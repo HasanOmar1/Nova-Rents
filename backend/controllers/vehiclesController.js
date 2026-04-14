@@ -1,5 +1,5 @@
 // Handlers for vehicle-related database actions (list, add, update, delete)
-const doQuery = require("../query");
+const doQuery = require("../database/query");
 const STATUS_CODE = require("../../constants/statusCodes");
 const { getVehicleByLicensePlate } = require("../../utils/getQueries");
 
