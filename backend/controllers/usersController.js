@@ -1,7 +1,8 @@
 // Handlers for user-related database actions (register, login, profile, etc.)
-const doQuery = require("../query");
+const bcrypt = require("bcrypt");
+const doQuery = require("../database/query");
 const hashPassword = require("../../utils/hashPassword");
-const { getUserByEmail } = require("../../utils/getQueries");
+const { getUserByEmail } = require("../database/queries/userQueries");
 const STATUS_CODE = require("../../constants/statusCodes");
 const {
   checkValidName,
@@ -10,8 +11,6 @@ const {
   checkValidPhoneIL,
   throwErr,
 } = require("../../utils/Valids");
-
-const bcrypt = require("bcrypt");
 
 // Get a list of all users in the system (for admin/testing)
 const getAllUsers = async (req, res, next) => {
@@ -23,6 +22,7 @@ const getAllUsers = async (req, res, next) => {
     next(error);
   }
 };
+
 // Register a new user: validates input, hashes password, inserts into DB
 async function register(req, res, next) {
   try {
