@@ -12,7 +12,7 @@ const {
 } = require("../../utils/Valids");
 
 // Get all vehicles in the system, newest year first (used on "All Vehicles" page)
-const getAllVehicles = async (req, res, next) => {
+const getAllVehiclesSortedByLatestYear = async (req, res, next) => {
   try {
     const query = "Select * from vehicles ORDER BY year DESC";
     const result = await doQuery(query);
@@ -225,7 +225,7 @@ const updateVehicle = async (req, res, next) => {
 };
 
 module.exports = {
-  getAllVehicles,
+  getAllVehiclesSortedByLatestYear,
   addVehicle,
   getVehicleById,
   deleteVehicle,

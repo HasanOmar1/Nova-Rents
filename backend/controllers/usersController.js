@@ -23,6 +23,26 @@ const getAllUsers = async (req, res, next) => {
   }
 };
 
+const getUserDetailsByEmail = async (req, res, next) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      res.status(STATUS_CODE.BAD_REQUEST);
+      throw new Error("Email not provided, Provide email as query parameter");
+    }
+
+    const user = await getUserByEmail(email);
+    if (!user) {
+      res.status(STATUS_CODE.NOT_FOUND);
+      throw new Error("User not found");
+    }
+
+    res.send(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Register a new user: validates input, hashes password, inserts into DB
 async function register(req, res, next) {
   try {
@@ -191,4 +211,45 @@ async function logout(req, res, next) {
   }
 }
 
-module.exports = { getAllUsers, register, login, getProfile, logout };
+// blocks user by email (it doesnt delete the user, just changes its status to blocked)
+const blockUserByEmail = async (req, res, next) => {
+  try {
+    if (req.session.user.role !== "admin") {
+      res.status(STATUS_CODE.FORBIDDEN);
+      throw new Error("Only admins can block users");
+    }
+
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(STATUS_CODE.BAD_REQUEST);
+      throw new Error("Email is required in the request body");
+    }
+
+    const updateQuery = "UPDATE users SET status = 'blocked' WHERE email = ?";
+    const result = await doQuery(updateQuery, [email]);
+
+    // MySQL returns 'affectedRows'. If 0, the email doesnt exist!
+    if (result.affectedRows === 0) {
+      res.status(STATUS_CODE.NOT_FOUND);
+      throw new Error("User not found");
+    }
+
+    res.send({
+      success: true,
+      message: `User ${email} has been blocked successfully.`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getAllUsers,
+  register,
+  login,
+  getProfile,
+  logout,
+  getUserDetailsByEmail,
+  blockUserByEmail,
+};
