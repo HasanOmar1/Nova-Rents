@@ -63,14 +63,14 @@
 }
 
 /* Base button styles */
-.navButton {
+.Header .navButton {
   display: flex;
   align-items: center;
   gap: 0.5rem; /* 8px */
-  border-radius: 1rem; /* 16px */
+  border-radius: 1rem;
   padding: 0.625rem 1rem; /* py-2.5 (10px) and px-4 (16px) */
-  font-size: 0.875rem; /* 14px */
-  line-height: 1.25rem; /* 20px */
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   font-weight: 500;
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
@@ -82,28 +82,28 @@
 }
 
 /* Hover state (when NOT active) */
-.navButton:not(.active):hover {
+.Header .navButton:not(.active):hover {
   background-color: rgba(255, 255, 255, 0.06);
   color: #ffffff;
 }
 
 /* Active state styles */
-.navButton.active {
+.Header .navButton.active {
   background-color: rgba(59, 130, 246, 0.15);
   color: #ffffff;
   box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
 }
 
 /* Icon styles */
-.navIcon {
-  height: 1rem; /* 16px */
-  width: 1rem; /* 16px */
+.Header .navIcon {
+  height: 1rem;
+  width: 1rem;
   flex-shrink: 0;
   opacity: 0.9;
 }
 
 /* log Out Container */
-.logOutContainer {
+.Header .logOutContainer {
   display: flex;
   align-items: center;
   gap: 0.5rem; /* 8px */
@@ -111,13 +111,13 @@
 }
 
 /* Notifications Button */
-.notifyButton {
-  display: none; /* hidden by default */
-  height: 2.5rem; /* 40px */
-  width: 2.5rem; /* 40px */
+.Header .notifyButton {
+  display: flex; /* hidden by default */
+  height: 2.5rem;
+  width: 2.5rem;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem; /* 16px */
+  border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(255, 255, 255, 0.04);
   color: rgba(255, 255, 255, 0.7);
@@ -128,70 +128,48 @@
   cursor: pointer;
 }
 
-.notifyButton:hover {
+.Header .notifyButton:hover {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Log Out Button */
-.logoutButton {
-  display: none; /* hidden by default */
+.Header .logoutButton {
+  display: flex; /* hidden by default */
   align-items: center;
   gap: 0.5rem; /* 8px */
-  border-radius: 1rem; /* 16px */
+  border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(255, 255, 255, 0.04);
   padding: 0.625rem 1rem; /* py-2.5 px-4 */
-  font-size: 0.875rem; /* 14px */
-  line-height: 1.25rem; /* 20px */
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   color: rgba(255, 255, 255, 0.85);
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 }
 
-.logoutButton:hover {
+.Header .logoutButton:hover {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Mobile Menu Button */
-.menuButton {
+.Header .menuButton {
   display: flex;
-  height: 2.5rem; /* 40px */
-  width: 2.5rem; /* 40px */
+  height: 2.5rem;
+  width: 2.5rem;
   align-items: center;
   justify-content: center;
-  border-radius: 1rem; /* 16px */
+  border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(255, 255, 255, 0.04);
   cursor: pointer;
 }
 
-/* Icon Sizes */
-.iconLarge {
-  height: 1.25rem; /* 20px */
-  width: 1.25rem; /* 20px */
+.Header .iconLarge {
+  height: 1.25rem;
+  width: 1.25rem;
 }
 
-.iconSmall {
-  height: 1rem; /* 16px */
-  width: 1rem; /* 16px */
-}
-
-/* Media Queries */
-
-/* md: breakpoint (Screens 768px and wider) */
-@media (min-width: 768px) {
-  .notifyButton {
-    display: flex;
-  }
-
-  .logoutButton {
-    display: inline-flex;
-  }
-}
-
-/* lg: breakpoint (Screens 1024px and wider) */
-@media (min-width: 1024px) {
-  .menuButton {
-    display: none;
-  }
+.Header .iconSmall {
+  height: 1rem;
+  width: 1rem;
 }
