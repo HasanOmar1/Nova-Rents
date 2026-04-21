@@ -1,2 +1,35 @@
 .Header {
+  min-height: 10vh;
+  background-color: #191e32;
+  color: #fff;
+}
+
+.Header .siteDetails {
+  display: flex;
+  gap: 20px;
+  padding-top: 15px;
+  padding-left: 8%;
+}
+
+.Header .logo {
+  width: 50px;
+  height: 50px;
+  background-color: black;
+  border-radius: 10px;
+}
+
+.Header .siteName {
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+  gap: 5px;
+}
+
+.Header .siteName h2 {
+  font-size: 1.4rem;
+}
+
+.Header .siteName p {
+  font-size: 0.7rem;
+  color: gray;
 }
