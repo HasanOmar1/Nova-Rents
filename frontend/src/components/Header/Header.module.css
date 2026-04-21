@@ -1,2 +1,197 @@
 .Header {
+  min-height: 10vh;
+  background-color: #191e32;
+  color: #fff;
+  /* display: flex; */
+}
+
+.Header .siteDetails {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding-top: 15px;
+}
+
+.Header .logoAndName {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+  margin-left: 10%;
+}
+
+.Header .logo {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  background-image: linear-gradient(
+    to bottom right,
+    rgba(56, 189, 248, 0.9),
+    rgba(16, 185, 129, 0.8)
+  );
+  color: #020617;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.Header .siteName {
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+  gap: 5px;
+}
+
+.Header .siteName h2 {
+  font-size: 1.4rem;
+}
+
+.Header .siteName p {
+  font-size: 0.7rem;
+  color: gray;
+}
+
+/* Navigation Container */
+.Header nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+/* Base button styles */
+.navButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* 8px */
+  border-radius: 1rem; /* 16px */
+  padding: 0.625rem 1rem; /* py-2.5 (10px) and px-4 (16px) */
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 500;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+
+  /* Inactive state default text color */
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Hover state (when NOT active) */
+.navButton:not(.active):hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+/* Active state styles */
+.navButton.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+/* Icon styles */
+.navIcon {
+  height: 1rem; /* 16px */
+  width: 1rem; /* 16px */
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* log Out Container */
+.logOutContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* 8px */
+  margin-right: 10%;
+}
+
+/* Notifications Button */
+.notifyButton {
+  display: none; /* hidden by default */
+  height: 2.5rem; /* 40px */
+  width: 2.5rem; /* 40px */
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem; /* 16px */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  transition:
+    background-color 300ms ease,
+    color 300ms ease,
+    border-color 300ms ease;
+  cursor: pointer;
+}
+
+.notifyButton:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Log Out Button */
+.logoutButton {
+  display: none; /* hidden by default */
+  align-items: center;
+  gap: 0.5rem; /* 8px */
+  border-radius: 1rem; /* 16px */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.04);
+  padding: 0.625rem 1rem; /* py-2.5 px-4 */
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.logoutButton:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Mobile Menu Button */
+.menuButton {
+  display: flex;
+  height: 2.5rem; /* 40px */
+  width: 2.5rem; /* 40px */
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem; /* 16px */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+/* Icon Sizes */
+.iconLarge {
+  height: 1.25rem; /* 20px */
+  width: 1.25rem; /* 20px */
+}
+
+.iconSmall {
+  height: 1rem; /* 16px */
+  width: 1rem; /* 16px */
+}
+
+/* Media Queries */
+
+/* md: breakpoint (Screens 768px and wider) */
+@media (min-width: 768px) {
+  .notifyButton {
+    display: flex;
+  }
+
+  .logoutButton {
+    display: inline-flex;
+  }
+}
+
+/* lg: breakpoint (Screens 1024px and wider) */
+@media (min-width: 1024px) {
+  .menuButton {
+    display: none;
+  }
 }
