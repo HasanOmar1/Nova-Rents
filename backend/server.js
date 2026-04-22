@@ -1,7 +1,7 @@
 const express = require("express");
 const session = require("express-session");
-const errorHandler = require("./middleWare/errorMiddleware");
 const cors = require("cors");
+const errorHandler = require("./middleWare/errorMiddleware");
 
 // routes
 const usersRoute = require("./routes/usersRoute");

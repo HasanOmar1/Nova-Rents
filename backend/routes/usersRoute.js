@@ -1,7 +1,7 @@
 // Express routes for user-related actions: register, login, profile, logout
 const express = require("express");
 const router = express.Router();
-const isAuthenticated = require("../middleWare/authMiddleware");
+const { isAuthenticated, isAdmin } = require("../middleWare/authMiddleware");
 const userQueries = require("../controllers/usersController");
 
 router.get("/", userQueries.getAllUsers);

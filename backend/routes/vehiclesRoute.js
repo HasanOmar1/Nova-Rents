@@ -1,7 +1,7 @@
 // Express routes for vehicle actions: list, my vehicles, add, update, delete
 const express = require("express");
 const router = express.Router();
-const isAuthenticated = require("../middleWare/authMiddleware");
+const { isAuthenticated } = require("../middleWare/authMiddleware");
 const vehicleQueries = require("../controllers/vehiclesController");
 
 router.get("/", vehicleQueries.getAllVehiclesSortedByLatestYear);

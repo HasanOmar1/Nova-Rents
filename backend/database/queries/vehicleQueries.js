@@ -1,4 +1,4 @@
-const doQuery = require("../database/query");
+const doQuery = require("../query");
 
 // Helper functions to fetch single vehicle records from the database depending on his license plate
 async function getVehicleByLicensePlate(plate) {
