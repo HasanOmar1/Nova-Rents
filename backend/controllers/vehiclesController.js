@@ -1,6 +1,6 @@
 // Handlers for vehicle-related database actions (list, add, update, delete)
 const doQuery = require("../database/query");
-const STATUS_CODE = require("../../constants/statusCodes");
+const STATUS_CODE = require("../constants/statusCodes");
 const {
   getVehicleByLicensePlate,
 } = require("../database/queries/vehicleQueries");
@@ -9,7 +9,7 @@ const {
   validateAndNormalizeVehicleCreate,
   validateAndMergeVehicleUpdate,
   throwErr,
-} = require("../../utils/Valids");
+} = require("../utils/Valids");
 
 // Get all vehicles in the system, newest year first (used on "All Vehicles" page)
 const getAllVehiclesSortedByLatestYear = async (req, res, next) => {

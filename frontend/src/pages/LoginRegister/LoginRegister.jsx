@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useUserContext } from "../../context/UserContext";
 import styles from "./LoginRegister.module.css";
 import { ArrowRight, Car, Shield, UserPlus } from "lucide-react";
 
@@ -5,6 +7,24 @@ const heroImg =
   "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1600&q=85";
 
 const LoginRegister = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login } = useUserContext();
+
+  const loginHandler = (e) => {
+    e.preventDefault();
+    const formData = {
+      email,
+      password,
+    };
+
+    if (email.trim() && password.trim()) {
+      login(formData);
+    }
+
+    console.log(formData);
+  };
+
   return (
     <div className={`${styles.container} page`}>
       <div className={styles.gridLayout}>
@@ -17,11 +37,13 @@ const LoginRegister = () => {
           </p>
 
           <div className={styles.formContainer}>
-            <form className={styles.formSpace}>
+            <form className={styles.formSpace} onSubmit={loginHandler}>
               <label className={styles.inputLabel}>
                 <span className={styles.labelText}>Email address</span>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email address"
                   className={styles.inputField}
                 />
@@ -30,6 +52,8 @@ const LoginRegister = () => {
               <label className={styles.inputLabel}>
                 <span className={styles.labelText}>Password</span>
                 <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   type="password"
                   placeholder="Password"
                   className={styles.inputField}
@@ -43,7 +67,6 @@ const LoginRegister = () => {
 
               <div className={styles.linkGroup}>
                 <span className={styles.link}>Forgot password?</span>
-                <span className={styles.link}>Support</span>
               </div>
             </form>
           </div>
