@@ -12,6 +12,28 @@ const UserContextProvider = ({ children }) => {
       const response = await axios.post("/users/login", userData);
       console.log("logged in successfully", response.data);
       setCurrentUser(response.data);
+      setErrorMsg("");
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      await axios.post("/users/register", userData);
+      setErrorMsg("");
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post("/users/logout", null, {});
+      setCurrentUser(null);
+      setErrorMsg("");
     } catch (error) {
       console.log(error?.response.data?.message);
       setErrorMsg(error?.response.data?.message);
@@ -19,7 +41,9 @@ const UserContextProvider = ({ children }) => {
   };
 
   return (
-    <UserContext.Provider value={{ currentUser, login, errorMsg }}>
+    <UserContext.Provider
+      value={{ currentUser, login, errorMsg, register, logout }}
+    >
       {children}
     </UserContext.Provider>
   );
