@@ -11,10 +11,10 @@ const UserContextProvider = ({ children }) => {
     try {
       const response = await axios.post("/users/login", userData);
       console.log("logged in successfully", response.data);
-      // setCurrentUser(response.data.user);
+      setCurrentUser(response.data);
     } catch (error) {
-      console.log(error);
-      // setErrorMsg("Login failed. Please check your credentials and try again.");
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
     }
   };
 

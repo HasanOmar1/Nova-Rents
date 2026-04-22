@@ -131,33 +131,36 @@ async function login(req, res, next) {
 
   try {
     if (!email || !password) {
-      throwErr(STATUS_CODE.BAD_REQUEST, "Email and password are required", res);
+      res.status(STATUS_CODE.BAD_REQUEST);
+      throw new Error("Email and password are required");
     }
 
     //--------Input validation--------
-    if (!checkValidEmail(email)) {
-      throwErr(STATUS_CODE.BAD_REQUEST, "Invalid email format.", res);
-    }
+    // if (!checkValidEmail(email)) {
+    //   throwErr(STATUS_CODE.BAD_REQUEST, "Invalid email format.", res);
+    // }
 
-    if (!checkValidPassword(password)) {
-      throwErr(
-        STATUS_CODE.BAD_REQUEST,
-        "Invalid password. It should be 3-8 characters long and include uppercase letters, lowercase letters, and numbers.",
-        res,
-      );
-    }
+    // if (!checkValidPassword(password)) {
+    //   throwErr(
+    //     STATUS_CODE.BAD_REQUEST,
+    //     "Invalid password. It should be 3-8 characters long and include uppercase letters, lowercase letters, and numbers.",
+    //     res,
+    //   );
+    // }
 
     //----if came here all inputs are valid----
 
     const user = await getUserByEmail(email);
 
     if (!user) {
-      throwErr(STATUS_CODE.BAD_REQUEST, "Invalid email or password", res);
+      res.status(STATUS_CODE.BAD_REQUEST);
+      throw new Error("Invalid email or password");
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throwErr(STATUS_CODE.BAD_REQUEST, "Invalid email or password", res);
+      res.status(STATUS_CODE.BAD_REQUEST);
+      throw new Error("Invalid email or password");
     }
 
     const loggedUser = {
@@ -172,10 +175,7 @@ async function login(req, res, next) {
     };
     req.session.user = loggedUser;
 
-    res.status(STATUS_CODE.OK).json({
-      message: "Login successful",
-      user: loggedUser,
-    });
+    res.status(STATUS_CODE.OK).json(loggedUser);
   } catch (error) {
     next(error);
   }
