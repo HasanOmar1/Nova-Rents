@@ -5,12 +5,13 @@ const hashPassword = require("../utils/hashPassword");
 const { getUserByEmail } = require("../database/queries/userQueries");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
-  checkValidName,
-  checkValidEmail,
-  checkValidPassword,
-  checkValidPhoneIL,
-  throwErr,
-} = require("../utils/Valids");
+  validateRequiredRegisterFields,
+  validateRegisterInputFormats,
+  validateEmailQuery,
+  validateLoginFields,
+  validateAuthenticatedUser,
+  validateEmailInBody,
+} = require("../utils/validsController");
 
 // Get a list of all users in the system (for admin/testing)
 const getAllUsers = async (req, res, next) => {
@@ -26,15 +27,11 @@ const getAllUsers = async (req, res, next) => {
 const getUserDetailsByEmail = async (req, res, next) => {
   try {
     const { email } = req.query;
-    if (!email) {
-      res.status(STATUS_CODE.BAD_REQUEST);
-      throw new Error("Email not provided, Provide email as query parameter");
-    }
+    if (!validateEmailQuery(email, res)) return;
 
     const user = await getUserByEmail(email);
     if (!user) {
-      res.status(STATUS_CODE.NOT_FOUND);
-      throw new Error("User not found");
+      return res.status(STATUS_CODE.NOT_FOUND).json({ message: "User not found" });
     }
 
     res.send(user);
@@ -47,56 +44,16 @@ const getUserDetailsByEmail = async (req, res, next) => {
 async function register(req, res, next) {
   try {
     const { firstName, lastName, email, password, phone, birthDate } = req.body;
-
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !password ||
-      !phone ||
-      !birthDate
-    ) {
-      throwErr(STATUS_CODE.BAD_REQUEST, "Missing required fields", res);
-    }
-
-    // --------Input validation--------
-    if (!checkValidName(firstName)) {
-      throwErr(
-        STATUS_CODE.BAD_REQUEST,
-        "Invalid first name. It should be 2-30 characters long and contain only letters, numbers, and underscores.",
-        res,
-      );
-    }
-
-    if (!checkValidName(lastName)) {
-      throwErr(
-        STATUS_CODE.BAD_REQUEST,
-        "Invalid last name. It should be 2-30 characters long and contain only letters, numbers, and underscores.",
-        res,
-      );
-    }
-
-    if (!checkValidEmail(email)) {
-      throwErr(STATUS_CODE.BAD_REQUEST, "Invalid email format.", res);
-    }
-
-    if (!checkValidPassword(password)) {
-      throwErr(
-        STATUS_CODE.BAD_REQUEST,
-        "Invalid password. It should be 3-8 characters long and include uppercase letters, lowercase letters, and numbers.",
-        res,
-      );
-    }
-
-    if (!checkValidPhoneIL(phone)) {
-      throwErr(STATUS_CODE.BAD_REQUEST, "Invalid phone number format.", res);
-    }
+    if (!validateRequiredRegisterFields(req.body, res)) return;
+    if (!validateRegisterInputFormats(req.body, res)) return;
 
     //----if came here all inputs are valid----
 
     const emailExist = await getUserByEmail(email);
     if (emailExist) {
-      throwErr(STATUS_CODE.CONFLICT, "Email already exists", res);
+      return res
+        .status(STATUS_CODE.CONFLICT)
+        .json({ message: "Email already exists" });
     }
     const hashedPassword = await hashPassword(password);
 
@@ -130,10 +87,7 @@ async function login(req, res, next) {
   const { email, password } = req.body;
 
   try {
-    if (!email || !password) {
-      res.status(STATUS_CODE.BAD_REQUEST);
-      throw new Error("Email and password are required");
-    }
+    if (!validateLoginFields(email, password, res)) return;
 
     //--------Input validation--------
     // if (!checkValidEmail(email)) {
@@ -153,14 +107,16 @@ async function login(req, res, next) {
     const user = await getUserByEmail(email);
 
     if (!user) {
-      res.status(STATUS_CODE.BAD_REQUEST);
-      throw new Error("Invalid email or password");
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Invalid email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(STATUS_CODE.BAD_REQUEST);
-      throw new Error("Invalid email or password");
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Invalid email or password" });
     }
 
     const loggedUser = {
@@ -183,9 +139,7 @@ async function login(req, res, next) {
 // Return the logged-in user's profile data from the session
 async function getProfile(req, res, next) {
   try {
-    if (!req.session.user) {
-      throwErr(STATUS_CODE.UNAUTHORIZED, "Unauthorized, Login first!", res);
-    }
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) return;
 
     res.status(STATUS_CODE.OK).json({
       message: "User profile fetched successfully",
@@ -215,24 +169,20 @@ async function logout(req, res, next) {
 const blockUserByEmail = async (req, res, next) => {
   try {
     if (req.session.user.role !== "admin") {
-      res.status(STATUS_CODE.FORBIDDEN);
-      throw new Error("Only admins can block users");
+      return res
+        .status(STATUS_CODE.FORBIDDEN)
+        .json({ message: "Only admins can block users" });
     }
 
     const { email } = req.body;
-
-    if (!email) {
-      res.status(STATUS_CODE.BAD_REQUEST);
-      throw new Error("Email is required in the request body");
-    }
+    if (!validateEmailInBody(email, res)) return;
 
     const updateQuery = "UPDATE users SET status = 'blocked' WHERE email = ?";
     const result = await doQuery(updateQuery, [email]);
 
     // MySQL returns 'affectedRows'. If 0, the email doesnt exist!
     if (result.affectedRows === 0) {
-      res.status(STATUS_CODE.NOT_FOUND);
-      throw new Error("User not found");
+      return res.status(STATUS_CODE.NOT_FOUND).json({ message: "User not found" });
     }
 
     res.send({

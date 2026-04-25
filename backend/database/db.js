@@ -5,7 +5,7 @@ const dbConfig = {
   host: "localhost",
   user: "root",
   password: "",
-  database: "cars",
+  database: "Nova_rents",
 };
 
 let connection;
