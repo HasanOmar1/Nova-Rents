@@ -4,14 +4,12 @@ const STATUS_CODE = require("../constants/statusCodes");
 const {
   getVehicleByLicensePlate,
 } = require("../database/queries/vehicleQueries");
-
 const {
   validateAndNormalizeVehicleCreate,
   validateAndMergeVehicleUpdate,
-  throwErr,
-} = require("../utils/Valids");
+  validateAuthenticatedUser,
+} = require("../utils/validsController");
 
-// Get all vehicles in the system, newest year first (used on "All Vehicles" page)
 const getAllVehiclesSortedByLatestYear = async (req, res, next) => {
   try {
     const query = "Select * from vehicles ORDER BY year DESC";
@@ -21,18 +19,12 @@ const getAllVehiclesSortedByLatestYear = async (req, res, next) => {
     next(error);
   }
 };
-// Get only the vehicles that belong to the currently logged-in user
+
 const getUserVehicles = async (req, res, next) => {
   try {
-    if (!req.session.user) {
-      throwErr(
-        STATUS_CODE.UNAUTHORIZED,
-        "You must be logged in to see your vehicles",
-        res,
-      );
-    }
+    if (!validateAuthenticatedUser(req, res, "You must be logged in to see your vehicles")) return;
 
-    const { userId } = req.session?.user;
+    const { userId } = req.session.user;
     const query = "Select * from vehicles where ownerId = ? ORDER BY year DESC";
     const result = await doQuery(query, [userId]);
     res.send(result);
@@ -40,13 +32,25 @@ const getUserVehicles = async (req, res, next) => {
     next(error);
   }
 };
-// Add a new vehicle for the logged-in user after validation and duplicate check
+
 const addVehicle = async (req, res, next) => {
   try {
-    const { userId, vehicle } = validateAndNormalizeVehicleCreate(req, res);
+    const normalized = validateAndNormalizeVehicleCreate(req, res);
+    if (!normalized) return;
+
+    const carModel = await doQuery("SELECT * FROM carModels WHERE modelId = ? AND brandId = ? AND carTypeId = ?", [modelId, brandId, typeId]);
+    if (carModel.length === 0) {
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "No car model found with this modelId, brandId and typeId",
+      });
+    }
+
+    const { userId, vehicle } = normalized;
     const {
       licensePlate,
-      make,
+      brandId,
+      modelId,
+      typeId,
       fuelType,
       expirationDate,
       image,
@@ -57,25 +61,23 @@ const addVehicle = async (req, res, next) => {
       color,
     } = vehicle;
 
-    // 5. Duplicate Check (Using the Integer)
     const existingVehicle = await getVehicleByLicensePlate(licensePlate);
     if (existingVehicle) {
-      throwErr(
-        STATUS_CODE.CONFLICT,
-        "A vehicle with this license plate already exists.",
-        res,
-      );
+      return res.status(STATUS_CODE.CONFLICT).json({
+        message: "A vehicle with this license plate already exists.",
+      });
     }
 
-    // 6. Database Insertion
     const insertQuery = `
-      INSERT INTO vehicles (licensePlate, make, fuelType, expirationDate, image, year, km, address, price, color, ownerId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO vehicles (licensePlate,modelId, fuelType, expirationDate, image, year, km, address, price, color, ownerId)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
-      licensePlate, // Stored as INT in SQL
-      make,
+      licensePlate,
+      brandId,
+      modelId,
+      typeId,
       fuelType,
       expirationDate,
       image,
@@ -90,25 +92,23 @@ const addVehicle = async (req, res, next) => {
     await doQuery(insertQuery, values);
 
     return res.status(STATUS_CODE.CREATED).json({
-      message: "Vehicle added successfully to Rentaro",
-      licensePlate: licensePlate,
+      message: "Vehicle added successfully to NovaRents",
+      licensePlate,
     });
   } catch (error) {
     next(error);
   }
 };
-// Get a single vehicle by its license plate
+
 const getVehicleById = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
     const vehicle = await getVehicleByLicensePlate(licensePlate);
 
     if (!vehicle) {
-      throwErr(
-        STATUS_CODE.NOT_FOUND,
-        "No vehicle found with this license plate",
-        res,
-      );
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "No vehicle found with this license plate",
+      });
     }
 
     res.send(vehicle);
@@ -116,35 +116,24 @@ const getVehicleById = async (req, res, next) => {
     next(error);
   }
 };
-// Delete a vehicle: only the owner (current user) can delete their own vehicle
+
 const deleteVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
 
-    if (!req.session.user) {
-      throwErr(
-        STATUS_CODE.UNAUTHORIZED,
-        "You must be logged in to delete a vehicle",
-        res,
-      );
-    }
+    if (!validateAuthenticatedUser(req, res, "You must be logged in to delete a vehicle")) return;
 
     const vehicle = await getVehicleByLicensePlate(licensePlate);
-
     if (!vehicle) {
-      throwErr(
-        STATUS_CODE.NOT_FOUND,
-        "No vehicle found with this license plate",
-        res,
-      );
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "No vehicle found with this license plate",
+      });
     }
 
     if (vehicle.ownerId !== req.session.user.userId) {
-      throwErr(
-        STATUS_CODE.FORBIDDEN,
-        "You do not have permission to delete this vehicle",
-        res,
-      );
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "You do not have permission to delete this vehicle",
+      });
     }
 
     const deleteQuery = "DELETE FROM vehicles WHERE licensePlate = ?";
@@ -155,34 +144,36 @@ const deleteVehicle = async (req, res, next) => {
     next(error);
   }
 };
-// Update vehicle details: validates input and ensures only the owner can update
+
 const updateVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
 
+    if (!validateAuthenticatedUser(req, res, "You must be logged in to perform this action.")) return;
+
     const existingVehicle = await getVehicleByLicensePlate(licensePlate);
     if (!existingVehicle) {
-      throwErr(STATUS_CODE.NOT_FOUND, "Vehicle not found", res);
+      return res.status(STATUS_CODE.NOT_FOUND).json({ message: "Vehicle not found" });
     }
 
     if (existingVehicle.ownerId !== req.session.user.userId) {
-      throwErr(
-        STATUS_CODE.FORBIDDEN,
-        "You cannot update someone else's car",
-        res,
-      );
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "You cannot update someone else's car",
+      });
     }
 
-    // Validate and merge updates (with session check inside)
     const mergedData = validateAndMergeVehicleUpdate(
       existingVehicle,
       req.body,
       req,
       res,
     );
+    if (!mergedData) return;
 
     const {
-      make,
+      brandId,
+      modelId,
+      typeId,
       fuelType,
       expirationDate,
       image,
@@ -194,12 +185,15 @@ const updateVehicle = async (req, res, next) => {
     } = mergedData;
 
     const updateQuery = `
-      UPDATE vehicles SET make = ? , fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ? 
-      WHERE licensePlate = ? 
+      UPDATE vehicles
+      SET brandId = ?, modelId = ?, typeId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?
+      WHERE licensePlate = ?
     `;
 
     const values = [
-      make,
+      brandId,
+      modelId,
+      typeId,
       fuelType,
       expirationDate,
       image,
@@ -212,7 +206,6 @@ const updateVehicle = async (req, res, next) => {
     ];
 
     await doQuery(updateQuery, values);
-
     const updatedVehicle = await getVehicleByLicensePlate(licensePlate);
 
     res.status(STATUS_CODE.OK).json({
