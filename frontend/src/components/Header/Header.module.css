@@ -109,13 +109,13 @@
 .Header .logOutContainer {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* 8px */
+  gap: 0.5rem;
   margin-right: 10%;
 }
 
 /* Notifications Button */
 .Header .notifyButton {
-  display: flex; /* hidden by default */
+  display: flex;
   height: 2.5rem;
   width: 2.5rem;
   align-items: center;

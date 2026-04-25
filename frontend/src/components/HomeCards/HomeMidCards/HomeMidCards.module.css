@@ -1,0 +1,26 @@
+.HomeMidCards {
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  padding: 30px;
+  border-radius: 20px;
+}
+
+.HomeMidCards .dataContainer .data {
+  margin-top: 20px;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #eeeaeaef;
+}
+
+.HomeMidCards .dataContainer p {
+  font-size: 0.8rem;
+}
+.HomeMidCards .data .date {
+  color: var(--gray);
+}
