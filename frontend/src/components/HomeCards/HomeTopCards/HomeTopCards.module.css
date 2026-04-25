@@ -1,0 +1,34 @@
+.HomeTopCards {
+  width: 320px;
+  background-color: var(--bg-gray);
+  padding: 15px 20px;
+
+  border-radius: 10px;
+  border: var(--cards-border);
+  line-height: 1.3;
+}
+
+.HomeTopCards .top {
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+}
+
+.HomeTopCards .top p {
+  width: 10ch;
+  color: var(--gray);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.HomeTopCards .carBox {
+  padding: 10px 20px;
+  border-radius: 20px;
+  background-color: var(--icons-bg-color);
+}
+
+.HomeTopCards .bottom p {
+  font-size: 2.5rem;
+  font-weight: bold;
+}

@@ -1,5 +1,5 @@
 import styles from "./Header.module.css";
-import { Car, Menu, Bell, LogOut } from "lucide-react";
+import { Car, Bell, LogOut } from "lucide-react";
 import { navByRole, labels, icons } from "./nav";
 import { useUserContext } from "../../context/UserContext";
 import { useEffect, useState } from "react";
