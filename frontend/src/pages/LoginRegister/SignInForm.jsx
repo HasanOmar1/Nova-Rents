@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import styles from "./LoginRegister.module.css";
+import { useNavigate } from "react-router-dom";
 
 const SignInForm = ({
   email,
@@ -7,6 +8,7 @@ const SignInForm = ({
   password,
   setPassword,
   loginHandler,
+  setCurrentForm,
 }) => {
   return (
     <div className={`${styles.glassPanel} ${styles.signInPanel} `}>
@@ -42,7 +44,16 @@ const SignInForm = ({
           </button>
 
           <div className={styles.linkGroup}>
-            <span className={styles.link}>Forgot password?</span>
+            <p className={styles.link}>Forgot password?</p>
+            <p>
+              Dont have an account yet?{" "}
+              <span
+                className={styles.link}
+                onClick={() => setCurrentForm("register")}
+              >
+                Register
+              </span>
+            </p>
           </div>
         </form>
       </div>
