@@ -150,10 +150,11 @@
 .LoginRegister .link {
   cursor: pointer;
   transition: color 0.2s ease;
+  color: rgba(125, 211, 252, 0.8);
 }
 
 .LoginRegister .link:hover {
-  color: rgba(125, 211, 252, 0.8);
+  color: rgba(125, 212, 252, 0.539);
 }
 
 /* Mid Section */

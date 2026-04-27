@@ -2,6 +2,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 10%;
+  padding-top: 10%;
   line-height: 1.7;
+}
+
+.NotFound h1 {
+  font-size: 3rem;
+  color: greenyellow;
+}
+
+.NotFound .timer {
+  color: red;
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import styles from "./LoginRegister.module.css";
 import { ArrowRight } from "lucide-react";
 
-const RegisterForm = () => {
+const RegisterForm = ({ handleRegister }) => {
   const [birthDate, setBirthDate] = useState("");
 
   const today = new Date();
@@ -28,7 +28,7 @@ const RegisterForm = () => {
       <h2 className={styles.heading}>Register</h2>
 
       <div className={styles.formContainer}>
-        <form className={styles.formSpace}>
+        <form className={styles.formSpace} onSubmit={handleRegister}>
           <div className={styles.inputRow}>
             <label className={styles.inputLabel}>
               <span className={styles.labelText}>First name</span>

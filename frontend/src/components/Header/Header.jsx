@@ -1,15 +1,30 @@
 import styles from "./Header.module.css";
-import { Car, Menu, Bell, LogOut } from "lucide-react";
+import { Car, Bell, LogOut } from "lucide-react";
 import { navByRole, labels, icons } from "./nav";
 import { useUserContext } from "../../context/UserContext";
 import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Header = ({ page }) => {
   const { currentUser, logout } = useUserContext();
-  const visible = navByRole[currentUser?.role] || [];
+  const location = useLocation();
+  // console.log(location);
+
+  // const visible = navByRole[currentUser?.role] || [];
+  const visible = [
+    "home",
+    "vehicles",
+    "map",
+    "myVehicles",
+    "profile",
+    "complaints",
+  ];
+
+  const navigate = useNavigate();
 
   const handleLogOut = () => {
     logout();
+    navigate("/");
   };
 
   return (
@@ -28,36 +43,37 @@ const Header = ({ page }) => {
         <nav>
           {visible.map((item) => {
             const Icon = icons[item];
+            const page = location.pathname.split("/")[1];
             const active = page === item;
 
             return (
-              <button
+              <Link
+                to={"/" + item}
                 key={item}
-                // onClick={() => setPage(item)}
                 className={`${styles.navButton}  ${active ? styles.active : ""}`}
               >
                 {Icon && <Icon className="nav-icon" />}
                 {labels[item]}
-              </button>
+              </Link>
             );
           })}
         </nav>
 
-        {currentUser?.role === "admin" ||
-          (currentUser?.role === "user" && (
-            <div className={styles.logOutContainer}>
-              <>
-                <button className={styles.notifyButton}>
-                  <Bell className={styles.iconLarge} />
-                </button>
+        {/* {currentUser?.role === "admin" ||
+          (currentUser?.role === "user" && ( */}
+        <div className={styles.logOutContainer}>
+          <>
+            <button className={styles.notifyButton}>
+              <Bell className={styles.iconLarge} />
+            </button>
 
-                <button className={styles.logoutButton} onClick={handleLogOut}>
-                  <LogOut className={styles.iconSmall} />
-                  Log out
-                </button>
-              </>
-            </div>
-          ))}
+            <button className={styles.logoutButton} onClick={handleLogOut}>
+              <LogOut className={styles.iconSmall} />
+              Log out
+            </button>
+          </>
+        </div>
+        {/* ))} */}
       </div>
     </header>
   );

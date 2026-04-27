@@ -5,15 +5,14 @@ import { ArrowRight, Car, Shield, UserPlus } from "lucide-react";
 import SignInForm from "./SignInForm";
 import RegisterForm from "./RegisterForm";
 import FormOption from "./FormOption";
-
-// const heroImg =
-//   "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1600&q=85";
+import { useNavigate } from "react-router-dom";
 
 const LoginRegister = () => {
   const [currentForm, setCurrentForm] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useUserContext();
+  const navigate = useNavigate();
 
   const loginHandler = (e) => {
     e.preventDefault();
@@ -22,9 +21,16 @@ const LoginRegister = () => {
       password,
     };
 
-    if (email.trim() && password.trim()) login(formData);
+    if (email.trim() && password.trim()) {
+      login(formData);
+      navigate("/home");
+    }
 
     console.log(formData);
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
   };
 
   return (
@@ -39,9 +45,10 @@ const LoginRegister = () => {
             setEmail={setEmail}
             setPassword={setPassword}
             loginHandler={loginHandler}
+            setCurrentForm={setCurrentForm}
           />
         ) : (
-          <RegisterForm />
+          <RegisterForm handleRegister={handleRegister} />
         )}
       </div>
     </div>
