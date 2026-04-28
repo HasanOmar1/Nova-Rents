@@ -27,6 +27,24 @@ const topData = [
   },
 ];
 
+const lineData = [
+  { month: "Jan", rentals: 12 },
+  { month: "Feb", rentals: 18 },
+  { month: "Mar", rentals: 24 },
+  { month: "Apr", rentals: 21 },
+  { month: "May", rentals: 32 },
+  { month: "Jun", rentals: 35 },
+];
+
+const barData = [
+  { month: "Jan", usage: 48 },
+  { month: "Feb", usage: 60 },
+  { month: "Mar", usage: 70 },
+  { month: "Apr", usage: 65 },
+  { month: "May", usage: 85 },
+  { month: "Jun", usage: 95 },
+];
+
 const Home = () => {
   return (
     <div className={`${styles.Home} page`}>
@@ -55,8 +73,18 @@ const Home = () => {
       </div>
 
       <div className={styles.bottomCardsContainer}>
-        <HomeBottomCards title={"Rentals over time"} />
-        <HomeBottomCards title={"Platform usage"} />
+        <HomeBottomCards
+          title={"Rentals over time"}
+          type="line"
+          data={lineData}
+          dataKey="rentals"
+        />
+        <HomeBottomCards
+          title={"Platform usage"}
+          type="bar"
+          data={barData}
+          dataKey="usage"
+        />
       </div>
     </div>
   );

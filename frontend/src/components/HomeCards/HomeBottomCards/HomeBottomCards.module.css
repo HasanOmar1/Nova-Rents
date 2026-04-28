@@ -1,18 +1,16 @@
 .HomeBottomCards {
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
   width: 48%;
-
   background-color: var(--bg-gray);
   border: var(--cards-border);
-  padding: 30px;
   border-radius: 20px;
+  padding: 30px;
   height: 300px;
+  gap: 30px;
 }
 
 .HomeBottomCards .statistics {
-  border: 3px solid red;
-  height: 70%;
-  margin-top: 20px;
+  width: 100%;
+  flex: 1;
 }
