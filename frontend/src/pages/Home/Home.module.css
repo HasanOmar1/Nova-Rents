@@ -63,3 +63,10 @@
   margin-top: 30px;
   padding-bottom: 30px;
 }
+
+/* Bottom Cards */
+.bottomCardsContainer {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 30px;
+}

@@ -1,3 +1,4 @@
+import HomeBottomCards from "../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import HomeMidCards from "../../components/HomeCards/HomeMidCards/HomeMidCards";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import styles from "./Home.module.css";
@@ -51,6 +52,11 @@ const Home = () => {
       <div className={styles.midCardsContainer}>
         <HomeMidCards title={"Recent Activity"} />
         <HomeMidCards title={"Notifications"} />
+      </div>
+
+      <div className={styles.bottomCardsContainer}>
+        <HomeBottomCards title={"Rentals over time"} />
+        <HomeBottomCards title={"Platform usage"} />
       </div>
     </div>
   );
