@@ -4,6 +4,7 @@ import UserContextProvider from "./context/UserContext";
 import LoginRegister from "./pages/LoginRegister/LoginRegister";
 import NotFound from "./pages/NotFound/NotFound";
 import Home from "./pages/Home/Home";
+import Vehicles from "./pages/Vehicles/Vehicles";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LoginRegister />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/vehicles" element={<Vehicles />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </UserContextProvider>
