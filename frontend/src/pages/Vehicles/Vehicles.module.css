@@ -1,0 +1,112 @@
+.Vehicles h1 {
+  font-size: 2.2rem;
+}
+
+/* Top Btn */
+.Vehicles .btnsContainer {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.Vehicles .btnsContainer button {
+  border-radius: 10px;
+}
+
+.Vehicles .openMapBtn {
+  background: transparent;
+  color: white;
+  border: var(--cards-border);
+}
+
+.Vehicles .openMapBtn:hover {
+  background: var(--bg-gray);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.Vehicles .openMapBtn:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.Vehicles .filterContainer {
+  background-color: var(--bg-gray);
+  min-height: 300px;
+  border-radius: 20px;
+  margin-top: 20px;
+  padding: 20px;
+}
+
+/* buttons container */
+.Vehicles .filterContainer .vehicleTypeBtnsContainer {
+  display: flex;
+  gap: 20px;
+}
+
+.Vehicles .vehicleTypeBtnsContainer button {
+  text-transform: capitalize;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* 8px */
+  border-radius: 1rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.Vehicles .vehicleTypeBtnsContainer button:not(.active):hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.Vehicles .vehicleTypeBtnsContainer button.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.Vehicles .filterContainer hr {
+  border: 1px solid var(--gray);
+  width: 100%;
+  margin: 10px 0;
+}
+
+.Vehicles .inputsContainer {
+  display: flex;
+  gap: 30px;
+  flex-direction: column;
+}
+
+.Vehicles .inputsContainer .top {
+  display: flex;
+  gap: 30px;
+}
+
+.Vehicles .searchContainer {
+  flex: 2;
+}
+
+.Vehicles .inputsContainer input,
+.Vehicles .inputsContainer select {
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+  outline: none;
+  color: #fff;
+  width: 100%;
+  padding: 10px;
+}
+
+.Vehicles .inputsContainer select {
+  flex: 1;
+}
+
+.Vehicles .inputsContainer input:focus {
+  /* outline: 2px solid greenyellow; */
+  outline: none;
+}

@@ -1,0 +1,16 @@
+.HomeBottomCards {
+  display: flex;
+  flex-direction: column;
+  width: 48%;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  border-radius: 20px;
+  padding: 30px;
+  height: 300px;
+  gap: 30px;
+}
+
+.HomeBottomCards .statistics {
+  width: 100%;
+  flex: 1;
+}
