@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-bottom: 30px;
-  width: 300px;
+  padding-bottom: 10px;
+  width: 390px;
   background-color: var(--bg-gray);
   font-size: 0.8rem;
   border-radius: 20px;
@@ -23,7 +23,9 @@
 }
 
 .VehiclesCards .vehType {
-  color: yellowgreen;
+  color: #83a3b7;
+  font-weight: bold;
+  padding-bottom: 10px;
 }
 
 .VehiclesCards .vehStatus {
@@ -34,9 +36,12 @@
 }
 
 .VehiclesCards .status {
-  border: 1px solid green;
-  padding: 10px;
+  background-color: #132828;
+  padding: 10px 20px;
   border-radius: 10px;
+  color: #a5f5cf;
+  font-size: 0.8rem;
+  font-weight: bold;
 }
 
 .VehiclesCards .vehDetails {
@@ -52,6 +57,7 @@
 
 .VehiclesCards .vehDetails .title {
   color: var(--gray);
+  font-weight: bold;
 }
 
 .VehiclesCards .vehDetails .detailsData {
@@ -65,11 +71,48 @@
   gap: 5px;
 }
 
+.VehiclesCards .ownerContainer {
+  color: var(--gray);
+  margin-top: 5px;
+}
+
 .VehiclesCards .host {
-  color: rgba(153, 205, 50, 0.752);
+  color: var(--gray);
+  font-weight: bold;
 }
 
 .VehiclesCards .btnsContainer {
   display: flex;
-  gap: 10px;
+  gap: 5px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.VehiclesCards .btnsContainer button {
+  outline: none;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: var(--bg-gray);
+  font-weight: 600;
+  color: white;
+  font-size: 0.8rem;
+  height: 50px;
+  margin-top: 5px;
+  transition: scale 0.3s;
+}
+
+.VehiclesCards .btnsContainer .detailsBtn {
+  border: var(--cards-border);
+}
+
+.VehiclesCards .btnsContainer .rentBtn {
+  background-color: #1841c2;
+}
+
+.VehiclesCards .btnsContainer .reportBtn {
+  background-color: #2b2118;
+}
+
+.VehiclesCards .btnsContainer button:hover {
+  scale: 1.05;
 }

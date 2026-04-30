@@ -2,6 +2,7 @@ import { useState } from "react";
 import styles from "./Vehicles.module.css";
 import { Search } from "lucide-react";
 import VehiclesCards from "../../components/VehiclesCards/VehiclesCards";
+import { Link } from "react-router-dom";
 
 const tabs = ["all", "Cars", "Motorcycles", "eventVehicles"];
 
@@ -72,6 +73,17 @@ const vehicleData = [
     type: "Event Vehicles",
     ownerName: "Hasan omar",
   },
+  {
+    id: 7,
+    img: "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=800&auto=format&fit=crop",
+    vehName: "Lamborghini Huracán",
+    price: "$1,500/day",
+    year: 2023,
+    location: "Haifa",
+    status: "Available",
+    type: "Event Vehicles",
+    ownerName: "Hasan omar",
+  },
 ];
 
 const Vehicles = () => {
@@ -90,7 +102,9 @@ const Vehicles = () => {
       <h1>Vehicles</h1>
 
       <div className={styles.btnsContainer}>
-        <button className={styles.openMapBtn}>Open Map View</button>
+        <Link to={"/map"} className={styles.openMapBtn}>
+          Open Map View
+        </Link>
       </div>
 
       <div className={styles.filterContainer}>
@@ -98,6 +112,7 @@ const Vehicles = () => {
           {tabs.map((t) => {
             return (
               <button
+                key={t}
                 onClick={() => setActiveTab(t)}
                 className={activeTab === t ? styles.active : ""}
               >
@@ -122,13 +137,21 @@ const Vehicles = () => {
 
             <select name="location" id="location">
               {locations.map((location) => {
-                return <option value={location}>{location}</option>;
+                return (
+                  <option key={location} value={location}>
+                    {location}
+                  </option>
+                );
               })}
             </select>
 
             <select name="sort" id="sort">
               {sortBy.map((sort) => {
-                return <option value={sort}>Sort: {sort}</option>;
+                return (
+                  <option key={sort} value={sort}>
+                    Sort: {sort}
+                  </option>
+                );
               })}
             </select>
           </div>
