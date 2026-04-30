@@ -7,8 +7,9 @@ async function getVehicleByLicensePlate(plate) {
       "SELECT * FROM vehicles WHERE licensePlate = ?",
       [plate],
     );
-
+    console.log(result, '😆 in getVehicleByLicensePlate');
     return result[0];
+
   } catch (error) {
     console.error("Error checking existing license plate:", error);
     throw error;

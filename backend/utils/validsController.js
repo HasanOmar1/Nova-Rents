@@ -109,12 +109,10 @@ function validateAndNormalizeVehicleCreate(req, res) {
     );
   }
 
-  const { userId } = req.session.user;
+  const {userId } = req.session.user;
   const {
     licensePlate,
-    brandId,
     modelId,
-    typeId,
     fuelType,
     expirationDate,
     image,
@@ -127,9 +125,6 @@ function validateAndNormalizeVehicleCreate(req, res) {
 
   if (
     licensePlate == null ||
-    brandId == null ||
-    modelId == null ||
-    typeId == null ||
     !fuelType ||
     !expirationDate ||
     !image ||
@@ -138,13 +133,13 @@ function validateAndNormalizeVehicleCreate(req, res) {
     !address ||
     price == null ||
     !color
-  ) {
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "All fields are required.",
-    );
-  }
+    || modelId == null 
+  ) 
+  return sendValidationError(
+    res,
+    STATUS_CODE.BAD_REQUEST,
+    "All fields are required.",
+  );
 
   const plateString = String(licensePlate).trim();
   if (!/^\d+$/.test(plateString)) {
@@ -196,9 +191,6 @@ function validateAndNormalizeVehicleCreate(req, res) {
     userId,
     vehicle: {
       licensePlate: Number.parseInt(plateString, 10),
-      brandId,
-      modelId,
-      typeId,
       fuelType,
       expirationDate,
       image,
@@ -207,6 +199,7 @@ function validateAndNormalizeVehicleCreate(req, res) {
       address,
       price: priceNum,
       color,
+      modelId,
     },
   };
 }
@@ -217,9 +210,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   }
 
   const merged = {
-    brandId: body.brandId ?? existingVehicle.brandId,
     modelId: body.modelId ?? existingVehicle.modelId,
-    typeId: body.typeId ?? existingVehicle.typeId,
     fuelType: body.fuelType ?? existingVehicle.fuelType,
     expirationDate: body.expirationDate ?? existingVehicle.expirationDate,
     image: body.image ?? existingVehicle.image,

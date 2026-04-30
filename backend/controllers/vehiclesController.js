@@ -1,5 +1,6 @@
 // Handlers for vehicle-related database actions (list, add, update, delete)
 const doQuery = require("../database/query");
+const { checkVehicleNumberInGovIL } = require("../services/govApiService");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   getVehicleByLicensePlate,
@@ -10,19 +11,16 @@ const {
   validateAuthenticatedUser,
 } = require("../utils/validsController");
 
-const getAllVehiclesSortedByLatestYear = async (req, res, next) => {
-  try {
-    const query = "Select * from vehicles ORDER BY year DESC";
-    const result = await doQuery(query);
-    res.send(result);
-  } catch (error) {
-    next(error);
-  }
-};
-
 const getUserVehicles = async (req, res, next) => {
   try {
-    if (!validateAuthenticatedUser(req, res, "You must be logged in to see your vehicles")) return;
+    if (
+      !validateAuthenticatedUser(
+        req,
+        res,
+        "You must be logged in to see your vehicles",
+      )
+    )
+      return;
 
     const { userId } = req.session.user;
     const query = "Select * from vehicles where ownerId = ? ORDER BY year DESC";
@@ -37,20 +35,10 @@ const addVehicle = async (req, res, next) => {
   try {
     const normalized = validateAndNormalizeVehicleCreate(req, res);
     if (!normalized) return;
-
-    const carModel = await doQuery("SELECT * FROM carModels WHERE modelId = ? AND brandId = ? AND carTypeId = ?", [modelId, brandId, typeId]);
-    if (carModel.length === 0) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "No car model found with this modelId, brandId and typeId",
-      });
-    }
-
     const { userId, vehicle } = normalized;
     const {
       licensePlate,
-      brandId,
       modelId,
-      typeId,
       fuelType,
       expirationDate,
       image,
@@ -61,23 +49,28 @@ const addVehicle = async (req, res, next) => {
       color,
     } = vehicle;
 
-    const existingVehicle = await getVehicleByLicensePlate(licensePlate);
-    if (existingVehicle) {
-      return res.status(STATUS_CODE.CONFLICT).json({
-        message: "A vehicle with this license plate already exists.",
+    const isVehicleNumberInGovIL =
+      await checkVehicleNumberInGovIL(licensePlate);
+    if (!isVehicleNumberInGovIL) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Vehicle number is not in the government database",
+      });
+    }
+
+    const checkIfVehicleAlreadyExists = await getVehicleByLicensePlate(licensePlate);
+    if (checkIfVehicleAlreadyExists) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Vehicle already exists",
       });
     }
 
     const insertQuery = `
-      INSERT INTO vehicles (licensePlate,modelId, fuelType, expirationDate, image, year, km, address, price, color, ownerId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     INSERT INTO vehicles 
+     (licensePlate,fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-
     const values = [
       licensePlate,
-      brandId,
-      modelId,
-      typeId,
       fuelType,
       expirationDate,
       image,
@@ -86,14 +79,14 @@ const addVehicle = async (req, res, next) => {
       address,
       price,
       color,
+      modelId,
       userId,
     ];
-
     await doQuery(insertQuery, values);
-
-    return res.status(STATUS_CODE.CREATED).json({
-      message: "Vehicle added successfully to NovaRents",
-      licensePlate,
+    const newVehicle = await getVehicleByLicensePlate(licensePlate);
+    res.status(STATUS_CODE.CREATED).json({
+      message: "Vehicle added successfully",
+      vehicle: newVehicle,
     });
   } catch (error) {
     next(error);
@@ -103,15 +96,17 @@ const addVehicle = async (req, res, next) => {
 const getVehicleById = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
-    const vehicle = await getVehicleByLicensePlate(licensePlate);
 
-    if (!vehicle) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "No vehicle found with this license plate",
-      });
-    }
-
-    res.send(vehicle);
+    const query = `SELECT * FROM vehicles v 
+    JOIN carModels cm ON v.modelId = cm.modelId
+    JOIN carBrands cb ON cm.brandId = cb.brandId
+    JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+    WHERE v.licensePlate = ?`;
+    const result = await doQuery(query, [licensePlate]);
+    res.status(STATUS_CODE.OK).json({
+      message: "Vehicle fetched successfully",
+      vehicle: result,
+    });
   } catch (error) {
     next(error);
   }
@@ -121,16 +116,23 @@ const deleteVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
 
-    if (!validateAuthenticatedUser(req, res, "You must be logged in to delete a vehicle")) return;
+    if (
+      !validateAuthenticatedUser(
+        req,
+        res,
+        "You must be logged in to delete a vehicle",
+      )
+    )
+      return;
 
-    const vehicle = await getVehicleByLicensePlate(licensePlate);
-    if (!vehicle) {
+    const existingVehicle = await getVehicleByLicensePlate(licensePlate);
+    if (!existingVehicle) {
       return res.status(STATUS_CODE.NOT_FOUND).json({
         message: "No vehicle found with this license plate",
       });
     }
 
-    if (vehicle.ownerId !== req.session.user.userId) {
+    if (existingVehicle.ownerId !== req.session.user.userId) {
       return res.status(STATUS_CODE.FORBIDDEN).json({
         message: "You do not have permission to delete this vehicle",
       });
@@ -139,7 +141,9 @@ const deleteVehicle = async (req, res, next) => {
     const deleteQuery = "DELETE FROM vehicles WHERE licensePlate = ?";
     await doQuery(deleteQuery, [licensePlate]);
 
-    res.json({ message: "Vehicle deleted successfully" });
+    res.status(STATUS_CODE.OK).json({
+      message: "Vehicle deleted successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -149,11 +153,20 @@ const updateVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
 
-    if (!validateAuthenticatedUser(req, res, "You must be logged in to perform this action.")) return;
+    if (
+      !validateAuthenticatedUser(
+        req,
+        res,
+        "You must be logged in to perform this action.",
+      )
+    )
+      return;
 
     const existingVehicle = await getVehicleByLicensePlate(licensePlate);
     if (!existingVehicle) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({ message: "Vehicle not found" });
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "Vehicle not found" });
     }
 
     if (existingVehicle.ownerId !== req.session.user.userId) {
@@ -218,7 +231,6 @@ const updateVehicle = async (req, res, next) => {
 };
 
 module.exports = {
-  getAllVehiclesSortedByLatestYear,
   addVehicle,
   getVehicleById,
   deleteVehicle,
