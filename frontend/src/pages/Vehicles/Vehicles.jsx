@@ -3,7 +3,7 @@ import styles from "./Vehicles.module.css";
 import { Search } from "lucide-react";
 import VehiclesCards from "../../components/VehiclesCards/VehiclesCards";
 
-const tabs = ["all", "cars", "motorcycles", "eventVehicles"];
+const tabs = ["all", "Cars", "Motorcycles", "eventVehicles"];
 
 const vehicleData = [
   {
@@ -14,8 +14,8 @@ const vehicleData = [
     year: 2023,
     location: "Tel Aviv",
     status: "Available",
-    type: "cars",
-    ownerName: "Ariel Cohen",
+    type: "Cars",
+    ownerName: "Ward Najjar",
   },
   {
     id: 2,
@@ -25,7 +25,7 @@ const vehicleData = [
     year: 2021,
     location: "Haifa",
     status: "Available",
-    type: "motorcycles",
+    type: "Motorcycles",
     ownerName: "Sarah Levi",
   },
   {
@@ -35,8 +35,8 @@ const vehicleData = [
     price: "$850/day",
     year: 1965,
     location: "Jerusalem",
-    status: "Event Only",
-    type: "eventVehicles",
+    status: "Available",
+    type: "Event Vehicles",
     ownerName: "David Mizrahi",
   },
   {
@@ -47,7 +47,7 @@ const vehicleData = [
     year: 2024,
     location: "Nazareth",
     status: "Booked",
-    type: "cars",
+    type: "Cars",
     ownerName: "Yousef Abbas",
   },
   {
@@ -58,7 +58,7 @@ const vehicleData = [
     year: 2022,
     location: "Tel Aviv",
     status: "Available",
-    type: "motorcycles",
+    type: "Motorcycles",
     ownerName: "Noa Golan",
   },
   {
@@ -69,8 +69,8 @@ const vehicleData = [
     year: 2023,
     location: "Haifa",
     status: "Available",
-    type: "eventVehicles",
-    ownerName: "Elias Mansour",
+    type: "Event Vehicles",
+    ownerName: "Hasan omar",
   },
 ];
 

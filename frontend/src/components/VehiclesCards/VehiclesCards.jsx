@@ -18,12 +18,10 @@ const VehiclesCards = ({
       <div className={styles.vehiclesCardsContainer}>
         <div className={styles.vehStatus}>
           <p>{vehName}</p>
-          <p>{status}</p>
+          <p className={styles.status}>{status}</p>
         </div>
 
-        <div className="vehTypeContainer">
-          <p className="vehType">{type}</p>
-        </div>
+        <p className={styles.vehType}>{type}</p>
 
         <div className={styles.vehDetails}>
           <div>
@@ -38,15 +36,23 @@ const VehiclesCards = ({
 
           <div>
             <p className={styles.title}>location</p>
-            <p className={styles.detailsData}>
-              {/* <MapIcon size={30} />  */}
-              {location}
-            </p>
+
+            <div className={styles.detailsData}>
+              <p>
+                <MapIcon size={15} color="#a7d2eb" />
+              </p>
+              <p>{location}</p>
+            </div>
           </div>
         </div>
-        <div className="ownerContainer">
-          {/* <User size={30} /> */}
-          <p className={styles.detailsData}>Host - {ownerName}</p>
+
+        <div className={styles.ownerContainer}>
+          <p>
+            <User size={15} color="#a7d2eb" />
+          </p>
+          <p>
+            <span className={styles.host}>Host</span> - {ownerName}
+          </p>
         </div>
 
         <div className={styles.btnsContainer}>

@@ -4,12 +4,15 @@
   gap: 10px;
   padding-bottom: 30px;
   width: 300px;
-  border: 3px solid var(--gray);
   background-color: var(--bg-gray);
+  font-size: 0.8rem;
+  border-radius: 20px;
 }
 
 .VehiclesCards img {
   display: block;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 
 .VehiclesCards .vehiclesCardsContainer {
@@ -19,9 +22,21 @@
   gap: 10px;
 }
 
+.VehiclesCards .vehType {
+  color: yellowgreen;
+}
+
 .VehiclesCards .vehStatus {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.VehiclesCards .status {
+  border: 1px solid green;
+  padding: 10px;
+  border-radius: 10px;
 }
 
 .VehiclesCards .vehDetails {
@@ -41,6 +56,17 @@
 
 .VehiclesCards .vehDetails .detailsData {
   font-size: 0.7rem;
+  display: flex;
+  flex-direction: row;
+}
+
+.VehiclesCards .ownerContainer {
+  display: flex;
+  gap: 5px;
+}
+
+.VehiclesCards .host {
+  color: rgba(153, 205, 50, 0.752);
 }
 
 .VehiclesCards .btnsContainer {
