@@ -116,18 +116,13 @@
 /* Notifications Button */
 .Header .notifyButton {
   display: flex;
-  height: 2.5rem;
-  width: 2.5rem;
+
   align-items: center;
   justify-content: center;
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(255, 255, 255, 0.04);
   color: rgba(255, 255, 255, 0.7);
-  transition:
-    background-color 300ms ease,
-    color 300ms ease,
-    border-color 300ms ease;
   cursor: pointer;
 }
 

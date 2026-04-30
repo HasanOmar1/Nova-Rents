@@ -28,7 +28,8 @@ body {
 }
 
 /* Base styles shared by all buttons */
-button {
+button,
+a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -40,4 +41,9 @@ button {
   cursor: pointer;
   outline: none;
   border: 1px solid transparent;
+  text-decoration: none;
+}
+
+.icon {
+  color: var(--icons-color);
 }
