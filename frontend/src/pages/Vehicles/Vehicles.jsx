@@ -1,8 +1,78 @@
 import { useState } from "react";
 import styles from "./Vehicles.module.css";
 import { Search } from "lucide-react";
+import VehiclesCards from "../../components/VehiclesCards/VehiclesCards";
 
 const tabs = ["all", "cars", "motorcycles", "eventVehicles"];
+
+const vehicleData = [
+  {
+    id: 1,
+    img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800&auto=format&fit=crop",
+    vehName: "Porsche 911 Carrera",
+    price: "$450/day",
+    year: 2023,
+    location: "Tel Aviv",
+    status: "Available",
+    type: "cars",
+    ownerName: "Ariel Cohen",
+  },
+  {
+    id: 2,
+    img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800&auto=format&fit=crop",
+    vehName: "Harley Davidson Iron 883",
+    price: "$120/day",
+    year: 2021,
+    location: "Haifa",
+    status: "Available",
+    type: "motorcycles",
+    ownerName: "Sarah Levi",
+  },
+  {
+    id: 3,
+    img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800&auto=format&fit=crop",
+    vehName: "Vintage Wedding Rolls-Royce",
+    price: "$850/day",
+    year: 1965,
+    location: "Jerusalem",
+    status: "Event Only",
+    type: "eventVehicles",
+    ownerName: "David Mizrahi",
+  },
+  {
+    id: 4,
+    img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800&auto=format&fit=crop",
+    vehName: "Tesla Model 3",
+    price: "$200/day",
+    year: 2024,
+    location: "Nazareth",
+    status: "Booked",
+    type: "cars",
+    ownerName: "Yousef Abbas",
+  },
+  {
+    id: 5,
+    img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800&auto=format&fit=crop",
+    vehName: "Yamaha YZF R1",
+    price: "$180/day",
+    year: 2022,
+    location: "Tel Aviv",
+    status: "Available",
+    type: "motorcycles",
+    ownerName: "Noa Golan",
+  },
+  {
+    id: 6,
+    img: "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=800&auto=format&fit=crop",
+    vehName: "Lamborghini Huracán",
+    price: "$1,500/day",
+    year: 2023,
+    location: "Haifa",
+    status: "Available",
+    type: "eventVehicles",
+    ownerName: "Elias Mansour",
+  },
+];
 
 const Vehicles = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -42,7 +112,7 @@ const Vehicles = () => {
         <div className={styles.inputsContainer}>
           <div className={styles.top}>
             <div className={styles.searchContainer}>
-              <Search size={20} color="gray" />
+              <Search size={20} color="gray" className={styles.searchLogo} />
               <input
                 type="text"
                 placeholder="Search name or location"
@@ -63,8 +133,29 @@ const Vehicles = () => {
             </select>
           </div>
 
-          <div className="bottom"></div>
+          <div className={styles.bottom}>
+            <input type="date" name="startDate" />
+            <input type="date" name="endDate" />
+          </div>
         </div>
+      </div>
+
+      <div className={styles.vehiclesCardsContainer}>
+        {vehicleData.map((veh) => {
+          return (
+            <VehiclesCards
+              key={veh.id}
+              img={veh.img}
+              location={veh.location}
+              ownerName={veh.ownerName}
+              price={veh.price}
+              status={veh.status}
+              type={veh.type}
+              vehName={veh.vehName}
+              year={veh.year}
+            />
+          );
+        })}
       </div>
     </div>
   );
