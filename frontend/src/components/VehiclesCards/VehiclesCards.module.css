@@ -1,0 +1,49 @@
+.VehiclesCards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 30px;
+  width: 300px;
+  border: 3px solid var(--gray);
+  background-color: var(--bg-gray);
+}
+
+.VehiclesCards img {
+  display: block;
+}
+
+.VehiclesCards .vehiclesCardsContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  gap: 10px;
+}
+
+.VehiclesCards .vehStatus {
+  display: flex;
+  justify-content: space-between;
+}
+
+.VehiclesCards .vehDetails {
+  display: flex;
+  justify-content: space-between;
+}
+
+.VehiclesCards .vehDetails div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.VehiclesCards .vehDetails .title {
+  color: var(--gray);
+}
+
+.VehiclesCards .vehDetails .detailsData {
+  font-size: 0.7rem;
+}
+
+.VehiclesCards .btnsContainer {
+  display: flex;
+  gap: 10px;
+}

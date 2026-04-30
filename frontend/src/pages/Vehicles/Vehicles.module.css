@@ -30,7 +30,7 @@
 
 .Vehicles .filterContainer {
   background-color: var(--bg-gray);
-  min-height: 300px;
+  min-height: 200px;
   border-radius: 20px;
   margin-top: 20px;
   padding: 20px;
@@ -79,34 +79,64 @@
 
 .Vehicles .inputsContainer {
   display: flex;
-  gap: 30px;
+  gap: 15px;
   flex-direction: column;
 }
 
+.Vehicles .inputsContainer .top,
+.Vehicles .bottom {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
 .Vehicles .inputsContainer .top {
-  display: flex;
-  gap: 30px;
+  margin-top: 10px;
 }
 
 .Vehicles .searchContainer {
-  flex: 2;
+  position: relative;
+  grid-column: span 2;
+}
+
+.Vehicles .searchContainer .searchLogo {
+  position: absolute;
+  top: 13px;
+  left: 10px;
+}
+
+.Vehicles .searchContainer .searchNameOrLocationInput {
+  padding-left: 35px;
 }
 
 .Vehicles .inputsContainer input,
 .Vehicles .inputsContainer select {
   background-color: var(--bg-gray);
-  border-radius: 20px;
+  border-radius: 15px;
   outline: none;
   color: #fff;
   width: 100%;
-  padding: 10px;
+  padding: 15px;
+  border: 1px solid var(--gray);
 }
 
 .Vehicles .inputsContainer select {
-  flex: 1;
+  grid-column: span 1;
 }
 
 .Vehicles .inputsContainer input:focus {
-  /* outline: 2px solid greenyellow; */
   outline: none;
+}
+
+.Vehicles .bottom input {
+  grid-column: span 2;
+}
+
+.Vehicles .vehiclesCardsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-top: 30px;
+  padding-bottom: 30px;
 }
