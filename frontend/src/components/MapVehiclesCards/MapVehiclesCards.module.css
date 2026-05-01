@@ -1,0 +1,107 @@
+.MapVehiclesCards {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 10px;
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+  min-height: 200px;
+  padding-bottom: 15px;
+}
+
+.MapVehiclesCards p {
+  font-size: 0.8rem;
+}
+
+.MapVehiclesCards .dataContainer {
+  display: flex;
+  gap: 15px;
+}
+
+.MapVehiclesCards .dataContainer .id {
+  background-color: #10374f;
+  color: var(--icons-color);
+  height: fit-content;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.MapVehiclesCards .dataContainer img {
+  width: 130px;
+  height: 100px;
+  border-radius: 20px;
+}
+
+.MapVehiclesCards .vehInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.MapVehiclesCards .vehName {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.MapVehiclesCards .vehType {
+  color: #83a3b7;
+  font-weight: bold;
+  padding-bottom: 10px;
+}
+
+.MapVehiclesCards .locationContainer {
+  font-size: 0.7rem;
+  display: flex;
+  flex-direction: row;
+  color: var(--gray);
+  font-weight: bold;
+  gap: 2px;
+}
+
+.MapVehiclesCards .price {
+  font-weight: bold;
+  color: #abacb0;
+  font-size: 0.9rem;
+}
+
+.MapVehiclesCards .ownerContainer {
+  display: flex;
+  gap: 5px;
+  color: var(--gray);
+  margin-top: 5px;
+  align-items: center;
+}
+
+.MapVehiclesCards .host {
+  color: var(--gray);
+  font-weight: bold;
+  font-size: 0.6rem;
+}
+
+.MapVehiclesCards hr {
+  margin: 5px;
+}
+
+.MapVehiclesCards .btnsContainer {
+  margin-left: auto;
+}
+
+.MapVehiclesCards .detailsBtn {
+  background: #20222b;
+  color: white;
+  border: var(--cards-border);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  letter-spacing: 1.1px;
+}
+
+.MapVehiclesCards .detailsBtn:hover {
+  background: transparent;
+  color: #83a3b7;
+}
+
+.MapVehiclesCards .detailsBtn:active {
+  background: rgba(255, 255, 255, 0.03);
+}

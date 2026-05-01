@@ -9,7 +9,7 @@
   margin-left: auto;
 }
 
-.Home .btnsContainer button {
+.Home .btnsContainer a {
   border-radius: 10px;
 }
 
@@ -33,13 +33,13 @@
 }
 
 .Home .myVehiclesBtn {
-  background: transparent;
+  background: var(--bg-gray);
   color: white;
   border: var(--cards-border);
 }
 
 .Home .myVehiclesBtn:hover {
-  background: var(--bg-gray);
+  background: transparent;
   color: rgba(255, 255, 255, 0.75);
 }
 
