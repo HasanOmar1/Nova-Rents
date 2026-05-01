@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import VehiclesCards from "../../components/VehiclesCards/VehiclesCards";
 import { Link } from "react-router-dom";
 
-const tabs = ["all", "Cars", "Motorcycles", "eventVehicles"];
+const tabs = ["all", "Cars", "Motorcycles", "Event Vehicle"];
 
 const vehicleData = [
   {
@@ -15,7 +15,7 @@ const vehicleData = [
     year: 2023,
     location: "Tel Aviv",
     status: "Available",
-    type: "Cars",
+    type: "Car",
     ownerName: "Ward Najjar",
   },
   {
@@ -26,7 +26,7 @@ const vehicleData = [
     year: 2021,
     location: "Haifa",
     status: "Available",
-    type: "Motorcycles",
+    type: "Motorcycle",
     ownerName: "Sarah Levi",
   },
   {
@@ -37,7 +37,7 @@ const vehicleData = [
     year: 1965,
     location: "Jerusalem",
     status: "Available",
-    type: "Event Vehicles",
+    type: "Event Vehicle",
     ownerName: "David Mizrahi",
   },
   {
@@ -48,7 +48,7 @@ const vehicleData = [
     year: 2024,
     location: "Nazareth",
     status: "Booked",
-    type: "Cars",
+    type: "Car",
     ownerName: "Yousef Abbas",
   },
   {
@@ -59,7 +59,7 @@ const vehicleData = [
     year: 2022,
     location: "Tel Aviv",
     status: "Available",
-    type: "Motorcycles",
+    type: "Motorcycle",
     ownerName: "Noa Golan",
   },
   {
@@ -70,7 +70,7 @@ const vehicleData = [
     year: 2023,
     location: "Haifa",
     status: "Available",
-    type: "Event Vehicles",
+    type: "Event Vehicle",
     ownerName: "Hasan omar",
   },
   {
@@ -81,7 +81,7 @@ const vehicleData = [
     year: 2023,
     location: "Haifa",
     status: "Available",
-    type: "Event Vehicles",
+    type: "Event Vehicle",
     ownerName: "Hasan omar",
   },
 ];
@@ -116,7 +116,7 @@ const Vehicles = () => {
                 onClick={() => setActiveTab(t)}
                 className={activeTab === t ? styles.active : ""}
               >
-                {t === "eventVehicles" ? "Event Vehicles" : t}
+                {t}
               </button>
             );
           })}

@@ -5,6 +5,8 @@ import LoginRegister from "./pages/LoginRegister/LoginRegister";
 import NotFound from "./pages/NotFound/NotFound";
 import Home from "./pages/Home/Home";
 import Vehicles from "./pages/Vehicles/Vehicles";
+import MyVehicles from "./pages/MyVehicles/MyVehicles";
+import Map from "./pages/Map/Map";
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
           <Route path="/" element={<LoginRegister />} />
           <Route path="/home" element={<Home />} />
           <Route path="/vehicles" element={<Vehicles />} />
+          <Route path="/map" element={<Map />} />
+          <Route path="/myVehicles" element={<MyVehicles />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </UserContextProvider>
