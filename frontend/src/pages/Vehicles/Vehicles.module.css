@@ -44,12 +44,15 @@
   gap: 20px;
 }
 
+.Vehicles hr {
+  margin: 10px;
+}
 .Vehicles .vehicleTypeBtnsContainer button {
   text-transform: capitalize;
   font-weight: bold;
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* 8px */
+  gap: 0.5rem;
   border-radius: 1rem;
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
