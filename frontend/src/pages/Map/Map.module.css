@@ -22,7 +22,6 @@
 .Map .vehiclesListBtn,
 .Map .useLocationBtn {
   border-radius: 0.75rem;
-  padding: 0.875rem;
   color: #ffffff;
   background-image: linear-gradient(
     to right,
@@ -66,6 +65,10 @@
   border: var(--cards-border);
 }
 
+.Map .filterContainer hr {
+  margin-top: 5px;
+}
+
 .Map .filterContainer .titleContainer {
   display: flex;
   gap: 15px;
@@ -82,7 +85,7 @@
 
 .Map .useLocationBtn {
   padding: 10px 30px;
-  margin-top: 7px;
+  margin-top: 10px;
 }
 
 /*  Map and data container */
