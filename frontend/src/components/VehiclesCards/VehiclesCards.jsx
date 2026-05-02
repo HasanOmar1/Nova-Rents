@@ -59,7 +59,7 @@ const VehiclesCards = ({
           <button className={styles.detailsBtn}>Details</button>
           <button className={styles.rentBtn}>Rent Now</button>
           <button className={styles.reportBtn}>
-            <AlertTriangle className="icon" />
+            <AlertTriangle size={20} className="icon" />
             Report Vehicle
           </button>
         </div>

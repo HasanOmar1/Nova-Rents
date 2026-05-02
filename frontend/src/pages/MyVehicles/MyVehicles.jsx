@@ -77,9 +77,8 @@ const MyVehicles = () => {
 
         {vehicleData.map((veh, i) => {
           return (
-            <>
+            <div key={veh.id}>
               <MyVehiclesCards
-                key={veh.id}
                 img={veh.img}
                 location={veh.location}
                 name={veh.vehName}
@@ -88,7 +87,7 @@ const MyVehicles = () => {
                 year={veh.year}
               />
               {i < vehicleData.length - 1 && <hr />}
-            </>
+            </div>
           );
         })}
       </div>

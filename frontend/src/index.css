@@ -10,7 +10,8 @@
   --gray: #84858a;
   --icons-bg-color: #182742;
   --icons-color: #a7d2eb;
-  --cards-border: 1px solid #2e3442;
+  --cards-border: 2px solid #2e3442;
+  --input-bg: #20232b;
 }
 
 body {
