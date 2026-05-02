@@ -111,7 +111,7 @@
 
 .Vehicles .inputsContainer input,
 .Vehicles .inputsContainer select {
-  background-color: var(--bg-gray);
+  background-color: var(--input-bg);
   border-radius: 15px;
   outline: none;
   color: #fff;
