@@ -2,10 +2,13 @@ import { useState } from "react";
 import styles from "./Complaints.module.css";
 
 const Complaints = () => {
-  const [vehicleReportTab, setVehicleReportTab] = useState(true);
+  const [activeTab, setActiveTab] = useState("vehicle");
 
-  const switchActiveTab = () => {
-    setVehicleReportTab((prev) => !prev);
+  const switchActiveTabToOwner = () => {
+    setActiveTab("owner");
+  };
+  const switchActiveTabToVehicle = () => {
+    setActiveTab("vehicle");
   };
 
   return (
@@ -25,20 +28,41 @@ const Complaints = () => {
         </p>
 
         <div className={styles.complaintTypeContainer}>
-          <p>Complaint Type</p>
-          <div className={styles.btnsContainer}>
-            <button
-              onClick={switchActiveTab}
-              className={`${styles.againstVehicleBtn} ${vehicleReportTab && styles.activeBtn}`}
-            >
-              Against vehicle
-            </button>
-            <button
-              onClick={switchActiveTab}
-              className={`${styles.againstOwnerBtn} ${!vehicleReportTab && styles.activeBtn}`}
-            >
-              Against owner
-            </button>
+          <div className={styles.labelAndInputContainer}>
+            <p>Complaint Type</p>
+            <div className={styles.btnsContainer}>
+              <button
+                onClick={switchActiveTabToVehicle}
+                className={`${styles.againstVehicleBtn} ${activeTab === "vehicle" && styles.activeBtn}`}
+              >
+                Against vehicle
+              </button>
+              <button
+                onClick={switchActiveTabToOwner}
+                className={`${styles.againstOwnerBtn} ${activeTab === "owner" && styles.activeBtn}`}
+              >
+                Against owner
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.labelAndInputContainer}>
+            <p>Related {activeTab === "vehicle" ? "vehicle" : "owner"}</p>
+            <input
+              type="text"
+              placeholder={activeTab === "vehicle" ? "Vehicle ID" : "Username"}
+              disabled
+            />
+          </div>
+
+          <div className={styles.labelAndInputContainer}>
+            <p>Title</p>
+            <input type="text" name="title" />
+          </div>
+
+          <div className={styles.labelAndInputContainer}>
+            <p>Description</p>
+            <textarea name="decsription"></textarea>
           </div>
         </div>
       </div>
