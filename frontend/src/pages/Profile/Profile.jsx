@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styles from "./Profile.module.css";
+import DocumentsCards from "../../components/DocumentsCards/DocumentsCards";
 
 const Profile = () => {
   const [editProfileClicked, setEditProfileClicked] = useState(false);
@@ -67,6 +68,10 @@ const Profile = () => {
             </button>
           </div>
         )}
+      </div>
+
+      <div className={styles.documentsContainer}>
+        <DocumentsCards />
       </div>
     </div>
   );
