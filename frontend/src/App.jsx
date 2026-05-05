@@ -8,6 +8,7 @@ import Vehicles from "./pages/Vehicles/Vehicles";
 import MyVehicles from "./pages/MyVehicles/MyVehicles";
 import Map from "./pages/Map/Map";
 import Profile from "./pages/Profile/Profile";
+import Complaints from "./pages/Complaints/Complaints";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/map" element={<Map />} />
           <Route path="/myVehicles" element={<MyVehicles />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/complaints" element={<Complaints />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </UserContextProvider>
