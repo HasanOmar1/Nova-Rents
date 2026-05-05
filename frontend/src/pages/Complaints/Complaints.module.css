@@ -24,12 +24,14 @@
 
 .Complaints .reportContainer .msg {
   color: var(--gray);
+  font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .Complaints .reportContainer .complaintTypeContainer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
   margin-top: 10px;
 }
 
@@ -67,4 +69,24 @@
   background-color: rgba(59, 130, 246, 0.15);
   color: #ffffff;
   box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.Complaints .labelAndInputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.Complaints .complaintTypeContainer input,
+.Complaints .complaintTypeContainer textarea {
+  border: var(--cards-border);
+  background-color: var(--input-bg);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 15px;
+}
+
+.Complaints .complaintTypeContainer input:focus,
+.Complaints .complaintTypeContainer textarea:focus {
+  outline: none;
 }
