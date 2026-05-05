@@ -119,3 +119,13 @@
 .Profile .personalInfoContainer .cancelBtn:hover {
   color: #ffa3a3;
 }
+
+/* documents container */
+
+.Profile .documentsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-top: 30px;
+  padding-bottom: 30px;
+}
