@@ -1,12 +1,43 @@
 import { useState } from "react";
 import styles from "./Complaints.module.css";
+import ComplaintsHistoryCards from "../../components/ComplaintsHistoryCards/ComplaintsHistoryCards";
+
+const dummyComplaints = [
+  {
+    id: 1,
+    title: "Suspicious listing photos",
+    status: "Open",
+    relatedVehOrOwner: "Wedding Limousine (#3)",
+    date: "2026-04-08",
+    type: "vehicle",
+    owner: "John Smith",
+    description:
+      "The uploaded photos do not match the actual event vehicle details.",
+  },
+  {
+    id: 2,
+    title: "Unprofessional Conduct",
+    status: "Closed",
+    relatedVehOrOwner: "Michael Brown",
+    date: "2026-01-10",
+    type: "user",
+    owner: "Sarah Wilson",
+    description:
+      "The driver was extremely rude during the handover process and arrived 40 minutes late without any prior notice or apology.",
+  },
+];
 
 const Complaints = () => {
   const [activeTab, setActiveTab] = useState("vehicle");
 
-  const switchActiveTabToOwner = () => {
+  const handleSubmitForm = (e) => {
+    e.preventDefault();
+  };
+
+  const switchActiveTabToOwner = (e) => {
     setActiveTab("owner");
   };
+
   const switchActiveTabToVehicle = () => {
     setActiveTab("vehicle");
   };
@@ -21,7 +52,7 @@ const Complaints = () => {
         </p>
       </div>
 
-      <div className={styles.reportContainer}>
+      <form className={styles.reportContainer} onSubmit={handleSubmitForm}>
         <h4>New Complaint</h4>
         <p className={styles.msg}>
           Choose type, link the subject, then describe the issue.
@@ -64,7 +95,32 @@ const Complaints = () => {
             <p>Description</p>
             <textarea name="decsription"></textarea>
           </div>
+
+          <label className={styles.customFileUpload}>
+            <input type="file" multiple />
+            <p>Upload Images</p>
+          </label>
         </div>
+
+        <button className={styles.submitBtn}>Submit Complaint</button>
+      </form>
+
+      <div className={styles.complaintsHistoryContainer}>
+        <h4>Previous complaints</h4>
+        {dummyComplaints.map((comp) => {
+          return (
+            <ComplaintsHistoryCards
+              key={comp.id}
+              title={comp.title}
+              relatedVehOrOwner={comp.relatedVehOrOwner}
+              date={comp.date}
+              description={comp.description}
+              owner={comp.owner}
+              status={comp.status}
+              type={comp.type}
+            />
+          );
+        })}
       </div>
     </div>
   );

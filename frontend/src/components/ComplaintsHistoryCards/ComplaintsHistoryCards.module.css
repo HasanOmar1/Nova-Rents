@@ -1,0 +1,43 @@
+.ComplaintsHistoryCards {
+  margin-top: 20px;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 30px;
+  border-radius: 20px;
+  color: #eeeaeaef;
+}
+
+.ComplaintsHistoryCards p {
+  color: var(--gray);
+  font-size: 0.75rem;
+}
+
+.ComplaintsHistoryCards .titleAndStatusContainer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ComplaintsHistoryCards .status {
+  width: 100px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  padding: 17px 0;
+  color: var(--icons-color);
+  background-color: var(--icons-bg-color);
+  margin-top: -20px;
+}
+
+.ComplaintsHistoryCards .description {
+  font-weight: bold;
+  line-height: 1.7;
+}
+
+.ComplaintsHistoryCards .closed {
+  color: greenyellow;
+}
