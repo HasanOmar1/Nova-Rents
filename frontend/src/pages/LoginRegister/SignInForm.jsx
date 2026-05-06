@@ -42,20 +42,19 @@ const SignInForm = ({
             Enter Nova Rents
             <ArrowRight className={styles.iconSm} />
           </button>
-
-          <div className={styles.linkGroup}>
-            <p className={styles.link}>Forgot password?</p>
-            <p>
-              Dont have an account yet?{" "}
-              <span
-                className={styles.link}
-                onClick={() => setCurrentForm("register")}
-              >
-                Register
-              </span>
-            </p>
-          </div>
         </form>
+        <div className={styles.linkGroup}>
+          <p className={styles.link}>Forgot password?</p>
+          <p>
+            Dont have an account yet?{" "}
+            <span
+              className={styles.link}
+              onClick={() => setCurrentForm("register")}
+            >
+              Register
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   );

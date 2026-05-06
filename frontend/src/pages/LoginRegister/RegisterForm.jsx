@@ -72,6 +72,12 @@ const RegisterForm = ({ handleRegister }) => {
             <ArrowRight className={styles.iconSm} />
           </button>
         </form>
+        <div className={styles.linkGroup}>
+          <p>
+            Already have an account?{" "}
+            <span className={styles.link}>Sign in</span>
+          </p>
+        </div>
       </div>
     </div>
   );
