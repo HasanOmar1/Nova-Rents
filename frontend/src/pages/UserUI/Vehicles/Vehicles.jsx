@@ -1,7 +1,7 @@
 import { useState } from "react";
 import styles from "./Vehicles.module.css";
 import { Search } from "lucide-react";
-import VehiclesCards from "../../components/VehiclesCards/VehiclesCards";
+import VehiclesCards from "../../../components/VehiclesCards/VehiclesCards";
 import { Link } from "react-router-dom";
 
 const tabs = ["all", "Cars", "Motorcycles", "Event Vehicle"];

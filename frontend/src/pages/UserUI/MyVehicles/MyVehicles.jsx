@@ -1,5 +1,5 @@
-import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
-import MyVehiclesCards from "../../components/MyVehiclesCards/MyVehiclesCards";
+import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
+import MyVehiclesCards from "../../../components/MyVehiclesCards/MyVehiclesCards";
 import styles from "./MyVehicles.module.css";
 import { Car } from "lucide-react";
 
