@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styles from "./Complaints.module.css";
-import ComplaintsHistoryCards from "../../components/ComplaintsHistoryCards/ComplaintsHistoryCards";
+import ComplaintsHistoryCards from "../../../components/ComplaintsHistoryCards/ComplaintsHistoryCards";
 
 const dummyComplaints = [
   {

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import HomeBottomCards from "../../components/HomeCards/HomeBottomCards/HomeBottomCards";
-import HomeMidCards from "../../components/HomeCards/HomeMidCards/HomeMidCards";
-import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
+import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
+import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
+import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import styles from "./Home.module.css";
 import { Car, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 

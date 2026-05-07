@@ -1,8 +1,8 @@
 import styles from "./Map.module.css";
 import { Link } from "react-router-dom";
 import { SlidersHorizontal, Crosshair } from "lucide-react";
-import { GoogleMapEmbed } from "../../components/GoogleMapEmbed/GoogleMapEmbed";
-import MapVehiclesCards from "../../components/MapVehiclesCards/MapVehiclesCards";
+import { GoogleMapEmbed } from "../../../components/GoogleMapEmbed/GoogleMapEmbed";
+import MapVehiclesCards from "../../../components/MapVehiclesCards/MapVehiclesCards";
 
 const Map = () => {
   const vehicleData = [
