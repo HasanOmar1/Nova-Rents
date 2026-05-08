@@ -1,0 +1,71 @@
+.UsersCards {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  align-items: center;
+}
+
+.UsersCards p {
+  font-weight: 500;
+}
+
+.UsersCards .name {
+  color: white;
+  width: 35%;
+}
+
+.UsersCards .email {
+  width: 35%;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+.UsersCards .status {
+  width: 15%;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.UsersCards .actionContainer {
+  width: 15%;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.UsersCards .action {
+  transition: 0.2s color ease;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  width: 120px;
+  text-align: center;
+}
+
+.UsersCards .action:hover {
+  color: var(--icons-color);
+}
+
+.UsersCards .protected {
+  color: var(--gray);
+  cursor: auto;
+  background-color: transparent;
+}
+
+.UsersCards .protected:hover {
+  color: var(--gray);
+}
+
+.UsersCards .active {
+  background-color: #132828;
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: #a5f5cf;
+}
+
+.UsersCards .blocked {
+  background-color: #281b13;
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: #f5a8a5;
+}
