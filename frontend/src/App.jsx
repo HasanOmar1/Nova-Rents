@@ -10,6 +10,7 @@ import Map from "./pages/UserUI/Map/Map";
 import MyVehicles from "./pages/UserUI/MyVehicles/MyVehicles";
 import Complaints from "./pages/UserUI/Complaints/Complaints";
 import DashBoard from "./pages/AdminUI/DashBoard/DashBoard";
+import Users from "./pages/AdminUI/Users/Users";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/complaints" element={<Complaints />} />
           {/* Admin */}
           <Route path="/dashboard" element={<DashBoard />} />
+          <Route path="/users" element={<Users />} />
 
           {/* Not found page */}
           <Route path="*" element={<NotFound />} />

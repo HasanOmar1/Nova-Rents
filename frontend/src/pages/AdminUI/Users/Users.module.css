@@ -1,0 +1,98 @@
+.Users .topCardsContainer {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.Users .searchContainer {
+  margin-top: 40px;
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  min-height: 15vh;
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.Users .searchContainer .left,
+.Users .searchContainer .right {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.Users .searchContainer label {
+  color: var(--gray);
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.Users .searchContainer input,
+.Users .searchContainer select {
+  background-color: var(--input-bg);
+  border-radius: 15px;
+  outline: none;
+  color: #fff;
+  width: 100%;
+  padding: 15px;
+  border: var(--cards-border);
+  width: 200px;
+}
+
+.Users .searchNameContainer input {
+  width: 600px;
+  padding-left: 35px;
+}
+
+.Users .searchContainer input:focus {
+  outline: none;
+}
+
+.Users .searchNameContainer {
+  position: relative;
+}
+
+.Users .searchContainer .searchLogo {
+  position: absolute;
+  top: 17px;
+  left: 10px;
+}
+
+/* Users container */
+.Users .usersContainer {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  min-height: 300px;
+  margin-top: 40px;
+  border-radius: 20px;
+  margin-bottom: 50px;
+}
+
+.Users .usersContainer .titles {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: var(--gray);
+}
+
+.Users .usersContainer .titles p:nth-child(1) {
+  width: 35%;
+}
+
+.Users .usersContainer .titles p:nth-child(2) {
+  width: 35%;
+}
+
+.Users .usersContainer .titles p:nth-child(3) {
+  width: 15%;
+  text-align: center;
+}
+
+.Users .usersContainer .titles p:nth-child(4) {
+  width: 15%;
+  text-align: right;
+}
