@@ -96,3 +96,56 @@
   width: 15%;
   text-align: right;
 }
+
+.Users .pagination {
+  border-top: var(--cards-border);
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  color: var(--gray);
+  font-size: 0.8rem;
+  align-items: center;
+  font-weight: bold;
+}
+
+.Users .pagination .btnsContainer {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.Users .pagination .btnsContainer button {
+  border: none;
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  color: var(--gray);
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+/* user growth stats */
+
+.Users .userGrowthContainer {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.Users .userGrowthContainer p {
+  color: var(--gray);
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.Users .userGrowthContainer .stats {
+  margin-top: 2rem;
+  height: 250px;
+  width: 100%;
+}
