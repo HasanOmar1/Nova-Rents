@@ -41,7 +41,7 @@ const vehicleData = [
     status: "Available",
   },
   {
-    img: "https://images.unsplash.com/photo-1533106497176-45ae19e68ba2?auto=format&fit=crop&q=80&w=800",
+    img: "https://ev-database.org/img/auto/Tesla_Model_S_2026/Tesla_Model_S_2026-01.jpg",
     id: "2",
     name: "Tesla Model S Plaid",
     year: 2023,
@@ -53,7 +53,7 @@ const vehicleData = [
     status: "Booked",
   },
   {
-    img: "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&q=80&w=800",
+    img: "https://www.insidehook.com/wp-content/uploads/2023/10/ford-f-150-raptor-r-review.jpg?fit=1200%2C800",
     id: "3",
     name: "Ford F-150 Raptor",
     year: 2022,
@@ -65,7 +65,7 @@ const vehicleData = [
     status: "Maintenance",
   },
   {
-    img: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=800",
+    img: "https://hips.hearstapps.com/hmg-prod/images/2025-mercedes-benz-g550-174-67d300d314cb6.jpg?crop=0.694xw:0.587xh;0.131xw,0.236xh&resize=1200:*",
     id: "4",
     name: "Mercedes-Benz G-Wagon",
     year: 2023,
