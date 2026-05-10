@@ -1,0 +1,66 @@
+.AllVehiclesCards {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--gray);
+  align-items: center;
+}
+
+.AllVehiclesCards .nameContainer {
+  display: flex;
+  gap: 20px;
+  width: 35%;
+  align-items: center;
+}
+
+.AllVehiclesCards img {
+  width: 130px;
+  height: 100px;
+  border-radius: 20px;
+}
+
+.AllVehiclesCards .description {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.AllVehiclesCards .name {
+  color: white;
+}
+
+.AllVehiclesCards .info {
+  color: var(--gray);
+}
+
+.AllVehiclesCards .type,
+.AllVehiclesCards .location,
+.AllVehiclesCards .price,
+.AllVehiclesCards .owner,
+.AllVehiclesCards .status {
+  width: 13%;
+}
+
+.AllVehiclesCards .status {
+  padding: 10px;
+  background-color: #212226;
+  text-align: center;
+  border-radius: 10px;
+}
+
+.AllVehiclesCards .available {
+  background-color: #102e2b;
+  color: #90dbbb;
+}
+
+.AllVehiclesCards .booked {
+  color: #f9e081;
+  background-color: #392d1f;
+}
+
+.AllVehiclesCards .maintenance {
+  color: #f9bb81;
+  background-color: #39251f;
+}
