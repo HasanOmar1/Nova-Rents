@@ -1,5 +1,5 @@
 import styles from "./LoginRegister.module.css";
-import heroImg from "../../../assets/loginRegisterCar.avif";
+import heroImg from "../../assets/loginRegisterCar.avif";
 import { Car } from "lucide-react";
 
 const FormOption = ({ setCurrentForm, currentForm }) => {
