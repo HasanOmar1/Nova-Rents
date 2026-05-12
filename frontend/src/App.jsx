@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import Header from "./components/Header/Header";
 import UserContextProvider from "./context/UserContext";
+import LoginRegister from "./pages/LoginRegister/LoginRegister";
 import NotFound from "./pages/NotFound/NotFound";
-import LoginRegister from "./pages/UserUI/LoginRegister/LoginRegister";
 import Home from "./pages/UserUI/Home/Home";
 import Profile from "./pages/UserUI/Profile/Profile";
 import Vehicles from "./pages/UserUI/Vehicles/Vehicles";
@@ -20,8 +20,8 @@ function App() {
       <UserContextProvider>
         <Header />
         <Routes>
-          {/* User */}
           <Route path="/" element={<LoginRegister />} />
+          {/* User */}
           <Route path="/home" element={<Home />} />
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/map" element={<Map />} />
