@@ -12,6 +12,7 @@ import Complaints from "./pages/UserUI/Complaints/Complaints";
 import DashBoard from "./pages/AdminUI/DashBoard/DashBoard";
 import Users from "./pages/AdminUI/Users/Users";
 import AllVehicles from "./pages/AdminUI/AllVehicles/AllVehicles";
+import Statistics from "./pages/AdminUI/Statistics/Statistics";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/users" element={<Users />} />
           <Route path="/allVehicles" element={<AllVehicles />} />
 
+          <Route path="/statistics" element={<Statistics />} />
           {/* Not found page */}
           <Route path="*" element={<NotFound />} />
         </Routes>
