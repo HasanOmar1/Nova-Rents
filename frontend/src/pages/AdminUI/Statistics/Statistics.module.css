@@ -1,0 +1,12 @@
+.Statistics .topCardsContainer {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.Statistics .bottomCardsContainer {
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 30px;
+}
