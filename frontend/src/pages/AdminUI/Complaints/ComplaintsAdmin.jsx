@@ -132,7 +132,7 @@ const ComplaintsAdmin = () => {
           );
         })}
         <div className={styles.pagination}>
-          <p>Showing 2-2 of 2</p>
+          <p>Showing 1-2 of 2</p>
 
           <div className={styles.btnsContainer}>
             <button>
