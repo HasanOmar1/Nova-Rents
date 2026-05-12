@@ -1,0 +1,34 @@
+.ComplaintsAdminCards {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  align-items: center;
+}
+
+.ComplaintsAdminCards .type {
+  width: 8%;
+}
+
+.ComplaintsAdminCards p {
+  font-weight: 500;
+  width: 15.3%;
+}
+.ComplaintsAdminCards .title {
+  color: white;
+}
+
+.ComplaintsAdminCards .action {
+  color: white;
+  transition: 0.2s color ease;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  width: 120px;
+  text-align: center;
+}
+
+.ComplaintsAdminCards .action:hover {
+  color: var(--icons-color);
+}

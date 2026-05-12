@@ -26,7 +26,7 @@ const AllVehiclesCards = ({
 
       <p className={styles.type}>{type}</p>
       <p className={styles.location}>{location}</p>
-      <p className={styles.price}>{price}$/day</p>
+      <p className={styles.price}>${price}/day</p>
       <p className={styles.owner}>{owner}</p>
       <p
         className={`${styles.status} ${status === "Available" ? styles.available : status === "Booked" ? styles.booked : styles.maintenance} `}

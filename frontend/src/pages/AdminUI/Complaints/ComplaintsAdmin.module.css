@@ -1,0 +1,134 @@
+.ComplaintsAdmin .topCardsContainer {
+  display: flex;
+  gap: 10px;
+  margin-top: 30px;
+  width: 100%;
+}
+
+.ComplaintsAdmin .searchContainer {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  min-height: 15vh;
+  border-radius: 20px;
+  display: flex;
+  padding: 20px;
+  gap: 15px;
+  margin-top: 15px;
+  justify-content: space-between;
+}
+
+.ComplaintsAdmin .searchContainer .left,
+.ComplaintsAdmin .searchContainer .right {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ComplaintsAdmin .searchContainer label {
+  color: var(--gray);
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.ComplaintsAdmin .searchContainer input,
+.ComplaintsAdmin .searchContainer select {
+  background-color: var(--input-bg);
+  border-radius: 15px;
+  outline: none;
+  color: #fff;
+  width: 100%;
+  padding: 15px;
+  border: var(--cards-border);
+  width: 200px;
+}
+
+.ComplaintsAdmin .searchContainer input:focus {
+  outline: none;
+}
+
+.ComplaintsAdmin .cardsContainer {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* complaints container */
+.ComplaintsAdmin .complaintsContainer {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  min-height: 200px;
+  margin-top: 20px;
+  border-radius: 20px;
+  margin-bottom: 30px;
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.ComplaintsAdmin .complaintsContainer .titles {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(1),
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(2),
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(3),
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(4),
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(5),
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(6),
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(7) {
+  width: 15.3%;
+}
+
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(1) {
+  width: 8%;
+}
+
+.ComplaintsAdmin .complaintsContainer .titles p:nth-child(7) {
+  text-align: center;
+}
+
+.ComplaintsAdmin .pagination {
+  border-top: var(--cards-border);
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  color: var(--gray);
+  font-size: 0.8rem;
+  align-items: center;
+  font-weight: bold;
+}
+
+.ComplaintsAdmin .pagination .btnsContainer {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.ComplaintsAdmin .pagination .btnsContainer button {
+  border: none;
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  color: var(--gray);
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+/* complaints stats */
+
+.ComplaintsAdmin .bottomStats {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
