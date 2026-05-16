@@ -51,49 +51,73 @@ const VehicleDetails = () => {
         </div>
       </div>
 
-      <div className={styles.dataContainer}>
-        <div className={`${styles.infoContainer} ${styles.container}`}>
-          <img src={state.img} alt={state.vehName} />
+      <div className={styles.allContainer}>
+        <div className={styles.dataContainer}>
+          <div className={`${styles.infoContainer} ${styles.container}`}>
+            <img src={state.img} alt={state.vehName} />
 
-          <div className={styles.about}>
-            <div className={styles.typeStatusContainer}>
-              <p className={styles.vehType}>{state.type}</p>
-              <p className={styles.status}>{state.status}</p>
+            <div className={styles.about}>
+              <div className={styles.typeStatusContainer}>
+                <p className={styles.vehType}>{state.type}</p>
+                <p className={styles.status}>{state.status}</p>
+              </div>
+
+              <div className={styles.cards}>
+                {cardsData.map((item) => {
+                  return (
+                    <HomeTopCards
+                      key={crypto.randomUUID()}
+                      title={item.title}
+                      value={item.value}
+                      className={styles.vehicleCardDetails}
+                    />
+                  );
+                })}
+              </div>
             </div>
+          </div>
 
-            <div className={styles.cards}>
-              {cardsData.map((item) => {
-                return (
-                  <HomeTopCards
-                    key={crypto.randomUUID()}
-                    title={item.title}
-                    value={item.value}
-                    className={styles.vehicleCardDetails}
-                  />
-                );
-              })}
+          <div className={`${styles.detailsContainer} ${styles.container}`}>
+            <h4>Details</h4>
+            <p>
+              Premium listing for your graduation demo: structured sections,
+              predictable scan order, and no decorative noise. In production
+              this would include mileage, fuel type, and owner policies.
+            </p>
+            <p>• Seats: 5</p>
+          </div>
+
+          <div className={`${styles.mapContainer} ${styles.container} `}>
+            <h4>Location</h4>
+            <div>
+              <GoogleMapEmbed
+                query={locationToMapQuery(state.location)}
+                title={state.location}
+              />
             </div>
           </div>
         </div>
 
-        <div className={`${styles.detailsContainer} ${styles.container}`}>
-          <h4>Details</h4>
-          <p>
-            Premium listing for your graduation demo: structured sections,
-            predictable scan order, and no decorative noise. In production this
-            would include mileage, fuel type, and owner policies.
-          </p>
-          <p>• Seats: 5</p>
-        </div>
-
-        <div className={`${styles.mapContainer} ${styles.container} `}>
-          <h4>Location</h4>
-          <div>
-            <GoogleMapEmbed
-              query={locationToMapQuery(state.location)}
-              title={state.location}
-            />
+        <div className={`${styles.bookingContainer} ${styles.container}`}>
+          <h4>Booking</h4>
+          <div className={styles.ownerInfoContainer}>
+            <p className={styles.msg}>Rental contract with</p>
+            <p className="owner">{state.ownerName} — 05400400 </p>
           </div>
+
+          <div className={styles.allDatesContainer}>
+            <div className={styles.datesContainer}>
+              <label htmlFor="start">Start</label>
+              <input type="date" name="start" />
+            </div>
+
+            <div className={styles.datesContainer}>
+              <label htmlFor="end">End</label>
+              <input type="date" name="end" />
+            </div>
+          </div>
+
+          <button>Confirm Booking</button>
         </div>
       </div>
     </div>
