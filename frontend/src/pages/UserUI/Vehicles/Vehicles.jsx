@@ -165,19 +165,7 @@ const Vehicles = () => {
 
       <div className={styles.vehiclesCardsContainer}>
         {vehicleData.map((veh) => {
-          return (
-            <VehiclesCards
-              key={veh.id}
-              img={veh.img}
-              location={veh.location}
-              ownerName={veh.ownerName}
-              price={veh.price}
-              status={veh.status}
-              type={veh.type}
-              vehName={veh.vehName}
-              year={veh.year}
-            />
-          );
+          return <VehiclesCards key={veh.id} veh={veh} />;
         })}
       </div>
     </div>

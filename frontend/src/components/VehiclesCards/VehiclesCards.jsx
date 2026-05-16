@@ -1,37 +1,29 @@
+import { Link } from "react-router-dom";
 import styles from "./VehiclesCards.module.css";
 import { MapPin, User, AlertTriangle } from "lucide-react";
 
-const VehiclesCards = ({
-  img,
-  vehName,
-  price,
-  year,
-  location,
-  status,
-  type,
-  ownerName,
-}) => {
+const VehiclesCards = ({ veh }) => {
   return (
     <div className={styles.VehiclesCards}>
-      <img src={img} alt={vehName} />
+      <img src={veh.img} alt={veh.vehName} />
 
       <div className={styles.vehiclesCardsContainer}>
         <div className={styles.vehStatus}>
-          <p>{vehName}</p>
-          <p className={styles.status}>{status}</p>
+          <p>{veh.vehName}</p>
+          <p className={styles.status}>{veh.status}</p>
         </div>
 
-        <p className={styles.vehType}>{type}</p>
+        <p className={styles.vehType}>{veh.type}</p>
 
         <div className={styles.vehDetails}>
           <div>
             <p className={styles.title}>Price</p>
-            <p className={styles.detailsData}>{price}</p>
+            <p className={styles.detailsData}>{veh.price}</p>
           </div>
 
           <div>
             <p className={styles.title}>Year</p>
-            <p className={styles.detailsData}>{year}</p>
+            <p className={styles.detailsData}>{veh.year}</p>
           </div>
 
           <div>
@@ -41,7 +33,7 @@ const VehiclesCards = ({
               <p>
                 <MapPin size={15} className="icon" />
               </p>
-              <p>{location}</p>
+              <p>{veh.location}</p>
             </div>
           </div>
         </div>
@@ -51,17 +43,18 @@ const VehiclesCards = ({
             <User size={15} className="icon" />
           </p>
           <p>
-            <span className={styles.host}>Host</span> · {ownerName}
+            <span className={styles.host}>Host</span> · {veh.ownerName}
           </p>
         </div>
 
         <div className={styles.btnsContainer}>
-          <button className={styles.detailsBtn}>Details</button>
-          <button className={styles.rentBtn}>Rent Now</button>
-          <button className={styles.reportBtn}>
-            <AlertTriangle size={20} className="icon" />
-            Report Vehicle
-          </button>
+          <Link
+            to={`/vehicles/${veh.id}`}
+            state={veh}
+            className={styles.detailsBtn}
+          >
+            Details
+          </Link>
         </div>
       </div>
     </div>
