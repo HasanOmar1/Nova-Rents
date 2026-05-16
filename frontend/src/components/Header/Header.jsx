@@ -11,22 +11,22 @@ const Header = ({ page }) => {
   // console.log(location);
 
   // const visible = navByRole[currentUser?.role] || [];
-  // const visible = [
-  //   "home",
-  //   "vehicles",
-  //   "map",
-  //   "myVehicles",
-  //   "profile",
-  //   "complaints",
-  // ];
-
   const visible = [
-    "dashboard",
-    "users",
-    "allVehicles",
-    "complaintsAdmin",
-    "statistics",
+    "home",
+    "vehicles",
+    "map",
+    "myVehicles",
+    "profile",
+    "complaints",
   ];
+
+  // const visible = [
+  //   "dashboard",
+  //   "users",
+  //   "allVehicles",
+  //   "complaintsAdmin",
+  //   "statistics",
+  // ];
 
   const navigate = useNavigate();
 

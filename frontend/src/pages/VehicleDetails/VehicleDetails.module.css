@@ -1,0 +1,137 @@
+.VehicleDetails .top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.VehicleDetails .top .btnsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.VehicleDetails .btnsContainer button,
+.VehicleDetails .btnsContainer a {
+  outline: none;
+  padding: 10px;
+  background-color: var(--bg-gray);
+  color: white;
+  height: 50px;
+  margin-top: 5px;
+  transition: scale 0.3s;
+  border-radius: 15px;
+  font-size: 0.9rem;
+}
+
+.VehicleDetails .btnsContainer .backBtn {
+  border: var(--cards-border);
+  margin-left: auto;
+  padding: 10px 20px;
+}
+
+.VehicleDetails .btnsContainer .reportBtn {
+  color: #f9e081;
+  background-color: #211e1f;
+  border: 1px solid #593d17;
+}
+
+.VehicleDetails .btnsContainer button:hover,
+.VehicleDetails .btnsContainer a:hover {
+  scale: 1.05;
+}
+
+/* Data Container */
+
+.VehicleDetails .dataContainer {
+  width: 60%;
+  margin-top: 30px;
+  min-height: fit-content;
+}
+
+.VehicleDetails .container {
+  width: 100%;
+  border-radius: 20px;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.VehicleDetails .infoContainer {
+  min-height: 400px;
+  padding: 0;
+}
+
+.VehicleDetails .infoContainer .about {
+  padding: 0px 20px;
+}
+
+.VehicleDetails .infoContainer img {
+  width: 100%;
+  border-top-right-radius: 20px;
+  border-top-left-radius: 20px;
+  height: min(56vh, 420px);
+  object-fit: cover;
+}
+
+.VehicleDetails .typeStatusContainer {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.VehicleDetails .typeStatusContainer p {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.VehicleDetails .vehType {
+  color: #87bee9;
+  background-color: #132e47;
+}
+
+.VehicleDetails .status {
+  background-color: #132828;
+  color: #a5f5cf;
+}
+
+.VehicleDetails .cards {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+  padding-bottom: 30px;
+}
+
+.VehicleDetails .cards .vehicleCardDetails {
+  display: flex;
+  gap: 10px;
+}
+
+.VehicleDetails .cards .vehicleCardDetails p {
+  font-size: 0.8rem;
+  display: flex;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.VehicleDetails .detailsContainer {
+  margin-top: 30px;
+}
+
+.VehicleDetails .detailsContainer p {
+  color: var(--gray);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.VehicleDetails .mapContainer {
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+.VehicleDetails .mapContainer iframe {
+  min-height: 400px;
+}

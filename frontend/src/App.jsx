@@ -14,6 +14,7 @@ import Users from "./pages/AdminUI/Users/Users";
 import AllVehicles from "./pages/AdminUI/AllVehicles/AllVehicles";
 import Statistics from "./pages/AdminUI/Statistics/Statistics";
 import ComplaintsAdmin from "./pages/AdminUI/Complaints/ComplaintsAdmin";
+import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
 
 function App() {
   return (
@@ -35,7 +36,8 @@ function App() {
           <Route path="/allVehicles" element={<AllVehicles />} />
           <Route path="/complaintsAdmin" element={<ComplaintsAdmin />} />
           <Route path="/statistics" element={<Statistics />} />
-          {/* Not found page */}
+          {/* other pages */}
+          <Route path="/vehicles/:id" element={<VehicleDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </UserContextProvider>

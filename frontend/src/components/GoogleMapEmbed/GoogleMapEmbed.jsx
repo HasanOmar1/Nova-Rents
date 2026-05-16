@@ -2,7 +2,11 @@
  * Google Maps embed. Set VITE_GOOGLE_MAPS_API_KEY in .env for Embed API (recommended).
  * Without a key, uses maps.google.com ... &output=embed (works for many demos; Google may restrict hotlinking in some cases).
  */
-export function GoogleMapEmbed({ query, title = "Map", className = "" }) {
+export default function GoogleMapEmbed({
+  query,
+  title = "Map",
+  className = "",
+}) {
   const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const q = encodeURIComponent(query);
 
