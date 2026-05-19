@@ -49,15 +49,16 @@ const addVehicle = async (req, res, next) => {
       color,
     } = vehicle;
 
-    const isVehicleNumberInGovIL =
-      await checkVehicleNumberInGovIL(licensePlate);
-    if (!isVehicleNumberInGovIL) {
-      return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "Vehicle number is not in the government database",
-      });
-    }
+    // const isVehicleNumberInGovIL =
+    //   await checkVehicleNumberInGovIL(licensePlate);
+    // if (!isVehicleNumberInGovIL) {
+    //   return res.status(STATUS_CODE.BAD_REQUEST).json({
+    //     message: "Vehicle number is not in the government database",
+    //   });
+    // }
 
-    const checkIfVehicleAlreadyExists = await getVehicleByLicensePlate(licensePlate);
+    const checkIfVehicleAlreadyExists =
+      await getVehicleByLicensePlate(licensePlate);
     if (checkIfVehicleAlreadyExists) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "Vehicle already exists",
@@ -183,30 +184,16 @@ const updateVehicle = async (req, res, next) => {
     );
     if (!mergedData) return;
 
-    const {
-      brandId,
-      modelId,
-      typeId,
-      fuelType,
-      expirationDate,
-      image,
-      year,
-      km,
-      address,
-      price,
-      color,
-    } = mergedData;
+    const { fuelType, expirationDate, image, year, km, address, price, color } =
+      mergedData;
 
     const updateQuery = `
       UPDATE vehicles
-      SET brandId = ?, modelId = ?, typeId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?
+      SET fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?
       WHERE licensePlate = ?
     `;
 
     const values = [
-      brandId,
-      modelId,
-      typeId,
       fuelType,
       expirationDate,
       image,
@@ -229,6 +216,195 @@ const updateVehicle = async (req, res, next) => {
     next(error);
   }
 };
+const getAllVehicles = async (req, res, next) => {
+  try {
+    const {
+      brand,
+      model,
+      type,
+      color,
+      fuelType,
+      location,
+      minPrice,
+      maxPrice,
+      minYear,
+      maxYear,
+      minKm,
+      maxKm,
+    } = req.query;
+
+    let query = `
+      SELECT 
+        v.licensePlate,
+        v.fuelType,
+        v.expirationDate,
+        v.image,
+        v.year,
+        v.km,
+        v.address,
+        v.price,
+        v.color,
+        v.ownerId,
+
+        cm.modelId,
+        cm.modelName,
+
+        cb.brandId,
+        cb.brandName,
+
+        ct.carTypeId,
+        ct.carTypeName
+
+      FROM vehicles v
+      JOIN carModels cm ON v.modelId = cm.modelId
+      JOIN carBrands cb ON cm.brandId = cb.brandId
+      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      WHERE 1 = 1
+    `;
+
+    const values = [];
+    if (brand) {
+      query += ` AND cb.brandName = ?`;
+      values.push(brand);
+    }
+
+    if (model) {
+      query += ` AND cm.modelName = ?`;
+      values.push(model);
+    }
+
+    if (type) {
+      query += ` AND ct.carTypeName = ?`;
+      values.push(type);
+    }
+
+    if (color) {
+      query += ` AND v.color = ?`;
+      values.push(color);
+    }
+
+    if (fuelType) {
+      query += ` AND v.fuelType = ?`;
+      values.push(fuelType);
+    }
+
+    if (location) {
+      query += ` AND v.address LIKE ?`;
+      values.push(`%${location}%`);
+    }
+
+    if (minPrice) {
+      query += ` AND v.price >= ?`;
+      values.push(Number(minPrice));
+    }
+
+    if (maxPrice) {
+      query += ` AND v.price <= ?`;
+      values.push(Number(maxPrice));
+    }
+
+    if (minYear) {
+      query += ` AND v.year >= ?`;
+      values.push(Number(minYear));
+    }
+
+    if (maxYear) {
+      query += ` AND v.year <= ?`;
+      values.push(Number(maxYear));
+    }
+
+    if (minKm) {
+      query += ` AND v.km >= ?`;
+      values.push(Number(minKm));
+    }
+
+    if (maxKm) {
+      query += ` AND v.km <= ?`;
+      values.push(Number(maxKm));
+    }
+
+    query += ` ORDER BY v.year DESC`;
+
+    const vehicles = await doQuery(query, values);
+
+    console.log(query, '😆 in getAllVehicles');
+    console.log(values, '😆 in getAllVehicles');
+
+    res.status(STATUS_CODE.OK).json({
+      message: "Vehicles fetched successfully",
+      count: vehicles.length,
+      vehicles,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAllCarBrands = async (req, res, next) => {
+  try { 
+    const query = "SELECT * FROM carBrands";
+    const result = await doQuery(query);
+    res.status(STATUS_CODE.OK).json({
+      message: "Car brands fetched successfully",
+      carBrands: result,
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+}
+const getAllCarModels = async (req, res, next) => {
+  try {
+    const { brandId, typeId } = req.query;
+    let query = `
+      SELECT 
+        modelId,
+        modelName,
+        brandId,
+        carTypeId
+      FROM carModels
+      WHERE 1 = 1
+    `;
+    const values = [];
+    if (brandId) {
+      query += ` AND brandId = ?`;
+      values.push(brandId);
+    }
+    if(typeId) {
+      query += ` AND carTypeId = ?`;
+      values.push(typeId);
+    }
+    query += ` ORDER BY modelName ASC`;
+
+    const models = await doQuery(query, values);
+
+    res.status(STATUS_CODE.OK).json({
+      message: "Car models fetched successfully",
+      carModels: models,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAllCarTypes = async (req, res, next) => {
+  try {
+    const query = `
+      SELECT carTypeId, carTypeName
+      FROM carTypes
+      ORDER BY carTypeName ASC
+    `;
+
+    const result = await doQuery(query);
+
+    res.status(STATUS_CODE.OK).json({
+      message: "Car types fetched successfully",
+      carTypes: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   addVehicle,
@@ -236,4 +412,8 @@ module.exports = {
   deleteVehicle,
   updateVehicle,
   getUserVehicles,
+  getAllVehicles,
+  getAllCarBrands,
+  getAllCarModels,
+  getAllCarTypes,
 };
