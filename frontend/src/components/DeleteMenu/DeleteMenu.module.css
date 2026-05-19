@@ -1,0 +1,97 @@
+.DeleteMenu {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  flex-direction: column;
+  gap: 10px;
+  position: absolute;
+  top: 30vh;
+  left: 40vw;
+  max-width: 500px;
+  width: 100%;
+  padding-bottom: 10px;
+  border-radius: 20px;
+  display: none;
+}
+
+.DeleteMenu[open] {
+  display: flex;
+}
+
+.DeleteMenu::backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.DeleteMenu .top {
+  display: flex;
+  justify-content: space-between;
+  color: var(--icons-color);
+  padding: 10px 40px;
+  font-weight: 500;
+  background-color: #2f3f58;
+  border-top-left-radius: 17px;
+  border-top-right-radius: 17px;
+}
+
+.DeleteMenu .container {
+  padding: 10px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.DeleteMenu .container p:first-child {
+  color: white;
+}
+
+.DeleteMenu .imgContainer {
+  display: flex;
+  background-color: #2e3442;
+  border-radius: 10px;
+}
+
+.DeleteMenu .imgContainer img {
+  padding: 15px;
+}
+
+.DeleteMenu .nameAndLocation {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  justify-content: center;
+}
+
+.DeleteMenu .imgContainer .location {
+  color: var(--gray);
+}
+
+.DeleteMenu .warningMsg {
+  font-weight: 500;
+  color: var(--gray);
+}
+
+.DeleteMenu .btnsContainer {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.DeleteMenu .btnsContainer button {
+  width: 200px;
+  font-size: 0.7rem;
+  border-radius: 10px;
+  color: white;
+}
+
+.DeleteMenu .btnsContainer button:hover {
+  opacity: 0.8;
+}
+
+.DeleteMenu .btnsContainer .cancelBtn {
+  background-color: #2e3442;
+}
+
+.DeleteMenu .btnsContainer .deleteBtn {
+  background-color: #a04944;
+}
