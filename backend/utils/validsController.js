@@ -210,7 +210,6 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   }
 
   const merged = {
-    modelId: body.modelId ?? existingVehicle.modelId,
     fuelType: body.fuelType ?? existingVehicle.fuelType,
     expirationDate: body.expirationDate ?? existingVehicle.expirationDate,
     image: body.image ?? existingVehicle.image,
@@ -222,9 +221,6 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   };
 
   if (
-    merged.brandId == null ||
-    merged.modelId == null ||
-    merged.typeId == null ||
     !merged.fuelType ||
     !merged.expirationDate ||
     !merged.image ||
