@@ -2,44 +2,36 @@ import { Link } from "react-router-dom";
 import styles from "./MapVehiclesCards.module.css";
 import { MapPin, User } from "lucide-react";
 
-const MapVehiclesCards = ({
-  id,
-  img,
-  vehName,
-  price,
-  location,
-  type,
-  ownerName,
-}) => {
+const MapVehiclesCards = ({ veh }) => {
   return (
     <div className={styles.MapVehiclesCards}>
       <div className={styles.dataContainer}>
         <div className={styles.id}>
-          <p>{id}</p>
+          <p>{veh.id}</p>
         </div>
 
         <div>
-          <img src={img} alt={vehName} />
+          <img src={veh.img} alt={veh.vehName} />
         </div>
 
         <div className={styles.vehInfo}>
-          <p className={styles.vehName}>{vehName}</p>
-          <p className={styles.vehType}>{type}</p>
+          <p className={styles.vehName}>{veh.vehName}</p>
+          <p className={styles.vehType}>{veh.type}</p>
 
           <div className={styles.locationContainer}>
             <p>
               <MapPin size={15} />
             </p>
-            <p>{location}</p>
+            <p>{veh.location}</p>
           </div>
 
-          <p className={styles.price}>{price}</p>
+          <p className={styles.price}>{veh.price}</p>
 
           <div className={styles.ownerContainer}>
             <p>
               <User size={15} className="icon" />
             </p>
-            <p className={styles.host}>{ownerName}</p>
+            <p className={styles.host}>{veh.ownerName}</p>
           </div>
         </div>
       </div>
@@ -47,7 +39,11 @@ const MapVehiclesCards = ({
       <hr />
 
       <div className={styles.btnsContainer}>
-        <Link to={"/vehicles"} className={styles.detailsBtn}>
+        <Link
+          to={`/vehicles/${veh.id}`}
+          state={veh}
+          className={styles.detailsBtn}
+        >
           View Details
         </Link>
       </div>
