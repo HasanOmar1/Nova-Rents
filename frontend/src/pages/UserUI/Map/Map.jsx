@@ -87,18 +87,7 @@ const Map = () => {
         </div>
         <div className={styles.right}>
           {vehicleData.map((veh) => {
-            return (
-              <MapVehiclesCards
-                key={veh.id}
-                id={veh.id}
-                img={veh.img}
-                location={veh.location}
-                ownerName={veh.ownerName}
-                price={veh.price}
-                type={veh.type}
-                vehName={veh.vehName}
-              />
-            );
+            return <MapVehiclesCards key={veh.id} veh={veh} />;
           })}
         </div>
       </div>
