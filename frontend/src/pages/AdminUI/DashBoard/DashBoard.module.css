@@ -1,0 +1,42 @@
+.DashBoard .topCardsContainer {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.DashBoard .complaintsContainer {
+  display: flex;
+  gap: 30px;
+  margin-top: 40px;
+  min-height: 55vh;
+  padding-bottom: 30px;
+}
+
+.DashBoard .complaintsContainer .left,
+.DashBoard .complaintsContainer .right {
+  border-radius: 20px;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  width: 50%;
+}
+
+.DashBoard .complaintsContainer .titleContainer {
+  border-bottom: var(--cards-border);
+  padding: 15px 30px;
+}
+
+.DashBoard .complaintsContainer .titleContainer h4 {
+  color: rgba(153, 205, 50, 0.897);
+}
+
+.DashBoard .complaintsContainer .titleContainer p {
+  color: var(--gray);
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.DashBoard .bottomCardsContainer {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 30px;
+}

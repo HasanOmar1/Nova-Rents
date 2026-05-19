@@ -1,0 +1,116 @@
+/* Top Btns */
+.Map .btnsContainer {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  width: 100%;
+}
+.Map .btnsContainer p {
+  color: var(--gray);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto;
+  margin-right: auto;
+  font-weight: 700;
+}
+
+.Map .btnsContainer a {
+  border-radius: 10px;
+}
+
+.Map .vehiclesListBtn,
+.Map .useLocationBtn {
+  border-radius: 0.75rem;
+  color: #ffffff;
+  background-image: linear-gradient(
+    to right,
+    #0ea5e9,
+    #1d4ed8,
+    #0ea4e99a,
+    #1d4ed8
+  );
+  background-size: 200% auto;
+  transition: background-position 1s ease;
+}
+
+.Map .vehiclesListBtn:hover,
+.Map .useLocationBtn:hover {
+  background-position: center;
+}
+
+.Map .editFiltersBtn {
+  background: var(--bg-gray);
+  color: white;
+  border: var(--cards-border);
+}
+
+.Map .editFiltersBtn:hover {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.Map .editFiltersBtn:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Active filters container */
+
+.Map .filterContainer {
+  background-color: var(--bg-gray);
+  min-height: 150px;
+  border-radius: 20px;
+  margin-top: 30px;
+  padding: 20px 30px;
+  border: var(--cards-border);
+}
+
+.Map .filterContainer hr {
+  margin-top: 5px;
+}
+
+.Map .filterContainer .titleContainer {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding-bottom: 20px;
+}
+
+.Map .filterContainer .filters {
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.Map .useLocationBtn {
+  padding: 10px 30px;
+  margin-top: 10px;
+}
+
+/*  Map and data container */
+.Map .mapAndDataContainer {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+  margin-top: 30px;
+  padding-bottom: 30px;
+}
+
+.Map .mapAndDataContainer .left,
+.Map .mapAndDataContainer .right {
+  border-radius: 20px;
+  min-height: 700px;
+  width: 50%;
+}
+.Map .mapAndDataContainer .left {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  padding: 20px;
+}
+
+.Map .mapAndDataContainer .right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

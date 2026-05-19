@@ -1,0 +1,46 @@
+.AdminComplaints {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 15px 30px;
+  border-bottom: var(--cards-border);
+}
+
+.AdminComplaints:last-child {
+  border-bottom: none;
+}
+
+.AdminComplaints .top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.AdminComplaints .state {
+  font-size: 0.8rem;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+
+.AdminComplaints .review {
+  color: #f9e081;
+  background-color: #392d1f;
+}
+
+.AdminComplaints .closed {
+  background-color: #102e2b;
+  color: #90dbbb;
+}
+
+.AdminComplaints .description {
+  color: var(--gray);
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.AdminComplaints .type {
+  font-size: 0.5rem;
+  border-radius: 10px;
+  padding: 3px 10px;
+  background-color: #2c3039;
+  text-transform: capitalize;
+}

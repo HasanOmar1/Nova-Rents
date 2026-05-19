@@ -48,7 +48,10 @@ const LoginRegister = () => {
             setCurrentForm={setCurrentForm}
           />
         ) : (
-          <RegisterForm handleRegister={handleRegister} />
+          <RegisterForm
+            handleRegister={handleRegister}
+            setCurrentForm={setCurrentForm}
+          />
         )}
       </div>
     </div>

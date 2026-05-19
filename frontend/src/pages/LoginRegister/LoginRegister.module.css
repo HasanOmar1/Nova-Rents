@@ -1,172 +1,19 @@
-.LoginRegister {
-  margin: 0 auto;
-  width: 100%;
-  max-width: 1440px;
-  padding: 1rem 0.75rem;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-}
-
 .LoginRegister .container {
   display: flex;
   gap: 1.5rem;
-  width: 1440px;
+  margin-bottom: 30px;
 }
 
-/* Base Form Panel (Glassmorphism) */
-.LoginRegister .glassPanel {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 28px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 1.5rem;
-  display: flex;
-  height: 780px;
-  flex-direction: column;
-}
-
-.LoginRegister .glassPanel {
-  opacity: 0.72;
-  transition:
-    opacity 0.3s ease,
-    border-color 0.3s ease;
-}
-
-.LoginRegister .glassPanel:hover {
-  opacity: 1;
-}
-
-.LoginRegister .formContainer {
-  margin-top: 2rem;
-}
-
-.LoginRegister .glassPanel {
-  height: fit-content;
-  transition: height 1s;
-}
-
-.LoginRegister .formSpace {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* Right Container */
-
-.LoginRegister .heading {
-  margin-top: 0.5rem;
-  font-size: 1.8rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  color: #ffffff;
-  margin-bottom: 0;
-}
-
-.LoginRegister .inputLabel {
-  display: block;
-}
-
-.LoginRegister .labelText {
-  font-size: 0.625rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: rgba(186, 230, 253, 0.45);
-}
-
-.LoginRegister .inputField {
-  margin-top: 0.5rem;
-  width: 100%;
-  border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  padding: 0.625rem 0;
-  font-size: 0.875rem;
-  padding: 5px;
-  color: #ffffff;
-  transition: border-color 0.3s ease;
-  box-sizing: border-box;
-}
-
-.LoginRegister .inputField::placeholder {
-  color: rgba(255, 255, 255, 0.25);
-}
-
-.LoginRegister .inputField:focus {
-  outline: none;
-  border-bottom-color: rgba(56, 189, 248, 0.8);
-}
-
-.LoginRegister input[type="date"] {
-  color-scheme: dark;
-}
-
-.LoginRegister .inputRow {
-  display: grid;
-  gap: 1.25rem;
-  grid-template-columns: 1fr;
-}
-
-/* Buttons */
-.LoginRegister .primaryButtonBlue {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 0.75rem;
-  padding: 0.875rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #ffffff;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
-
-.LoginRegister .primaryButtonBlue {
-  background: linear-gradient(to right, #0ea5e9, #1d4ed8);
-  box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.3);
-}
-
-.LoginRegister .primaryButtonBlue:hover {
-  transform: scale(1.02);
-}
-
-.LoginRegister .linkGroup {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.6875rem; /* 11px */
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.LoginRegister .link {
-  cursor: pointer;
-  transition: color 0.2s ease;
-  color: rgba(125, 211, 252, 0.8);
-}
-
-.LoginRegister .link:hover {
-  color: rgba(125, 212, 252, 0.539);
-}
-
-/* Mid Section */
+/* left side Section */
 .LoginRegister .heroSection {
   position: relative;
   overflow: hidden;
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  height: 780px;
-  min-height: 300px;
   display: flex;
   flex-direction: column;
+  border: var(--cards-border);
+  max-height: 780px;
 }
 
 .LoginRegister .heroImage {
@@ -295,6 +142,150 @@
   color: rgba(255, 255, 255, 0.55);
 }
 
+/* Base Form Panel (Glassmorphism) */
+.LoginRegister .glassPanel {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1.5rem;
+  display: flex;
+  min-height: 780px;
+  flex-direction: column;
+  opacity: 0.72;
+  transition:
+    opacity 0.3s ease,
+    border-color 0.3s ease;
+
+  border: var(--cards-border);
+  max-height: 780px;
+}
+
+.LoginRegister .glassPanel:hover {
+  opacity: 1;
+}
+
+.LoginRegister .formContainer {
+  margin-top: 2rem;
+}
+
+.LoginRegister .glassPanel {
+  height: fit-content;
+  transition: height 1s;
+  /* background-color: red; */
+}
+
+.LoginRegister .formSpace {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Right Container */
+
+.LoginRegister .heading {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  margin-bottom: 0;
+}
+
+.LoginRegister .inputLabel {
+  display: block;
+}
+
+.LoginRegister .labelText {
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(186, 230, 253, 0.45);
+}
+
+.LoginRegister .inputField {
+  margin-top: 0.5rem;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  padding: 0.625rem 0;
+  font-size: 0.875rem;
+  padding: 5px;
+  color: #ffffff;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.LoginRegister .inputField::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.LoginRegister .inputField:focus {
+  outline: none;
+  border-bottom-color: rgba(56, 189, 248, 0.8);
+}
+
+.LoginRegister input[type="date"] {
+  color-scheme: dark;
+}
+
+.LoginRegister .inputRow {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+}
+
+/* Buttons */
+.LoginRegister .primaryButtonBlue {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  margin-bottom: 10px;
+  margin-top: -10px;
+}
+
+.LoginRegister .primaryButtonBlue {
+  background: linear-gradient(to right, #0ea5e9, #1d4ed8);
+  box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.3);
+}
+
+.LoginRegister .primaryButtonBlue:hover {
+  transform: scale(1.02);
+}
+
+.LoginRegister .linkGroup {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.LoginRegister .link {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  color: rgba(125, 211, 252, 0.8);
+}
+
+.LoginRegister .link:hover {
+  color: rgba(125, 212, 252, 0.539);
+}
+
 /* Icons */
 .LoginRegister .iconSm {
   height: 1rem;
@@ -307,4 +298,19 @@
 }
 .LoginRegister .primaryButtonBlue:hover .iconSm {
   transform: translateX(2px);
+}
+
+.LoginRegister .alreadyRegistered {
+  font-size: 0.7rem;
+  margin-top: 10px;
+}
+
+.LoginRegister .signIn {
+  margin-left: 5px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.LoginRegister .signIn:hover {
+  color: var(--icons-color);
 }

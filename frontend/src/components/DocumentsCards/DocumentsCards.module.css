@@ -1,0 +1,40 @@
+.DocumentsCards {
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  padding: 30px;
+  border-radius: 20px;
+}
+
+.DocumentsCards .dataContainer .data {
+  margin-top: 20px;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  display: flex;
+  padding: 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #eeeaeaef;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.DocumentsCards .customFileUpload input[type="file"] {
+  display: none;
+}
+
+.DocumentsCards .customFileUpload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #2a2e35;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border: var(--cards-border);
+}
+
+.DocumentsCards .customFileUpload:hover {
+  background-color: #3f444d;
+}

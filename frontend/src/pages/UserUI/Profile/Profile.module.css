@@ -1,0 +1,131 @@
+.Profile .card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 30px;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  border-radius: 20px;
+  margin-top: 30px;
+  padding-bottom: 35px;
+}
+
+.Profile .signedAsContainer p {
+  font-size: 0.8rem;
+}
+
+.Profile h4 {
+  font-size: 1.7rem;
+  letter-spacing: 1px;
+}
+
+.Profile .signedAsContainer p:nth-child(1) {
+  color: var(--gray);
+}
+
+.Profile .signedAsContainer .userEmail {
+  color: var(--icons-color);
+}
+
+/* personal info container */
+
+.Profile .personalInfoContainer .editBtnAndTitleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  padding-bottom: 10px;
+  height: 47px;
+}
+
+.Profile .personalInfoContainer .editBtnAndTitleContainer p {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.Profile .personalInfoContainer button {
+  border-radius: 20px;
+  background-color: var(--input-bg);
+  border: var(--cards-border);
+  color: white;
+  padding: 10px 30px;
+}
+
+.Profile .personalInfoContainer .editBtnAndTitleContainer button:hover {
+  color: var(--icons-color);
+}
+
+.Profile .inputsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.Profile .inputsContainer label {
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.Profile .personalInfoContainer input {
+  background-color: var(--input-bg);
+  border-radius: 15px;
+  outline: none;
+  color: #fff;
+  padding: 15px;
+  border: var(--cards-border);
+}
+
+.Profile .personalInfoContainer input:focus {
+  outline: none;
+}
+
+.Profile .personalInfoContainer .labelInputContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  width: 49%;
+}
+
+.Profile .personalInfoContainer .saveChangesBtnsContainer {
+  display: flex;
+  gap: 10px;
+  justify-content: right;
+  margin-top: 20px;
+}
+
+.Profile .personalInfoContainer .saveChangesBtn {
+  border-radius: 0.75rem;
+  color: #ffffff;
+  background-image: linear-gradient(
+    to right,
+    #0ea5e9,
+    #1d4ed8,
+    #0ea4e99a,
+    #1d4ed8
+  );
+  background-size: 200% auto;
+  transition: background-position 1s ease;
+}
+
+.Profile .personalInfoContainer .saveChangesBtn:hover {
+  background-position: center;
+  color: white;
+}
+
+.Profile .personalInfoContainer .cancelBtn {
+  background-color: #2a171c;
+}
+
+.Profile .personalInfoContainer .cancelBtn:hover {
+  color: #ffa3a3;
+}
+
+/* documents container */
+
+.Profile .documentsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-top: 30px;
+  padding-bottom: 30px;
+}

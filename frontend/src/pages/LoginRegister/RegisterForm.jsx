@@ -2,7 +2,7 @@ import { useState } from "react";
 import styles from "./LoginRegister.module.css";
 import { ArrowRight } from "lucide-react";
 
-const RegisterForm = ({ handleRegister }) => {
+const RegisterForm = ({ handleRegister, setCurrentForm }) => {
   const [birthDate, setBirthDate] = useState("");
 
   const today = new Date();
@@ -72,6 +72,17 @@ const RegisterForm = ({ handleRegister }) => {
             <ArrowRight className={styles.iconSm} />
           </button>
         </form>
+        <div className={styles.linkGroup}>
+          <p>
+            Already have an account?{" "}
+            <span
+              className={styles.link}
+              onClick={() => setCurrentForm("login")}
+            >
+              Sign in
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,158 @@
+.Complaints .msgContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.Complaints .msgContainer p {
+  color: var(--gray);
+  font-weight: 700;
+}
+
+.Complaints .reportContainer {
+  margin-top: 30px;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 30px;
+  border-radius: 20px;
+  color: #eeeaeaef;
+  min-height: 500px;
+  margin-bottom: 50px;
+}
+
+.Complaints .reportContainer .msg {
+  color: var(--gray);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.Complaints .reportContainer .complaintTypeContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.Complaints .reportContainer .complaintTypeContainer p {
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.Complaints .reportContainer .complaintTypeContainer .btnsContainer {
+  display: flex;
+  border-radius: 10px;
+}
+
+.Complaints .complaintTypeContainer .btnsContainer button {
+  flex: 1;
+  padding: 15px 0;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  color: white;
+  border-radius: 10px;
+}
+.Complaints .complaintTypeContainer .btnsContainer .againstVehicleBtn {
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.Complaints .complaintTypeContainer .btnsContainer .againstOwnerBtn {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.Complaints .complaintTypeContainer .btnsContainer button.activeBtn {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.Complaints .labelAndInputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.Complaints .complaintTypeContainer input,
+.Complaints .complaintTypeContainer textarea {
+  border: var(--cards-border);
+  background-color: var(--input-bg);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 15px;
+}
+
+.Complaints .complaintTypeContainer input:focus,
+.Complaints .complaintTypeContainer textarea:focus {
+  outline: none;
+}
+
+.Complaints .complaintTypeContainer textarea {
+  resize: none;
+  min-height: 120px;
+}
+
+.Complaints .customFileUpload {
+  margin-top: 20px;
+  width: 100%;
+  min-height: 130px;
+  border: 2px dotted #2e3442;
+  border-radius: 20px;
+  background-color: var(--input-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.Complaints .customFileUpload input {
+  display: none;
+}
+
+.Complaints form .submitBtn {
+  width: fit-content;
+  margin-left: auto;
+  margin-top: 15px;
+  display: inline-block;
+  padding: 12px 20px;
+  border: none;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #ffffff;
+  border-radius: 16px;
+  background: linear-gradient(to right, #157052, #047857);
+  box-shadow:
+    0 10px 15px -3px rgba(6, 78, 59, 0.25),
+    0 4px 6px -4px rgba(6, 78, 59, 0.25);
+
+  transition: transform 0.3s ease;
+}
+
+.Complaints form .submitBtn:hover {
+  transform: scale(1.02);
+}
+
+.Complaints form .submitBtn:focus {
+  outline: 2px solid #10b981;
+}
+
+/* history */
+
+.Complaints .complaintsHistoryContainer {
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 30px;
+  border-radius: 20px;
+  color: #eeeaeaef;
+  min-height: 200px;
+  margin-bottom: 50px;
+}

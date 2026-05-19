@@ -1,0 +1,64 @@
+import { Link } from "react-router-dom";
+import styles from "./VehiclesCards.module.css";
+import { MapPin, User, AlertTriangle } from "lucide-react";
+
+const VehiclesCards = ({ veh }) => {
+  return (
+    <div className={styles.VehiclesCards}>
+      <img src={veh.img} alt={veh.vehName} />
+
+      <div className={styles.vehiclesCardsContainer}>
+        <div className={styles.vehStatus}>
+          <p>{veh.vehName}</p>
+          <p className={styles.status}>{veh.status}</p>
+        </div>
+
+        <p className={styles.vehType}>{veh.type}</p>
+
+        <div className={styles.vehDetails}>
+          <div>
+            <p className={styles.title}>Price</p>
+            <p className={styles.detailsData}>{veh.price}</p>
+          </div>
+
+          <div>
+            <p className={styles.title}>Year</p>
+            <p className={styles.detailsData}>{veh.year}</p>
+          </div>
+
+          <div>
+            <p className={styles.title}>Location</p>
+
+            <div className={styles.detailsData}>
+              <p>
+                <MapPin size={15} className="icon" />
+              </p>
+              <p>{veh.location}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.ownerContainer}>
+          <p>
+            <User size={15} className="icon" />
+          </p>
+          <p>
+            <span className={styles.host}>Host</span> · {veh.ownerName}
+          </p>
+        </div>
+
+        <div className={styles.btnsContainer}>
+          <Link
+            to={`/vehicles/${veh.id}`}
+            state={veh}
+            className={styles.detailsBtn}
+          >
+            Details
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default VehiclesCards;

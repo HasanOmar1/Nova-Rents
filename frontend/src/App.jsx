@@ -3,8 +3,18 @@ import Header from "./components/Header/Header";
 import UserContextProvider from "./context/UserContext";
 import LoginRegister from "./pages/LoginRegister/LoginRegister";
 import NotFound from "./pages/NotFound/NotFound";
-import Home from "./pages/Home/Home";
-import Vehicles from "./pages/Vehicles/Vehicles";
+import Home from "./pages/UserUI/Home/Home";
+import Profile from "./pages/UserUI/Profile/Profile";
+import Vehicles from "./pages/UserUI/Vehicles/Vehicles";
+import Map from "./pages/UserUI/Map/Map";
+import MyVehicles from "./pages/UserUI/MyVehicles/MyVehicles";
+import Complaints from "./pages/UserUI/Complaints/Complaints";
+import DashBoard from "./pages/AdminUI/DashBoard/DashBoard";
+import Users from "./pages/AdminUI/Users/Users";
+import AllVehicles from "./pages/AdminUI/AllVehicles/AllVehicles";
+import Statistics from "./pages/AdminUI/Statistics/Statistics";
+import ComplaintsAdmin from "./pages/AdminUI/Complaints/ComplaintsAdmin";
+import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
 
 function App() {
   return (
@@ -13,8 +23,21 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<LoginRegister />} />
+          {/* User */}
           <Route path="/home" element={<Home />} />
           <Route path="/vehicles" element={<Vehicles />} />
+          <Route path="/map" element={<Map />} />
+          <Route path="/myVehicles" element={<MyVehicles />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/complaints" element={<Complaints />} />
+          {/* Admin */}
+          <Route path="/dashboard" element={<DashBoard />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/allVehicles" element={<AllVehicles />} />
+          <Route path="/complaintsAdmin" element={<ComplaintsAdmin />} />
+          <Route path="/statistics" element={<Statistics />} />
+          {/* other pages */}
+          <Route path="/vehicles/:id" element={<VehicleDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </UserContextProvider>

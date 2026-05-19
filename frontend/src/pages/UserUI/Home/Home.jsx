@@ -1,6 +1,7 @@
-import HomeBottomCards from "../../components/HomeCards/HomeBottomCards/HomeBottomCards";
-import HomeMidCards from "../../components/HomeCards/HomeMidCards/HomeMidCards";
-import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
+import { Link } from "react-router-dom";
+import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
+import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
+import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import styles from "./Home.module.css";
 import { Car, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 
@@ -50,8 +51,12 @@ const Home = () => {
     <div className={`${styles.Home} page`}>
       <h1>Welcome back</h1>
       <div className={styles.btnsContainer}>
-        <button className={styles.browseVehiclesBtn}>Browse Vehicles</button>
-        <button className={styles.myVehiclesBtn}>My Vehicles</button>
+        <Link to={"/vehicles"} className={styles.browseVehiclesBtn}>
+          Browse Vehicles
+        </Link>
+        <Link to={"/myVehicles"} className={styles.myVehiclesBtn}>
+          My Vehicles
+        </Link>
       </div>
 
       <div className={styles.topCardsContainer}>

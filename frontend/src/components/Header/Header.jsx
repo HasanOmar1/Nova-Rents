@@ -20,6 +20,14 @@ const Header = ({ page }) => {
     "complaints",
   ];
 
+  // const visible = [
+  //   "dashboard",
+  //   "users",
+  //   "allVehicles",
+  //   "complaintsAdmin",
+  //   "statistics",
+  // ];
+
   const navigate = useNavigate();
 
   const handleLogOut = () => {
@@ -52,7 +60,7 @@ const Header = ({ page }) => {
                 key={item}
                 className={`${styles.navButton}  ${active ? styles.active : ""}`}
               >
-                {Icon && <Icon className="nav-icon" />}
+                {Icon && <Icon className="icon" />}
                 {labels[item]}
               </Link>
             );
@@ -64,11 +72,11 @@ const Header = ({ page }) => {
         <div className={styles.logOutContainer}>
           <>
             <button className={styles.notifyButton}>
-              <Bell className={styles.iconLarge} />
+              <Bell className={`${styles.iconLarge} icon`} />
             </button>
 
             <button className={styles.logoutButton} onClick={handleLogOut}>
-              <LogOut className={styles.iconSmall} />
+              <LogOut className={` ${styles.iconSmall} icon `} />
               Log out
             </button>
           </>
