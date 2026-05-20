@@ -15,4 +15,6 @@ async function getVehicleByLicensePlate(plate) {
     throw error;
   }
 }
+
+
 module.exports = { getVehicleByLicensePlate };

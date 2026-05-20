@@ -14,4 +14,16 @@ async function getUserByEmail(email) {
   }
 }
 
-module.exports = { getUserByEmail };
+async function getUserByPhone(phone) {
+  try {
+    const result = await doQuery("SELECT * FROM users WHERE phone = ?", [
+      phone,
+    ]);
+    return result[0];
+  } catch (error) {
+    console.error("Error checking existing user:", error);
+    throw error;
+  }
+}
+
+module.exports = { getUserByEmail, getUserByPhone };

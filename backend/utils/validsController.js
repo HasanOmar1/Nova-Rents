@@ -60,17 +60,6 @@ function validateRegisterInputFormats(body, res) {
   return true;
 }
 
-function validateEmailQuery(email, res) {
-  if (!email) {
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "Email not provided, Provide email as query parameter",
-    );
-  }
-  return true;
-}
-
 function validateLoginFields(email, password, res) {
   if (!email || !password) {
     return sendValidationError(
@@ -221,6 +210,9 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   };
 
   if (
+    merged.brandId == null ||
+    merged.modelId == null ||
+    merged.typeId == null ||
     !merged.fuelType ||
     !merged.expirationDate ||
     !merged.image ||
@@ -277,7 +269,6 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
 module.exports = {
   validateRequiredRegisterFields,
   validateRegisterInputFormats,
-  validateEmailQuery,
   validateLoginFields,
   validateAuthenticatedUser,
   validateEmailInBody,

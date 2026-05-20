@@ -11,5 +11,5 @@ router.post("/login", userQueries.login);
 router.get("/profile", isAuthenticated, userQueries.getProfile);
 router.post("/logout", isAuthenticated, userQueries.logout);
 router.post("/block", isAdmin, userQueries.blockUserByEmail);
-
+router.post("/unblock", isAdmin, userQueries.unblockUserByEmail);
 module.exports = router;
