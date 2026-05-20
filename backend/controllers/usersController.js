@@ -2,39 +2,44 @@
 const bcrypt = require("bcrypt");
 const doQuery = require("../database/query");
 const hashPassword = require("../utils/hashPassword");
-const { getUserByEmail } = require("../database/queries/userQueries");
+const { getUserByEmail, getUserByPhone } = require("../database/queries/userQueries");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   validateRequiredRegisterFields,
   validateRegisterInputFormats,
-  validateEmailQuery,
   validateLoginFields,
   validateAuthenticatedUser,
   validateEmailInBody,
 } = require("../utils/validsController");
 
-// Get a list of all users in the system (for admin/testing)
+// Get a list of all users in the system
 const getAllUsers = async (req, res, next) => {
   try {
-    const query = "Select * from users";
-    const result = await doQuery(query);
-    res.send(result);
-  } catch (error) {
-    next(error);
-  }
-};
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    if (req.session.user.role !== "admin")
+      return res
+        .status(STATUS_CODE.FORBIDDEN)
+        .json({ message: "You are not authorized to access this resource" });
+    const query = ` Select 
+    u.userId,
+        u.firstName,
+        u.lastName,
+        u.email,
+        u.phone,
+        u.birthDate,
+        u.role,
+        u.status
+    FROM users u
+    ORDER BY u.userId DESC
+    `;
 
-const getUserDetailsByEmail = async (req, res, next) => {
-  try {
-    const { email } = req.query;
-    if (!validateEmailQuery(email, res)) return;
-
-    const user = await getUserByEmail(email);
-    if (!user) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({ message: "User not found" });
-    }
-
-    res.send(user);
+    const users = await doQuery(query);
+    res.status(STATUS_CODE.OK).json({
+      message: "Users fetched successfully",
+      users: users,
+      count: users.length,
+    });
   } catch (error) {
     next(error);
   }
@@ -55,28 +60,49 @@ async function register(req, res, next) {
         .status(STATUS_CODE.CONFLICT)
         .json({ message: "Email already exists" });
     }
+
+    const phoneExist = await getUserByPhone(phone);
+    if (phoneExist) {
+      return res
+        .status(STATUS_CODE.CONFLICT)
+        .json({ message: "Phone already exists" });
+    }
+
     const hashedPassword = await hashPassword(password);
 
     const insertQuery = `
-    INSERT INTO users (firstName,lastName, email, password, phone,birthDate )
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO users (firstName,lastName, email, password, phone,birthDate, status, role)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
-
-    const firstNameCap = firstName[0].toUpperCase() + firstName.slice(1);
-    const lastNameCap = lastName[0].toUpperCase() + lastName.slice(1);
+    const firstNameClean = firstName.trim();
+    const lastNameClean = lastName.trim();
+    const firstNameCap =
+      firstNameClean[0].toUpperCase() + firstNameClean.slice(1);
+    const lastNameCap = lastNameClean[0].toUpperCase() + lastNameClean.slice(1);
+    const emailLower = email.trim().toLowerCase();
     const values = [
       firstNameCap,
       lastNameCap,
-      email,
+      emailLower,
       hashedPassword,
       phone,
       birthDate,
+      "active",
+      "user",
     ];
     const result = await doQuery(insertQuery, values);
-
     return res.status(STATUS_CODE.CREATED).json({
       message: "User registered successfully",
-      userId: result.insertId,
+      user: {
+        userId: result.userId,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone,
+        birthDate: birthDate,
+        status: "active",
+        role: "user",
+      },
     });
   } catch (error) {
     next(error);
@@ -88,28 +114,18 @@ async function login(req, res, next) {
 
   try {
     if (!validateLoginFields(email, password, res)) return;
-
-    //--------Input validation--------
-    // if (!checkValidEmail(email)) {
-    //   throwErr(STATUS_CODE.BAD_REQUEST, "Invalid email format.", res);
-    // }
-
-    // if (!checkValidPassword(password)) {
-    //   throwErr(
-    //     STATUS_CODE.BAD_REQUEST,
-    //     "Invalid password. It should be 3-8 characters long and include uppercase letters, lowercase letters, and numbers.",
-    //     res,
-    //   );
-    // }
-
-    //----if came here all inputs are valid----
-
     const user = await getUserByEmail(email);
 
     if (!user) {
       return res
         .status(STATUS_CODE.BAD_REQUEST)
         .json({ message: "Invalid email or password" });
+    }
+
+    if (user.status === "blocked") {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "User is blocked" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -136,14 +152,64 @@ async function login(req, res, next) {
     next(error);
   }
 }
+const getUserDetailsByEmail = async (req, res, next) => {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    if (req.session.user.role !== "admin") {
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "Only admins can access user details",
+      });
+    }
+
+    const { email } = req.query;
+
+    if (!validateEmailQuery(email, res)) return;
+
+    const query = `
+      SELECT 
+        userId,
+        firstName,
+        lastName,
+        email,
+        phone,
+        birthDate,
+        role,
+        status
+      FROM users
+      WHERE email = ?
+    `;
+
+    const result = await doQuery(query, [email]);
+
+    if (result.length === 0) {
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(STATUS_CODE.OK).json({
+      message: "User fetched successfully",
+      user: result[0],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 // Return the logged-in user's profile data from the session
 async function getProfile(req, res, next) {
   try {
-    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) return;
-
+    const { email } = req.session.user;
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "User not found" });
+    }
     res.status(STATUS_CODE.OK).json({
       message: "User profile fetched successfully",
-      user: req.session.user,
+      user: user,
     });
   } catch (error) {
     next(error);
@@ -168,6 +234,8 @@ async function logout(req, res, next) {
 // blocks user by email (it doesnt delete the user, just changes its status to blocked)
 const blockUserByEmail = async (req, res, next) => {
   try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
     if (req.session.user.role !== "admin") {
       return res
         .status(STATUS_CODE.FORBIDDEN)
@@ -182,12 +250,41 @@ const blockUserByEmail = async (req, res, next) => {
 
     // MySQL returns 'affectedRows'. If 0, the email doesnt exist!
     if (result.affectedRows === 0) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({ message: "User not found" });
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "User not found" });
     }
 
     res.send({
       success: true,
       message: `User ${email} has been blocked successfully.`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const unblockUserByEmail = async (req, res, next) => {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    if (req.session.user.role !== "admin") {
+      return res
+        .status(STATUS_CODE.FORBIDDEN)
+        .json({ message: "Only admins can unblock users" });
+    }
+    const { email } = req.body;
+    if (!validateEmailInBody(email, res)) return;
+    const updateQuery = "UPDATE users SET status = 'active' WHERE email = ?";
+    const result = await doQuery(updateQuery, [email]);
+    if (result.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "User not found" });
+    }
+    res.send({
+      success: true,
+      message: `User ${email} has been unblocked successfully.`,
     });
   } catch (error) {
     next(error);
@@ -200,6 +297,7 @@ module.exports = {
   login,
   getProfile,
   logout,
-  getUserDetailsByEmail,
   blockUserByEmail,
+  unblockUserByEmail,
+  getUserDetailsByEmail,
 };

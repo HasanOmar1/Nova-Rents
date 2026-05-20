@@ -23,9 +23,46 @@ const getUserVehicles = async (req, res, next) => {
       return;
 
     const { userId } = req.session.user;
-    const query = "Select * from vehicles where ownerId = ? ORDER BY year DESC";
+
+    const query = `
+      SELECT 
+        v.licensePlate,
+        v.fuelType,
+        v.expirationDate,
+        v.image,
+        v.year,
+        v.km,
+        v.address,
+        v.price,
+        v.color,
+        v.status,
+        v.ownerId,
+
+        cm.modelId,
+        cm.modelName,
+
+        cb.brandId,
+        cb.brandName,
+
+        ct.carTypeId,
+        ct.carTypeName
+
+      FROM vehicles v
+      JOIN carModels cm ON v.modelId = cm.modelId
+      JOIN carBrands cb ON cm.brandId = cb.brandId
+      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+
+      WHERE v.ownerId = ?
+      ORDER BY v.year DESC
+    `;
+
     const result = await doQuery(query, [userId]);
-    res.send(result);
+
+    res.status(STATUS_CODE.OK).json({
+      message: "User vehicles fetched successfully",
+      count: result.length,
+      vehicles: result,
+    });
   } catch (error) {
     next(error);
   }
@@ -49,13 +86,13 @@ const addVehicle = async (req, res, next) => {
       color,
     } = vehicle;
 
-    // const isVehicleNumberInGovIL =
-    //   await checkVehicleNumberInGovIL(licensePlate);
-    // if (!isVehicleNumberInGovIL) {
-    //   return res.status(STATUS_CODE.BAD_REQUEST).json({
-    //     message: "Vehicle number is not in the government database",
-    //   });
-    // }
+    const isVehicleNumberInGovIL =
+      await checkVehicleNumberInGovIL(licensePlate);
+    if (!isVehicleNumberInGovIL) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Vehicle number is not in the government database",
+      });
+    }
 
     const checkIfVehicleAlreadyExists =
       await getVehicleByLicensePlate(licensePlate);
@@ -93,26 +130,62 @@ const addVehicle = async (req, res, next) => {
     next(error);
   }
 };
-
 const getVehicleById = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
 
-    const query = `SELECT * FROM vehicles v 
-    JOIN carModels cm ON v.modelId = cm.modelId
-    JOIN carBrands cb ON cm.brandId = cb.brandId
-    JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
-    WHERE v.licensePlate = ?`;
+    const query = `
+      SELECT 
+        v.licensePlate,
+        v.fuelType,
+        v.expirationDate,
+        v.image,
+        v.year,
+        v.km,
+        v.address,
+        v.price,
+        v.color,
+        v.status,
+        v.ownerId,
+
+        cm.modelId,
+        cm.modelName,
+
+        cb.brandId,
+        cb.brandName,
+
+        ct.carTypeId,
+        ct.carTypeName,
+
+        u.firstName AS ownerFirstName,
+        u.lastName AS ownerLastName,
+        u.email AS ownerEmail,
+        u.phone AS ownerPhone
+
+      FROM vehicles v
+      JOIN carModels cm ON v.modelId = cm.modelId
+      JOIN carBrands cb ON cm.brandId = cb.brandId
+      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN users u ON v.ownerId = u.userId
+      WHERE v.licensePlate = ?
+    `;
+
     const result = await doQuery(query, [licensePlate]);
+
+    if (result.length === 0) {
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "Vehicle not found",
+      });
+    }
+
     res.status(STATUS_CODE.OK).json({
       message: "Vehicle fetched successfully",
-      vehicle: result,
+      vehicle: result[0],
     });
   } catch (error) {
     next(error);
   }
 };
-
 const deleteVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
@@ -244,7 +317,9 @@ const getAllVehicles = async (req, res, next) => {
         v.address,
         v.price,
         v.color,
+        v.status,
         v.ownerId,
+        
 
         cm.modelId,
         cm.modelName,

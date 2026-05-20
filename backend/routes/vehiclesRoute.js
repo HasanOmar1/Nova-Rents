@@ -5,11 +5,11 @@ const { isAuthenticated } = require("../middleWare/authMiddleware");
 const vehicleQueries = require("../controllers/vehiclesController");
 router.get("/", vehicleQueries.getAllVehicles);
 
-router.get("/brands", isAuthenticated, vehicleQueries.getAllCarBrands);
+router.get("/brands",  vehicleQueries.getAllCarBrands);
 
-router.get("/models", isAuthenticated, vehicleQueries.getAllCarModels);
+router.get("/models", vehicleQueries.getAllCarModels);
 
-router.get("/types", isAuthenticated, vehicleQueries.getAllCarTypes);
+router.get("/types", vehicleQueries.getAllCarTypes);
 
 router.get("/myVehicles", isAuthenticated, vehicleQueries.getUserVehicles);
 
