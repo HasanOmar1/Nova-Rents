@@ -1,7 +1,14 @@
+import { useState } from "react";
+import DeleteMenu from "../DeleteMenu/DeleteMenu";
 import styles from "./MyVehiclesCards.module.css";
 import { Pencil, Trash2 } from "lucide-react";
 
 const MyVehiclesCards = ({ img, name, year, type, location, price }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const openDeleteMenu = () => setIsOpen(true);
+  const closeDeleteMenu = () => setIsOpen(false);
+
   return (
     <div className={styles.MyVehiclesCards}>
       <div className={styles.nameContainer}>
@@ -20,10 +27,18 @@ const MyVehiclesCards = ({ img, name, year, type, location, price }) => {
         <p>
           <Pencil size={18} className="icon" />
         </p>
-        <p className={styles.delete}>
+        <p className={styles.delete} onClick={openDeleteMenu}>
           <Trash2 size={18} />
         </p>
       </div>
+
+      <DeleteMenu
+        img={img}
+        location={location}
+        name={name}
+        closeMenu={closeDeleteMenu}
+        isOpen={isOpen}
+      />
     </div>
   );
 };
