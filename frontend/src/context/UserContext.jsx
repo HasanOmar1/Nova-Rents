@@ -7,10 +7,12 @@ const UserContext = createContext();
 const UserContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (localStorage.getItem("session")) loadMe();
+    else setIsLoading(false);
   }, []);
 
   // Function to check if user is already logged in when the app loads
@@ -21,6 +23,8 @@ const UserContextProvider = ({ children }) => {
       setCurrentUser(res.data.user); // User is logged in, save their data
     } catch {
       setCurrentUser(null); // User is not logged in
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -29,7 +33,13 @@ const UserContextProvider = ({ children }) => {
       const response = await axios.post("/users/login", userData);
       console.log("logged in successfully", response.data);
       setCurrentUser(response.data);
-      navigate("/home");
+
+      if (response.data.role === "user") {
+        navigate("/home");
+      } else {
+        navigate("/dashboard");
+      }
+
       setErrorMsg("");
       localStorage.setItem("session", "true");
     } catch (error) {
@@ -52,20 +62,32 @@ const UserContextProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    setIsLoading(true);
     try {
       await axios.post("/users/logout", null, {});
-      setCurrentUser(null);
-      setErrorMsg("");
       localStorage.clear();
+      setCurrentUser(null);
+      navigate("/");
+      setErrorMsg("");
     } catch (error) {
       console.log(error?.response.data?.message);
       setErrorMsg(error?.response.data?.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <UserContext.Provider
-      value={{ currentUser, login, errorMsg, setErrorMsg, register, logout }}
+      value={{
+        currentUser,
+        login,
+        errorMsg,
+        setErrorMsg,
+        register,
+        logout,
+        isLoading,
+      }}
     >
       {children}
     </UserContext.Provider>

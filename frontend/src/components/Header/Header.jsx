@@ -15,7 +15,6 @@ const Header = ({ page }) => {
 
   const handleLogOut = () => {
     logout();
-    navigate("/");
   };
 
   return (
