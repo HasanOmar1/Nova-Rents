@@ -1,18 +1,34 @@
 import { ArrowRight } from "lucide-react";
 import styles from "./LoginRegister.module.css";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useUserContext } from "../../context/UserContext";
 
-const SignInForm = ({
-  email,
-  setEmail,
-  password,
-  setPassword,
-  loginHandler,
-  setCurrentForm,
-}) => {
+const SignInForm = ({ setCurrentForm }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, errorMsg, setErrorMsg } = useUserContext();
+
+  const handleCurrentForm = () => {
+    setCurrentForm("register");
+    setErrorMsg("");
+  };
+
+  const loginHandler = (e) => {
+    e.preventDefault();
+    const formData = {
+      email,
+      password,
+    };
+
+    login(formData);
+  };
+
   return (
     <div className={`${styles.glassPanel} ${styles.signInPanel} `}>
-      <h2 className={styles.heading}>Sign in</h2>
+      <div className={styles.headingContainer}>
+        <h2 className={styles.heading}>Sign in</h2>
+        {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
+      </div>
 
       <div className={styles.formContainer}>
         <form className={styles.formSpace} onSubmit={loginHandler}>
@@ -47,10 +63,7 @@ const SignInForm = ({
           <p className={styles.link}>Forgot password?</p>
           <p>
             Dont have an account yet?{" "}
-            <span
-              className={styles.link}
-              onClick={() => setCurrentForm("register")}
-            >
+            <span className={styles.link} onClick={handleCurrentForm}>
               Register
             </span>
           </p>

@@ -2,7 +2,10 @@
 const bcrypt = require("bcrypt");
 const doQuery = require("../database/query");
 const hashPassword = require("../utils/hashPassword");
-const { getUserByEmail, getUserByPhone } = require("../database/queries/userQueries");
+const {
+  getUserByEmail,
+  getUserByPhone,
+} = require("../database/queries/userQueries");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   validateRequiredRegisterFields,
@@ -91,18 +94,23 @@ async function register(req, res, next) {
       "user",
     ];
     const result = await doQuery(insertQuery, values);
+
+    const loggedUser = {
+      userId: result.insertId,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      phone: phone,
+      birthDate: birthDate,
+      status: "active",
+      role: "user",
+    };
+
+    req.session.user = loggedUser;
+
     return res.status(STATUS_CODE.CREATED).json({
       message: "User registered successfully",
-      user: {
-        userId: result.userId,
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        phone: phone,
-        birthDate: birthDate,
-        status: "active",
-        role: "user",
-      },
+      user: loggedUser,
     });
   } catch (error) {
     next(error);
@@ -135,6 +143,8 @@ async function login(req, res, next) {
         .json({ message: "Invalid email or password" });
     }
 
+    const birthDate = user.birthDate.toLocaleDateString();
+
     const loggedUser = {
       userId: user.userId,
       firstName: user.firstName,
@@ -142,7 +152,7 @@ async function login(req, res, next) {
       email: user.email,
       phone: user.phone,
       role: user.role,
-      birthDate: user.birthDate,
+      birthDate: birthDate,
       status: user.status,
     };
     req.session.user = loggedUser;
@@ -207,9 +217,23 @@ async function getProfile(req, res, next) {
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "User not found" });
     }
+
+    const birthDate = user.birthDate.toLocaleDateString();
+
+    const loggedUser = {
+      userId: user.userId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      birthDate: birthDate,
+      status: user.status,
+    };
+
     res.status(STATUS_CODE.OK).json({
       message: "User profile fetched successfully",
-      user: user,
+      user: loggedUser,
     });
   } catch (error) {
     next(error);

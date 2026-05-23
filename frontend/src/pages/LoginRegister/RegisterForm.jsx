@@ -1,9 +1,16 @@
 import { useState } from "react";
 import styles from "./LoginRegister.module.css";
 import { ArrowRight } from "lucide-react";
+import { useUserContext } from "../../context/UserContext";
 
-const RegisterForm = ({ handleRegister, setCurrentForm }) => {
+const RegisterForm = ({ setCurrentForm }) => {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [password, setPassword] = useState("");
+  const { register, errorMsg, setErrorMsg } = useUserContext();
 
   const today = new Date();
 
@@ -23,31 +30,69 @@ const RegisterForm = ({ handleRegister, setCurrentForm }) => {
   );
   const formattedMinDate = minAgeDate.toISOString().split("T")[0];
 
+  const handleCurrentForm = () => {
+    setCurrentForm("login");
+    setErrorMsg("");
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    const formData = {
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+      birthDate,
+    };
+
+    register(formData);
+  };
+
   return (
     <div className={`${styles.glassPanel} `}>
-      <h2 className={styles.heading}>Register</h2>
+      <div className={styles.headingContainer}>
+        <h2 className={styles.heading}>Register</h2>
+        {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
+      </div>
 
       <div className={styles.formContainer}>
         <form className={styles.formSpace} onSubmit={handleRegister}>
           <div className={styles.inputRow}>
             <label className={styles.inputLabel}>
               <span className={styles.labelText}>First name</span>
-              <input type="text" className={styles.inputField} />
+              <input
+                type="text"
+                className={styles.inputField}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
             </label>
             <label className={styles.inputLabel}>
               <span className={styles.labelText}>Last name</span>
-              <input type="text" className={styles.inputField} />
+              <input
+                type="text"
+                className={styles.inputField}
+                onChange={(e) => setLastName(e.target.value)}
+              />
             </label>
           </div>
 
           <label className={styles.inputLabel}>
             <span className={styles.labelText}>Email address</span>
-            <input type="email" className={styles.inputField} />
+            <input
+              type="email"
+              className={styles.inputField}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </label>
 
           <label className={styles.inputLabel}>
             <span className={styles.labelText}>Contact number</span>
-            <input type="tel" className={styles.inputField} />
+            <input
+              type="tel"
+              className={styles.inputField}
+              onChange={(e) => setPhone(e.target.value)}
+            />
           </label>
 
           <label className={styles.inputLabel}>
@@ -64,7 +109,11 @@ const RegisterForm = ({ handleRegister, setCurrentForm }) => {
 
           <label className={styles.inputLabel}>
             <span className={styles.labelText}>Password</span>
-            <input type="password" className={styles.inputField} />
+            <input
+              type="password"
+              className={styles.inputField}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </label>
 
           <button className={styles.primaryButtonBlue}>
@@ -75,10 +124,7 @@ const RegisterForm = ({ handleRegister, setCurrentForm }) => {
         <div className={styles.linkGroup}>
           <p>
             Already have an account?{" "}
-            <span
-              className={styles.link}
-              onClick={() => setCurrentForm("login")}
-            >
+            <span className={styles.link} onClick={handleCurrentForm}>
               Sign in
             </span>
           </p>

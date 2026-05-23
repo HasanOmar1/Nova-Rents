@@ -8,25 +8,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 const Header = ({ page }) => {
   const { currentUser, logout } = useUserContext();
   const location = useLocation();
-  // console.log(location);
 
-  // const visible = navByRole[currentUser?.role] || [];
-  const visible = [
-    "home",
-    "vehicles",
-    "map",
-    "myVehicles",
-    "profile",
-    "complaints",
-  ];
-
-  // const visible = [
-  //   "dashboard",
-  //   "users",
-  //   "allVehicles",
-  //   "complaintsAdmin",
-  //   "statistics",
-  // ];
+  const visible = navByRole[currentUser?.role] || [];
 
   const navigate = useNavigate();
 
@@ -67,21 +50,20 @@ const Header = ({ page }) => {
           })}
         </nav>
 
-        {/* {currentUser?.role === "admin" ||
-          (currentUser?.role === "user" && ( */}
-        <div className={styles.logOutContainer}>
-          <>
-            <button className={styles.notifyButton}>
-              <Bell className={`${styles.iconLarge} icon`} />
-            </button>
+        {currentUser && (
+          <div className={styles.logOutContainer}>
+            <>
+              <button className={styles.notifyButton}>
+                <Bell className={`${styles.iconLarge} icon`} />
+              </button>
 
-            <button className={styles.logoutButton} onClick={handleLogOut}>
-              <LogOut className={` ${styles.iconSmall} icon `} />
-              Log out
-            </button>
-          </>
-        </div>
-        {/* ))} */}
+              <button className={styles.logoutButton} onClick={handleLogOut}>
+                <LogOut className={` ${styles.iconSmall} icon `} />
+                Log out
+              </button>
+            </>
+          </div>
+        )}
       </div>
     </header>
   );
