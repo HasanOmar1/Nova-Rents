@@ -4,6 +4,7 @@ import axios from "axios";
 import "./index.css";
 import App from "./App.jsx";
 import { BrowserRouter } from "react-router-dom";
+import UserContextProvider from "./context/UserContext.jsx";
 
 axios.defaults.baseURL = "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -11,7 +12,9 @@ axios.defaults.withCredentials = true;
 createRoot(document.getElementById("root")).render(
   // <StrictMode>
   <BrowserRouter>
-    <App />
+    <UserContextProvider>
+      <App />
+    </UserContextProvider>
   </BrowserRouter>,
   // </StrictMode>,
 );
