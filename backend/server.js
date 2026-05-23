@@ -2,6 +2,7 @@ const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
 const errorHandler = require("./middleWare/errorMiddleware");
+require("dotenv").config();
 
 // routes
 const usersRoute = require("./routes/usersRoute");
