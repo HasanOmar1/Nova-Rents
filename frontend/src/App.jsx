@@ -1,6 +1,6 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Header from "./components/Header/Header";
-import UserContextProvider from "./context/UserContext";
+import { useUserContext } from "./context/UserContext";
 import LoginRegister from "./pages/LoginRegister/LoginRegister";
 import NotFound from "./pages/NotFound/NotFound";
 import Home from "./pages/UserUI/Home/Home";
@@ -17,30 +17,58 @@ import ComplaintsAdmin from "./pages/AdminUI/Complaints/ComplaintsAdmin";
 import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
 
 function App() {
+  const { currentUser, isLoading } = useUserContext();
+
+  if (isLoading) {
+    return (
+      <div
+        style={{ display: "flex", justifyContent: "center", marginTop: "20vh" }}
+      >
+        <h2>Loading Nova Rents...</h2>
+      </div>
+    );
+  }
   return (
     <>
-      <UserContextProvider>
-        <Header />
-        <Routes>
-          <Route path="/" element={<LoginRegister />} />
-          {/* User */}
-          <Route path="/home" element={<Home />} />
-          <Route path="/vehicles" element={<Vehicles />} />
-          <Route path="/map" element={<Map />} />
-          <Route path="/myVehicles" element={<MyVehicles />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/complaints" element={<Complaints />} />
-          {/* Admin */}
-          <Route path="/dashboard" element={<DashBoard />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/allVehicles" element={<AllVehicles />} />
-          <Route path="/complaintsAdmin" element={<ComplaintsAdmin />} />
-          <Route path="/statistics" element={<Statistics />} />
-          {/* other pages */}
-          <Route path="/vehicles/:id" element={<VehicleDetails />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </UserContextProvider>
+      <Header />
+      <Routes>
+        {/* User */}
+        {currentUser?.role === "user" ? (
+          <>
+            <Route path="/" element={<Navigate to="/home" replace />} />
+
+            <Route path="/home" element={<Home />} />
+            <Route path="/vehicles" element={<Vehicles />} />
+            <Route path="/map" element={<Map />} />
+            <Route path="/myVehicles" element={<MyVehicles />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/complaints" element={<Complaints />} />
+          </>
+        ) : currentUser?.role === "admin" ? (
+          <>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+            {/* Admin */}
+            <Route path="/dashboard" element={<DashBoard />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/allVehicles" element={<AllVehicles />} />
+            <Route path="/complaintsAdmin" element={<ComplaintsAdmin />} />
+            <Route path="/statistics" element={<Statistics />} />
+          </>
+        ) : (
+          <>
+            <Route path="/" element={<LoginRegister />} />
+
+            {/* Fixes Logout Flash: If they are on these routes and log out, redirect them instantly */}
+            <Route path="/home" element={<Navigate to="/" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
+          </>
+        )}
+
+        {/* other pages */}
+        <Route path="/vehicles/:id" element={<VehicleDetails />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </>
   );
 }

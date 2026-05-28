@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import styles from "./NotFound.module.css";
 import { useNavigate } from "react-router-dom";
+import { useUserContext } from "../../context/UserContext";
 
 const NotFound = () => {
   const [timer, setTimer] = useState(3);
   const navigate = useNavigate();
+  const { currentUser } = useUserContext();
 
   useEffect(() => {
     const countdown = setInterval(() => {
@@ -15,7 +17,13 @@ const NotFound = () => {
 
   useEffect(() => {
     if (timer <= 0) {
-      navigate("/");
+      if (currentUser?.role === "user") {
+        navigate("/home");
+      } else if (currentUser?.role === "admin") {
+        navigate("/dashboard");
+      } else {
+        navigate("/");
+      }
     }
   }, [timer]);
 

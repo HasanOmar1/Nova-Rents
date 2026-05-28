@@ -2,7 +2,7 @@ const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
 const errorHandler = require("./middleWare/errorMiddleware");
-
+require("dotenv").config({ quiet: true }); // quiet = removes the ad from the dotenv developer
 // routes
 const usersRoute = require("./routes/usersRoute");
 const vehiclesRoute = require("./routes/vehiclesRoute");

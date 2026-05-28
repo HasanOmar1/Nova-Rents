@@ -314,3 +314,11 @@
 .LoginRegister .signIn:hover {
   color: var(--icons-color);
 }
+
+.LoginRegister .errorMsg {
+  position: absolute;
+  color: red;
+  margin-top: 5px;
+  font-weight: bold;
+  font-size: 0.7rem;
+}
