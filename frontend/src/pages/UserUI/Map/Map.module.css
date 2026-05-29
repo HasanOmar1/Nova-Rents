@@ -1,10 +1,10 @@
-/* Top Btns */
 .Map .btnsContainer {
   display: flex;
   gap: 10px;
   margin-left: auto;
   width: 100%;
 }
+
 .Map .btnsContainer p {
   color: var(--gray);
   display: flex;
@@ -54,8 +54,6 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* Active filters container */
-
 .Map .filterContainer {
   background-color: var(--bg-gray);
   min-height: 150px;
@@ -88,7 +86,6 @@
   margin-top: 10px;
 }
 
-/*  Map and data container */
 .Map .mapAndDataContainer {
   display: flex;
   gap: 15px;
@@ -103,6 +100,7 @@
   min-height: 700px;
   width: 50%;
 }
+
 .Map .mapAndDataContainer .left {
   border: var(--cards-border);
   background-color: var(--bg-gray);
@@ -113,4 +111,73 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+@media (max-width: 1024px) {
+  .Map .btnsContainer {
+    flex-wrap: wrap;
+  }
+
+  .Map .btnsContainer p {
+    width: 100%;
+    margin-bottom: 10px;
+    justify-content: flex-start;
+  }
+
+  .Map .mapAndDataContainer {
+    flex-direction: column;
+  }
+
+  .Map .mapAndDataContainer .left,
+  .Map .mapAndDataContainer .right {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .Map .mapAndDataContainer .left {
+    height: 450px;
+  }
+}
+
+@media (max-width: 768px) {
+  .Map .filterContainer {
+    padding: 15px 20px;
+  }
+
+  .Map .mapAndDataContainer .left {
+    height: 350px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .Map .btnsContainer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .Map .btnsContainer p {
+    font-size: 0.85rem;
+    text-align: left;
+  }
+
+  .Map .btnsContainer a {
+    width: 100%;
+  }
+
+  .Map .filterContainer {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .Map .useLocationBtn {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .Map .mapAndDataContainer .left {
+    height: 300px;
+    padding: 10px;
+  }
 }

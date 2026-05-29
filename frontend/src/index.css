@@ -11,7 +11,6 @@
   --icons-bg-color: #182742;
   --icons-color: #a7d2eb;
   --cards-border: 2px solid #2e3442;
-  /* --input-bg: #20232b; */
   --input-bg: #0f1523;
   --input-focus-border-color: #3b82f6;
 }
@@ -30,7 +29,6 @@ body {
   margin: 0 auto;
 }
 
-/* Base styles shared by all buttons */
 button,
 a {
   display: inline-flex;
@@ -66,4 +64,24 @@ hr {
 
 img {
   display: block;
+}
+
+@media (max-width: 1024px) {
+  .page {
+    width: 85vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    width: 90vw;
+    padding-top: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    width: 95vw;
+    padding-top: 15px;
+  }
 }

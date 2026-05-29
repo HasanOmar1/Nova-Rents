@@ -53,7 +53,6 @@
   color: gray;
 }
 
-/* Navigation Container */
 .Header nav {
   display: flex;
   align-items: center;
@@ -61,13 +60,12 @@
   gap: 0.25rem;
 }
 
-/* Base button styles */
 .Header .navButton {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* 8px */
+  gap: 0.5rem;
   border-radius: 1rem;
-  padding: 0.625rem 1rem; /* py-2.5 (10px) and px-4 (16px) */
+  padding: 0.625rem 1rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
   font-weight: 500;
@@ -75,8 +73,6 @@
   cursor: pointer;
   border: none;
   background: transparent;
-
-  /* Inactive state default text color */
   color: rgba(255, 255, 255, 0.65);
 }
 
@@ -84,20 +80,17 @@
   text-decoration: none;
 }
 
-/* Hover state (when NOT active) */
 .Header .navButton:not(.active):hover {
   background-color: rgba(255, 255, 255, 0.06);
   color: #ffffff;
 }
 
-/* Active state styles */
 .Header .navButton.active {
   background-color: rgba(59, 130, 246, 0.15);
   color: #ffffff;
   box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
 }
 
-/* Icon styles */
 .Header .navIcon {
   height: 1rem;
   width: 1rem;
@@ -105,7 +98,6 @@
   opacity: 0.9;
 }
 
-/* log Out Container */
 .Header .logOutContainer {
   display: flex;
   align-items: center;
@@ -113,10 +105,8 @@
   margin-right: 10%;
 }
 
-/* Notifications Button */
 .Header .notifyButton {
   display: flex;
-
   align-items: center;
   justify-content: center;
   border-radius: 1rem;
@@ -130,15 +120,14 @@
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Log Out Button */
 .Header .logoutButton {
-  display: flex; /* hidden by default */
+  display: flex;
   align-items: center;
-  gap: 0.5rem; /* 8px */
+  gap: 0.5rem;
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(255, 255, 255, 0.04);
-  padding: 0.625rem 1rem; /* py-2.5 px-4 */
+  padding: 0.625rem 1rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
   color: rgba(255, 255, 255, 0.85);
@@ -170,4 +159,40 @@
 .Header .iconSmall {
   height: 1rem;
   width: 1rem;
+}
+
+@media (max-width: 1200px) {
+  .Header .siteDetails {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 15px;
+  }
+
+  .Header .logoAndName {
+    margin-left: 0;
+  }
+
+  .Header .logOutContainer {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .Header nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .Header .navButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .Header .logoutButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
 }

@@ -33,3 +33,47 @@
   font-size: 2.5rem;
   font-weight: bold;
 }
+
+@media (max-width: 1024px) {
+  .HomeTopCards {
+    padding: 15px;
+  }
+
+  .HomeTopCards .bottom p {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .HomeTopCards .top p {
+    width: auto;
+  }
+
+  .HomeTopCards .bottom p {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .HomeTopCards {
+    padding: 12px 15px;
+    border-radius: 12px;
+  }
+
+  .HomeTopCards .top {
+    gap: 1rem;
+  }
+
+  .HomeTopCards .top p {
+    font-size: 0.75rem;
+  }
+
+  .HomeTopCards .carBox {
+    padding: 8px 15px;
+    border-radius: 15px;
+  }
+
+  .HomeTopCards .bottom p {
+    font-size: 1.8rem;
+  }
+}

@@ -3,11 +3,9 @@
   background-color: var(--bg-gray);
   flex-direction: column;
   gap: 10px;
-  position: absolute;
-  top: 30vh;
-  left: 40vw;
+  margin: auto;
   max-width: 500px;
-  width: 100%;
+  width: 90%;
   padding-bottom: 10px;
   border-radius: 20px;
   display: none;
@@ -52,6 +50,8 @@
 
 .DeleteMenu .imgContainer img {
   padding: 15px;
+  width: 130px;
+  border-radius: 25px;
 }
 
 .DeleteMenu .nameAndLocation {
@@ -68,6 +68,7 @@
 .DeleteMenu .warningMsg {
   font-weight: 500;
   color: var(--gray);
+  line-height: 1.4;
 }
 
 .DeleteMenu .btnsContainer {
@@ -82,6 +83,7 @@
   font-size: 0.7rem;
   border-radius: 10px;
   color: white;
+  padding: 12px;
 }
 
 .DeleteMenu .btnsContainer button:hover {
@@ -94,4 +96,57 @@
 
 .DeleteMenu .btnsContainer .deleteBtn {
   background-color: #a04944;
+}
+
+@media (max-width: 768px) {
+  .DeleteMenu .top {
+    padding: 10px 20px;
+  }
+
+  .DeleteMenu .container {
+    padding: 10px 20px;
+  }
+
+  .DeleteMenu .imgContainer img {
+    width: 110px;
+    padding: 12px;
+  }
+
+  .DeleteMenu .btnsContainer button {
+    width: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .DeleteMenu {
+    width: 95%;
+  }
+
+  .DeleteMenu .top {
+    padding: 12px 15px;
+    font-size: 0.9rem;
+  }
+
+  .DeleteMenu .container {
+    padding: 15px;
+  }
+
+  .DeleteMenu .imgContainer {
+    align-items: center;
+  }
+
+  .DeleteMenu .imgContainer img {
+    width: 90px;
+    padding: 10px;
+    border-radius: 20px;
+  }
+
+  .DeleteMenu .btnsContainer {
+    flex-direction: column;
+  }
+
+  .DeleteMenu .btnsContainer button {
+    width: 100%;
+    padding: 12px;
+  }
 }

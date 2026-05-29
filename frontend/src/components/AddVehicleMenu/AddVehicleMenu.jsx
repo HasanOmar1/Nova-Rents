@@ -50,7 +50,6 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
 
       <form onSubmit={handleSubmit}>
         <div className={styles.formGrid}>
-          {/* Row 1 */}
           <div className={styles.inputGroup}>
             <label>Model ID / Name</label>
             <input
@@ -72,7 +71,6 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             />
           </div>
 
-          {/* Row 2 */}
           <div className={styles.inputGroup}>
             <label>Year</label>
             <input
@@ -96,7 +94,6 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             />
           </div>
 
-          {/* Row 3 */}
           <div className={styles.inputGroup}>
             <label>Mileage (KM)</label>
             <input
@@ -118,7 +115,6 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             />
           </div>
 
-          {/* Row 4 */}
           <div className={styles.inputGroup}>
             <label>Fuel Type</label>
             <select name="fuelType" onChange={handleChange}>
@@ -140,7 +136,6 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             />
           </div>
 
-          {/* Row 5  */}
           <div className={styles.inputGroup}>
             <label>Listing Expiration Date</label>
             <input

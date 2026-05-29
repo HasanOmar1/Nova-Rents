@@ -54,6 +54,7 @@
   color: white;
   border-radius: 10px;
 }
+
 .Complaints .complaintTypeContainer .btnsContainer .againstVehicleBtn {
   border-right: none;
   border-top-right-radius: 0;
@@ -131,7 +132,6 @@
   box-shadow:
     0 10px 15px -3px rgba(6, 78, 59, 0.25),
     0 4px 6px -4px rgba(6, 78, 59, 0.25);
-
   transition: transform 0.3s ease;
 }
 
@@ -156,4 +156,41 @@
   color: #eeeaeaef;
   min-height: 200px;
   margin-bottom: 50px;
+}
+
+@media (max-width: 768px) {
+  .Complaints .reportContainer,
+  .Complaints .complaintsHistoryContainer {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .Complaints .reportContainer,
+  .Complaints .complaintsHistoryContainer {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .Complaints .complaintTypeContainer .btnsContainer {
+    flex-direction: column;
+  }
+
+  .Complaints .complaintTypeContainer .btnsContainer .againstVehicleBtn {
+    border-right: var(--cards-border);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .Complaints .complaintTypeContainer .btnsContainer .againstOwnerBtn {
+    border-left: var(--cards-border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .Complaints form .submitBtn {
+    width: 100%;
+    margin-left: 0;
+    padding: 15px;
+  }
 }

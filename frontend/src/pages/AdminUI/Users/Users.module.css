@@ -69,6 +69,7 @@
   margin-top: 40px;
   border-radius: 20px;
   margin-bottom: 50px;
+  overflow: hidden;
 }
 
 .Users .usersContainer .titles {
@@ -99,6 +100,12 @@
   text-align: right;
 }
 
+.Users .usersContainer hr {
+  margin: 0;
+  border: none;
+  border-top: var(--cards-border);
+}
+
 .Users .pagination {
   border-top: var(--cards-border);
   display: flex;
@@ -124,6 +131,16 @@
   color: var(--gray);
   font-weight: bold;
   font-size: 0.8rem;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.Users .pagination .btnsContainer button:hover {
+  color: white;
 }
 
 /* user growth stats */
@@ -150,4 +167,61 @@
   margin-top: 2rem;
   height: 250px;
   width: 100%;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .Users .topCardsContainer {
+    flex-wrap: wrap;
+  }
+
+  .Users .searchNameContainer input {
+    width: 100%;
+    min-width: 300px;
+  }
+
+  /* Hide the titles on smaller screens to match the responsive stacking in UsersCards */
+  .Users .usersContainer .titles {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .Users .searchContainer {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .Users .searchContainer .left,
+  .Users .searchContainer .right {
+    width: 100%;
+  }
+
+  .Users .searchNameContainer input {
+    min-width: auto;
+  }
+
+  .Users .searchContainer select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .Users .topCardsContainer {
+    flex-direction: column;
+  }
+
+  .Users .searchContainer {
+    padding: 15px;
+  }
+
+  .Users .pagination {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .Users .pagination .btnsContainer {
+    width: 100%;
+    justify-content: space-between;
+  }
 }

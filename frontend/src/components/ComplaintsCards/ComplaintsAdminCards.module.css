@@ -13,6 +13,7 @@
   font-weight: 500;
   width: 15.3%;
 }
+
 .ComplaintsAdminCards .title {
   color: white;
 }
@@ -31,4 +32,56 @@
 
 .ComplaintsAdminCards .action:hover {
   color: var(--icons-color);
+}
+
+@media (max-width: 1024px) {
+  .ComplaintsAdminCards {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .ComplaintsAdminCards p {
+    width: 20%;
+  }
+
+  .ComplaintsAdminCards .type {
+    width: 15%;
+  }
+
+  .ComplaintsAdminCards .action {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ComplaintsAdminCards p {
+    width: 45%;
+    font-size: 0.9rem;
+  }
+
+  .ComplaintsAdminCards .type,
+  .ComplaintsAdminCards .title {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .ComplaintsAdminCards {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .ComplaintsAdminCards p,
+  .ComplaintsAdminCards .type {
+    width: 100%;
+  }
+
+  .ComplaintsAdminCards .action {
+    width: 100%;
+    margin-top: 5px;
+  }
 }
