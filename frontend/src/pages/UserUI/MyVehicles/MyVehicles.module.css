@@ -5,6 +5,7 @@
   margin-left: auto;
   width: 100%;
 }
+
 .MyVehicles .btnsContainer p {
   color: var(--gray);
   display: flex;
@@ -17,6 +18,10 @@
 
 .MyVehicles .btnsContainer button {
   border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
 }
 
 .MyVehicles .addVehicleBtn {
@@ -51,6 +56,7 @@
   min-height: 300px;
   margin-top: 30px;
   border-radius: 20px;
+  overflow: hidden;
 }
 
 .MyVehicles .myVehiclesContainer .titles {
@@ -90,4 +96,53 @@
 
 .MyVehicles .myVehiclesContainer hr {
   margin: 0;
+  border: none;
+  border-top: var(--cards-border);
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .MyVehicles .btnsContainer {
+    flex-wrap: wrap;
+  }
+
+  .MyVehicles .btnsContainer p {
+    width: 100%;
+    margin-bottom: 10px;
+    justify-content: flex-start;
+  }
+
+  .MyVehicles .topCardsContainer {
+    flex-wrap: wrap;
+  }
+
+  /* Hide the titles on smaller screens because the individual cards change their layout to stack */
+  .MyVehicles .myVehiclesContainer .titles {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .MyVehicles .topCardsContainer {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .MyVehicles .btnsContainer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .MyVehicles .btnsContainer p {
+    font-size: 0.85rem;
+    text-align: left;
+    line-height: 1.4;
+  }
+
+  .MyVehicles .addVehicleBtn {
+    width: 100%;
+    padding: 15px;
+  }
 }

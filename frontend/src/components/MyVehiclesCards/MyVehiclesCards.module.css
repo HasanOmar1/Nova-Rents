@@ -38,9 +38,11 @@
 .MyVehiclesCards .type {
   width: 20%;
 }
+
 .MyVehiclesCards .location {
   width: 20%;
 }
+
 .MyVehiclesCards .price {
   width: 15%;
 }
@@ -68,4 +70,72 @@
 
 .MyVehiclesCards .actionsContainer p:hover {
   scale: 1.1;
+}
+
+@media (max-width: 1024px) {
+  .MyVehiclesCards {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .MyVehiclesCards .nameContainer {
+    width: 100%;
+  }
+
+  .MyVehiclesCards .type,
+  .MyVehiclesCards .location,
+  .MyVehiclesCards .price {
+    width: 25%;
+  }
+
+  .MyVehiclesCards .actionsContainer {
+    width: 15%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .MyVehiclesCards .type,
+  .MyVehiclesCards .location,
+  .MyVehiclesCards .price {
+    width: 30%;
+  }
+
+  .MyVehiclesCards .actionsContainer {
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .MyVehiclesCards {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+    gap: 12px;
+  }
+
+  .MyVehiclesCards .nameContainer img {
+    width: 100px;
+    height: 80px;
+  }
+
+  .MyVehiclesCards .type,
+  .MyVehiclesCards .location,
+  .MyVehiclesCards .price {
+    width: 100%;
+  }
+
+  .MyVehiclesCards .actionsContainer {
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  .MyVehiclesCards .actionsContainer p {
+    padding: 12px 15px;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
 }

@@ -3,7 +3,8 @@
   flex-direction: column;
   gap: 10px;
   padding-bottom: 10px;
-  width: 390px;
+  width: 100%;
+  max-width: 390px;
   background-color: var(--bg-gray);
   font-size: 0.8rem;
   border-radius: 20px;
@@ -12,6 +13,8 @@
 
 .VehiclesCards img {
   display: block;
+  width: 100%;
+  height: auto;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
 }
@@ -109,4 +112,33 @@
 .VehiclesCards .btnsContainer button:hover,
 .VehiclesCards .btnsContainer a:hover {
   scale: 1.05;
+}
+
+@media (max-width: 480px) {
+  .VehiclesCards {
+    max-width: 100%;
+  }
+
+  .VehiclesCards .vehiclesCardsContainer {
+    padding: 12px;
+  }
+
+  .VehiclesCards .vehStatus {
+    font-size: 0.85rem;
+  }
+
+  .VehiclesCards .status {
+    padding: 8px 15px;
+    font-size: 0.75rem;
+  }
+
+  .VehiclesCards .vehDetails {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .VehiclesCards .btnsContainer .detailsBtn {
+    width: 100%;
+    text-align: center;
+  }
 }

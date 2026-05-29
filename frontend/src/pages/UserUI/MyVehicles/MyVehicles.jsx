@@ -1,3 +1,5 @@
+import { useState } from "react";
+import AddVehicleMenu from "../../../components/AddVehicleMenu/AddVehicleMenu";
 import DeleteMenu from "../../../components/DeleteMenu/DeleteMenu";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import MyVehiclesCards from "../../../components/MyVehiclesCards/MyVehiclesCards";
@@ -44,15 +46,21 @@ const vehicleData = [
 ];
 
 const MyVehicles = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const openAddVehMenu = () => setIsOpen(true);
+  const closeAddVehMenu = () => setIsOpen(false);
+
   return (
     <div className={`${styles.MyVehicles} page`}>
       <h1>My vehicles</h1>
       <div className={styles.btnsContainer}>
         <p>Your listings only — add, edit, or remove vehicles.</p>
 
-        <button className={styles.addVehicleBtn}>Add vehicle</button>
+        <button className={styles.addVehicleBtn} onClick={openAddVehMenu}>
+          Add vehicle
+        </button>
       </div>
-
       <div className={styles.topCardsContainer}>
         {topData.map((item) => {
           return (
@@ -65,7 +73,6 @@ const MyVehicles = () => {
           );
         })}
       </div>
-
       <div className={styles.myVehiclesContainer}>
         <div className={styles.titles}>
           <p className={styles.vehicleTitle}>Vehicle</p>
@@ -92,6 +99,7 @@ const MyVehicles = () => {
           );
         })}
       </div>
+      <AddVehicleMenu isOpen={isOpen} onClose={closeAddVehMenu} />
     </div>
   );
 };

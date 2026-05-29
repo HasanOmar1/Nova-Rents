@@ -64,3 +64,57 @@
   color: #f9bb81;
   background-color: #39251f;
 }
+
+@media (max-width: 1024px) {
+  .AllVehiclesCards {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .AllVehiclesCards .nameContainer {
+    width: 100%;
+  }
+
+  .AllVehiclesCards .type,
+  .AllVehiclesCards .location,
+  .AllVehiclesCards .price,
+  .AllVehiclesCards .owner,
+  .AllVehiclesCards .status {
+    width: 18%;
+  }
+}
+
+@media (max-width: 768px) {
+  .AllVehiclesCards .type,
+  .AllVehiclesCards .location,
+  .AllVehiclesCards .price,
+  .AllVehiclesCards .owner,
+  .AllVehiclesCards .status {
+    width: 30%;
+    margin-bottom: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .AllVehiclesCards {
+    padding: 15px;
+  }
+
+  .AllVehiclesCards img {
+    width: 100px;
+    height: 80px;
+    border-radius: 12px;
+  }
+
+  .AllVehiclesCards .type,
+  .AllVehiclesCards .location,
+  .AllVehiclesCards .price,
+  .AllVehiclesCards .owner {
+    width: 45%;
+  }
+
+  .AllVehiclesCards .status {
+    width: 100%;
+    margin-top: 5px;
+  }
+}

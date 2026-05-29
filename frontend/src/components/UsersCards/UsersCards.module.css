@@ -19,6 +19,7 @@
   color: var(--gray);
   font-size: 0.9rem;
 }
+
 .UsersCards .status {
   width: 15%;
   font-size: 0.8rem;
@@ -68,4 +69,73 @@
   padding: 10px 20px;
   border-radius: 10px;
   color: #f5a8a5;
+}
+
+@media (max-width: 1024px) {
+  .UsersCards .name,
+  .UsersCards .email {
+    width: 30%;
+  }
+
+  .UsersCards .status,
+  .UsersCards .actionContainer {
+    width: 20%;
+  }
+}
+
+@media (max-width: 768px) {
+  .UsersCards {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .UsersCards .name {
+    width: 45%;
+  }
+
+  .UsersCards .email {
+    width: 50%;
+    text-align: right;
+  }
+
+  .UsersCards .status {
+    width: 45%;
+    text-align: left;
+  }
+
+  .UsersCards .actionContainer {
+    width: 50%;
+  }
+
+  .UsersCards .action {
+    width: 100%;
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .UsersCards {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+    gap: 12px;
+  }
+
+  .UsersCards .name,
+  .UsersCards .email,
+  .UsersCards .status,
+  .UsersCards .actionContainer {
+    width: 100%;
+    text-align: left;
+  }
+
+  .UsersCards .status {
+    text-align: center;
+  }
+
+  .UsersCards .action {
+    margin-left: 0;
+    width: 100%;
+    max-width: none;
+  }
 }

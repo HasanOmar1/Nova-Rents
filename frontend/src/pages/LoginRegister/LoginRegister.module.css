@@ -14,6 +14,7 @@
   flex-direction: column;
   border: var(--cards-border);
   max-height: 780px;
+  flex: 1;
 }
 
 .LoginRegister .heroImage {
@@ -156,10 +157,11 @@
   opacity: 0.72;
   transition:
     opacity 0.3s ease,
-    border-color 0.3s ease;
-
+    border-color 0.3s ease,
+    height 1s;
   border: var(--cards-border);
   max-height: 780px;
+  flex: 1;
 }
 
 .LoginRegister .glassPanel:hover {
@@ -168,12 +170,6 @@
 
 .LoginRegister .formContainer {
   margin-top: 2rem;
-}
-
-.LoginRegister .glassPanel {
-  height: fit-content;
-  transition: height 1s;
-  /* background-color: red; */
 }
 
 .LoginRegister .formSpace {
@@ -256,9 +252,6 @@
   transition: transform 0.3s ease;
   margin-bottom: 10px;
   margin-top: -10px;
-}
-
-.LoginRegister .primaryButtonBlue {
   background: linear-gradient(to right, #0ea5e9, #1d4ed8);
   box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.3);
 }
@@ -292,10 +285,12 @@
   width: 1rem;
   transition: transform 0.3s ease;
 }
+
 .LoginRegister .iconMd {
   height: 1.5rem;
   width: 1.5rem;
 }
+
 .LoginRegister .primaryButtonBlue:hover .iconSm {
   transform: translateX(2px);
 }
@@ -321,4 +316,67 @@
   margin-top: 5px;
   font-weight: bold;
   font-size: 0.7rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .LoginRegister .container {
+    gap: 1rem;
+  }
+
+  .LoginRegister .heroTitle {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .LoginRegister .container {
+    flex-direction: column;
+  }
+
+  .LoginRegister .heroSection,
+  .LoginRegister .glassPanel {
+    max-height: none;
+    min-height: auto;
+  }
+
+  .LoginRegister .heroSection {
+    min-height: 400px;
+  }
+
+  .LoginRegister .switchWrapper {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .LoginRegister .container {
+    gap: 0.75rem;
+  }
+
+  .LoginRegister .heroSection {
+    min-height: 350px;
+    padding: 1rem;
+  }
+
+  .LoginRegister .heroTitle {
+    font-size: 1.25rem;
+  }
+
+  .LoginRegister .heroSubtext {
+    font-size: 0.8rem;
+  }
+
+  .LoginRegister .glassPanel {
+    padding: 1.25rem;
+  }
+
+  .LoginRegister .switchBtn {
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+  }
+
+  .LoginRegister .inputRow {
+    grid-template-columns: 1fr;
+  }
 }

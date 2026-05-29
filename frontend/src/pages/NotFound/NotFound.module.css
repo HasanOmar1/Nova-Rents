@@ -4,13 +4,49 @@
   align-items: center;
   padding-top: 10%;
   line-height: 1.7;
+  text-align: center;
 }
 
 .NotFound h1 {
   font-size: 3rem;
   color: greenyellow;
+  margin-bottom: 15px;
+}
+
+.NotFound p {
+  font-size: 1.1rem;
+  padding: 0 20px;
 }
 
 .NotFound .timer {
   color: red;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .NotFound {
+    padding-top: 15%;
+  }
+
+  .NotFound h1 {
+    font-size: 2.5rem;
+  }
+
+  .NotFound p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .NotFound {
+    padding-top: 20%;
+  }
+
+  .NotFound h1 {
+    font-size: 2rem;
+  }
+
+  .NotFound p {
+    font-size: 0.95rem;
+  }
 }
