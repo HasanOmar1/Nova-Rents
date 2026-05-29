@@ -76,6 +76,7 @@
 
 .Profile .personalInfoContainer input:focus {
   outline: none;
+  border-color: var(--input-focus-border-color);
 }
 
 .Profile .personalInfoContainer .labelInputContainer {

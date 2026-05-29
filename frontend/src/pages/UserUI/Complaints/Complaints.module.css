@@ -90,6 +90,7 @@
 .Complaints .complaintTypeContainer input:focus,
 .Complaints .complaintTypeContainer textarea:focus {
   outline: none;
+  border-color: var(--input-focus-border-color);
 }
 
 .Complaints .complaintTypeContainer textarea {

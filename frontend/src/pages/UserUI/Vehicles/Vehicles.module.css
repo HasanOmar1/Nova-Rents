@@ -118,14 +118,17 @@
   width: 100%;
   padding: 15px;
   border: var(--cards-border);
+  transition: border-color 0.2s;
 }
 
 .Vehicles .inputsContainer select {
   grid-column: span 1;
 }
 
-.Vehicles .inputsContainer input:focus {
+.Vehicles .inputsContainer input:focus,
+.Vehicles .inputsContainer select:focus {
   outline: none;
+  border-color: var(--input-focus-border-color);
 }
 
 .Vehicles .bottom input {

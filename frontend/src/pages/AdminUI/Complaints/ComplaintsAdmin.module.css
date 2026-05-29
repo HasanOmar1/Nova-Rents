@@ -42,8 +42,10 @@
   width: 200px;
 }
 
-.ComplaintsAdmin .searchContainer input:focus {
+.ComplaintsAdmin .searchContainer input:focus,
+.ComplaintsAdmin .searchContainer select:focus {
   outline: none;
+  border-color: var(--input-focus-border-color);
 }
 
 .ComplaintsAdmin .cardsContainer {

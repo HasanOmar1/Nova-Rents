@@ -45,8 +45,10 @@
   padding-left: 35px;
 }
 
-.Users .searchContainer input:focus {
+.Users .searchContainer input:focus,
+.Users .searchContainer select:focus {
   outline: none;
+  border-color: var(--input-focus-border-color);
 }
 
 .Users .searchNameContainer {

@@ -200,6 +200,9 @@
   border: var(--cards-border);
   width: 200px;
 }
+.VehicleDetails .datesContainer input:focus {
+  border-color: var(--input-focus-border-color);
+}
 
 .VehicleDetails .bookingContainer button {
   background-color: #1a42c6;
