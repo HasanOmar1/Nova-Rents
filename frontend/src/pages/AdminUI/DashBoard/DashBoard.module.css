@@ -40,3 +40,45 @@
   justify-content: space-between;
   padding-bottom: 30px;
 }
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .DashBoard .topCardsContainer {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .DashBoard .bottomCardsContainer {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .DashBoard .complaintsContainer {
+    flex-direction: column;
+    gap: 20px;
+    min-height: auto;
+  }
+
+  .DashBoard .complaintsContainer .left,
+  .DashBoard .complaintsContainer .right {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .DashBoard .topCardsContainer {
+    grid-template-columns: 1fr;
+    margin-top: 20px;
+  }
+
+  .DashBoard .complaintsContainer {
+    margin-top: 25px;
+  }
+
+  .DashBoard .complaintsContainer .titleContainer {
+    padding: 15px 20px;
+  }
+}

@@ -26,6 +26,7 @@
   padding: 10px 15px;
   border-radius: 10px;
   font-weight: bold;
+  width: fit-content;
 }
 
 .MapVehiclesCards .dataContainer img {
@@ -104,4 +105,42 @@
 
 .MapVehiclesCards .detailsBtn:active {
   background: rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 768px) {
+  .MapVehiclesCards {
+    padding: 15px;
+  }
+
+  .MapVehiclesCards .dataContainer {
+    gap: 10px;
+  }
+
+  .MapVehiclesCards .dataContainer img {
+    width: 110px;
+    height: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .MapVehiclesCards .dataContainer {
+    flex-direction: column;
+  }
+
+  .MapVehiclesCards .dataContainer img {
+    width: 100%;
+    height: 160px;
+  }
+
+  .MapVehiclesCards .btnsContainer {
+    width: 100%;
+    margin-left: 0;
+    display: flex;
+  }
+
+  .MapVehiclesCards .detailsBtn {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
 }

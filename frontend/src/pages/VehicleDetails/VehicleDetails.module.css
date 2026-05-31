@@ -45,8 +45,6 @@
   margin-top: 30px;
 }
 
-/* Data Container */
-
 .VehicleDetails .dataContainer {
   width: 60%;
   min-height: fit-content;
@@ -143,8 +141,6 @@
   min-height: 400px;
 }
 
-/* Booking container */
-
 .VehicleDetails .bookingContainer {
   width: auto;
   position: sticky;
@@ -201,6 +197,10 @@
   width: 200px;
 }
 
+.VehicleDetails .datesContainer input:focus {
+  border-color: var(--input-focus-border-color);
+}
+
 .VehicleDetails .bookingContainer button {
   background-color: #1a42c6;
   color: white;
@@ -209,4 +209,76 @@
 
 .VehicleDetails .bookingContainer button:hover {
   background-color: #1a42c6cb;
+}
+
+@media (max-width: 1024px) {
+  .VehicleDetails .allContainer {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .VehicleDetails .dataContainer {
+    width: 100%;
+  }
+
+  .VehicleDetails .bookingContainer {
+    width: 100%;
+    position: relative;
+    top: 0;
+  }
+
+  .VehicleDetails .datesContainer {
+    flex: 1;
+  }
+
+  .VehicleDetails .datesContainer input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .VehicleDetails .top {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .VehicleDetails .top .btnsContainer {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .VehicleDetails .btnsContainer .backBtn,
+  .VehicleDetails .btnsContainer .reportBtn {
+    flex: 1;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .VehicleDetails .top h1 {
+    font-size: 1.8rem;
+  }
+
+  .VehicleDetails .top .btnsContainer {
+    flex-direction: column;
+  }
+
+  .VehicleDetails .container {
+    padding: 20px;
+  }
+
+  .VehicleDetails .infoContainer .about {
+    padding: 0 15px;
+  }
+
+  .VehicleDetails .infoContainer img {
+    height: 250px;
+  }
+
+  .VehicleDetails .allDatesContainer {
+    flex-direction: column;
+  }
 }

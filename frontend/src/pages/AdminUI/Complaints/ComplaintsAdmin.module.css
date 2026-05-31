@@ -42,8 +42,10 @@
   width: 200px;
 }
 
-.ComplaintsAdmin .searchContainer input:focus {
+.ComplaintsAdmin .searchContainer input:focus,
+.ComplaintsAdmin .searchContainer select:focus {
   outline: none;
+  border-color: var(--input-focus-border-color);
 }
 
 .ComplaintsAdmin .cardsContainer {
@@ -63,6 +65,7 @@
   margin-bottom: 30px;
   color: var(--gray);
   font-size: 0.8rem;
+  overflow: hidden;
 }
 
 .ComplaintsAdmin .complaintsContainer .titles {
@@ -92,6 +95,12 @@
   text-align: center;
 }
 
+.ComplaintsAdmin .complaintsContainer hr {
+  margin: 0;
+  border: none;
+  border-top: var(--cards-border);
+}
+
 .ComplaintsAdmin .pagination {
   border-top: var(--cards-border);
   display: flex;
@@ -117,6 +126,16 @@
   color: var(--gray);
   font-weight: bold;
   font-size: 0.8rem;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.ComplaintsAdmin .pagination .btnsContainer button:hover {
+  color: white;
 }
 
 /* complaints stats */
@@ -131,4 +150,57 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .ComplaintsAdmin .topCardsContainer {
+    flex-wrap: wrap;
+  }
+
+  /* Hide the titles on smaller screens because the individual cards change their layout to stack */
+  .ComplaintsAdmin .complaintsContainer .titles {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .ComplaintsAdmin .searchContainer {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .ComplaintsAdmin .searchContainer .left,
+  .ComplaintsAdmin .searchContainer .right {
+    width: 100%;
+  }
+
+  .ComplaintsAdmin .searchContainer input,
+  .ComplaintsAdmin .searchContainer select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .ComplaintsAdmin .topCardsContainer {
+    flex-direction: column;
+  }
+
+  .ComplaintsAdmin .searchContainer {
+    padding: 15px;
+  }
+
+  .ComplaintsAdmin .pagination {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .ComplaintsAdmin .pagination .btnsContainer {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ComplaintsAdmin .bottomStats {
+    min-height: 300px;
+  }
 }
