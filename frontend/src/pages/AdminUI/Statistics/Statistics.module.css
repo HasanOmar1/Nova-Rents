@@ -10,3 +10,28 @@
   justify-content: space-between;
   padding-bottom: 30px;
 }
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .Statistics .bottomCardsContainer {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .Statistics .topCardsContainer {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .Statistics .topCardsContainer {
+    flex-direction: column;
+    margin-top: 20px;
+  }
+
+  .Statistics .bottomCardsContainer {
+    margin-top: 20px;
+  }
+}

@@ -31,12 +31,24 @@ const Profile = () => {
         <div className={styles.inputsContainer}>
           <div className={styles.labelInputContainer}>
             <label htmlFor="fname">First name</label>
-            <input type="text" name="fname" id="fname" value={"Hasan"} />
+            <input
+              type="text"
+              name="fname"
+              id="fname"
+              value={"Hasan"}
+              disabled={!editProfileClicked}
+            />
           </div>
 
           <div className={styles.labelInputContainer}>
             <label htmlFor="lfname">Last name</label>
-            <input type="text" name="lname" id="lname" value={"Omar"} />
+            <input
+              type="text"
+              name="lname"
+              id="lname"
+              value={"Omar"}
+              disabled={!editProfileClicked}
+            />
           </div>
 
           <div className={styles.labelInputContainer}>
@@ -46,12 +58,19 @@ const Profile = () => {
               name="email"
               id="email"
               value={"hasan@gmail.com"}
+              disabled={!editProfileClicked}
             />
           </div>
 
           <div className={styles.labelInputContainer}>
             <label htmlFor="phone">Phone</label>
-            <input type="phone" name="phone" id="phone" value={"052-0000000"} />
+            <input
+              type="phone"
+              name="phone"
+              id="phone"
+              value={"052-0000000"}
+              disabled={!editProfileClicked}
+            />
           </div>
         </div>
 

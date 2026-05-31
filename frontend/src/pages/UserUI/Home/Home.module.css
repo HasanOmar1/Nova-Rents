@@ -2,7 +2,6 @@
   font-size: 2.2rem;
 }
 
-/* Top Btns */
 .Home .btnsContainer {
   display: flex;
   gap: 10px;
@@ -46,15 +45,12 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-/*  Top Cards */
-
 .Home .topCardsContainer {
   display: flex;
   gap: 20px;
   margin-top: 30px;
 }
 
-/* Mid Cards */
 .Home .midCardsContainer {
   display: flex;
   flex-direction: column;
@@ -63,9 +59,54 @@
   padding-bottom: 30px;
 }
 
-/* Bottom Cards */
 .bottomCardsContainer {
   display: flex;
   justify-content: space-between;
   padding-bottom: 30px;
+}
+
+@media (max-width: 1024px) {
+  .Home .topCardsContainer {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .bottomCardsContainer {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .Home h1 {
+    font-size: 1.8rem;
+  }
+
+  .Home .midCardsContainer {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .Home h1 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  .Home .btnsContainer {
+    margin-left: 0;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .Home .btnsContainer a {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .Home .topCardsContainer {
+    grid-template-columns: 1fr;
+    margin-top: 20px;
+  }
 }
