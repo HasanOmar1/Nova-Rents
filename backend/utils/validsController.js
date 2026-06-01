@@ -23,6 +23,7 @@ function validateRequiredRegisterFields(body, res) {
   return true;
 }
 
+
 function validateRegisterInputFormats(body, res) {
   const { firstName, lastName, email, password, phone } = body;
 
