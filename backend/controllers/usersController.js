@@ -2,6 +2,11 @@
 const bcrypt = require("bcrypt");
 const doQuery = require("../database/query");
 const hashPassword = require("../utils/hashPassword");
+const generateOTP = require("../utils/generateOTP");
+const {
+  sendOTPEmail,
+  handleEmailVerification,
+} = require("../services/emailService");
 const {
   getUserByEmail,
   getUserByPhone,
@@ -14,6 +19,57 @@ const {
   validateAuthenticatedUser,
   validateEmailInBody,
 } = require("../utils/validsController");
+
+const sendVerificationCode = async (req, res) => {
+  const { email } = req.body;
+
+  const otp = generateOTP(); // utils
+  await sendOTPEmail(email, otp); // service
+
+  req.session.otp = otp;
+
+  res.json({ message: "sent" });
+};
+
+// Verify the OTP for a pending email change and apply it
+const verifyCode = async (req, res, next) => {
+  try {
+    const { code } = req.body;
+    const { pendingEmail, emailOtp } = req.session;
+
+    if (!pendingEmail || !emailOtp) {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "No pending email verification" });
+    }
+
+    if (!code || String(code) !== String(emailOtp)) {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Invalid verification code" });
+    }
+
+    const updateQuery = "UPDATE users SET email = ? WHERE email = ?";
+    const result = await doQuery(updateQuery, [
+      pendingEmail,
+      req.session.user.email,
+    ]);
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "User not found" });
+    }
+
+    req.session.user.email = pendingEmail;
+    delete req.session.pendingEmail;
+    delete req.session.emailOtp;
+
+    res.status(STATUS_CODE.OK).json({ message: "Email verified and updated" });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // Get a list of all users in the system
 const getAllUsers = async (req, res, next) => {
@@ -175,7 +231,7 @@ const getUserDetailsByEmail = async (req, res, next) => {
 
     const { email } = req.query;
 
-    if (!validateEmailQuery(email, res)) return;
+    if (!validateEmailInBody(email, res)) return;
 
     const query = `
       SELECT 
@@ -314,7 +370,124 @@ const unblockUserByEmail = async (req, res, next) => {
     next(error);
   }
 };
+const updateUserProfile = async (req, res, next) => {
+  try {
+    const currentEmail = req.session.user.email;
 
+    const { firstName, lastName, phone, birthDate, password, newEmail } =
+      req.body;
+
+    if (!validateRegisterInputFormats(req.body, res)) return;
+
+    const user = await getUserByEmail(currentEmail);
+
+    if (!user) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "User not found" });
+    }
+
+    const fields = [];
+    const values = [];
+
+    // -------------------------
+    // NAME FIELDS
+    // -------------------------
+    if (firstName) {
+      const clean = firstName.trim();
+      fields.push("firstName = ?");
+      values.push(clean[0].toUpperCase() + clean.slice(1));
+    }
+
+    if (lastName) {
+      const clean = lastName.trim();
+      fields.push("lastName = ?");
+      values.push(clean[0].toUpperCase() + clean.slice(1));
+    }
+
+    if (phone) {
+      fields.push("phone = ?");
+      values.push(phone);
+    }
+
+    if (birthDate) {
+      fields.push("birthDate = ?");
+      values.push(birthDate);
+    }
+
+    // -------------------------
+    // PASSWORD
+    // -------------------------
+    if (password) {
+      const hashedPassword = await hashPassword(password);
+      fields.push("password = ?");
+      values.push(hashedPassword);
+    }
+
+    // -------------------------
+    // EMAIL CHANGE (2-STEP FLOW)
+    // -------------------------
+    if (newEmail) {
+      const normalizedEmail = newEmail.trim().toLowerCase();
+
+      if (normalizedEmail !== currentEmail) {
+        const otp = await handleEmailVerification(normalizedEmail);
+
+        req.session.pendingEmail = normalizedEmail;
+        req.session.emailOtp = otp;
+
+        return res.json({
+          message: "Verify new email first",
+        });
+      }
+    }
+
+    // -------------------------
+    // SAFETY CHECK (IMPORTANT)
+    // -------------------------
+    if (fields.length === 0) {
+      return res.status(400).json({
+        message: "No fields to update",
+      });
+    }
+
+    // -------------------------
+    // UPDATE DB
+    // -------------------------
+    const updateQuery = `
+      UPDATE users 
+      SET ${fields.join(", ")} 
+      WHERE email = ?
+    `;
+
+    const result = await doQuery(updateQuery, [...values, currentEmail]);
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "User not found" });
+    }
+
+    // -------------------------
+    // RESPONSE
+    // -------------------------
+    res.status(STATUS_CODE.OK).json({
+      message: "User profile updated successfully",
+      user: {
+        userId: user.userId,
+        firstName: firstName ?? user.firstName,
+        lastName: lastName ?? user.lastName,
+        email: currentEmail,
+        phone: phone ?? user.phone,
+        birthDate: birthDate ?? user.birthDate,
+        role: user.role,
+        status: user.status,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   getAllUsers,
   register,
@@ -324,4 +497,7 @@ module.exports = {
   blockUserByEmail,
   unblockUserByEmail,
   getUserDetailsByEmail,
+  updateUserProfile,
+  sendVerificationCode,
+  verifyCode,
 };
