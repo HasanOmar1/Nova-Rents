@@ -1,9 +1,12 @@
 import { useState } from "react";
 import styles from "./Profile.module.css";
 import DocumentsCards from "../../../components/DocumentsCards/DocumentsCards";
+import { useUserContext } from "../../../context/UserContext";
 
 const Profile = () => {
   const [editProfileClicked, setEditProfileClicked] = useState(false);
+  const { currentUser } = useUserContext();
+  console.log(currentUser);
 
   const clickEditProfile = () => {
     setEditProfileClicked((prev) => !prev);
@@ -15,8 +18,8 @@ const Profile = () => {
 
       <div className={`${styles.card} ${styles.signedAsContainer}`}>
         <p>Signed in as</p>
-        <h4>Hasan Omar</h4>
-        <p className={styles.userEmail}>hasan@gmail.com</p>
+        <h4>{currentUser?.firstName}</h4>
+        <p className={styles.userEmail}>{currentUser?.email}</p>
       </div>
 
       <div className={`${styles.card} ${styles.personalInfoContainer}`}>
@@ -35,7 +38,7 @@ const Profile = () => {
               type="text"
               name="fname"
               id="fname"
-              value={"Hasan"}
+              value={currentUser?.firstName}
               disabled={!editProfileClicked}
             />
           </div>
@@ -46,7 +49,7 @@ const Profile = () => {
               type="text"
               name="lname"
               id="lname"
-              value={"Omar"}
+              value={currentUser?.lastName}
               disabled={!editProfileClicked}
             />
           </div>
@@ -57,7 +60,7 @@ const Profile = () => {
               type="email"
               name="email"
               id="email"
-              value={"hasan@gmail.com"}
+              value={currentUser?.email}
               disabled={!editProfileClicked}
             />
           </div>
@@ -68,8 +71,19 @@ const Profile = () => {
               type="phone"
               name="phone"
               id="phone"
-              value={"052-0000000"}
+              value={currentUser?.phone}
               disabled={!editProfileClicked}
+            />
+          </div>
+
+          <div className={styles.labelInputContainer}>
+            <label htmlFor="phone">Birth Date</label>
+            <input
+              type="text"
+              name="birthdate"
+              id="birthdate"
+              value={currentUser?.birthDate}
+              disabled={true}
             />
           </div>
         </div>
