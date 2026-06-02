@@ -289,6 +289,7 @@ const updateVehicle = async (req, res, next) => {
     next(error);
   }
 };
+
 const getAllVehicles = async (req, res, next) => {
   try {
     const {
@@ -310,7 +311,7 @@ const getAllVehicles = async (req, res, next) => {
       SELECT 
         v.licensePlate,
         v.fuelType,
-        v.expirationDate,
+        DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
         v.image,
         v.year,
         v.km,
@@ -328,12 +329,17 @@ const getAllVehicles = async (req, res, next) => {
         cb.brandName,
 
         ct.carTypeId,
-        ct.carTypeName
+        ct.carTypeName,
+        u.firstName AS ownerFirstName,
+        u.lastName AS ownerLastName,
+        u.email AS ownerEmail,
+        u.phone AS ownerPhone
 
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      Join users u ON v.ownerId = u.userId
       WHERE 1 = 1
     `;
 
@@ -448,6 +454,7 @@ const getAllCarModels = async (req, res, next) => {
       query += ` AND carTypeId = ?`;
       values.push(typeId);
     }
+
     query += ` ORDER BY modelName ASC`;
 
     const models = await doQuery(query, values);
