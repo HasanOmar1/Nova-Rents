@@ -408,9 +408,6 @@ const getAllVehicles = async (req, res, next) => {
 
     const vehicles = await doQuery(query, values);
 
-    console.log(query, "😆 in getAllVehicles");
-    console.log(values, "😆 in getAllVehicles");
-
     res.status(STATUS_CODE.OK).json({
       message: "Vehicles fetched successfully",
       count: vehicles.length,
