@@ -42,6 +42,22 @@
   font-size: 1.2rem;
 }
 
+.Profile .editBtnAndTitleContainer div .errorMsg {
+  position: absolute;
+  color: red;
+  margin-top: 5px;
+  font-weight: bold;
+  font-size: 0.7rem;
+}
+
+.Profile .editBtnAndTitleContainer div .successMsg {
+  position: absolute;
+  color: #a5f5cf;
+  margin-top: 5px;
+  font-weight: bold;
+  font-size: 0.7rem;
+}
+
 .Profile .personalInfoContainer button {
   border-radius: 20px;
   background-color: var(--input-bg);
@@ -58,6 +74,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
+  margin-top: 5px;
 }
 
 .Profile .inputsContainer label {
