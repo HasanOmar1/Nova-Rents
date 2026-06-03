@@ -19,6 +19,7 @@ const {
   validateAuthenticatedUser,
   validateEmailInBody,
   validateUpdateProfileInputFormats,
+  validateUpdateInputFormats,
 } = require("../utils/validsController");
 
 const sendVerificationCode = async (req, res) => {
@@ -371,18 +372,24 @@ const unblockUserByEmail = async (req, res, next) => {
     next(error);
   }
 };
+
 const updateUserProfile = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
     const currentEmail = req.session.user.email;
+    const currentUserId = req.session.user.userId;
 
     const { firstName, lastName, phone, birthDate, password, newEmail } =
       req.body;
 
     if (!validateUpdateProfileInputFormats(req.body, res)) return;
+    if (!validateUpdateInputFormats(req.body, res)) return;
 
-    const user = await getUserByEmail(currentEmail);
+    const users = await doQuery("SELECT * FROM users WHERE userId = ?", [
+      currentUserId,
+    ]);
+    const user = users[0];
 
     if (!user) {
       return res
@@ -398,32 +405,58 @@ const updateUserProfile = async (req, res, next) => {
       }
     }
 
+    const currentEmail = user.email;
+
     const fields = [];
     const values = [];
 
     // -------------------------
     // NAME FIELDS
     // -------------------------
-    if (firstName) {
+    if (firstName && firstName !== user.firstName) {
       const clean = firstName.trim();
       fields.push("firstName = ?");
       values.push(clean[0].toUpperCase() + clean.slice(1));
     }
 
-    if (lastName) {
+    if (lastName && lastName !== user.lastName) {
       const clean = lastName.trim();
       fields.push("lastName = ?");
       values.push(clean[0].toUpperCase() + clean.slice(1));
     }
 
-    if (phone) {
+    // -------------------------
+    // PHONE
+    // -------------------------
+    if (phone && phone !== user.phone) {
+      const phoneExist = await getUserByPhone(phone);
+      if (phoneExist) {
+        res.status(STATUS_CODE.CONFLICT);
+        throw new Error("Phone already exists!");
+      }
+
       fields.push("phone = ?");
       values.push(phone);
     }
 
-    if (birthDate) {
+    if (birthDate && birthDate !== user.birthDate) {
       fields.push("birthDate = ?");
       values.push(birthDate);
+    }
+
+    // -------------------------
+    // EMAIL
+    // -------------------------
+    if (newEmail && newEmail !== currentEmail) {
+      const anotherUser = await getUserByEmail(newEmail);
+
+      if (anotherUser) {
+        res.status(STATUS_CODE.CONFLICT);
+        throw new Error("Email already exists!");
+      }
+
+      fields.push("email = ?");
+      values.push(newEmail);
     }
 
     // -------------------------
@@ -435,11 +468,12 @@ const updateUserProfile = async (req, res, next) => {
       values.push(hashedPassword);
     }
 
-    // -------------------------
+    // we dont use this
+    //     -------------------------
     // EMAIL CHANGE (2-STEP FLOW)
     // -------------------------
-    if (newEmail) {
-      const normalizedEmail = newEmail.trim().toLowerCase();
+    // if (newEmail) {
+    //   const normalizedEmail = newEmail.trim().toLowerCase();
 
       if (normalizedEmail !== currentEmail) {
         const emailExist = await getUserByEmail(normalizedEmail);
@@ -451,6 +485,17 @@ const updateUserProfile = async (req, res, next) => {
         }
       }
     }
+    //   if (normalizedEmail !== currentEmail) {
+    //     const otp = await handleEmailVerification(normalizedEmail);
+
+    //     req.session.pendingEmail = normalizedEmail;
+    //     req.session.emailOtp = otp;
+
+    //     return res.json({
+    //       message: "Verify new email first",
+    //     });
+    //   }
+    // }
 
     // -------------------------
     // SAFETY CHECK (IMPORTANT)
@@ -467,10 +512,10 @@ const updateUserProfile = async (req, res, next) => {
     const updateQuery = `
       UPDATE users 
       SET ${fields.join(", ")} 
-      WHERE email = ?
+      WHERE userId = ?
     `;
 
-    const result = await doQuery(updateQuery, [...values, currentEmail]);
+    const result = await doQuery(updateQuery, [...values, currentUserId]);
 
     if (result.affectedRows === 0) {
       return res
@@ -481,23 +526,42 @@ const updateUserProfile = async (req, res, next) => {
     // -------------------------
     // RESPONSE
     // -------------------------
-    res.status(STATUS_CODE.OK).json({
-      message: "User profile updated successfully",
-      user: {
-        userId: user.userId,
-        firstName: firstName ?? user.firstName,
-        lastName: lastName ?? user.lastName,
-        email: currentEmail,
-        phone: phone ?? user.phone,
-        birthDate: birthDate ?? user.birthDate,
-        role: user.role,
-        status: user.status,
-      },
+    let safeBirthDate = birthDate;
+    if (!safeBirthDate && user?.birthDate) {
+      const d = new Date(user.birthDate);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      safeBirthDate = `${year}-${month}-${day}`;
+    }
+
+    const loggedUser = {
+      userId: user.userId,
+      firstName: firstName ?? user.firstName,
+      lastName: lastName ?? user.lastName,
+      email: newEmail ?? currentEmail,
+      phone: phone ?? user.phone,
+      birthDate: safeBirthDate,
+      role: user.role,
+      status: user.status,
+    };
+
+    req.session.user = loggedUser;
+
+    // Force the session to save BEFORE sending the 200 OK.
+    // This completely eliminates race conditions with the frontend.
+    req.session.save((err) => {
+      if (err) return next(err);
+      res.status(STATUS_CODE.OK).json({
+        message: "User profile updated successfully",
+        user: loggedUser,
+      });
     });
   } catch (error) {
     next(error);
   }
 };
+
 module.exports = {
   getAllUsers,
   register,

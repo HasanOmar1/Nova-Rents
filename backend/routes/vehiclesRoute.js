@@ -3,22 +3,15 @@ const express = require("express");
 const router = express.Router();
 const { isAuthenticated } = require("../middleWare/authMiddleware");
 const vehicleQueries = require("../controllers/vehiclesController");
+
 router.get("/", vehicleQueries.getAllVehicles);
-
-router.get("/brands",  vehicleQueries.getAllCarBrands);
-
+router.get("/brands", vehicleQueries.getAllCarBrands);
 router.get("/models", vehicleQueries.getAllCarModels);
-
 router.get("/types", vehicleQueries.getAllCarTypes);
-
 router.get("/myVehicles", isAuthenticated, vehicleQueries.getUserVehicles);
-
 router.get("/:licensePlate", vehicleQueries.getVehicleById);
-
 router.post("/add", isAuthenticated, vehicleQueries.addVehicle);
-
 router.put("/:licensePlate", isAuthenticated, vehicleQueries.updateVehicle);
-
 router.delete("/:licensePlate", isAuthenticated, vehicleQueries.deleteVehicle);
 
 module.exports = router;

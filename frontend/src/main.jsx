@@ -5,6 +5,7 @@ import "./index.css";
 import App from "./App.jsx";
 import { BrowserRouter } from "react-router-dom";
 import UserContextProvider from "./context/UserContext.jsx";
+import VehicleContextProvider from "./context/VehicleContext.jsx";
 
 axios.defaults.baseURL = "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -12,9 +13,11 @@ axios.defaults.withCredentials = true;
 createRoot(document.getElementById("root")).render(
   // <StrictMode>
   <BrowserRouter>
-    <UserContextProvider>
-      <App />
-    </UserContextProvider>
+    <VehicleContextProvider>
+      <UserContextProvider>
+        <App />
+      </UserContextProvider>
+    </VehicleContextProvider>
   </BrowserRouter>,
   // </StrictMode>,
 );
