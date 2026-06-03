@@ -5,20 +5,20 @@ import { MapPin, User, AlertTriangle } from "lucide-react";
 const VehiclesCards = ({ veh }) => {
   return (
     <div className={styles.VehiclesCards}>
-      <img src={veh.img} alt={veh.vehName} />
+      <img src={veh.image} alt={veh.brandName} />
 
       <div className={styles.vehiclesCardsContainer}>
         <div className={styles.vehStatus}>
-          <p>{veh.vehName}</p>
+          <p>{veh.brandName + " " + veh.modelName}</p>
           <p className={styles.status}>{veh.status}</p>
         </div>
 
-        <p className={styles.vehType}>{veh.type}</p>
+        <p className={styles.vehType}>{veh.carTypeName}</p>
 
         <div className={styles.vehDetails}>
           <div>
             <p className={styles.title}>Price</p>
-            <p className={styles.detailsData}>{veh.price}</p>
+            <p className={styles.detailsData}>${veh.price}</p>
           </div>
 
           <div>
@@ -33,7 +33,7 @@ const VehiclesCards = ({ veh }) => {
               <p>
                 <MapPin size={15} className="icon" />
               </p>
-              <p>{veh.location}</p>
+              <p>{veh.address}</p>
             </div>
           </div>
         </div>
@@ -43,13 +43,14 @@ const VehiclesCards = ({ veh }) => {
             <User size={15} className="icon" />
           </p>
           <p>
-            <span className={styles.host}>Host</span> · {veh.ownerName}
+            <span className={styles.host}>Host</span> · {veh.ownerFirstName}{" "}
+            {veh.ownerLastName}
           </p>
         </div>
 
         <div className={styles.btnsContainer}>
           <Link
-            to={`/vehicles/${veh.id}`}
+            to={`/vehicles/${veh.licensePlate}`}
             state={veh}
             className={styles.detailsBtn}
           >

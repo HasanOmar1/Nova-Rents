@@ -23,7 +23,6 @@ function validateRequiredRegisterFields(body, res) {
   return true;
 }
 
-
 function validateRegisterInputFormats(body, res) {
   const { firstName, lastName, email, password, phone } = body;
 
@@ -42,7 +41,11 @@ function validateRegisterInputFormats(body, res) {
     );
   }
   if (!checkValidEmail(email)) {
-    return sendValidationError(res, STATUS_CODE.BAD_REQUEST, "Invalid email format.");
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid email format.",
+    );
   }
   if (!checkValidPassword(password)) {
     return sendValidationError(
@@ -69,6 +72,49 @@ function validateLoginFields(email, password, res) {
       "Email and password are required",
     );
   }
+  return true;
+}
+
+function validateUpdateInputFormats(body, res) {
+  const { firstName, lastName, newEmail, password, phone } = body;
+
+  // Only validate if the field was actually sent in the request
+  if (firstName !== undefined && !checkValidName(firstName)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid first name. It should be 2-30 characters long and contain only letters, numbers, and underscores.",
+    );
+  }
+  if (lastName !== undefined && !checkValidName(lastName)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid last name. It should be 2-30 characters long and contain only letters, numbers, and underscores.",
+    );
+  }
+  if (newEmail !== undefined && !checkValidEmail(newEmail)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid email format.",
+    );
+  }
+  if (password !== undefined && !checkValidPassword(password)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid password. It should be 3-8 characters long and include uppercase letters, lowercase letters, and numbers.",
+    );
+  }
+  if (phone !== undefined && !checkValidPhoneIL(phone)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid phone number format.",
+    );
+  }
+
   return true;
 }
 
@@ -99,7 +145,7 @@ function validateAndNormalizeVehicleCreate(req, res) {
     );
   }
 
-  const {userId } = req.session.user;
+  const { userId } = req.session.user;
   const {
     licensePlate,
     modelId,
@@ -122,14 +168,14 @@ function validateAndNormalizeVehicleCreate(req, res) {
     km == null ||
     !address ||
     price == null ||
-    !color
-    || modelId == null 
-  ) 
-  return sendValidationError(
-    res,
-    STATUS_CODE.BAD_REQUEST,
-    "All fields are required.",
-  );
+    !color ||
+    modelId == null
+  )
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "All fields are required.",
+    );
 
   const plateString = String(licensePlate).trim();
   if (!/^\d+$/.test(plateString)) {
@@ -148,13 +194,25 @@ function validateAndNormalizeVehicleCreate(req, res) {
   }
 
   if (Number.isNaN(Number(year))) {
-    return sendValidationError(res, STATUS_CODE.BAD_REQUEST, "Year must be a number.");
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Year must be a number.",
+    );
   }
   if (Number.isNaN(Number(km))) {
-    return sendValidationError(res, STATUS_CODE.BAD_REQUEST, "KM must be a number.");
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "KM must be a number.",
+    );
   }
   if (Number.isNaN(Number(price))) {
-    return sendValidationError(res, STATUS_CODE.BAD_REQUEST, "Price must be a number.");
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Price must be a number.",
+    );
   }
 
   const yearNum = Number(year);
@@ -195,7 +253,13 @@ function validateAndNormalizeVehicleCreate(req, res) {
 }
 
 function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
-  if (!validateAuthenticatedUser(req, res, "You must be logged in to perform this action.")) {
+  if (
+    !validateAuthenticatedUser(
+      req,
+      res,
+      "You must be logged in to perform this action.",
+    )
+  ) {
     return null;
   }
 
@@ -236,13 +300,25 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   const currentYear = new Date().getFullYear();
 
   if (Number.isNaN(yearNum)) {
-    return sendValidationError(res, STATUS_CODE.BAD_REQUEST, "Year must be a number.");
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Year must be a number.",
+    );
   }
   if (Number.isNaN(kmNum)) {
-    return sendValidationError(res, STATUS_CODE.BAD_REQUEST, "KM must be a number.");
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "KM must be a number.",
+    );
   }
   if (Number.isNaN(priceNum)) {
-    return sendValidationError(res, STATUS_CODE.BAD_REQUEST, "Price must be a number.");
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Price must be a number.",
+    );
   }
   if (yearNum < 1900 || yearNum > currentYear + 1) {
     return sendValidationError(
@@ -275,4 +351,5 @@ module.exports = {
   validateEmailInBody,
   validateAndNormalizeVehicleCreate,
   validateAndMergeVehicleUpdate,
+  validateUpdateInputFormats,
 };

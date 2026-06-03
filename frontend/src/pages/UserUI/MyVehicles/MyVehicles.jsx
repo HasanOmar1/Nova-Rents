@@ -24,26 +24,26 @@ const topData = [
   },
 ];
 
-const vehicleData = [
-  {
-    id: 1,
-    img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800&auto=format&fit=crop",
-    vehName: "Porsche 911 Carrera",
-    price: "$450",
-    location: "Tel Aviv",
-    type: "Car",
-    year: 2023,
-  },
-  {
-    id: 2,
-    img: "https://nsimgall.s3.amazonaws.com/wp-content/uploads/2026/02/24134709/20250729_163726-scaled.jpg",
-    vehName: "Harley Davidson Iron 883",
-    year: 2021,
-    price: "$120",
-    location: "Haifa",
-    type: "Motorcycle",
-  },
-];
+// const vehicleData = [
+//   {
+//     id: 1,
+//     img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800&auto=format&fit=crop",
+//     vehName: "Porsche 911 Carrera",
+//     price: "$450",
+//     location: "Tel Aviv",
+//     type: "Car",
+//     year: 2023,
+//   },
+//   {
+//     id: 2,
+//     img: "https://nsimgall.s3.amazonaws.com/wp-content/uploads/2026/02/24134709/20250729_163726-scaled.jpg",
+//     vehName: "Harley Davidson Iron 883",
+//     year: 2021,
+//     price: "$120",
+//     location: "Haifa",
+//     type: "Motorcycle",
+//   },
+// ];
 
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -82,7 +82,7 @@ const MyVehicles = () => {
           <p>Actions</p>
         </div>
         <hr />
-
+        {/* 
         {vehicleData.map((veh, i) => {
           return (
             <div key={veh.id}>
@@ -97,7 +97,7 @@ const MyVehicles = () => {
               {i < vehicleData.length - 1 && <hr />}
             </div>
           );
-        })}
+        })} */}
       </div>
       <AddVehicleMenu isOpen={isOpen} onClose={closeAddVehMenu} />
     </div>

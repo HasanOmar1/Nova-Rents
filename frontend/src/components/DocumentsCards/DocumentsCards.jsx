@@ -18,9 +18,9 @@ const DocumentsCards = () => {
     <div className={styles.DocumentsCards}>
       <h4>Documents</h4>
 
-      {activityData.map((item) => {
+      {activityData.map((item, i) => {
         return (
-          <div className={styles.dataContainer}>
+          <div className={styles.dataContainer} key={i}>
             <div className={styles.data}>
               <p>{item.notification}</p>
               <label className={styles.customFileUpload}>

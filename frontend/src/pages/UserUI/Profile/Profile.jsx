@@ -1,12 +1,96 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./Profile.module.css";
 import DocumentsCards from "../../../components/DocumentsCards/DocumentsCards";
+import { useUserContext } from "../../../context/UserContext";
+
+const normalizeDate = (dateStr) => {
+  if (!dateStr) return "";
+  if (dateStr.includes("/")) {
+    const [day, month, year] = dateStr.split("/");
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+  return dateStr.split("T")[0];
+};
 
 const Profile = () => {
   const [editProfileClicked, setEditProfileClicked] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+
+  const { currentUser, updateProfile, errorMsg, setErrorMsg } =
+    useUserContext();
+
+  const [inputsValues, setInputsValues] = useState({
+    firstName: currentUser?.firstName || "",
+    lastName: currentUser?.lastName || "",
+    email: currentUser?.email || "",
+    phone: currentUser?.phone || "",
+    birthDate: normalizeDate(currentUser?.birthDate),
+    password: "",
+  });
+
+  useEffect(() => {
+    if (currentUser && !editProfileClicked) {
+      setInputsValues({
+        firstName: currentUser.firstName || "",
+        lastName: currentUser.lastName || "",
+        email: currentUser.email || "",
+        phone: currentUser.phone || "",
+        birthDate: normalizeDate(currentUser.birthDate),
+        password: "",
+      });
+    }
+  }, [currentUser, editProfileClicked]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setInputsValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const clickEditProfile = () => {
-    setEditProfileClicked((prev) => !prev);
+    setEditProfileClicked(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+  };
+
+  const clickCancel = () => {
+    setEditProfileClicked(false);
+    setErrorMsg("");
+    setSuccessMsg("");
+    setInputsValues({
+      firstName: currentUser?.firstName || "",
+      lastName: currentUser?.lastName || "",
+      email: currentUser?.email || "",
+      phone: currentUser?.phone || "",
+      birthDate: normalizeDate(currentUser?.birthDate),
+      password: "",
+    });
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+    const newData = {
+      firstName: inputsValues.firstName,
+      lastName: inputsValues.lastName,
+      newEmail: inputsValues.email,
+      phone: inputsValues.phone,
+      birthDate: inputsValues.birthDate,
+    };
+
+    if (inputsValues.password && inputsValues.password.trim() !== "") {
+      newData.password = inputsValues.password;
+    }
+
+    const isSuccess = await updateProfile(newData);
+    if (isSuccess) {
+      setSuccessMsg("Profile updated successfully!");
+      setEditProfileClicked(false);
+      setInputsValues((prev) => ({ ...prev, password: "" }));
+    }
   };
 
   return (
@@ -15,78 +99,120 @@ const Profile = () => {
 
       <div className={`${styles.card} ${styles.signedAsContainer}`}>
         <p>Signed in as</p>
-        <h4>Hasan Omar</h4>
-        <p className={styles.userEmail}>hasan@gmail.com</p>
+        <h4>{currentUser?.firstName}</h4>
+        <p className={styles.userEmail}>{currentUser?.email}</p>
       </div>
 
       <div className={`${styles.card} ${styles.personalInfoContainer}`}>
         <div className={styles.editBtnAndTitleContainer}>
-          <p>Personal Information</p>
+          <div>
+            <p>Personal Information</p>
+            {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
+            {successMsg && <p className={styles.successMsg}>{successMsg}</p>}
+          </div>
 
           {!editProfileClicked && (
-            <button onClick={clickEditProfile}>Edit</button>
+            <button type="button" onClick={clickEditProfile}>
+              Edit
+            </button>
           )}
         </div>
 
-        <div className={styles.inputsContainer}>
-          <div className={styles.labelInputContainer}>
-            <label htmlFor="fname">First name</label>
-            <input
-              type="text"
-              name="fname"
-              id="fname"
-              value={"Hasan"}
-              disabled={!editProfileClicked}
-            />
+        <form onSubmit={handleUpdateProfile}>
+          <div className={styles.inputsContainer}>
+            <div className={styles.labelInputContainer}>
+              <label htmlFor="firstName">First name</label>
+              <input
+                type="text"
+                name="firstName"
+                id="firstName"
+                value={inputsValues.firstName}
+                onChange={handleInputChange}
+                disabled={!editProfileClicked}
+              />
+            </div>
+
+            <div className={styles.labelInputContainer}>
+              <label htmlFor="lastName">Last name</label>
+              <input
+                type="text"
+                name="lastName"
+                id="lastName"
+                value={inputsValues.lastName}
+                onChange={handleInputChange}
+                disabled={!editProfileClicked}
+              />
+            </div>
+
+            <div className={styles.labelInputContainer}>
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                value={inputsValues.email}
+                onChange={handleInputChange}
+                disabled={!editProfileClicked}
+              />
+            </div>
+
+            <div className={styles.labelInputContainer}>
+              <label htmlFor="phone">Phone</label>
+              <input
+                type="tel"
+                name="phone"
+                id="phone"
+                value={inputsValues.phone}
+                onChange={handleInputChange}
+                disabled={!editProfileClicked}
+              />
+            </div>
+
+            <div className={styles.labelInputContainer}>
+              <label htmlFor="birthDate">Birth Date</label>
+              <input
+                type={!editProfileClicked ? "text" : "date"}
+                name="birthDate"
+                id="birthDate"
+                value={inputsValues.birthDate}
+                onChange={handleInputChange}
+                disabled={!editProfileClicked}
+              />
+            </div>
+
+            <div className={styles.labelInputContainer}>
+              <label htmlFor="password">New Password</label>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                placeholder={
+                  editProfileClicked
+                    ? "Leave blank to keep current"
+                    : "********"
+                }
+                value={inputsValues.password}
+                onChange={handleInputChange}
+                disabled={!editProfileClicked}
+              />
+            </div>
           </div>
 
-          <div className={styles.labelInputContainer}>
-            <label htmlFor="lfname">Last name</label>
-            <input
-              type="text"
-              name="lname"
-              id="lname"
-              value={"Omar"}
-              disabled={!editProfileClicked}
-            />
-          </div>
-
-          <div className={styles.labelInputContainer}>
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              value={"hasan@gmail.com"}
-              disabled={!editProfileClicked}
-            />
-          </div>
-
-          <div className={styles.labelInputContainer}>
-            <label htmlFor="phone">Phone</label>
-            <input
-              type="phone"
-              name="phone"
-              id="phone"
-              value={"052-0000000"}
-              disabled={!editProfileClicked}
-            />
-          </div>
-        </div>
-
-        {editProfileClicked && (
-          <div className={styles.saveChangesBtnsContainer}>
-            <button
-              className={styles.saveChangesBtn}
-              onClick={clickEditProfile}
-            >
-              Save Changes
-            </button>
-            <button className={styles.cancelBtn} onClick={clickEditProfile}>
-              Cancel
-            </button>
-          </div>
-        )}
+          {editProfileClicked && (
+            <div className={styles.saveChangesBtnsContainer}>
+              <button
+                className={styles.cancelBtn}
+                onClick={clickCancel}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button className={styles.saveChangesBtn} type="submit">
+                Save Changes
+              </button>
+            </div>
+          )}
+        </form>
       </div>
 
       <div className={styles.documentsContainer}>

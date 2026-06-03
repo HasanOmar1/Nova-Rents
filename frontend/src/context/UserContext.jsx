@@ -77,6 +77,19 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (newData) => {
+    try {
+      const res = await axios.put("/users/profile", newData);
+      setCurrentUser(res.data.user);
+      setErrorMsg("");
+      return true;
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+      return false;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -87,6 +100,7 @@ const UserContextProvider = ({ children }) => {
         register,
         logout,
         isLoading,
+        updateProfile,
       }}
     >
       {children}
