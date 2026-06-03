@@ -4,19 +4,21 @@
   gap: 10px;
   padding-bottom: 10px;
   width: 100%;
-  max-width: 390px;
   background-color: var(--bg-gray);
   font-size: 0.8rem;
   border-radius: 20px;
   border: var(--cards-border);
+  overflow: hidden;
 }
 
 .VehiclesCards img {
   display: block;
   width: 100%;
-  height: auto;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
+  height: 240px;
+  height: 50%;
+  object-fit: cover;
+  aspect-ratio: 16/10;
+  object-position: center 70%;
 }
 
 .VehiclesCards .vehiclesCardsContainer {
@@ -24,6 +26,7 @@
   flex-direction: column;
   padding: 15px;
   gap: 10px;
+  flex-grow: 1;
 }
 
 .VehiclesCards .vehType {

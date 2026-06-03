@@ -43,7 +43,8 @@ const VehiclesCards = ({ veh }) => {
             <User size={15} className="icon" />
           </p>
           <p>
-            <span className={styles.host}>Host</span> · {veh.ownerId}
+            <span className={styles.host}>Host</span> · {veh.ownerFirstName}{" "}
+            {veh.ownerLastName}
           </p>
         </div>
 

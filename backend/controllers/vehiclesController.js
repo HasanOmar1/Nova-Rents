@@ -86,13 +86,13 @@ const addVehicle = async (req, res, next) => {
       color,
     } = vehicle;
 
-    const isVehicleNumberInGovIL =
-      await checkVehicleNumberInGovIL(licensePlate);
-    if (!isVehicleNumberInGovIL) {
-      return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "Vehicle number is not in the government database",
-      });
-    }
+    // const isVehicleNumberInGovIL =
+    //   await checkVehicleNumberInGovIL(licensePlate);
+    // if (!isVehicleNumberInGovIL) {
+    //   return res.status(STATUS_CODE.BAD_REQUEST).json({
+    //     message: "Vehicle number is not in the government database",
+    //   });
+    // }
 
     const checkIfVehicleAlreadyExists =
       await getVehicleByLicensePlate(licensePlate);
@@ -130,6 +130,7 @@ const addVehicle = async (req, res, next) => {
     next(error);
   }
 };
+
 const getVehicleById = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
