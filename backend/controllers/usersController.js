@@ -18,7 +18,6 @@ const {
   validateLoginFields,
   validateAuthenticatedUser,
   validateEmailInBody,
-  validateUpdateProfileInputFormats,
   validateUpdateInputFormats,
 } = require("../utils/validsController");
 
@@ -382,8 +381,6 @@ const updateUserProfile = async (req, res, next) => {
 
     const { firstName, lastName, phone, birthDate, password, newEmail } =
       req.body;
-
-    if (!validateUpdateProfileInputFormats(req.body, res)) return;
     if (!validateUpdateInputFormats(req.body, res)) return;
 
     const users = await doQuery("SELECT * FROM users WHERE userId = ?", [
