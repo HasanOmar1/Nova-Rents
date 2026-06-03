@@ -18,6 +18,7 @@ const {
   validateLoginFields,
   validateAuthenticatedUser,
   validateEmailInBody,
+  validateUpdateInputFormats,
 } = require("../utils/validsController");
 
 const sendVerificationCode = async (req, res) => {
@@ -370,6 +371,7 @@ const unblockUserByEmail = async (req, res, next) => {
     next(error);
   }
 };
+
 const updateUserProfile = async (req, res, next) => {
   try {
     const currentEmail = req.session.user.email;
@@ -377,7 +379,7 @@ const updateUserProfile = async (req, res, next) => {
     const { firstName, lastName, phone, birthDate, password, newEmail } =
       req.body;
 
-    if (!validateRegisterInputFormats(req.body, res)) return;
+    if (!validateUpdateInputFormats(req.body, res)) return;
 
     const user = await getUserByEmail(currentEmail);
 
@@ -406,6 +408,12 @@ const updateUserProfile = async (req, res, next) => {
     }
 
     if (phone) {
+      const phoneExist = await getUserByPhone(phone);
+      if (phoneExist) {
+        res.status(STATUS_CODE.CONFLICT);
+        throw new Error("Phone already exists!, Enter new one");
+      }
+
       fields.push("phone = ?");
       values.push(phone);
     }
@@ -413,6 +421,18 @@ const updateUserProfile = async (req, res, next) => {
     if (birthDate) {
       fields.push("birthDate = ?");
       values.push(birthDate);
+    }
+
+    if (newEmail) {
+      const anotherUser = await getUserByEmail(newEmail);
+
+      if (anotherUser) {
+        res.status(STATUS_CODE.CONFLICT);
+        throw new Error("Email already exists!, Enter new one");
+      }
+
+      fields.push("email = ?");
+      values.push(newEmail);
     }
 
     // -------------------------
@@ -427,20 +447,20 @@ const updateUserProfile = async (req, res, next) => {
     // -------------------------
     // EMAIL CHANGE (2-STEP FLOW)
     // -------------------------
-    if (newEmail) {
-      const normalizedEmail = newEmail.trim().toLowerCase();
+    // if (newEmail) {
+    //   const normalizedEmail = newEmail.trim().toLowerCase();
 
-      if (normalizedEmail !== currentEmail) {
-        const otp = await handleEmailVerification(normalizedEmail);
+    //   if (normalizedEmail !== currentEmail) {
+    //     const otp = await handleEmailVerification(normalizedEmail);
 
-        req.session.pendingEmail = normalizedEmail;
-        req.session.emailOtp = otp;
+    //     req.session.pendingEmail = normalizedEmail;
+    //     req.session.emailOtp = otp;
 
-        return res.json({
-          message: "Verify new email first",
-        });
-      }
-    }
+    //     return res.json({
+    //       message: "Verify new email first",
+    //     });
+    //   }
+    // }
 
     // -------------------------
     // SAFETY CHECK (IMPORTANT)
@@ -471,15 +491,18 @@ const updateUserProfile = async (req, res, next) => {
     // -------------------------
     // RESPONSE
     // -------------------------
+
+    const newBirthDate = user?.birthDate.toLocaleDateString();
+
     res.status(STATUS_CODE.OK).json({
       message: "User profile updated successfully",
       user: {
         userId: user.userId,
         firstName: firstName ?? user.firstName,
         lastName: lastName ?? user.lastName,
-        email: currentEmail,
+        email: newEmail ?? currentEmail,
         phone: phone ?? user.phone,
-        birthDate: birthDate ?? user.birthDate,
+        birthDate: birthDate ?? newBirthDate,
         role: user.role,
         status: user.status,
       },
@@ -488,6 +511,7 @@ const updateUserProfile = async (req, res, next) => {
     next(error);
   }
 };
+
 module.exports = {
   getAllUsers,
   register,
