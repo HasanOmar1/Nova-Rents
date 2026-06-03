@@ -377,7 +377,7 @@ const updateUserProfile = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
-    const currentEmail = req.session.user.email;
+    
     const currentUserId = req.session.user.userId;
 
     const { firstName, lastName, phone, birthDate, password, newEmail } =
@@ -475,16 +475,16 @@ const updateUserProfile = async (req, res, next) => {
     // if (newEmail) {
     //   const normalizedEmail = newEmail.trim().toLowerCase();
 
-      if (normalizedEmail !== currentEmail) {
-        const emailExist = await getUserByEmail(normalizedEmail);
+    //   if (normalizedEmail !== currentEmail) {
+    //     const emailExist = await getUserByEmail(normalizedEmail);
 
-        if (emailExist) {
-          return res
-            .status(STATUS_CODE.CONFLICT)
-            .json({ message: "Email already exists" });
-        }
-      }
-    }
+    //     if (emailExist) {
+    //       return res
+    //         .status(STATUS_CODE.CONFLICT)
+    //         .json({ message: "Email already exists" });
+    //     }
+    //   }
+    // }
     //   if (normalizedEmail !== currentEmail) {
     //     const otp = await handleEmailVerification(normalizedEmail);
 
@@ -560,7 +560,7 @@ const updateUserProfile = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+}
 
 module.exports = {
   getAllUsers,

@@ -405,4 +405,6 @@ module.exports = {
   validateEmailInBody,
   validateAndNormalizeVehicleCreate,
   validateAndMergeVehicleUpdate,
+  validateUpdateProfileInputFormats,
+  validateUpdateInputFormats,
 };
