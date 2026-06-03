@@ -2,11 +2,11 @@
 const bcrypt = require("bcrypt");
 const doQuery = require("../database/query");
 const hashPassword = require("../utils/hashPassword");
-const generateOTP = require("../utils/generateOTP");
-const {
-  sendOTPEmail,
-  handleEmailVerification,
-} = require("../services/emailService");
+// const generateOTP = require("../utils/generateOTP");
+// const {
+//   sendOTPEmail,
+//   handleEmailVerification,
+// } = require("../services/emailService");
 const {
   getUserByEmail,
   getUserByPhone,
@@ -18,6 +18,7 @@ const {
   validateLoginFields,
   validateAuthenticatedUser,
   validateEmailInBody,
+  validateUpdateProfileInputFormats,
 } = require("../utils/validsController");
 
 const sendVerificationCode = async (req, res) => {
@@ -32,44 +33,44 @@ const sendVerificationCode = async (req, res) => {
 };
 
 // Verify the OTP for a pending email change and apply it
-const verifyCode = async (req, res, next) => {
-  try {
-    const { code } = req.body;
-    const { pendingEmail, emailOtp } = req.session;
+// const verifyCode = async (req, res, next) => {
+//   try {
+//     const { code } = req.body;
+//     const { pendingEmail, emailOtp } = req.session;
 
-    if (!pendingEmail || !emailOtp) {
-      return res
-        .status(STATUS_CODE.BAD_REQUEST)
-        .json({ message: "No pending email verification" });
-    }
+//     if (!pendingEmail || !emailOtp) {
+//       return res
+//         .status(STATUS_CODE.BAD_REQUEST)
+//         .json({ message: "No pending email verification" });
+//     }
 
-    if (!code || String(code) !== String(emailOtp)) {
-      return res
-        .status(STATUS_CODE.BAD_REQUEST)
-        .json({ message: "Invalid verification code" });
-    }
+//     if (!code || String(code) !== String(emailOtp)) {
+//       return res
+//         .status(STATUS_CODE.BAD_REQUEST)
+//         .json({ message: "Invalid verification code" });
+//     }
 
-    const updateQuery = "UPDATE users SET email = ? WHERE email = ?";
-    const result = await doQuery(updateQuery, [
-      pendingEmail,
-      req.session.user.email,
-    ]);
+//     const updateQuery = "UPDATE users SET email = ? WHERE email = ?";
+//     const result = await doQuery(updateQuery, [
+//       pendingEmail,
+//       req.session.user.email,
+//     ]);
 
-    if (result.affectedRows === 0) {
-      return res
-        .status(STATUS_CODE.NOT_FOUND)
-        .json({ message: "User not found" });
-    }
+//     if (result.affectedRows === 0) {
+//       return res
+//         .status(STATUS_CODE.NOT_FOUND)
+//         .json({ message: "User not found" });
+//     }
 
-    req.session.user.email = pendingEmail;
-    delete req.session.pendingEmail;
-    delete req.session.emailOtp;
+//     req.session.user.email = pendingEmail;
+//     delete req.session.pendingEmail;
+//     delete req.session.emailOtp;
 
-    res.status(STATUS_CODE.OK).json({ message: "Email verified and updated" });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res.status(STATUS_CODE.OK).json({ message: "Email verified and updated" });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 // Get a list of all users in the system
 const getAllUsers = async (req, res, next) => {
@@ -153,8 +154,8 @@ async function register(req, res, next) {
 
     const loggedUser = {
       userId: result.insertId,
-      firstName: firstName,
-      lastName: lastName,
+      firstName: firstNameCap,
+      lastName: lastNameCap,
       email: email,
       phone: phone,
       birthDate: birthDate,
@@ -200,12 +201,13 @@ async function login(req, res, next) {
     }
 
     const birthDate = user.birthDate.toLocaleDateString();
+    const emailNormalized = user.email.toLowerCase();
 
     const loggedUser = {
       userId: user.userId,
       firstName: user.firstName,
       lastName: user.lastName,
-      email: user.email,
+      email: emailNormalized,
       phone: user.phone,
       role: user.role,
       birthDate: birthDate,
@@ -264,37 +266,36 @@ const getUserDetailsByEmail = async (req, res, next) => {
   }
 };
 // Return the logged-in user's profile data from the session
-async function getProfile(req, res, next) {
-  try {
-    const { email } = req.session.user;
-    const user = await getUserByEmail(email);
-    if (!user) {
-      return res
-        .status(STATUS_CODE.NOT_FOUND)
-        .json({ message: "User not found" });
-    }
+// async function getProfile(req, res, next) {
+//   try {
 
-    const birthDate = user.birthDate.toLocaleDateString();
+//     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+//       return;
+//     const user =  await getUserByEmail(req.session.user.email);
+//     if (!user) {
+//       return res
+//         .status(STATUS_CODE.NOT_FOUND)
+//         .json({ message: "User not found" });
+//     }
+//     const loggedUser = {
+//       userId: user.userId,
+//       firstName: user.firstName,
+//       lastName: user.lastName,
+//       email: user.email,
+//       phone: user.phone,
+//       role: user.role,
+//       birthDate: user.birthDate.toLocaleDateString(),
+//       status: user.status,
+//     };
 
-    const loggedUser = {
-      userId: user.userId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      birthDate: birthDate,
-      status: user.status,
-    };
-
-    res.status(STATUS_CODE.OK).json({
-      message: "User profile fetched successfully",
-      user: loggedUser,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
+//     res.status(STATUS_CODE.OK).json({
+//       message: "User profile fetched successfully",
+//       user: loggedUser,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// }
 // Logout the current user: destroys session and clears cookie
 async function logout(req, res, next) {
   try {
@@ -372,12 +373,14 @@ const unblockUserByEmail = async (req, res, next) => {
 };
 const updateUserProfile = async (req, res, next) => {
   try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
     const currentEmail = req.session.user.email;
 
     const { firstName, lastName, phone, birthDate, password, newEmail } =
       req.body;
 
-    if (!validateRegisterInputFormats(req.body, res)) return;
+    if (!validateUpdateProfileInputFormats(req.body, res)) return;
 
     const user = await getUserByEmail(currentEmail);
 
@@ -385,6 +388,14 @@ const updateUserProfile = async (req, res, next) => {
       return res
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "User not found" });
+    }
+    if (phone && phone !== user.phone) {
+      const phoneExist = await getUserByPhone(phone);
+      if (phoneExist) {
+        return res
+          .status(STATUS_CODE.CONFLICT)
+          .json({ message: "Phone already exists" });
+      }
     }
 
     const fields = [];
@@ -431,14 +442,13 @@ const updateUserProfile = async (req, res, next) => {
       const normalizedEmail = newEmail.trim().toLowerCase();
 
       if (normalizedEmail !== currentEmail) {
-        const otp = await handleEmailVerification(normalizedEmail);
+        const emailExist = await getUserByEmail(normalizedEmail);
 
-        req.session.pendingEmail = normalizedEmail;
-        req.session.emailOtp = otp;
-
-        return res.json({
-          message: "Verify new email first",
-        });
+        if (emailExist) {
+          return res
+            .status(STATUS_CODE.CONFLICT)
+            .json({ message: "Email already exists" });
+        }
       }
     }
 
@@ -492,12 +502,10 @@ module.exports = {
   getAllUsers,
   register,
   login,
-  getProfile,
+  // getProfile,
   logout,
   blockUserByEmail,
   unblockUserByEmail,
   getUserDetailsByEmail,
   updateUserProfile,
-  sendVerificationCode,
-  verifyCode,
 };

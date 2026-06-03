@@ -61,6 +61,60 @@ function validateRegisterInputFormats(body, res) {
   return true;
 }
 
+function validateUpdateProfileInputFormats(body, res) {
+  const { firstName, lastName, phone, birthDate, password, newEmail } = body;
+
+  if (firstName && !/^[A-Za-z0-9_]{2,30}$/.test(firstName)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid first name. It should be 2-30 characters long and contain only letters, numbers, and underscores.",
+    );
+  }
+
+  if (lastName && !/^[A-Za-z0-9_]{2,30}$/.test(lastName)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid last name. It should be 2-30 characters long and contain only letters, numbers, and underscores.",
+    );
+  }
+
+  if (phone && !/^05\d{8}$/.test(phone)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid phone number. It should start with 05 and contain 10 digits.",
+    );
+  }
+
+  if (birthDate && isNaN(Date.parse(birthDate))) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid birth date.",
+    );
+  }
+
+  if (password && password.length < 6) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid password. It should be at least 6 characters long.",
+    );
+  }
+
+  if (newEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Invalid email format.",
+    );
+  }
+
+  return true;
+}
+
 function validateLoginFields(email, password, res) {
   if (!email || !password) {
     return sendValidationError(
@@ -275,4 +329,5 @@ module.exports = {
   validateEmailInBody,
   validateAndNormalizeVehicleCreate,
   validateAndMergeVehicleUpdate,
+  validateUpdateProfileInputFormats,
 };

@@ -6,6 +6,7 @@ require("dotenv").config({ quiet: true }); // quiet = removes the ad from the do
 // routes
 const usersRoute = require("./routes/usersRoute");
 const vehiclesRoute = require("./routes/vehiclesRoute");
+const rentalRoute = require("./routes/rentalRoute");  
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -30,7 +31,7 @@ app.use(
 
 app.use("/users", usersRoute);
 app.use("/vehicles", vehiclesRoute);
-
+app.use("/rentals", rentalRoute);
 app.use(errorHandler);
 
 app.listen(port, () => {
