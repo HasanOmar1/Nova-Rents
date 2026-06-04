@@ -22,6 +22,17 @@ function validateRequiredRegisterFields(body, res) {
   }
   return true;
 }
+function validateRequiredRentalFields(body, res) {
+  const { licensePlate, startDate, endDate } = body;
+  if (!licensePlate || !startDate || !endDate) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Missing required fields",
+    );
+  }
+  return true;
+}
 
 function validateRegisterInputFormats(body, res) {
   const { firstName, lastName, email, password, phone } = body;
@@ -343,6 +354,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   };
 }
 
+
 module.exports = {
   validateRequiredRegisterFields,
   validateRegisterInputFormats,
@@ -352,4 +364,5 @@ module.exports = {
   validateAndNormalizeVehicleCreate,
   validateAndMergeVehicleUpdate,
   validateUpdateInputFormats,
+  validateRequiredRentalFields,
 };
