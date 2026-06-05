@@ -162,7 +162,6 @@ function validateAndNormalizeVehicleCreate(req, res) {
     modelId,
     fuelType,
     expirationDate,
-    image,
     year,
     km,
     address,
@@ -170,11 +169,20 @@ function validateAndNormalizeVehicleCreate(req, res) {
     color,
   } = req.body;
 
+  const uploadedFiles = req.files;
+
+  if (!uploadedFiles || uploadedFiles.length === 0) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "At least one vehicle image is required.",
+    );
+  }
+
   if (
     licensePlate == null ||
     !fuelType ||
     !expirationDate ||
-    !image ||
     year == null ||
     km == null ||
     !address ||
@@ -187,6 +195,10 @@ function validateAndNormalizeVehicleCreate(req, res) {
       STATUS_CODE.BAD_REQUEST,
       "All fields are required.",
     );
+
+  const imageFilenames = uploadedFiles.map((file) => file.filename);
+
+  const imageJsonString = JSON.stringify(imageFilenames);
 
   const plateString = String(licensePlate).trim();
   if (!/^\d+$/.test(plateString)) {
@@ -252,13 +264,13 @@ function validateAndNormalizeVehicleCreate(req, res) {
       licensePlate: Number.parseInt(plateString, 10),
       fuelType,
       expirationDate,
-      image,
       year: yearNum,
       km: kmNum,
       address,
-      price: priceNum,
+      price: Number(priceNum),
       color,
       modelId,
+      image: imageJsonString,
     },
   };
 }
@@ -353,7 +365,6 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     price: priceNum,
   };
 }
-
 
 module.exports = {
   validateRequiredRegisterFields,

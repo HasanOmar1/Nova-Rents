@@ -25,10 +25,17 @@ const MyVehiclesCards = ({
     if (isSuccess) closeDeleteMenu();
   };
 
+  let parsedImages = [];
+  parsedImages = JSON.parse(img);
+
+  const mainImage = parsedImages[0];
+
+  const imageUrl = `http://localhost:3000/uploads/${mainImage}`;
+
   return (
     <div className={styles.MyVehiclesCards}>
       <div className={styles.nameContainer}>
-        <img src={img} alt={name} />
+        <img src={imageUrl} alt={name} />
         <div className={styles.nameAndYear}>
           <p className={styles.name}>{name}</p>
           <p className={styles.year}>{year}</p>

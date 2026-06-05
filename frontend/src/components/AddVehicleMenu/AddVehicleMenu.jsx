@@ -1,20 +1,45 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./AddVehicleMenu.module.css";
+import { useVehicleContext } from "../../context/VehicleContext";
+
+const initialFormState = {
+  brandId: "0",
+  modelId: "",
+  carTypeId: "",
+  licensePlate: "",
+  year: "",
+  color: "",
+  fuelType: "Petrol",
+  km: "",
+  price: "",
+  address: "",
+  expirationDate: "",
+  images: [],
+};
 
 const AddVehicleMenu = ({ isOpen, onClose }) => {
   const dialogRef = useRef(null);
+  const [formData, setFormData] = useState(initialFormState);
+  const {
+    getBrands,
+    vehiclesBrands,
+    getModelsByBrand,
+    vehicleModel,
+    getVehType,
+    vehiclesType,
+    addVehicle,
+  } = useVehicleContext();
 
-  const [formData, setFormData] = useState({
-    modelId: "",
-    licensePlate: "",
-    year: "",
-    color: "",
-    fuelType: "Petrol",
-    km: "",
-    price: "",
-    address: "",
-    expirationDate: "",
-  });
+  useEffect(() => {
+    getBrands();
+    getVehType();
+  }, []);
+
+  useEffect(() => {
+    if (formData.brandId && formData.brandId !== "0") {
+      getModelsByBrand(formData.brandId);
+    }
+  }, [formData.brandId]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -28,21 +53,70 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+
+      // If user changes Brand, reset Model and Type
+      if (name === "brandId") {
+        newData.modelId = "";
+        newData.carTypeId = "";
+      }
+      // If user changes Model, reset Type
+      else if (name === "modelId") {
+        newData.carTypeId = "";
+      }
+
+      return newData;
+    });
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    console.log("Selected file:", file);
+    const files = Array.from(e.target.files).slice(0, 4);
+    setFormData((prev) => ({ ...prev, images: files }));
   };
 
-  const handleSubmit = (e) => {
+  const clearImages = () => {
+    setFormData((prev) => ({ ...prev, images: [] }));
+  };
+
+  const handleCloseAndReset = () => {
+    setFormData(initialFormState);
+    onClose();
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting to MySQL:", formData);
+
+    const submitData = new FormData();
+
+    submitData.append("modelId", formData.modelId);
+    submitData.append("licensePlate", formData.licensePlate);
+    submitData.append("year", formData.year);
+    submitData.append("color", formData.color);
+    submitData.append("fuelType", formData.fuelType);
+    submitData.append("km", formData.km);
+    submitData.append("price", formData.price);
+    submitData.append("address", formData.address);
+    submitData.append("expirationDate", formData.expirationDate);
+
+    if (formData.images && formData.images.length > 0) {
+      formData.images.forEach((file) => {
+        submitData.append("images", file);
+      });
+    }
+
+    const isSuccess = await addVehicle(submitData);
+    if (isSuccess) handleCloseAndReset();
   };
 
   return (
-    <dialog className={styles.AddVehicleMenu} ref={dialogRef} onClose={onClose}>
+    <dialog
+      className={styles.AddVehicleMenu}
+      ref={dialogRef}
+      onClose={handleCloseAndReset}
+    >
       <div className={styles.header}>
         <h2>Add New Vehicle</h2>
         <p>List a new luxury vehicle in your fleet.</p>
@@ -51,20 +125,85 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
       <form onSubmit={handleSubmit}>
         <div className={styles.formGrid}>
           <div className={styles.inputGroup}>
-            <label>Model ID / Name</label>
-            <input
-              type="text"
-              name="modelId"
+            <label>Vehicle Brand</label>
+            <select
+              name="brandId"
+              id="brand-select"
+              value={formData.brandId}
               onChange={handleChange}
               required
-              placeholder="e.g. Porsche 911"
-            />
+            >
+              <option value="0" disabled hidden>
+                Select Brand
+              </option>
+              {vehiclesBrands?.map((b) => {
+                return (
+                  <option key={b.brandId} value={b.brandId}>
+                    {b.brandName}
+                  </option>
+                );
+              })}
+            </select>
           </div>
+
+          {/* MODEL SELECT (Disabled until Brand is picked) */}
+          <div className={styles.inputGroup}>
+            <label>Vehicle Model</label>
+            <select
+              name="modelId"
+              id="model-select"
+              value={formData.modelId}
+              onChange={handleChange}
+              disabled={formData.brandId === "0"}
+              required
+            >
+              <option value="" disabled hidden>
+                {formData.brandId === "0"
+                  ? "Pick a brand first"
+                  : "Select Model"}
+              </option>
+              {vehicleModel?.map((m) => {
+                return (
+                  <option key={m.modelId} value={m.modelId}>
+                    {m.modelName}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {/* TYPE SELECT (Disabled until Model is picked) */}
+          <div className={styles.inputGroup}>
+            <label>Vehicle Category</label>
+            <select
+              name="carTypeId"
+              id="type-select"
+              value={formData.carTypeId}
+              onChange={handleChange}
+              disabled={formData.modelId === ""}
+              required
+            >
+              <option value="" disabled hidden>
+                {formData.modelId === ""
+                  ? "Pick a model first"
+                  : "Select Category"}
+              </option>
+              {vehiclesType?.map((t) => {
+                return (
+                  <option key={t.carTypeId} value={t.carTypeId}>
+                    {t.carTypeName}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
           <div className={styles.inputGroup}>
             <label>License Plate</label>
             <input
               type="text"
               name="licensePlate"
+              value={formData.licensePlate}
               onChange={handleChange}
               required
               placeholder="ABC-1234"
@@ -76,6 +215,7 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             <input
               type="number"
               name="year"
+              value={formData.year}
               onChange={handleChange}
               required
               placeholder="2023"
@@ -83,11 +223,13 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
               max="2025"
             />
           </div>
+
           <div className={styles.inputGroup}>
             <label>Color</label>
             <input
               type="text"
               name="color"
+              value={formData.color}
               onChange={handleChange}
               required
               placeholder="Obsidian Black"
@@ -99,16 +241,19 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             <input
               type="number"
               name="km"
+              value={formData.km}
               onChange={handleChange}
               required
               placeholder="15000"
             />
           </div>
+
           <div className={styles.inputGroup}>
             <label>Daily Price ($)</label>
             <input
               type="number"
               name="price"
+              value={formData.price}
               onChange={handleChange}
               required
               placeholder="450"
@@ -117,7 +262,11 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
 
           <div className={styles.inputGroup}>
             <label>Fuel Type</label>
-            <select name="fuelType" onChange={handleChange}>
+            <select
+              name="fuelType"
+              value={formData.fuelType}
+              onChange={handleChange}
+            >
               <option value="Petrol">Petrol</option>
               <option value="Diesel">Diesel</option>
               <option value="Electric">Electric</option>
@@ -130,6 +279,7 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             <input
               type="text"
               name="address"
+              value={formData.address}
               onChange={handleChange}
               required
               placeholder="e.g. Tel Aviv, Israel"
@@ -141,28 +291,50 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             <input
               type="date"
               name="expirationDate"
+              value={formData.expirationDate}
               onChange={handleChange}
               required
             />
           </div>
 
           <div className={styles.inputGroup}>
-            <label>Vehicle Image</label>
-            <label htmlFor="vehicle-image" className={styles.uploadButton}>
-              + Click to browse image
-            </label>
-            <input
-              id="vehicle-image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-            />
+            <label>Vehicle Image (Max: 4)</label>
+
+            {/* Only show the upload button if they have LESS than 4 images */}
+            {(!formData.images || formData.images.length < 4) && (
+              <>
+                <label htmlFor="vehicle-image" className={styles.uploadButton}>
+                  + Click to browse image
+                </label>
+                <input
+                  id="vehicle-image"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  style={{ display: "none" }}
+                />
+              </>
+            )}
+
+            {/* Status text to show how many images are selected and a Clear button */}
+            {formData.images && formData.images.length > 0 && (
+              <div className={styles.selectedImagesContainer}>
+                <p>{formData.images.length} / 4 images selected</p>
+                <button type="button" onClick={clearImages}>
+                  Clear
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.cancelBtn} onClick={onClose}>
+          <button
+            type="button"
+            className={styles.cancelBtn}
+            onClick={handleCloseAndReset}
+          >
             Cancel
           </button>
           <button type="submit" className={styles.submitBtn}>

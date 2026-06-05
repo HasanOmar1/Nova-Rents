@@ -431,6 +431,7 @@ const getAllCarBrands = async (req, res, next) => {
     next(error);
   }
 };
+
 const getAllCarModels = async (req, res, next) => {
   try {
     const { brandId, typeId } = req.query;
