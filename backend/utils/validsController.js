@@ -5,6 +5,7 @@ const {
   checkValidPassword,
   checkValidPhoneIL,
 } = require("./Valids");
+const { clearFailedUploads } = require("./handleUploads");
 
 function sendValidationError(res, status, message) {
   res.status(status).json({ message });
@@ -148,9 +149,14 @@ function validateEmailInBody(email, res) {
 }
 
 function validateAndNormalizeVehicleCreate(req, res) {
+  // NEW: A tiny wrapper that clears images BEFORE sending the error back
+  const handleError = (status, msg) => {
+    clearFailedUploads(req.files);
+    return sendValidationError(res, status, msg);
+  };
+
   if (!req.session?.user) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.UNAUTHORIZED,
       "You must be logged in to perform this action.",
     );
@@ -162,7 +168,6 @@ function validateAndNormalizeVehicleCreate(req, res) {
     modelId,
     fuelType,
     expirationDate,
-    image,
     year,
     km,
     address,
@@ -170,61 +175,55 @@ function validateAndNormalizeVehicleCreate(req, res) {
     color,
   } = req.body;
 
+  const uploadedFiles = req.files;
+
+  // We use sendValidationError directly here because if there are no files,
+  // there is nothing to clean up anyway!
+  if (!uploadedFiles || uploadedFiles.length === 0) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "At least one vehicle image is required.",
+    );
+  }
+
   if (
     licensePlate == null ||
     !fuelType ||
     !expirationDate ||
-    !image ||
     year == null ||
     km == null ||
     !address ||
     price == null ||
     !color ||
     modelId == null
-  )
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "All fields are required.",
-    );
+  ) {
+    return handleError(STATUS_CODE.BAD_REQUEST, "All fields are required.");
+  }
+
+  const imageFilenames = uploadedFiles.map((file) => file.filename);
+  const imageJsonString = JSON.stringify(imageFilenames);
 
   const plateString = String(licensePlate).trim();
   if (!/^\d+$/.test(plateString)) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.BAD_REQUEST,
       "License plate must contain numbers only.",
     );
   }
   if (plateString.length < 7 || plateString.length > 8) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.BAD_REQUEST,
       "Enter a valid Israeli license plate (7 or 8 digits).",
     );
   }
 
-  if (Number.isNaN(Number(year))) {
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "Year must be a number.",
-    );
-  }
-  if (Number.isNaN(Number(km))) {
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "KM must be a number.",
-    );
-  }
-  if (Number.isNaN(Number(price))) {
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "Price must be a number.",
-    );
-  }
+  if (Number.isNaN(Number(year)))
+    return handleError(STATUS_CODE.BAD_REQUEST, "Year must be a number.");
+  if (Number.isNaN(Number(km)))
+    return handleError(STATUS_CODE.BAD_REQUEST, "KM must be a number.");
+  if (Number.isNaN(Number(price)))
+    return handleError(STATUS_CODE.BAD_REQUEST, "Price must be a number.");
 
   const yearNum = Number(year);
   const kmNum = Number(km);
@@ -232,15 +231,13 @@ function validateAndNormalizeVehicleCreate(req, res) {
   const currentYear = new Date().getFullYear();
 
   if (yearNum < 1900 || yearNum > currentYear + 1) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.BAD_REQUEST,
       `Enter a valid year between 1900 and ${currentYear + 1}`,
     );
   }
   if (kmNum < 0 || priceNum < 0) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.BAD_REQUEST,
       "Kilometers and Price cannot be negative.",
     );
@@ -252,13 +249,13 @@ function validateAndNormalizeVehicleCreate(req, res) {
       licensePlate: Number.parseInt(plateString, 10),
       fuelType,
       expirationDate,
-      image,
       year: yearNum,
       km: kmNum,
       address,
-      price: priceNum,
+      price: Number(priceNum),
       color,
       modelId,
+      image: imageJsonString,
     },
   };
 }
@@ -274,10 +271,17 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     return null;
   }
 
+  let imageToSave = existingVehicle.image;
+  if (req.files && req.files.length > 0) {
+    const imageFilenames = req.files.map((file) => file.filename);
+    imageToSave = JSON.stringify(imageFilenames);
+  }
+
   const merged = {
+    modelId: body.modelId ?? existingVehicle.modelId,
     fuelType: body.fuelType ?? existingVehicle.fuelType,
     expirationDate: body.expirationDate ?? existingVehicle.expirationDate,
-    image: body.image ?? existingVehicle.image,
+    image: imageToSave,
     year: body.year ?? existingVehicle.year,
     km: body.km ?? existingVehicle.km,
     address: body.address ?? existingVehicle.address,
@@ -286,9 +290,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   };
 
   if (
-    merged.brandId == null ||
     merged.modelId == null ||
-    merged.typeId == null ||
     !merged.fuelType ||
     !merged.expirationDate ||
     !merged.image ||
@@ -310,27 +312,25 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   const priceNum = Number(merged.price);
   const currentYear = new Date().getFullYear();
 
-  if (Number.isNaN(yearNum)) {
+  if (Number.isNaN(yearNum))
     return sendValidationError(
       res,
       STATUS_CODE.BAD_REQUEST,
       "Year must be a number.",
     );
-  }
-  if (Number.isNaN(kmNum)) {
+  if (Number.isNaN(kmNum))
     return sendValidationError(
       res,
       STATUS_CODE.BAD_REQUEST,
       "KM must be a number.",
     );
-  }
-  if (Number.isNaN(priceNum)) {
+  if (Number.isNaN(priceNum))
     return sendValidationError(
       res,
       STATUS_CODE.BAD_REQUEST,
       "Price must be a number.",
     );
-  }
+
   if (yearNum < 1900 || yearNum > currentYear + 1) {
     return sendValidationError(
       res,
@@ -353,7 +353,6 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     price: priceNum,
   };
 }
-
 
 module.exports = {
   validateRequiredRegisterFields,

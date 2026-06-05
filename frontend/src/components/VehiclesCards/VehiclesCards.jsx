@@ -3,9 +3,15 @@ import styles from "./VehiclesCards.module.css";
 import { MapPin, User, AlertTriangle } from "lucide-react";
 
 const VehiclesCards = ({ veh }) => {
+  let parsedImages = [];
+  parsedImages = JSON.parse(veh.image);
+
+  const mainImage = parsedImages[0];
+
+  const imageUrl = `http://localhost:3000/uploads/${mainImage}`;
   return (
     <div className={styles.VehiclesCards}>
-      <img src={veh.image} alt={veh.brandName} />
+      <img src={imageUrl} alt={veh.brandName} />
 
       <div className={styles.vehiclesCardsContainer}>
         <div className={styles.vehStatus}>

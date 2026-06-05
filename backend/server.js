@@ -2,11 +2,13 @@ const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
 const errorHandler = require("./middleWare/errorMiddleware");
+const path = require("path");
 require("dotenv").config({ quiet: true }); // quiet = removes the ad from the dotenv developer
+
 // routes
 const usersRoute = require("./routes/usersRoute");
 const vehiclesRoute = require("./routes/vehiclesRoute");
-const rentalRoute = require("./routes/rentalRoute");  
+const rentalRoute = require("./routes/rentalRoute");
 const govRoute = require("./routes/govRoute");
 
 const app = express();
@@ -20,7 +22,7 @@ app.use(
 );
 
 app.use(express.json());
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(
   session({
     secret: "your-secret-key",

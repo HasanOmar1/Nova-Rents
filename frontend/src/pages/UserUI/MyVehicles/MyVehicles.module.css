@@ -57,6 +57,7 @@
   margin-top: 30px;
   border-radius: 20px;
   overflow: hidden;
+  margin-bottom: 30px;
 }
 
 .MyVehicles .myVehiclesContainer .titles {
@@ -100,6 +101,12 @@
   border-top: var(--cards-border);
 }
 
+.MyVehicles .myVehiclesContainer .noVehicles {
+  text-align: center;
+  padding: 30px 0;
+  color: var(--gray);
+}
+
 /* Responsive Styles */
 @media (max-width: 1024px) {
   .MyVehicles .btnsContainer {
@@ -116,7 +123,6 @@
     flex-wrap: wrap;
   }
 
-  /* Hide the titles on smaller screens because the individual cards change their layout to stack */
   .MyVehicles .myVehiclesContainer .titles {
     display: none;
   }
