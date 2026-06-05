@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import styles from "./AddVehicleMenu.module.css";
+import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
 
 const initialFormState = {
@@ -17,9 +17,10 @@ const initialFormState = {
   images: [],
 };
 
-const AddVehicleMenu = ({ isOpen, onClose }) => {
+const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   const dialogRef = useRef(null);
   const [formData, setFormData] = useState(initialFormState);
+
   const {
     getBrands,
     vehiclesBrands,
@@ -28,6 +29,9 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
     getVehType,
     vehiclesType,
     addVehicle,
+    updateVehicle,
+    errorMsg,
+    setErrorMsg,
   } = useVehicleContext();
 
   useEffect(() => {
@@ -36,10 +40,35 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
   }, []);
 
   useEffect(() => {
-    if (formData.brandId && formData.brandId !== "0") {
-      getModelsByBrand(formData.brandId);
+    if (isOpen) {
+      if (vehicle) {
+        // --- EDIT MODE: Pre-fill the form ---
+        setFormData({
+          brandId: vehicle.brandId || "0",
+          modelId: vehicle.modelId || "",
+          carTypeId: vehicle.carTypeId || "",
+          licensePlate: vehicle.licensePlate || "",
+          year: vehicle.year || "",
+          color: vehicle.color || "",
+          fuelType: vehicle.fuelType || "Petrol",
+          km: vehicle.km || "",
+          price: vehicle.price || "",
+          address: vehicle.address || "",
+          expirationDate: vehicle.expirationDate
+            ? vehicle.expirationDate.split("T")[0]
+            : "",
+          images: [],
+        });
+
+        if (vehicle.brandId) {
+          getModelsByBrand(vehicle.brandId);
+        }
+      } else {
+        // --- ADD MODE: Clear the form ---
+        setFormData(initialFormState);
+      }
     }
-  }, [formData.brandId]);
+  }, [vehicle, isOpen]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -62,6 +91,7 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
       if (name === "brandId") {
         newData.modelId = "";
         newData.carTypeId = "";
+        getModelsByBrand(value);
       }
       // If user changes Model, reset Type
       else if (name === "modelId") {
@@ -84,6 +114,7 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
   const handleCloseAndReset = () => {
     setFormData(initialFormState);
     onClose();
+    setErrorMsg("");
   };
 
   const handleSubmit = async (e) => {
@@ -107,19 +138,34 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
       });
     }
 
-    const isSuccess = await addVehicle(submitData);
+    // --- DYNAMIC SUBMISSION ---
+    let isSuccess;
+    if (vehicle) {
+      isSuccess = await updateVehicle(formData.licensePlate, submitData);
+    } else {
+      isSuccess = await addVehicle(submitData);
+    }
+
     if (isSuccess) handleCloseAndReset();
   };
 
+  // Helper variable to easily check the current mode
+  const isEditMode = Boolean(vehicle);
+
   return (
     <dialog
-      className={styles.AddVehicleMenu}
+      className={styles.AddVehicleMenu} // Assumes you renamed your CSS file to match this component!
       ref={dialogRef}
       onClose={handleCloseAndReset}
     >
       <div className={styles.header}>
-        <h2>Add New Vehicle</h2>
-        <p>List a new luxury vehicle in your fleet.</p>
+        <h2>{isEditMode ? "Edit Vehicle" : "Add New Vehicle"}</h2>
+        <p>
+          {isEditMode
+            ? "Update your vehicle's details and listings."
+            : "List a new luxury vehicle in your fleet."}
+        </p>
+        {errorMsg && <p className={styles.errorMsg}> {errorMsg}</p>}
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -128,7 +174,6 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             <label>Vehicle Brand</label>
             <select
               name="brandId"
-              id="brand-select"
               value={formData.brandId}
               onChange={handleChange}
               required
@@ -146,12 +191,11 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             </select>
           </div>
 
-          {/* MODEL SELECT (Disabled until Brand is picked) */}
+          {/* MODEL SELECT */}
           <div className={styles.inputGroup}>
             <label>Vehicle Model</label>
             <select
               name="modelId"
-              id="model-select"
               value={formData.modelId}
               onChange={handleChange}
               disabled={formData.brandId === "0"}
@@ -172,12 +216,11 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             </select>
           </div>
 
-          {/* TYPE SELECT (Disabled until Model is picked) */}
+          {/* TYPE SELECT */}
           <div className={styles.inputGroup}>
             <label>Vehicle Category</label>
             <select
               name="carTypeId"
-              id="type-select"
               value={formData.carTypeId}
               onChange={handleChange}
               disabled={formData.modelId === ""}
@@ -207,6 +250,8 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
               onChange={handleChange}
               required
               placeholder="ABC-1234"
+              disabled={isEditMode}
+              style={isEditMode ? { opacity: 0.6, cursor: "not-allowed" } : {}}
             />
           </div>
 
@@ -298,16 +343,25 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label>Vehicle Image (Max: 4)</label>
+            <label>
+              {isEditMode
+                ? "Update Images (Optional)"
+                : "Vehicle Image (Max: 4)"}
+            </label>
 
             {/* Only show the upload button if they have LESS than 4 images */}
             {(!formData.images || formData.images.length < 4) && (
               <>
-                <label htmlFor="vehicle-image" className={styles.uploadButton}>
-                  + Click to browse image
+                <label
+                  htmlFor="vehicle-image-upload"
+                  className={styles.uploadButton}
+                >
+                  {isEditMode
+                    ? "+ Upload new images to overwrite old ones"
+                    : "+ Click to browse image"}
                 </label>
                 <input
-                  id="vehicle-image"
+                  id="vehicle-image-upload"
                   type="file"
                   accept="image/*"
                   multiple
@@ -338,7 +392,7 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
             Cancel
           </button>
           <button type="submit" className={styles.submitBtn}>
-            Save Vehicle
+            {isEditMode ? "Save Changes" : "Save Vehicle"}
           </button>
         </div>
       </form>
@@ -346,4 +400,4 @@ const AddVehicleMenu = ({ isOpen, onClose }) => {
   );
 };
 
-export default AddVehicleMenu;
+export default AddEditVehicleMenu;

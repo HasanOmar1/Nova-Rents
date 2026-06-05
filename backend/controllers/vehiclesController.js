@@ -228,15 +228,6 @@ const updateVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
 
-    if (
-      !validateAuthenticatedUser(
-        req,
-        res,
-        "You must be logged in to perform this action.",
-      )
-    )
-      return;
-
     const existingVehicle = await getVehicleByLicensePlate(licensePlate);
     if (!existingVehicle) {
       return res
@@ -256,18 +247,29 @@ const updateVehicle = async (req, res, next) => {
       req,
       res,
     );
+
     if (!mergedData) return;
 
-    const { fuelType, expirationDate, image, year, km, address, price, color } =
-      mergedData;
+    const {
+      modelId,
+      fuelType,
+      expirationDate,
+      image,
+      year,
+      km,
+      address,
+      price,
+      color,
+    } = mergedData;
 
     const updateQuery = `
       UPDATE vehicles
-      SET fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?
+      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?
       WHERE licensePlate = ?
     `;
 
     const values = [
+      modelId,
       fuelType,
       expirationDate,
       image,

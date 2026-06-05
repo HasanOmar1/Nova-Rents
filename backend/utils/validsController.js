@@ -274,7 +274,6 @@ function validateAndNormalizeVehicleCreate(req, res) {
     },
   };
 }
-
 function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   if (
     !validateAuthenticatedUser(
@@ -286,10 +285,17 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     return null;
   }
 
+  let imageToSave = existingVehicle.image;
+  if (req.files && req.files.length > 0) {
+    const imageFilenames = req.files.map((file) => file.filename);
+    imageToSave = JSON.stringify(imageFilenames);
+  }
+
   const merged = {
+    modelId: body.modelId ?? existingVehicle.modelId,
     fuelType: body.fuelType ?? existingVehicle.fuelType,
     expirationDate: body.expirationDate ?? existingVehicle.expirationDate,
-    image: body.image ?? existingVehicle.image,
+    image: imageToSave,
     year: body.year ?? existingVehicle.year,
     km: body.km ?? existingVehicle.km,
     address: body.address ?? existingVehicle.address,
@@ -298,9 +304,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   };
 
   if (
-    merged.brandId == null ||
     merged.modelId == null ||
-    merged.typeId == null ||
     !merged.fuelType ||
     !merged.expirationDate ||
     !merged.image ||
@@ -322,27 +326,25 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   const priceNum = Number(merged.price);
   const currentYear = new Date().getFullYear();
 
-  if (Number.isNaN(yearNum)) {
+  if (Number.isNaN(yearNum))
     return sendValidationError(
       res,
       STATUS_CODE.BAD_REQUEST,
       "Year must be a number.",
     );
-  }
-  if (Number.isNaN(kmNum)) {
+  if (Number.isNaN(kmNum))
     return sendValidationError(
       res,
       STATUS_CODE.BAD_REQUEST,
       "KM must be a number.",
     );
-  }
-  if (Number.isNaN(priceNum)) {
+  if (Number.isNaN(priceNum))
     return sendValidationError(
       res,
       STATUS_CODE.BAD_REQUEST,
       "Price must be a number.",
     );
-  }
+
   if (yearNum < 1900 || yearNum > currentYear + 1) {
     return sendValidationError(
       res,

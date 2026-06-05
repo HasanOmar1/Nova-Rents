@@ -97,6 +97,20 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  const updateVehicle = async (licensePlate, vehData) => {
+    try {
+      const response = await axios.put(`/vehicles/${licensePlate}`, vehData);
+      console.log("Updating Vehicle:", response.data);
+      await Promise.all([getAllVehicles(), getUserVehicles()]);
+      setErrorMsg("");
+      return true;
+    } catch (error) {
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
+      return false;
+    }
+  };
+
   return (
     <VehicleContext.Provider
       value={{
@@ -113,6 +127,8 @@ const VehicleContextProvider = ({ children }) => {
         getVehType,
         vehiclesType,
         addVehicle,
+        setErrorMsg,
+        updateVehicle,
       }}
     >
       {children}

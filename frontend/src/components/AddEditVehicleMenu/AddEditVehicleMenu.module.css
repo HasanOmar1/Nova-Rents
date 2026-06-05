@@ -33,6 +33,11 @@
   font-size: 0.875rem;
 }
 
+.AddVehicleMenu .header .errorMsg {
+  color: red;
+  font-size: 0.7rem;
+}
+
 .AddVehicleMenu .formGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
