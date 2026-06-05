@@ -2,12 +2,28 @@ import { useState } from "react";
 import DeleteMenu from "../DeleteMenu/DeleteMenu";
 import styles from "./MyVehiclesCards.module.css";
 import { Pencil, Trash2 } from "lucide-react";
+import { useVehicleContext } from "../../context/VehicleContext";
 
-const MyVehiclesCards = ({ img, name, year, type, location, price }) => {
+const MyVehiclesCards = ({
+  img,
+  name,
+  year,
+  type,
+  location,
+  price,
+  licensePlate,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { deleteUserVehicle, errorMsg } = useVehicleContext();
 
   const openDeleteMenu = () => setIsOpen(true);
   const closeDeleteMenu = () => setIsOpen(false);
+
+  const handleDeleteVehicle = async () => {
+    const isSuccess = await deleteUserVehicle(licensePlate);
+
+    if (isSuccess) closeDeleteMenu();
+  };
 
   return (
     <div className={styles.MyVehiclesCards}>
@@ -21,7 +37,7 @@ const MyVehiclesCards = ({ img, name, year, type, location, price }) => {
 
       <p className={styles.type}>{type}</p>
       <p className={styles.location}>{location}</p>
-      <p className={styles.price}>{price}</p>
+      <p className={styles.price}>${price}</p>
 
       <div className={styles.actionsContainer}>
         <p>
@@ -38,6 +54,8 @@ const MyVehiclesCards = ({ img, name, year, type, location, price }) => {
         name={name}
         closeMenu={closeDeleteMenu}
         isOpen={isOpen}
+        handleDeleteVehicle={handleDeleteVehicle}
+        errorMsg={errorMsg}
       />
     </div>
   );

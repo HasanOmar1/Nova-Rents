@@ -266,36 +266,36 @@ const getUserDetailsByEmail = async (req, res, next) => {
   }
 };
 // Return the logged-in user's profile data from the session
-// async function getProfile(req, res, next) {
-//   try {
+async function getProfile(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    const user = await getUserByEmail(req.session.user.email);
+    if (!user) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "User not found" });
+    }
+    const loggedUser = {
+      userId: user.userId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      birthDate: user.birthDate.toLocaleDateString(),
+      status: user.status,
+    };
 
-//     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
-//       return;
-//     const user =  await getUserByEmail(req.session.user.email);
-//     if (!user) {
-//       return res
-//         .status(STATUS_CODE.NOT_FOUND)
-//         .json({ message: "User not found" });
-//     }
-//     const loggedUser = {
-//       userId: user.userId,
-//       firstName: user.firstName,
-//       lastName: user.lastName,
-//       email: user.email,
-//       phone: user.phone,
-//       role: user.role,
-//       birthDate: user.birthDate.toLocaleDateString(),
-//       status: user.status,
-//     };
+    res.status(STATUS_CODE.OK).json({
+      message: "User profile fetched successfully",
+      user: loggedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
-//     res.status(STATUS_CODE.OK).json({
-//       message: "User profile fetched successfully",
-//       user: loggedUser,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// }
 // Logout the current user: destroys session and clears cookie
 async function logout(req, res, next) {
   try {
@@ -376,7 +376,7 @@ const updateUserProfile = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
-    
+
     const currentUserId = req.session.user.userId;
 
     const { firstName, lastName, phone, birthDate, password, newEmail } =
@@ -557,13 +557,13 @@ const updateUserProfile = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
 module.exports = {
   getAllUsers,
   register,
   login,
-  // getProfile,
+  getProfile,
   logout,
   blockUserByEmail,
   unblockUserByEmail,

@@ -1,13 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 const VehicleContext = createContext();
 
 const VehicleContextProvider = ({ children }) => {
   const [errorMsg, setErrorMsg] = useState("");
-  const navigate = useNavigate();
   const [allVehicles, setAllVehicles] = useState([]);
+  const [userVehicles, setUserVehicles] = useState([]);
 
   const getAllVehicles = async () => {
     try {
@@ -21,8 +20,41 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  const getUserVehicles = async () => {
+    try {
+      const response = await axios.get("/vehicles/myVehicles");
+      setUserVehicles(response.data.vehicles);
+      console.log("User vehicles:", response.data.vehicles);
+      setErrorMsg("");
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+    }
+  };
+
+  const deleteUserVehicle = async (licensePlate) => {
+    try {
+      await axios.delete(`/vehicles/${licensePlate}`);
+      getUserVehicles();
+      return true;
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+      return false;
+    }
+  };
+
   return (
-    <VehicleContext.Provider value={{ errorMsg, getAllVehicles, allVehicles }}>
+    <VehicleContext.Provider
+      value={{
+        errorMsg,
+        getAllVehicles,
+        allVehicles,
+        getUserVehicles,
+        userVehicles,
+        deleteUserVehicle,
+      }}
+    >
       {children}
     </VehicleContext.Provider>
   );

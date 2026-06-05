@@ -2,7 +2,15 @@ import { useEffect, useRef } from "react";
 import styles from "./DeleteMenu.module.css";
 import { TriangleAlert } from "lucide-react";
 
-const DeleteMenu = ({ img, name, location, closeMenu, isOpen }) => {
+const DeleteMenu = ({
+  img,
+  name,
+  location,
+  closeMenu,
+  isOpen,
+  handleDeleteVehicle,
+  errorMsg,
+}) => {
   const dialogRef = useRef(null);
 
   useEffect(() => {
@@ -26,7 +34,10 @@ const DeleteMenu = ({ img, name, location, closeMenu, isOpen }) => {
       </div>
 
       <div className={styles.container}>
-        <p>Are you sure you want to delete the vehicle listed below?</p>
+        {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
+        <p className={styles.sureMsg}>
+          Are you sure you want to delete the vehicle listed below?
+        </p>
         <div className={styles.mid}>
           <div className={styles.imgContainer}>
             <img src={img} alt={name} />
@@ -46,7 +57,7 @@ const DeleteMenu = ({ img, name, location, closeMenu, isOpen }) => {
           <button className={styles.cancelBtn} onClick={closeMenu}>
             Cancel
           </button>
-          <button className={styles.deleteBtn} onClick={closeMenu}>
+          <button className={styles.deleteBtn} onClick={handleDeleteVehicle}>
             DELETE permanently
           </button>
         </div>
