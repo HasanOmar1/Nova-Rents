@@ -5,6 +5,7 @@ const {
   checkValidPassword,
   checkValidPhoneIL,
 } = require("./Valids");
+const { clearFailedUploads } = require("./handleUploads");
 
 function sendValidationError(res, status, message) {
   res.status(status).json({ message });
@@ -148,9 +149,14 @@ function validateEmailInBody(email, res) {
 }
 
 function validateAndNormalizeVehicleCreate(req, res) {
+  // NEW: A tiny wrapper that clears images BEFORE sending the error back
+  const handleError = (status, msg) => {
+    clearFailedUploads(req.files);
+    return sendValidationError(res, status, msg);
+  };
+
   if (!req.session?.user) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.UNAUTHORIZED,
       "You must be logged in to perform this action.",
     );
@@ -171,6 +177,8 @@ function validateAndNormalizeVehicleCreate(req, res) {
 
   const uploadedFiles = req.files;
 
+  // We use sendValidationError directly here because if there are no files,
+  // there is nothing to clean up anyway!
   if (!uploadedFiles || uploadedFiles.length === 0) {
     return sendValidationError(
       res,
@@ -189,54 +197,33 @@ function validateAndNormalizeVehicleCreate(req, res) {
     price == null ||
     !color ||
     modelId == null
-  )
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "All fields are required.",
-    );
+  ) {
+    return handleError(STATUS_CODE.BAD_REQUEST, "All fields are required.");
+  }
 
   const imageFilenames = uploadedFiles.map((file) => file.filename);
-
   const imageJsonString = JSON.stringify(imageFilenames);
 
   const plateString = String(licensePlate).trim();
   if (!/^\d+$/.test(plateString)) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.BAD_REQUEST,
       "License plate must contain numbers only.",
     );
   }
   if (plateString.length < 7 || plateString.length > 8) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.BAD_REQUEST,
       "Enter a valid Israeli license plate (7 or 8 digits).",
     );
   }
 
-  if (Number.isNaN(Number(year))) {
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "Year must be a number.",
-    );
-  }
-  if (Number.isNaN(Number(km))) {
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "KM must be a number.",
-    );
-  }
-  if (Number.isNaN(Number(price))) {
-    return sendValidationError(
-      res,
-      STATUS_CODE.BAD_REQUEST,
-      "Price must be a number.",
-    );
-  }
+  if (Number.isNaN(Number(year)))
+    return handleError(STATUS_CODE.BAD_REQUEST, "Year must be a number.");
+  if (Number.isNaN(Number(km)))
+    return handleError(STATUS_CODE.BAD_REQUEST, "KM must be a number.");
+  if (Number.isNaN(Number(price)))
+    return handleError(STATUS_CODE.BAD_REQUEST, "Price must be a number.");
 
   const yearNum = Number(year);
   const kmNum = Number(km);
@@ -244,15 +231,13 @@ function validateAndNormalizeVehicleCreate(req, res) {
   const currentYear = new Date().getFullYear();
 
   if (yearNum < 1900 || yearNum > currentYear + 1) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.BAD_REQUEST,
       `Enter a valid year between 1900 and ${currentYear + 1}`,
     );
   }
   if (kmNum < 0 || priceNum < 0) {
-    return sendValidationError(
-      res,
+    return handleError(
       STATUS_CODE.BAD_REQUEST,
       "Kilometers and Price cannot be negative.",
     );
@@ -274,6 +259,7 @@ function validateAndNormalizeVehicleCreate(req, res) {
     },
   };
 }
+
 function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   if (
     !validateAuthenticatedUser(

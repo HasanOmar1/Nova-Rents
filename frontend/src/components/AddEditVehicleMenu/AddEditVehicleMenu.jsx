@@ -152,6 +152,11 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   // Helper variable to easily check the current mode
   const isEditMode = Boolean(vehicle);
 
+  // Creates a unique ID for the file input
+  const uniqueInputId = isEditMode
+    ? `image-upload-${vehicle.licensePlate}`
+    : "image-upload-new";
+
   return (
     <dialog
       className={styles.AddVehicleMenu} // Assumes you renamed your CSS file to match this component!
@@ -352,16 +357,13 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             {/* Only show the upload button if they have LESS than 4 images */}
             {(!formData.images || formData.images.length < 4) && (
               <>
-                <label
-                  htmlFor="vehicle-image-upload"
-                  className={styles.uploadButton}
-                >
+                <label htmlFor={uniqueInputId} className={styles.uploadButton}>
                   {isEditMode
                     ? "+ Upload new images to overwrite old ones"
                     : "+ Click to browse image"}
                 </label>
                 <input
-                  id="vehicle-image-upload"
+                  id={uniqueInputId}
                   type="file"
                   accept="image/*"
                   multiple

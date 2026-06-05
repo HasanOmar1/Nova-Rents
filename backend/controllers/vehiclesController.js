@@ -10,6 +10,10 @@ const {
   validateAndMergeVehicleUpdate,
   validateAuthenticatedUser,
 } = require("../utils/validsController");
+const {
+  deleteImagesFromDisk,
+  clearFailedUploads,
+} = require("../utils/handleUploads");
 
 const getUserVehicles = async (req, res, next) => {
   try {
@@ -96,9 +100,12 @@ const addVehicle = async (req, res, next) => {
 
     const checkIfVehicleAlreadyExists =
       await getVehicleByLicensePlate(licensePlate);
+
     if (checkIfVehicleAlreadyExists) {
+      //  Wipe the files from the disk because the vehicle exists!
+      clearFailedUploads(req.files);
       return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "Vehicle already exists",
+        message: "License plate already exists!",
       });
     }
 
@@ -127,6 +134,8 @@ const addVehicle = async (req, res, next) => {
       vehicle: newVehicle,
     });
   } catch (error) {
+    // Wipe the files if the database query crashes for any reason!
+    clearFailedUploads(req.files);
     next(error);
   }
 };
@@ -216,6 +225,9 @@ const deleteVehicle = async (req, res, next) => {
     const deleteQuery = "DELETE FROM vehicles WHERE licensePlate = ?";
     await doQuery(deleteQuery, [licensePlate]);
 
+    // If the DB delete was successful, wipe the images from the hard drive!
+    deleteImagesFromDisk(existingVehicle.image);
+
     res.status(STATUS_CODE.OK).json({
       message: "Vehicle deleted successfully",
     });
@@ -239,6 +251,18 @@ const updateVehicle = async (req, res, next) => {
       return res.status(STATUS_CODE.FORBIDDEN).json({
         message: "You cannot update someone else's car",
       });
+    }
+
+    let imageToSave = existingVehicle.image;
+
+    // If the user uploaded new images...
+    if (req.files && req.files.length > 0) {
+      // Delete the OLD images from the hard drive
+      deleteImagesFromDisk(existingVehicle.image);
+
+      // Save the NEW images to the database
+      const imageFilenames = req.files.map((file) => file.filename);
+      imageToSave = JSON.stringify(imageFilenames);
     }
 
     const mergedData = validateAndMergeVehicleUpdate(
