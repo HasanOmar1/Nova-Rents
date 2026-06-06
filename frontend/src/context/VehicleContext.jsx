@@ -51,7 +51,6 @@ const VehicleContextProvider = ({ children }) => {
     try {
       const response = await axios.get("/vehicles/brands");
       setVehiclesBrands(response.data.carBrands);
-      console.log("Brands: ", response.data.carBrands);
       setErrorMsg("");
     } catch (error) {
       console.log(error?.response.data?.message);
@@ -63,7 +62,6 @@ const VehicleContextProvider = ({ children }) => {
     try {
       const response = await axios.get(`/vehicles/models?brandId=${brandId}`);
       setVehicleModel(response.data.carModels);
-      console.log("Models: ", response.data.carModels);
       setErrorMsg("");
     } catch (error) {
       console.log(error?.response.data?.message);
@@ -75,7 +73,6 @@ const VehicleContextProvider = ({ children }) => {
     try {
       const response = await axios.get(`/vehicles/types`);
       setVehiclesType(response.data.carTypes);
-      console.log("Types: ", response.data.carTypes);
       setErrorMsg("");
     } catch (error) {
       console.log(error?.response.data?.message);
@@ -86,7 +83,6 @@ const VehicleContextProvider = ({ children }) => {
   const addVehicle = async (vehData) => {
     try {
       const response = await axios.post("/vehicles/add", vehData);
-      console.log("Adding Vehicle:", response.data);
       await Promise.all([getAllVehicles(), getUserVehicles()]);
       setErrorMsg("");
       return true;
@@ -100,7 +96,6 @@ const VehicleContextProvider = ({ children }) => {
   const updateVehicle = async (licensePlate, vehData) => {
     try {
       const response = await axios.put(`/vehicles/${licensePlate}`, vehData);
-      console.log("Updating Vehicle:", response.data);
       await Promise.all([getAllVehicles(), getUserVehicles()]);
       setErrorMsg("");
       return true;

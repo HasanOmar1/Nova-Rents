@@ -159,7 +159,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
 
   return (
     <dialog
-      className={styles.AddVehicleMenu} // Assumes you renamed your CSS file to match this component!
+      className={styles.AddEditVehicleMenu}
       ref={dialogRef}
       onClose={handleCloseAndReset}
     >

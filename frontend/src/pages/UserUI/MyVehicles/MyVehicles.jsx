@@ -63,8 +63,9 @@ const MyVehicles = () => {
         <div className={styles.titles}>
           <p className={styles.vehicleTitle}>Vehicle</p>
           <p>Category</p>
-          <p>Location</p>
+          <p>Address</p>
           <p>Price</p>
+          <p>Status</p>
           <p>Actions</p>
         </div>
         <hr />

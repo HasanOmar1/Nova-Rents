@@ -4,6 +4,8 @@ import styles from "./MyVehiclesCards.module.css";
 import { Pencil, Trash2 } from "lucide-react";
 import { useVehicleContext } from "../../context/VehicleContext";
 import AddEditVehicleMenu from "../AddEditVehicleMenu/AddEditVehicleMenu";
+import { Link } from "react-router-dom";
+import { parseImgs } from "../../utils/parseImgs";
 
 const MyVehiclesCards = ({ veh }) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -22,41 +24,37 @@ const MyVehiclesCards = ({ veh }) => {
     if (isSuccess) closeDeleteMenu();
   };
 
-  let parsedImages = [];
-  try {
-    parsedImages = JSON.parse(veh.image);
-  } catch (error) {
-    parsedImages = [veh.image];
-  }
-
-  const mainImage = parsedImages[0];
-  const imageUrl = `http://localhost:3000/uploads/${mainImage}`;
-
+  const imageUrl = parseImgs(veh.image);
   const fullName = `${veh.brandName} ${veh.modelName}`;
 
   return (
     <div className={styles.MyVehiclesCards}>
-      <div className={styles.nameContainer}>
+      <Link
+        className={styles.nameContainer}
+        to={`/vehicles/${veh.licensePlate}`}
+        state={veh}
+      >
         <img src={imageUrl} alt={fullName} />
         <div className={styles.nameAndYear}>
           <p className={styles.name}>{fullName}</p>
           <p className={styles.year}>{veh.year}</p>
         </div>
-      </div>
+      </Link>
 
       <p className={styles.type}>{veh.carTypeName}</p>
-      <p className={styles.location}>{veh.address}</p>
+      <p className={styles.address}>{veh.address}</p>
       <p className={styles.price}>${veh.price}</p>
+      <p
+        className={`${styles.status} ${veh.status === "available" ? styles.available : veh.status === "booked" ? styles.booked : styles.maintenance} `}
+      >
+        {veh.status}
+      </p>
 
       <div className={styles.actionsContainer}>
-        <p onClick={openEditMenu} style={{ cursor: "pointer" }}>
+        <p onClick={openEditMenu}>
           <Pencil size={18} className="icon" />
         </p>
-        <p
-          className={styles.delete}
-          onClick={openDeleteMenu}
-          style={{ cursor: "pointer" }}
-        >
+        <p className={styles.delete} onClick={openDeleteMenu}>
           <Trash2 size={18} />
         </p>
       </div>

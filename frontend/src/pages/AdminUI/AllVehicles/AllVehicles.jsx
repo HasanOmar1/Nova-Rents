@@ -116,18 +116,7 @@ const AllVehicles = () => {
         {vehicleData.map((veh, i) => {
           return (
             <div key={veh.id}>
-              <AllVehiclesCards
-                img={veh.img}
-                location={veh.location}
-                name={veh.name}
-                price={veh.price}
-                type={veh.type}
-                year={veh.year}
-                id={veh.id}
-                owner={veh.owner}
-                seats={veh.seats}
-                status={veh.status}
-              />
+              <AllVehiclesCards veh={veh} />
               {i < vehicleData.length - 1 && <hr />}
             </div>
           );
