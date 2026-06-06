@@ -3,11 +3,15 @@ import styles from "./VehicleDetails.module.css";
 import { AlertTriangle, MapPin } from "lucide-react";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
+import { parseImgs } from "../../utils/parseImgs";
 
 const VehicleDetails = () => {
   const { id } = useParams();
   const { state } = useLocation();
   console.log(state);
+
+  const imageUrl = parseImgs(state.image);
+  const ownerFullName = state.ownerFirstName + " " + state.ownerLastName;
 
   const cardsData = [
     {
@@ -22,18 +26,18 @@ const VehicleDetails = () => {
       title: "Location",
       value: (
         <>
-          <MapPin size={17} /> {state.location}
+          <MapPin size={17} /> {state.address}
         </>
       ),
     },
     {
       title: "Owner",
-      value: state.ownerName,
+      value: ownerFullName,
     },
   ];
 
-  function locationToMapQuery(location) {
-    return `${location}, Israel`;
+  function locationToMapQuery(address) {
+    return `${address}, Israel`;
   }
 
   return (
@@ -54,11 +58,11 @@ const VehicleDetails = () => {
       <div className={styles.allContainer}>
         <div className={styles.dataContainer}>
           <div className={`${styles.infoContainer} ${styles.container}`}>
-            <img src={state.img} alt={state.vehName} />
+            <img src={imageUrl} alt={state.vehName} />
 
             <div className={styles.about}>
               <div className={styles.typeStatusContainer}>
-                <p className={styles.vehType}>{state.type}</p>
+                <p className={styles.vehType}>{state.carTypeName}</p>
                 <p className={styles.status}>{state.status}</p>
               </div>
 
@@ -91,8 +95,8 @@ const VehicleDetails = () => {
             <h4>Location</h4>
             <div>
               <GoogleMapEmbed
-                query={locationToMapQuery(state.location)}
-                title={state.location}
+                query={locationToMapQuery(state.address)}
+                title={state.address}
               />
             </div>
           </div>
@@ -102,7 +106,9 @@ const VehicleDetails = () => {
           <h4>Booking</h4>
           <div className={styles.ownerInfoContainer}>
             <p className={styles.msg}>Rental contract with</p>
-            <p className="owner">{state.ownerName} — 05400400 </p>
+            <p>
+              {ownerFullName} — {state?.ownerPhone}
+            </p>
           </div>
 
           <div className={styles.allDatesContainer}>
