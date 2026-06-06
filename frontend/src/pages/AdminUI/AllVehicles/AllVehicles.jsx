@@ -5,35 +5,45 @@ import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCard
 import { useVehicleContext } from "../../../context/VehicleContext";
 import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 
-const topData = [
-  {
-    title: "Total in system",
-    value: 4,
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Available",
-    value: 2,
-    icon: <CheckCircle2 size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Booked",
-    value: 1,
-    icon: <CalendarClock size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Maintenance",
-    value: 1,
-    icon: <Wrench size={28} color="#a7d2eb" />,
-  },
-];
-
 const AllVehicles = () => {
   const { getAllVehicles, allVehicles } = useVehicleContext();
 
   useEffect(() => {
     getAllVehicles();
   }, []);
+
+  const availableCount = allVehicles?.filter(
+    (v) => v.status === "available",
+  ).length;
+
+  const rentedCount = allVehicles?.filter((v) => v.status === "rented").length;
+
+  const maintenanceCount = allVehicles?.filter(
+    (v) => v.status === "maintenance",
+  ).length;
+
+  const topData = [
+    {
+      title: "Total in system",
+      value: allVehicles.length,
+      icon: <Car size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Available",
+      value: availableCount,
+      icon: <CheckCircle2 size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Booked",
+      value: rentedCount,
+      icon: <CalendarClock size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Maintenance",
+      value: maintenanceCount,
+      icon: <Wrench size={28} color="#a7d2eb" />,
+    },
+  ];
 
   return (
     <div className={`${styles.AllVehicles} page`}>

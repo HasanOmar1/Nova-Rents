@@ -8,24 +8,6 @@ import { useVehicleContext } from "../../../context/VehicleContext";
 import { useEffect } from "react";
 import AddEditVehicleMenu from "../../../components/AddEditVehicleMenu/AddEditVehicleMenu";
 
-const topData = [
-  {
-    title: "Active listings",
-    value: 2,
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Available now",
-    value: 2,
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Avg. daily rate",
-    value: "$275",
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-];
-
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { getUserVehicles, userVehicles } = useVehicleContext();
@@ -34,8 +16,30 @@ const MyVehicles = () => {
     getUserVehicles();
   }, []);
 
+  const availableCount = userVehicles?.filter(
+    (v) => v.status === "available",
+  ).length;
+
   const openAddVehMenu = () => setIsOpen(true);
   const closeAddVehMenu = () => setIsOpen(false);
+
+  const topData = [
+    {
+      title: "Active listings",
+      value: userVehicles.length || 0,
+      icon: <Car size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Available now",
+      value: availableCount,
+      icon: <Car size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Avg. daily rate",
+      value: `$311`,
+      icon: <Car size={28} color="#a7d2eb" />,
+    },
+  ];
 
   return (
     <div className={`${styles.MyVehicles} page`}>
