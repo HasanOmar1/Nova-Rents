@@ -148,6 +148,23 @@
   opacity: 0.9;
 }
 
+.AddEditVehicleMenu .checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.AddEditVehicleMenu .checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
 @media (max-width: 768px) {
   .AddEditVehicleMenu {
     padding: 20px;

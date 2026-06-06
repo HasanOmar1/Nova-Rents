@@ -19,10 +19,8 @@ const Vehicles = () => {
   const [sortBy, setSortBy] = useState(["price", "year"]);
   const { getAllVehicles, allVehicles } = useVehicleContext();
 
-  console.log(allVehicles);
   useEffect(() => {
     getAllVehicles();
-    console.log("asd");
   }, []);
 
   return (

@@ -82,6 +82,10 @@
   width: 15%;
 }
 
+.MyVehicles .myVehiclesContainer .titles p:nth-child(6) {
+  text-align: center;
+}
+
 .MyVehicles .myVehiclesContainer hr {
   margin: 0;
   border: none;

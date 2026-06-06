@@ -1,7 +1,7 @@
 import { useState } from "react";
 import DeleteMenu from "../../../components/DeleteMenu/DeleteMenu";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
-import MyVehiclesCards from "../../../components/MyVehiclesCards/MyVehiclesCards";
+import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 import styles from "./MyVehicles.module.css";
 import { Car } from "lucide-react";
 import { useVehicleContext } from "../../../context/VehicleContext";
@@ -74,7 +74,7 @@ const MyVehicles = () => {
             {userVehicles.map((veh, i) => {
               return (
                 <div key={veh.licensePlate}>
-                  <MyVehiclesCards veh={veh} />
+                  <VehiclesCardsTable veh={veh} />
                   {i < userVehicles.length - 1 && <hr />}
                 </div>
               );

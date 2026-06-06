@@ -253,16 +253,8 @@ const updateVehicle = async (req, res, next) => {
       });
     }
 
-    let imageToSave = existingVehicle.image;
-
-    // If the user uploaded new images...
     if (req.files && req.files.length > 0) {
-      // Delete the OLD images from the hard drive
       deleteImagesFromDisk(existingVehicle.image);
-
-      // Save the NEW images to the database
-      const imageFilenames = req.files.map((file) => file.filename);
-      imageToSave = JSON.stringify(imageFilenames);
     }
 
     const mergedData = validateAndMergeVehicleUpdate(
@@ -284,11 +276,12 @@ const updateVehicle = async (req, res, next) => {
       address,
       price,
       color,
+      status,
     } = mergedData;
 
     const updateQuery = `
       UPDATE vehicles
-      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?
+      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?, status = ?
       WHERE licensePlate = ?
     `;
 
@@ -302,6 +295,7 @@ const updateVehicle = async (req, res, next) => {
       address,
       price,
       color,
+      status,
       licensePlate,
     ];
 

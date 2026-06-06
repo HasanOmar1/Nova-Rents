@@ -1,4 +1,4 @@
-.MyVehiclesCards {
+.VehiclesCardsTable {
   display: flex;
   justify-content: space-between;
   padding: 15px 20px;
@@ -9,7 +9,7 @@
   transition: 0.3s ease;
 }
 
-.MyVehiclesCards .nameContainer {
+.VehiclesCardsTable .nameContainer {
   padding: 0;
   justify-content: flex-start;
   color: inherit;
@@ -23,73 +23,74 @@
   transition: all 0.3s ease;
 }
 
-.MyVehiclesCards .nameContainer:hover {
+.VehiclesCardsTable .nameContainer:hover {
   scale: 1.01;
   background-color: var(--icons-bg-color);
   cursor: pointer;
 }
 
-.MyVehiclesCards img {
+.VehiclesCardsTable img {
   width: 130px;
   height: 100px;
   border-radius: 20px;
   object-fit: cover;
 }
 
-.MyVehiclesCards .nameAndYear {
+.VehiclesCardsTable .nameAndYear {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.MyVehiclesCards .name {
+.VehiclesCardsTable .name {
   color: white;
 }
 
-.MyVehiclesCards .year {
+.VehiclesCardsTable .year {
   color: var(--gray);
 }
 
-.MyVehiclesCards .type,
-.MyVehiclesCards .address,
-.MyVehiclesCards .price,
-.MyVehiclesCards .status,
-.MyVehiclesCards .actionsContainer {
+.VehiclesCardsTable .type,
+.VehiclesCardsTable .address,
+.VehiclesCardsTable .price,
+.VehiclesCardsTable .status,
+.VehiclesCardsTable .owner,
+.VehiclesCardsTable .actionsContainer {
   width: 15%;
 }
 
-.MyVehiclesCards .status {
+.VehiclesCardsTable .status {
   padding: 10px;
   text-align: center;
   border-radius: 10px;
 }
 
-.MyVehiclesCards .available {
+.VehiclesCardsTable .available {
   background-color: #102e2b;
   color: #90dbbb;
 }
 
-.MyVehiclesCards .booked {
+.VehiclesCardsTable .rented {
   color: #f9e081;
   background-color: #392d1f;
 }
 
-.MyVehiclesCards .maintenance {
+.VehiclesCardsTable .maintenance {
   color: #f9bb81;
   background-color: #39251f;
 }
 
-.MyVehiclesCards .address {
+.VehiclesCardsTable .address {
   font-size: 0.55rem;
 }
 
-.MyVehiclesCards .actionsContainer {
+.VehiclesCardsTable .actionsContainer {
   display: flex;
   gap: 10px;
-  justify-content: center;
+  justify-content: right;
 }
 
-.MyVehiclesCards .actionsContainer p {
+.VehiclesCardsTable .actionsContainer p {
   padding: 10px 15px;
   border: var(--cards-border);
   border-radius: 20px;
@@ -98,35 +99,35 @@
   transition: all 0.3s;
 }
 
-.MyVehiclesCards .actionsContainer .delete {
+.VehiclesCardsTable .actionsContainer .delete {
   background-color: #2a171c;
   color: #ffa3a3;
 }
 
-.MyVehiclesCards .actionsContainer p:hover {
+.VehiclesCardsTable .actionsContainer p:hover {
   scale: 1.1;
 }
 
 /* Tablet (1024px) */
 @media (max-width: 1024px) {
-  .MyVehiclesCards {
+  .VehiclesCardsTable {
     flex-wrap: wrap;
     gap: 20px;
   }
 
-  .MyVehiclesCards .nameContainer {
+  .VehiclesCardsTable .nameContainer {
     width: 100%;
   }
 
-  .MyVehiclesCards .type,
-  .MyVehiclesCards .address,
-  .MyVehiclesCards .price,
-  .MyVehiclesCards .status {
+  .VehiclesCardsTable .type,
+  .VehiclesCardsTable .address,
+  .VehiclesCardsTable .price,
+  .VehiclesCardsTable .status {
     width: auto;
     flex: 1;
   }
 
-  .MyVehiclesCards .actionsContainer {
+  .VehiclesCardsTable .actionsContainer {
     width: 100%;
     justify-content: flex-end;
   }
@@ -134,47 +135,47 @@
 
 /* Mobile (768px) */
 @media (max-width: 768px) {
-  .MyVehiclesCards .type,
-  .MyVehiclesCards .address,
-  .MyVehiclesCards .price,
-  .MyVehiclesCards .status {
+  .VehiclesCardsTable .type,
+  .VehiclesCardsTable .address,
+  .VehiclesCardsTable .price,
+  .VehiclesCardsTable .status {
     flex: 1 1 40%;
     margin-bottom: 5px;
   }
 
-  .MyVehiclesCards .actionsContainer {
+  .VehiclesCardsTable .actionsContainer {
     justify-content: flex-start;
   }
 }
 
 /* Small Mobile (480px) */
 @media (max-width: 480px) {
-  .MyVehiclesCards {
+  .VehiclesCardsTable {
     flex-direction: column;
     align-items: flex-start;
     padding: 15px;
     gap: 15px;
   }
 
-  .MyVehiclesCards .nameContainer img {
+  .VehiclesCardsTable .nameContainer img {
     width: 100px;
     height: 80px;
   }
 
-  .MyVehiclesCards .type,
-  .MyVehiclesCards .address,
-  .MyVehiclesCards .price,
-  .MyVehiclesCards .status {
+  .VehiclesCardsTable .type,
+  .VehiclesCardsTable .address,
+  .VehiclesCardsTable .price,
+  .VehiclesCardsTable .status {
     width: 100%;
     flex: none;
   }
 
-  .MyVehiclesCards .actionsContainer {
+  .VehiclesCardsTable .actionsContainer {
     width: 100%;
     margin-top: 5px;
   }
 
-  .MyVehiclesCards .actionsContainer p {
+  .VehiclesCardsTable .actionsContainer p {
     padding: 12px 15px;
     flex: 1;
     display: flex;

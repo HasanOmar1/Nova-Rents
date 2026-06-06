@@ -1,13 +1,13 @@
 import { useState } from "react";
 import DeleteMenu from "../DeleteMenu/DeleteMenu";
-import styles from "./MyVehiclesCards.module.css";
+import styles from "./VehiclesCardsTable.module.css";
 import { Pencil, Trash2 } from "lucide-react";
 import { useVehicleContext } from "../../context/VehicleContext";
 import AddEditVehicleMenu from "../AddEditVehicleMenu/AddEditVehicleMenu";
 import { Link } from "react-router-dom";
 import { parseImgs } from "../../utils/parseImgs";
 
-const MyVehiclesCards = ({ veh }) => {
+const VehiclesCardsTable = ({ veh, admin }) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -26,9 +26,10 @@ const MyVehiclesCards = ({ veh }) => {
 
   const imageUrl = parseImgs(veh.image);
   const fullName = `${veh.brandName} ${veh.modelName}`;
+  const ownerFullName = `${veh.ownerFirstName} ${veh.ownerLastName}`;
 
   return (
-    <div className={styles.MyVehiclesCards}>
+    <div className={styles.VehiclesCardsTable}>
       <Link
         className={styles.nameContainer}
         to={`/vehicles/${veh.licensePlate}`}
@@ -44,20 +45,23 @@ const MyVehiclesCards = ({ veh }) => {
       <p className={styles.type}>{veh.carTypeName}</p>
       <p className={styles.address}>{veh.address}</p>
       <p className={styles.price}>${veh.price}</p>
+      {admin && <p className={styles.owner}>{ownerFullName}</p>}
       <p
-        className={`${styles.status} ${veh.status === "available" ? styles.available : veh.status === "booked" ? styles.booked : styles.maintenance} `}
+        className={`${styles.status} ${veh.status === "available" ? styles.available : veh.status === "rented" ? styles.rented : styles.maintenance} `}
       >
         {veh.status}
       </p>
 
-      <div className={styles.actionsContainer}>
-        <p onClick={openEditMenu}>
-          <Pencil size={18} className="icon" />
-        </p>
-        <p className={styles.delete} onClick={openDeleteMenu}>
-          <Trash2 size={18} />
-        </p>
-      </div>
+      {!admin && (
+        <div className={styles.actionsContainer}>
+          <p onClick={openEditMenu}>
+            <Pencil size={18} className="icon" />
+          </p>
+          <p className={styles.delete} onClick={openDeleteMenu}>
+            <Trash2 size={18} />
+          </p>
+        </div>
+      )}
 
       <DeleteMenu
         img={imageUrl}
@@ -78,4 +82,4 @@ const MyVehiclesCards = ({ veh }) => {
   );
 };
 
-export default MyVehiclesCards;
+export default VehiclesCardsTable;
