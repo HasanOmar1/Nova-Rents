@@ -1,0 +1,184 @@
+.VehiclesCardsTable {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  font-size: 0.65rem;
+  font-weight: bold;
+  color: var(--gray);
+  align-items: center;
+  transition: 0.3s ease;
+}
+
+.VehiclesCardsTable .nameContainer {
+  padding: 0;
+  justify-content: flex-start;
+  color: inherit;
+  text-decoration: none;
+  display: flex;
+  gap: 20px;
+  width: 25%;
+  align-items: center;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  transition: all 0.3s ease;
+}
+
+.VehiclesCardsTable .nameContainer:hover {
+  scale: 1.01;
+  background-color: var(--icons-bg-color);
+  cursor: pointer;
+}
+
+.VehiclesCardsTable img {
+  width: 130px;
+  height: 100px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.VehiclesCardsTable .nameAndYear {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.VehiclesCardsTable .name {
+  color: white;
+}
+
+.VehiclesCardsTable .year {
+  color: var(--gray);
+}
+
+.VehiclesCardsTable .type,
+.VehiclesCardsTable .address,
+.VehiclesCardsTable .price,
+.VehiclesCardsTable .status,
+.VehiclesCardsTable .owner,
+.VehiclesCardsTable .actionsContainer {
+  width: 15%;
+}
+
+.VehiclesCardsTable .status {
+  padding: 10px;
+  text-align: center;
+  border-radius: 10px;
+}
+
+.VehiclesCardsTable .available {
+  background-color: #102e2b;
+  color: #90dbbb;
+}
+
+.VehiclesCardsTable .rented {
+  color: #f9e081;
+  background-color: #392d1f;
+}
+
+.VehiclesCardsTable .maintenance {
+  color: #f9bb81;
+  background-color: #39251f;
+}
+
+.VehiclesCardsTable .address {
+  font-size: 0.55rem;
+}
+
+.VehiclesCardsTable .actionsContainer {
+  display: flex;
+  gap: 10px;
+  justify-content: right;
+}
+
+.VehiclesCardsTable .actionsContainer p {
+  padding: 10px 15px;
+  border: var(--cards-border);
+  border-radius: 20px;
+  cursor: pointer;
+  background-color: #212226;
+  transition: all 0.3s;
+}
+
+.VehiclesCardsTable .actionsContainer .delete {
+  background-color: #2a171c;
+  color: #ffa3a3;
+}
+
+.VehiclesCardsTable .actionsContainer p:hover {
+  scale: 1.1;
+}
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .VehiclesCardsTable {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .VehiclesCardsTable .nameContainer {
+    width: 100%;
+  }
+
+  .VehiclesCardsTable .type,
+  .VehiclesCardsTable .address,
+  .VehiclesCardsTable .price,
+  .VehiclesCardsTable .status {
+    width: auto;
+    flex: 1;
+  }
+
+  .VehiclesCardsTable .actionsContainer {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Mobile (768px) */
+@media (max-width: 768px) {
+  .VehiclesCardsTable .type,
+  .VehiclesCardsTable .address,
+  .VehiclesCardsTable .price,
+  .VehiclesCardsTable .status {
+    flex: 1 1 40%;
+    margin-bottom: 5px;
+  }
+
+  .VehiclesCardsTable .actionsContainer {
+    justify-content: flex-start;
+  }
+}
+
+/* Small Mobile (480px) */
+@media (max-width: 480px) {
+  .VehiclesCardsTable {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .VehiclesCardsTable .nameContainer img {
+    width: 100px;
+    height: 80px;
+  }
+
+  .VehiclesCardsTable .type,
+  .VehiclesCardsTable .address,
+  .VehiclesCardsTable .price,
+  .VehiclesCardsTable .status {
+    width: 100%;
+    flex: none;
+  }
+
+  .VehiclesCardsTable .actionsContainer {
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  .VehiclesCardsTable .actionsContainer p {
+    padding: 12px 15px;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+}

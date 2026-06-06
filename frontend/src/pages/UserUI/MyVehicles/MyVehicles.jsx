@@ -1,30 +1,12 @@
 import { useState } from "react";
 import DeleteMenu from "../../../components/DeleteMenu/DeleteMenu";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
-import MyVehiclesCards from "../../../components/MyVehiclesCards/MyVehiclesCards";
+import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 import styles from "./MyVehicles.module.css";
 import { Car } from "lucide-react";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import { useEffect } from "react";
 import AddEditVehicleMenu from "../../../components/AddEditVehicleMenu/AddEditVehicleMenu";
-
-const topData = [
-  {
-    title: "Active listings",
-    value: 2,
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Available now",
-    value: 2,
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Avg. daily rate",
-    value: "$275",
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-];
 
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,8 +16,30 @@ const MyVehicles = () => {
     getUserVehicles();
   }, []);
 
+  const availableCount = userVehicles?.filter(
+    (v) => v.status === "available",
+  ).length;
+
   const openAddVehMenu = () => setIsOpen(true);
   const closeAddVehMenu = () => setIsOpen(false);
+
+  const topData = [
+    {
+      title: "Active listings",
+      value: userVehicles.length || 0,
+      icon: <Car size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Available now",
+      value: availableCount,
+      icon: <Car size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Avg. daily rate",
+      value: `$311`,
+      icon: <Car size={28} color="#a7d2eb" />,
+    },
+  ];
 
   return (
     <div className={`${styles.MyVehicles} page`}>
@@ -63,8 +67,9 @@ const MyVehicles = () => {
         <div className={styles.titles}>
           <p className={styles.vehicleTitle}>Vehicle</p>
           <p>Category</p>
-          <p>Location</p>
+          <p>Address</p>
           <p>Price</p>
+          <p>Status</p>
           <p>Actions</p>
         </div>
         <hr />
@@ -73,7 +78,7 @@ const MyVehicles = () => {
             {userVehicles.map((veh, i) => {
               return (
                 <div key={veh.licensePlate}>
-                  <MyVehiclesCards veh={veh} />
+                  <VehiclesCardsTable veh={veh} />
                   {i < userVehicles.length - 1 && <hr />}
                 </div>
               );

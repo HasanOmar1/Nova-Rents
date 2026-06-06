@@ -36,7 +36,7 @@
 }
 
 .AllVehicles .myVehiclesContainer .titles p:nth-child(1) {
-  width: 35%;
+  width: 25%;
 }
 
 .AllVehicles .myVehiclesContainer .titles p:nth-child(2),
@@ -44,7 +44,7 @@
 .AllVehicles .myVehiclesContainer .titles p:nth-child(4),
 .AllVehicles .myVehiclesContainer .titles p:nth-child(5),
 .AllVehicles .myVehiclesContainer .titles p:nth-child(6) {
-  width: 13%;
+  width: 15%;
 }
 
 .AllVehicles .myVehiclesContainer hr {
@@ -61,7 +61,6 @@
     gap: 15px;
   }
 
-  /* Hide the titles on smaller screens to match the responsive stacking in AllVehiclesCards */
   .AllVehicles .myVehiclesContainer .titles {
     display: none;
   }

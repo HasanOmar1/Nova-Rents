@@ -1,14 +1,11 @@
 import { Link } from "react-router-dom";
 import styles from "./VehiclesCards.module.css";
 import { MapPin, User, AlertTriangle } from "lucide-react";
+import { parseImgs } from "../../utils/parseImgs";
 
 const VehiclesCards = ({ veh }) => {
-  let parsedImages = [];
-  parsedImages = JSON.parse(veh.image);
+  const imageUrl = parseImgs(veh.image);
 
-  const mainImage = parsedImages[0];
-
-  const imageUrl = `http://localhost:3000/uploads/${mainImage}`;
   return (
     <div className={styles.VehiclesCards}>
       <img src={imageUrl} alt={veh.brandName} />

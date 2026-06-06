@@ -71,28 +71,19 @@
 }
 
 .MyVehicles .myVehiclesContainer .titles p:nth-child(1) {
-  width: 35%;
-} /* Vehicle */
+  width: 25%;
+}
 
-.MyVehicles .myVehiclesContainer .titles p:nth-child(2) {
-  width: 20%;
-} /* type */
-
-.MyVehicles .myVehiclesContainer .titles p:nth-child(3) {
-  width: 20%;
-} /* Location */
-
-.MyVehicles .myVehiclesContainer .titles p:nth-child(4) {
+.MyVehicles .myVehiclesContainer .titles p:nth-child(2),
+.MyVehicles .myVehiclesContainer .titles p:nth-child(3),
+.MyVehicles .myVehiclesContainer .titles p:nth-child(4),
+.MyVehicles .myVehiclesContainer .titles p:nth-child(5),
+.MyVehicles .myVehiclesContainer .titles p:nth-child(6) {
   width: 15%;
-} /* Price */
+}
 
-.MyVehicles .myVehiclesContainer .titles p:nth-child(5) {
-  width: 10%;
-  text-align: right;
-} /* Actions */
-
-.MyVehicles .vehicleTitle {
-  width: 300px;
+.MyVehicles .myVehiclesContainer .titles p:nth-child(6) {
+  text-align: center;
 }
 
 .MyVehicles .myVehiclesContainer hr {

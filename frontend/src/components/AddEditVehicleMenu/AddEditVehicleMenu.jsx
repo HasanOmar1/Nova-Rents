@@ -14,6 +14,7 @@ const initialFormState = {
   price: "",
   address: "",
   expirationDate: "",
+  status: "available", // <--- Added default status
   images: [],
 };
 
@@ -57,6 +58,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           expirationDate: vehicle.expirationDate
             ? vehicle.expirationDate.split("T")[0]
             : "",
+          status: vehicle.status || "available", // <--- Populate existing status
           images: [],
         });
 
@@ -87,14 +89,11 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
 
-      // If user changes Brand, reset Model and Type
       if (name === "brandId") {
         newData.modelId = "";
         newData.carTypeId = "";
         getModelsByBrand(value);
-      }
-      // If user changes Model, reset Type
-      else if (name === "modelId") {
+      } else if (name === "modelId") {
         newData.carTypeId = "";
       }
 
@@ -131,6 +130,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     submitData.append("price", formData.price);
     submitData.append("address", formData.address);
     submitData.append("expirationDate", formData.expirationDate);
+    submitData.append("status", formData.status); // <--- Add status to FormData
 
     if (formData.images && formData.images.length > 0) {
       formData.images.forEach((file) => {
@@ -138,7 +138,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
       });
     }
 
-    // --- DYNAMIC SUBMISSION ---
     let isSuccess;
     if (vehicle) {
       isSuccess = await updateVehicle(formData.licensePlate, submitData);
@@ -149,19 +148,19 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     if (isSuccess) handleCloseAndReset();
   };
 
-  // Helper variable to easily check the current mode
   const isEditMode = Boolean(vehicle);
 
-  // Creates a unique ID for the file input
   const uniqueInputId = isEditMode
     ? `image-upload-${vehicle.licensePlate}`
     : "image-upload-new";
 
   return (
     <dialog
-      className={styles.AddVehicleMenu} // Assumes you renamed your CSS file to match this component!
+      className={styles.AddEditVehicleMenu}
       ref={dialogRef}
       onClose={handleCloseAndReset}
+      onClick={(e) => e.stopPropagation()}
+      style={{ cursor: "default" }}
     >
       <div className={styles.header}>
         <h2>{isEditMode ? "Edit Vehicle" : "Add New Vehicle"}</h2>
@@ -196,7 +195,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             </select>
           </div>
 
-          {/* MODEL SELECT */}
           <div className={styles.inputGroup}>
             <label>Vehicle Model</label>
             <select
@@ -221,7 +219,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             </select>
           </div>
 
-          {/* TYPE SELECT */}
           <div className={styles.inputGroup}>
             <label>Vehicle Category</label>
             <select
@@ -354,12 +351,11 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
                 : "Vehicle Image (Max: 4)"}
             </label>
 
-            {/* Only show the upload button if they have LESS than 4 images */}
             {(!formData.images || formData.images.length < 4) && (
               <>
                 <label htmlFor={uniqueInputId} className={styles.uploadButton}>
                   {isEditMode
-                    ? "+ Upload new images to overwrite old ones"
+                    ? "+ Upload new images"
                     : "+ Click to browse image"}
                 </label>
                 <input
@@ -373,7 +369,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               </>
             )}
 
-            {/* Status text to show how many images are selected and a Clear button */}
             {formData.images && formData.images.length > 0 && (
               <div className={styles.selectedImagesContainer}>
                 <p>{formData.images.length} / 4 images selected</p>
@@ -382,6 +377,23 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
                 </button>
               </div>
             )}
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                name="status"
+                checked={formData.status === "maintenance"}
+                onChange={(e) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    status: e.target.checked ? "maintenance" : "available",
+                  }));
+                }}
+              />
+              Under Maintenance
+            </label>
           </div>
         </div>
 

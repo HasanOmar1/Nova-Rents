@@ -259,7 +259,6 @@ function validateAndNormalizeVehicleCreate(req, res) {
     },
   };
 }
-
 function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   if (
     !validateAuthenticatedUser(
@@ -287,6 +286,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     address: body.address ?? existingVehicle.address,
     price: body.price ?? existingVehicle.price,
     color: body.color ?? existingVehicle.color,
+    status: body.status ?? existingVehicle.status, // <-- ADDED STATUS MERGE
   };
 
   if (
@@ -298,7 +298,8 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     merged.km == null ||
     !merged.address ||
     merged.price == null ||
-    !merged.color
+    !merged.color ||
+    !merged.status // <-- ADDED STATUS TO REQUIRED CHECK
   ) {
     return sendValidationError(
       res,
