@@ -77,78 +77,133 @@ const getAllUsers = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
-
     if (req.session.user.role !== "admin")
-      return res
-        .status(STATUS_CODE.FORBIDDEN)
-        .json({ message: "You are not authorized to access this resource" });
+      return res.status(STATUS_CODE.FORBIDDEN).json({ message: "Forbidden" });
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
-
-    // Calculate how many rows to skip (the OFFSET)
-    // Example: Page 1 skips 0. Page 2 skips 5. Page 3 skips 10.
     const offset = (page - 1) * limit;
 
+    // Get the search term and wrap it in % for the SQL LIKE operator
+    const search = req.query.search || "";
+    const searchTerm = `%${search}%`;
+
     const query = ` 
-      SELECT 
-        u.userId,
-        u.firstName,
-        u.lastName,
-        u.email,
-        u.phone,
-        u.birthDate,
-        u.role,
-        u.status
+      SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.birthDate, u.role, u.status
       FROM users u
+      WHERE u.email LIKE ? 
       ORDER BY u.userId DESC
       LIMIT ? OFFSET ?
     `;
+    const users = await doQuery(query, [searchTerm, limit, offset]);
 
-    const users = await doQuery(query, [limit, offset]);
+    const formattedUsers = users.map((user) => ({
+      ...user,
+      birthDate: user.birthDate
+        ? new Date(user.birthDate).toLocaleDateString("en-GB")
+        : "N/A",
+    }));
 
-    const countQuery = `
-      SELECT 
-        COUNT(*) as totalUsers,
-        SUM(status = 'active') as activeUsers,
-        SUM(status = 'blocked') as blockedUsers,
-        SUM(role = 'admin') as adminUsers
+    const countQuery = `SELECT COUNT(*) as totalCount FROM users WHERE email LIKE ?`;
+    const countResult = await doQuery(countQuery, [searchTerm]);
+    const totalPages = Math.ceil(countResult[0].totalCount / limit);
+
+    const statsQuery = `
+      SELECT COUNT(*) as total,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) as blocked,
+        SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admins
       FROM users
     `;
-    const countResult = await doQuery(countQuery);
-    const stats = countResult[0];
-    const totalUsers = stats.totalUsers;
-
-    // Calculate total pages (e.g. 12 users / 5 per page = 3 pages)
-    const totalPages = Math.ceil(totalUsers / limit);
-
-    const formattedUsers = users.map((user) => {
-      return {
-        ...user,
-        birthDate: user.birthDate.toLocaleDateString(),
-      };
-    });
+    const statsResult = await doQuery(statsQuery);
 
     res.status(STATUS_CODE.OK).json({
       message: "Users fetched successfully",
       users: formattedUsers,
+      stats: {
+        total: Number(statsResult[0].total) || 0,
+        active: Number(statsResult[0].active) || 0,
+        blocked: Number(statsResult[0].blocked) || 0,
+        admins: Number(statsResult[0].admins) || 0,
+      },
       pagination: {
-        totalUsers,
+        totalUsers: countResult[0].totalCount,
         totalPages,
         currentPage: page,
         limit,
-      },
-      stats: {
-        total: totalUsers,
-        active: Number(stats.activeUsers) || 0,
-        blocked: Number(stats.blockedUsers) || 0,
-        admins: Number(stats.adminUsers) || 0,
       },
     });
   } catch (error) {
     next(error);
   }
 };
+
+// --- GET USERS BY STATUS (WITH SEARCH) ---
+const getUsersByStatus = async (req, res, next) => {
+  try {
+    const { status } = req.params;
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    if (req.session.user.role !== "admin")
+      return res.status(STATUS_CODE.FORBIDDEN).json({ message: "Forbidden" });
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+
+    const search = req.query.search || "";
+    const searchTerm = `%${search}%`;
+
+    const query = ` 
+      SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.birthDate, u.role, u.status
+      FROM users u
+      WHERE status = ? AND u.email LIKE ?
+      ORDER BY u.userId DESC
+      LIMIT ? OFFSET ?
+    `;
+    const users = await doQuery(query, [status, searchTerm, limit, offset]);
+
+    const formattedUsers = users.map((user) => ({
+      ...user,
+      birthDate: user.birthDate
+        ? new Date(user.birthDate).toLocaleDateString("en-GB")
+        : "N/A",
+    }));
+
+    const countQuery = `SELECT COUNT(*) as totalCount FROM users WHERE status = ? AND email LIKE ?`;
+    const countResult = await doQuery(countQuery, [status, searchTerm]);
+    const totalPages = Math.ceil(countResult[0].totalCount / limit);
+
+    const statsQuery = `
+      SELECT COUNT(*) as total,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) as blocked,
+        SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admins
+      FROM users
+    `;
+    const statsResult = await doQuery(statsQuery);
+
+    res.status(STATUS_CODE.OK).json({
+      message: "Users fetched successfully",
+      users: formattedUsers,
+      stats: {
+        total: Number(statsResult[0].total) || 0,
+        active: Number(statsResult[0].active) || 0,
+        blocked: Number(statsResult[0].blocked) || 0,
+        admins: Number(statsResult[0].admins) || 0,
+      },
+      pagination: {
+        totalUsers: countResult[0].totalCount,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Register a new user: validates input, hashes password, inserts into DB
 async function register(req, res, next) {
   try {
@@ -614,4 +669,5 @@ module.exports = {
   unblockUserByEmail,
   getUserDetailsByEmail,
   updateUserProfile,
+  getUsersByStatus,
 };

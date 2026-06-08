@@ -40,10 +40,32 @@ const gridStroke = "rgba(255,255,255,0.06)";
 const Users = () => {
   const { getUsers, usersStats, pagination } = useUserContext();
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // ---  THE DEBOUNCE EFFECT (Only delays typing!) ---
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (debouncedSearch !== searchInput) {
+        setDebouncedSearch(searchInput);
+        setCurrentPage(1);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput, debouncedSearch]);
 
   useEffect(() => {
-    getUsers(currentPage);
-  }, [currentPage]);
+    getUsers(currentPage, statusFilter, debouncedSearch);
+  }, [currentPage, statusFilter, debouncedSearch]);
+
+  useEffect(() => {
+    if (pagination?.totalPages && currentPage > pagination.totalPages) {
+      setCurrentPage(pagination.totalPages);
+    }
+  }, [pagination?.totalPages, currentPage]);
 
   const handleNextPage = () => {
     if (pagination?.currentPage < pagination?.totalPages) {
@@ -56,6 +78,16 @@ const Users = () => {
       setCurrentPage((prev) => prev - 1);
     }
   };
+
+  const handleStatusChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchInput(e.target.value);
+  };
+
   const topData = [
     {
       title: "All Users",
@@ -101,13 +133,23 @@ const Users = () => {
           <label htmlFor="search">Search</label>
           <div className={styles.searchNameContainer}>
             <Search size={20} color="gray" className={styles.searchLogo} />
-            <input type="text" placeholder="Search name" name="search" />
+            <input
+              type="text"
+              placeholder="Search Email"
+              name="search"
+              value={searchInput}
+              onChange={handleSearchChange}
+            />
           </div>
         </div>
 
         <div className={styles.right}>
           <label htmlFor="status">Status</label>
-          <select name="status">
+          <select
+            name="status"
+            value={statusFilter}
+            onChange={handleStatusChange}
+          >
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="blocked">Blocked</option>
