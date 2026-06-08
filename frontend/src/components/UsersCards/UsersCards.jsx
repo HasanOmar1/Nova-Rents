@@ -1,25 +1,33 @@
 import styles from "./UsersCards.module.css";
 
-const UsersCards = ({ name, email, action, status }) => {
+const UsersCards = ({ user, blockUser, unBlockUser }) => {
+  const handleUserAction = () => {
+    if (user.status === "active") blockUser(user.email);
+    if (user.status === "blocked") unBlockUser(user.email);
+  };
+
+  const fullName = user.firstName + " " + user.lastName;
   return (
     <div className={styles.UsersCards}>
-      <p className={styles.name}>{name}</p>
-      <p className={styles.email}>{email}</p>
+      <p className={styles.name}>{fullName}</p>
+      <p className={styles.email}>{user.email}</p>
       <p
-        className={`${styles.status} ${status === "Active" ? styles.active : styles.blocked}`}
+        className={`${styles.status} ${user.status === "active" ? styles.active : styles.blocked}`}
       >
-        {status}
+        {user.status}
       </p>
       <div className={styles.actionContainer}>
-        <p
-          className={`${styles.action} ${action === "admin" && styles.protected}`}
-        >
-          {action === "user" && status === "Active"
-            ? "Block"
-            : action === "user" && status === "Blocked"
-              ? "Unblock"
-              : "Protected"}
-        </p>
+        {user.role === "admin" ? (
+          <p className={`${styles.action} ${styles.protected}`}>Protected</p>
+        ) : (
+          <p className={styles.action} onClick={handleUserAction}>
+            {user.role === "user" && user.status === "active"
+              ? "Block"
+              : user.role === "user" && user.status === "blocked"
+                ? "Unblock"
+                : "Protected"}
+          </p>
+        )}
       </div>
     </div>
   );

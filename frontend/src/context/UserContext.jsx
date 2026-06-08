@@ -6,8 +6,13 @@ const UserContext = createContext();
 
 const UserContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
+  const [pagination, setPagination] = useState({});
+  const [usersStats, setUsersStats] = useState({});
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState("all");
+  const [currentSearch, setCurrentSearch] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,6 +95,59 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  const getUsers = async (page = 1, status = "all", search = "") => {
+    try {
+      setCurrentStatus(status);
+      setCurrentSearch(search);
+
+      const endpoint =
+        status === "all"
+          ? `/users?page=${page}&search=${search}`
+          : `/users/status/${status}?page=${page}&search=${search}`;
+
+      const res = await axios.get(endpoint);
+      setAllUsers(res.data.users);
+      setPagination(res.data.pagination);
+
+      if (res.data.stats) {
+        setUsersStats(res.data.stats);
+      }
+
+      setErrorMsg("");
+      return true;
+    } catch (error) {
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
+      return false;
+    }
+  };
+
+  const blockUser = async (email) => {
+    try {
+      await axios.post(`/users/block/${email}`);
+      setErrorMsg("");
+      getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
+      return true;
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+      return false;
+    }
+  };
+
+  const unBlockUser = async (email) => {
+    try {
+      await axios.post(`/users/unblock/${email}`);
+      setErrorMsg("");
+      getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
+      return true;
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+      return false;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -101,6 +159,12 @@ const UserContextProvider = ({ children }) => {
         logout,
         isLoading,
         updateProfile,
+        getUsers,
+        allUsers,
+        pagination,
+        blockUser,
+        unBlockUser,
+        usersStats,
       }}
     >
       {children}

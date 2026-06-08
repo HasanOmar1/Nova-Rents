@@ -78,27 +78,126 @@ const getAllUsers = async (req, res, next) => {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
     if (req.session.user.role !== "admin")
-      return res
-        .status(STATUS_CODE.FORBIDDEN)
-        .json({ message: "You are not authorized to access this resource" });
-    const query = ` Select 
-    u.userId,
-        u.firstName,
-        u.lastName,
-        u.email,
-        u.phone,
-        u.birthDate,
-        u.role,
-        u.status
-    FROM users u
-    ORDER BY u.userId DESC
-    `;
+      return res.status(STATUS_CODE.FORBIDDEN).json({ message: "Forbidden" });
 
-    const users = await doQuery(query);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+
+    // Get the search term and wrap it in % for the SQL LIKE operator
+    const search = req.query.search || "";
+    const searchTerm = `%${search}%`;
+
+    const query = ` 
+      SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.birthDate, u.role, u.status
+      FROM users u
+      WHERE u.email LIKE ? 
+      ORDER BY u.userId DESC
+      LIMIT ? OFFSET ?
+    `;
+    const users = await doQuery(query, [searchTerm, limit, offset]);
+
+    const formattedUsers = users.map((user) => ({
+      ...user,
+      birthDate: user.birthDate
+        ? new Date(user.birthDate).toLocaleDateString("en-GB")
+        : "N/A",
+    }));
+
+    const countQuery = `SELECT COUNT(*) as totalCount FROM users WHERE email LIKE ?`;
+    const countResult = await doQuery(countQuery, [searchTerm]);
+    const totalPages = Math.ceil(countResult[0].totalCount / limit);
+
+    const statsQuery = `
+      SELECT COUNT(*) as total,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) as blocked,
+        SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admins
+      FROM users
+    `;
+    const statsResult = await doQuery(statsQuery);
+
     res.status(STATUS_CODE.OK).json({
       message: "Users fetched successfully",
-      users: users,
-      count: users.length,
+      users: formattedUsers,
+      stats: {
+        total: Number(statsResult[0].total) || 0,
+        active: Number(statsResult[0].active) || 0,
+        blocked: Number(statsResult[0].blocked) || 0,
+        admins: Number(statsResult[0].admins) || 0,
+      },
+      pagination: {
+        totalUsers: countResult[0].totalCount,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- GET USERS BY STATUS (WITH SEARCH) ---
+const getUsersByStatus = async (req, res, next) => {
+  try {
+    const { status } = req.params;
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    if (req.session.user.role !== "admin")
+      return res.status(STATUS_CODE.FORBIDDEN).json({ message: "Forbidden" });
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+
+    const search = req.query.search || "";
+    const searchTerm = `%${search}%`;
+
+    const query = ` 
+      SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.birthDate, u.role, u.status
+      FROM users u
+      WHERE status = ? AND u.email LIKE ?
+      ORDER BY u.userId DESC
+      LIMIT ? OFFSET ?
+    `;
+    const users = await doQuery(query, [status, searchTerm, limit, offset]);
+
+    const formattedUsers = users.map((user) => ({
+      ...user,
+      birthDate: user.birthDate
+        ? new Date(user.birthDate).toLocaleDateString("en-GB")
+        : "N/A",
+    }));
+
+    const countQuery = `SELECT COUNT(*) as totalCount FROM users WHERE status = ? AND email LIKE ?`;
+    const countResult = await doQuery(countQuery, [status, searchTerm]);
+    const totalPages = Math.ceil(countResult[0].totalCount / limit);
+
+    const statsQuery = `
+      SELECT COUNT(*) as total,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) as blocked,
+        SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admins
+      FROM users
+    `;
+    const statsResult = await doQuery(statsQuery);
+
+    res.status(STATUS_CODE.OK).json({
+      message: "Users fetched successfully",
+      users: formattedUsers,
+      stats: {
+        total: Number(statsResult[0].total) || 0,
+        active: Number(statsResult[0].active) || 0,
+        blocked: Number(statsResult[0].blocked) || 0,
+        admins: Number(statsResult[0].admins) || 0,
+      },
+      pagination: {
+        totalUsers: countResult[0].totalCount,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
     });
   } catch (error) {
     next(error);
@@ -314,6 +413,7 @@ async function logout(req, res, next) {
 
 // blocks user by email (it doesnt delete the user, just changes its status to blocked)
 const blockUserByEmail = async (req, res, next) => {
+  const { email } = req.params;
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
@@ -323,7 +423,6 @@ const blockUserByEmail = async (req, res, next) => {
         .json({ message: "Only admins can block users" });
     }
 
-    const { email } = req.body;
     if (!validateEmailInBody(email, res)) return;
 
     const updateQuery = "UPDATE users SET status = 'blocked' WHERE email = ?";
@@ -347,6 +446,8 @@ const blockUserByEmail = async (req, res, next) => {
 
 const unblockUserByEmail = async (req, res, next) => {
   try {
+    const { email } = req.params;
+
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
     if (req.session.user.role !== "admin") {
@@ -354,7 +455,6 @@ const unblockUserByEmail = async (req, res, next) => {
         .status(STATUS_CODE.FORBIDDEN)
         .json({ message: "Only admins can unblock users" });
     }
-    const { email } = req.body;
     if (!validateEmailInBody(email, res)) return;
     const updateQuery = "UPDATE users SET status = 'active' WHERE email = ?";
     const result = await doQuery(updateQuery, [email]);
@@ -569,4 +669,5 @@ module.exports = {
   unblockUserByEmail,
   getUserDetailsByEmail,
   updateUserProfile,
+  getUsersByStatus,
 };

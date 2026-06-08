@@ -20,6 +20,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useUserContext } from "../../../context/UserContext";
+import { useEffect } from "react";
+import { useState } from "react";
+import AdminUsersTable from "../../../components/AdminUsersTable/AdminUsersTable";
 
 export const statsData = [
   { month: "Jan", users: 6 },
@@ -33,56 +37,80 @@ export const statsData = [
 const axisTick = { fill: "rgba(255,255,255,0.45)", fontSize: 11 };
 const gridStroke = "rgba(255,255,255,0.06)";
 
-const topData = [
-  {
-    title: "All Users",
-    value: 4,
-    icon: <UsersIcon size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Active",
-    value: 3,
-    icon: <CheckCircle2 size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Blocked",
-    value: 1,
-    icon: <Shield size={28} color="#a7d2eb" />,
-  },
-];
-
-const dummyUsers = [
-  {
-    id: 1,
-    name: "Essa Lwabne",
-    email: "user@autolux.com",
-    role: "user",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Admin Nova Rents",
-    email: "admin@autolux.com",
-    role: "admin",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Noor K",
-    email: "noor@autolux.com",
-    role: "user",
-    status: "Blocked",
-  },
-  {
-    id: 4,
-    name: "Fadi M",
-    email: "fadi@autolux.com",
-    role: "user",
-    status: "Active",
-  },
-];
-
 const Users = () => {
+  const { getUsers, usersStats, pagination } = useUserContext();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // ---  THE DEBOUNCE EFFECT (Only delays typing!) ---
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (debouncedSearch !== searchInput) {
+        setDebouncedSearch(searchInput);
+        setCurrentPage(1);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput, debouncedSearch]);
+
+  useEffect(() => {
+    getUsers(currentPage, statusFilter, debouncedSearch);
+  }, [currentPage, statusFilter, debouncedSearch]);
+
+  useEffect(() => {
+    if (pagination?.totalPages && currentPage > pagination.totalPages) {
+      setCurrentPage(pagination.totalPages);
+    }
+  }, [pagination?.totalPages, currentPage]);
+
+  const handleNextPage = () => {
+    if (pagination?.currentPage < pagination?.totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (pagination?.currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
+  const handleStatusChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchInput(e.target.value);
+  };
+
+  const topData = [
+    {
+      title: "All Users",
+      value: usersStats.total,
+      icon: <UsersIcon size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Active",
+      value: usersStats.active,
+      icon: <CheckCircle2 size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Blocked",
+      value: usersStats.blocked,
+      icon: <Shield size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Admins",
+      value: usersStats.admins,
+      icon: <UsersIcon size={28} color="#a7d2eb" />,
+    },
+  ];
+
   return (
     <div className={`${styles.Users} page`}>
       <h1>Users</h1>
@@ -107,16 +135,21 @@ const Users = () => {
             <Search size={20} color="gray" className={styles.searchLogo} />
             <input
               type="text"
-              placeholder="Search name or location"
-              className={styles.searchNameOrLocationInput}
+              placeholder="Search Email"
               name="search"
+              value={searchInput}
+              onChange={handleSearchChange}
             />
           </div>
         </div>
 
         <div className={styles.right}>
           <label htmlFor="status">Status</label>
-          <select name="status">
+          <select
+            name="status"
+            value={statusFilter}
+            onChange={handleStatusChange}
+          >
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="blocked">Blocked</option>
@@ -124,42 +157,10 @@ const Users = () => {
         </div>
       </div>
 
-      <div className={styles.usersContainer}>
-        <div className={styles.titles}>
-          <p>Name</p>
-          <p>Email</p>
-          <p>Status</p>
-          <p>Action</p>
-        </div>
-        <hr />
-
-        {dummyUsers.map((user, i) => {
-          return (
-            <div key={user.id}>
-              <UsersCards
-                name={user.name}
-                email={user.email}
-                status={user.status}
-                action={user.role}
-              />
-              {i < dummyUsers.length - 1 && <hr />}
-            </div>
-          );
-        })}
-        <div className={styles.pagination}>
-          <p>Showing 1-4 of 4</p>
-
-          <div className={styles.btnsContainer}>
-            <button>
-              <ChevronLeft size={20} /> Prev
-            </button>
-            <p>Page 1 / 1</p>
-            <button>
-              Next <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-      </div>
+      <AdminUsersTable
+        handleNextPage={handleNextPage}
+        handlePrevPage={handlePrevPage}
+      />
 
       <div className={styles.userGrowthContainer}>
         <h4>User growth</h4>

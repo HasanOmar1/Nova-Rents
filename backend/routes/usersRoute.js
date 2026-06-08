@@ -5,13 +5,14 @@ const { isAuthenticated, isAdmin } = require("../middleWare/authMiddleware");
 const userQueries = require("../controllers/usersController");
 
 router.get("/", userQueries.getAllUsers);
+router.get("/status/:status", isAdmin, userQueries.getUsersByStatus);
 router.get("/details", isAuthenticated, userQueries.getUserDetailsByEmail);
 router.post("/register", userQueries.register);
 router.post("/login", userQueries.login);
 router.get("/profile", isAuthenticated, userQueries.getProfile);
 router.post("/logout", isAuthenticated, userQueries.logout);
-router.post("/block", isAdmin, userQueries.blockUserByEmail);
-router.post("/unblock", isAdmin, userQueries.unblockUserByEmail);
+router.post("/block/:email", isAdmin, userQueries.blockUserByEmail);
+router.post("/unblock/:email", isAdmin, userQueries.unblockUserByEmail);
 router.put("/profile", isAuthenticated, userQueries.updateUserProfile);
 // router.post("/verify-code", isAuthenticated, userQueries.verifyCode);
 module.exports = router;
