@@ -77,12 +77,22 @@ const getAllUsers = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
+
     if (req.session.user.role !== "admin")
       return res
         .status(STATUS_CODE.FORBIDDEN)
         .json({ message: "You are not authorized to access this resource" });
-    const query = ` Select 
-    u.userId,
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+
+    // Calculate how many rows to skip (the OFFSET)
+    // Example: Page 1 skips 0. Page 2 skips 5. Page 3 skips 10.
+    const offset = (page - 1) * limit;
+
+    const query = ` 
+      SELECT 
+        u.userId,
         u.firstName,
         u.lastName,
         u.email,
@@ -90,21 +100,55 @@ const getAllUsers = async (req, res, next) => {
         u.birthDate,
         u.role,
         u.status
-    FROM users u
-    ORDER BY u.userId DESC
+      FROM users u
+      ORDER BY u.userId DESC
+      LIMIT ? OFFSET ?
     `;
 
-    const users = await doQuery(query);
+    const users = await doQuery(query, [limit, offset]);
+
+    const countQuery = `
+      SELECT 
+        COUNT(*) as totalUsers,
+        SUM(status = 'active') as activeUsers,
+        SUM(status = 'blocked') as blockedUsers,
+        SUM(role = 'admin') as adminUsers
+      FROM users
+    `;
+    const countResult = await doQuery(countQuery);
+    const stats = countResult[0];
+    const totalUsers = stats.totalUsers;
+
+    // Calculate total pages (e.g. 12 users / 5 per page = 3 pages)
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    const formattedUsers = users.map((user) => {
+      return {
+        ...user,
+        birthDate: user.birthDate.toLocaleDateString(),
+      };
+    });
+
     res.status(STATUS_CODE.OK).json({
       message: "Users fetched successfully",
-      users: users,
-      count: users.length,
+      users: formattedUsers,
+      pagination: {
+        totalUsers,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
+      stats: {
+        total: totalUsers,
+        active: Number(stats.activeUsers) || 0,
+        blocked: Number(stats.blockedUsers) || 0,
+        admins: Number(stats.adminUsers) || 0,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
-
 // Register a new user: validates input, hashes password, inserts into DB
 async function register(req, res, next) {
   try {
@@ -314,6 +358,7 @@ async function logout(req, res, next) {
 
 // blocks user by email (it doesnt delete the user, just changes its status to blocked)
 const blockUserByEmail = async (req, res, next) => {
+  const { email } = req.params;
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
@@ -323,7 +368,6 @@ const blockUserByEmail = async (req, res, next) => {
         .json({ message: "Only admins can block users" });
     }
 
-    const { email } = req.body;
     if (!validateEmailInBody(email, res)) return;
 
     const updateQuery = "UPDATE users SET status = 'blocked' WHERE email = ?";
@@ -347,6 +391,8 @@ const blockUserByEmail = async (req, res, next) => {
 
 const unblockUserByEmail = async (req, res, next) => {
   try {
+    const { email } = req.params;
+
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
     if (req.session.user.role !== "admin") {
@@ -354,7 +400,6 @@ const unblockUserByEmail = async (req, res, next) => {
         .status(STATUS_CODE.FORBIDDEN)
         .json({ message: "Only admins can unblock users" });
     }
-    const { email } = req.body;
     if (!validateEmailInBody(email, res)) return;
     const updateQuery = "UPDATE users SET status = 'active' WHERE email = ?";
     const result = await doQuery(updateQuery, [email]);

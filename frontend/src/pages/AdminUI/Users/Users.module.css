@@ -61,88 +61,6 @@
   left: 10px;
 }
 
-/* Users container */
-.Users .usersContainer {
-  border: var(--cards-border);
-  background-color: var(--bg-gray);
-  min-height: 300px;
-  margin-top: 40px;
-  border-radius: 20px;
-  margin-bottom: 50px;
-  overflow: hidden;
-}
-
-.Users .usersContainer .titles {
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 20px;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  font-weight: bold;
-  color: var(--gray);
-}
-
-.Users .usersContainer .titles p:nth-child(1) {
-  width: 35%;
-}
-
-.Users .usersContainer .titles p:nth-child(2) {
-  width: 35%;
-}
-
-.Users .usersContainer .titles p:nth-child(3) {
-  width: 15%;
-  text-align: center;
-}
-
-.Users .usersContainer .titles p:nth-child(4) {
-  width: 15%;
-  text-align: right;
-}
-
-.Users .usersContainer hr {
-  margin: 0;
-  border: none;
-  border-top: var(--cards-border);
-}
-
-.Users .pagination {
-  border-top: var(--cards-border);
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 20px;
-  color: var(--gray);
-  font-size: 0.8rem;
-  align-items: center;
-  font-weight: bold;
-}
-
-.Users .pagination .btnsContainer {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  align-items: center;
-}
-
-.Users .pagination .btnsContainer button {
-  border: none;
-  border-radius: 10px;
-  background-color: var(--input-bg);
-  color: var(--gray);
-  font-weight: bold;
-  font-size: 0.8rem;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.Users .pagination .btnsContainer button:hover {
-  color: white;
-}
-
 /* user growth stats */
 
 .Users .userGrowthContainer {
@@ -178,11 +96,6 @@
   .Users .searchNameContainer input {
     width: 100%;
     min-width: 300px;
-  }
-
-  /* Hide the titles on smaller screens to match the responsive stacking in UsersCards */
-  .Users .usersContainer .titles {
-    display: none;
   }
 }
 

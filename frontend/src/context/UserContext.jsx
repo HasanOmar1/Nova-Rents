@@ -6,6 +6,9 @@ const UserContext = createContext();
 
 const UserContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
+  const [pagination, setPagination] = useState({});
+  const [usersStats, setUsersStats] = useState({});
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -90,6 +93,47 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  const getUsers = async (page = 1) => {
+    try {
+      const res = await axios.get(`/users?page=${page}`);
+      setAllUsers(res.data.users);
+      setPagination(res.data.pagination);
+      setUsersStats(res.data.stats);
+      setErrorMsg("");
+      return true;
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+      return false;
+    }
+  };
+
+  const blockUser = async (email) => {
+    try {
+      await axios.post(`/users/block/${email}`);
+      setErrorMsg("");
+      getUsers(pagination.currentPage || 1);
+      return true;
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+      return false;
+    }
+  };
+
+  const unBlockUser = async (email) => {
+    try {
+      await axios.post(`/users/unblock/${email}`);
+      setErrorMsg("");
+      getUsers(pagination.currentPage || 1);
+      return true;
+    } catch (error) {
+      console.log(error?.response.data?.message);
+      setErrorMsg(error?.response.data?.message);
+      return false;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -101,6 +145,12 @@ const UserContextProvider = ({ children }) => {
         logout,
         isLoading,
         updateProfile,
+        getUsers,
+        allUsers,
+        pagination,
+        blockUser,
+        unBlockUser,
+        usersStats,
       }}
     >
       {children}

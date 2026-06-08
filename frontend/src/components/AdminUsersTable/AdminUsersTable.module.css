@@ -1,0 +1,105 @@
+.AdminUsersTable {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  min-height: 200px;
+  margin-top: 40px;
+  border-radius: 20px;
+  margin-bottom: 50px;
+  overflow: hidden;
+}
+
+.AdminUsersTable .titles {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: var(--gray);
+}
+
+.AdminUsersTable .titles p:nth-child(1) {
+  width: 35%;
+}
+
+.AdminUsersTable .titles p:nth-child(2) {
+  width: 35%;
+}
+
+.AdminUsersTable .titles p:nth-child(3) {
+  width: 15%;
+  text-align: center;
+}
+
+.AdminUsersTable .titles p:nth-child(4) {
+  width: 15%;
+  text-align: right;
+}
+
+.AdminUsersTable hr {
+  margin: 0;
+  border: none;
+  border-top: var(--cards-border);
+}
+
+.AdminUsersTable .pagination {
+  border-top: var(--cards-border);
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  color: var(--gray);
+  font-size: 0.8rem;
+  align-items: center;
+  font-weight: bold;
+}
+
+.AdminUsersTable .pagination .btnsContainer {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.AdminUsersTable .pagination .btnsContainer button {
+  border: none;
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  color: var(--gray);
+  font-weight: bold;
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.AdminUsersTable .pagination .btnsContainer button:hover {
+  color: white;
+}
+
+.AdminUsersTable .pagination .btnsContainer button:disabled {
+  cursor: not-allowed;
+  color: var(--gray);
+}
+
+.AdminUsersTable .noUsers {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--gray);
+  margin-top: 50px;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .AdminUsersTable .titles {
+    display: none;
+  }
+
+  .AdminUsersTable .pagination {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
