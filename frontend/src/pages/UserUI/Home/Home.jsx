@@ -73,8 +73,8 @@ const Home = () => {
       </div>
 
       <div className={styles.midCardsContainer}>
-        <HomeMidCards title={"Recent Activity"} />
         <HomeMidCards title={"Notifications"} />
+        <HomeMidCards title={"Recent Activity"} />
       </div>
 
       <div className={styles.bottomCardsContainer}>
