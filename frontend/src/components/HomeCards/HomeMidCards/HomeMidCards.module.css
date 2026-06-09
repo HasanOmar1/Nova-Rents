@@ -25,6 +25,15 @@
 .HomeMidCards .data .date {
   color: var(--gray);
 }
+.unread {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.read {
+  cursor: pointer;
+  opacity: 0.65;
+}
 
 @media (max-width: 768px) {
   .HomeMidCards {

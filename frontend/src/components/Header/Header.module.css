@@ -194,6 +194,25 @@
   height: 1rem;
   width: 1rem;
 }
+.notifyButton {
+  position: relative;
+}
+
+.notificationBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: red;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 @media (max-width: 1200px) {
   .Header .siteDetails {
