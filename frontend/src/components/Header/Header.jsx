@@ -1,5 +1,5 @@
 import styles from "./Header.module.css";
-import { Car, Bell, LogOut } from "lucide-react";
+import { Car, Bell, LogOut, TableOfContents, History } from "lucide-react";
 import { navByRole, labels, icons } from "./nav";
 import { useUserContext } from "../../context/UserContext";
 import { useEffect, useState } from "react";
@@ -7,6 +7,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Header = ({ page }) => {
   const { currentUser, logout } = useUserContext();
+  const [areMoreTabsOpen, setAreMoreTabsOpen] = useState(false);
   const location = useLocation();
 
   const visible = navByRole[currentUser?.role] || [];
@@ -15,6 +16,10 @@ const Header = ({ page }) => {
 
   const handleLogOut = () => {
     logout();
+  };
+
+  const handleTabs = () => {
+    setAreMoreTabsOpen((prev) => !prev);
   };
 
   return (
@@ -56,10 +61,44 @@ const Header = ({ page }) => {
                 <Bell className={`${styles.iconLarge} icon`} />
               </button>
 
-              <button className={styles.logoutButton} onClick={handleLogOut}>
-                <LogOut className={` ${styles.iconSmall} icon `} />
-                Log out
-              </button>
+              {currentUser?.role === "user" ? (
+                <>
+                  {" "}
+                  <div className={styles.tabsContainer}>
+                    <button className={styles.tabsButton} onClick={handleTabs}>
+                      <TableOfContents className={`${styles.iconLarge} icon`} />
+                    </button>
+
+                    {areMoreTabsOpen && (
+                      <div className={styles.moreTabsContainer}>
+                        <Link
+                          className={styles.rentsButton}
+                          to={"/rentsHistory"}
+                          onClick={() => setAreMoreTabsOpen(false)}
+                        >
+                          <History className={` ${styles.iconSmall} icon `} />
+                          Rents History
+                        </Link>
+                        <button
+                          className={styles.logoutButton}
+                          onClick={handleLogOut}
+                        >
+                          <LogOut className={` ${styles.iconSmall} icon `} />
+                          Log out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <button
+                  className={styles.logoutButtonAdmin}
+                  onClick={handleLogOut}
+                >
+                  <LogOut className={` ${styles.iconSmall} icon `} />
+                  Log out
+                </button>
+              )}
             </>
           </div>
         )}

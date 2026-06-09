@@ -162,6 +162,7 @@ async function approveRental(req, res, next) {
     next(error);
   }
 }
+
 async function rejectRental(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))

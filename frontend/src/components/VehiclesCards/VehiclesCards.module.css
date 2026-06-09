@@ -51,6 +51,21 @@
   font-weight: bold;
 }
 
+.VehiclesCards .available {
+  background-color: #102e2b;
+  color: #90dbbb;
+}
+
+.VehiclesCards .rented {
+  color: #f9e081;
+  background-color: #392d1f;
+}
+
+.VehiclesCards .maintenance {
+  color: #f9bb81;
+  background-color: #39251f;
+}
+
 .VehiclesCards .vehDetails {
   display: flex;
   justify-content: space-between;
