@@ -12,6 +12,8 @@ const {
   getMyRentalsByRenterId,
   getRequestsForMyVehiclesByOwnerId,
   getRentalById,
+  updateRentalStatus,
+  updateVehicleConditions,
 } = require("../database/queries/rentalQueries");
 async function createRental(req, res, next) {
   try {
@@ -34,7 +36,7 @@ async function createRental(req, res, next) {
     }
     const start = new Date(startDate);
     const end = new Date(endDate);
-   
+
     if (start >= end) {
       return res
         .status(STATUS_CODE.BAD_REQUEST)
@@ -77,8 +79,7 @@ async function createRental(req, res, next) {
     }
     return res
       .status(STATUS_CODE.CREATED)
-      .json({ message: "Rental created successfully" ,
-      });
+      .json({ message: "Rental created successfully" });
   } catch (error) {
     next(error);
   }
@@ -120,7 +121,7 @@ async function getRequestsForMyVehicles(req, res, next) {
       message: "Requests fetched successfully",
       count: requests.length,
       results: requests,
-    })
+    });
   } catch (error) {
     next(error);
   }
@@ -148,18 +149,116 @@ async function approveRental(req, res, next) {
         .status(STATUS_CODE.BAD_REQUEST)
         .json({ message: "Only Pending can be approved" });
     }
-    const updateQuery = `UPDATE rentals SET status = 'approved' WHERE rentalId = ?`;
-    const values = [rentalId];
-    const result = await doQuery(updateQuery, values);
+    const result = await updateRentalStatus(rentalId, "approved");
     if (result.affectedRows === 0) {
       return res
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to approve rental" });
     }
-    return res.status(STATUS_CODE.OK).json({ message: "Rental approved successfully" });
+    return res
+      .status(STATUS_CODE.OK)
+      .json({ message: "Rental approved successfully" });
   } catch (error) {
     next(error);
   }
 }
-
-module.exports = { createRental, getMyRentals, getRequestsForMyVehicles, approveRental };
+async function rejectRental(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    const ownerId = req.session.user.userId;
+    const { rentalId } = req.params;
+    const rental = await getRentalById(rentalId);
+    if (!rental) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "Rental not found" });
+    }
+    if (rental.ownerId !== ownerId) {
+      return res
+        .status(STATUS_CODE.FORBIDDEN)
+        .json({ message: "You are not the owner of this rental" });
+    }
+    if (rental.status !== "pending") {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Only Pending can be rejected" });
+    }
+    const result = await updateRentalStatus(rentalId, "rejected");
+    if (result.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
+        .json({ message: "Failed to reject rental" });
+    }
+    return res
+      .status(STATUS_CODE.OK)
+      .json({ message: "Rental rejected successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+async function cancelRental(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    const renterId = req.session.user.userId;
+    const { rentalId } = req.params;
+    const rental = await getRentalById(rentalId);
+    console.log("session renterId:", renterId);
+    console.log("rental renterId:", rental.renterId);
+    console.log("rental:", rental);
+    if (!rental) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "Rental not found" });
+    }
+    if (rental.renterId !== renterId) {
+      return res
+        .status(STATUS_CODE.FORBIDDEN)
+        .json({ message: "You are not the renter of this rental" });
+    }
+    if (rental.status !== "pending") {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Only Pending can be canceled" });
+    }
+    const result = await updateRentalStatus(rentalId, "cancelled");
+    if (result.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
+        .json({ message: "Failed to cancel rental" });
+    }
+    return res
+      .status(STATUS_CODE.OK)
+      .json({ message: "Rental canceled successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+async function updateVehicleStatus(req, res, next) {
+  try {
+    const { licensePlate } = req.params;
+    const { status } = req.body;
+    const result = await updateVehicleConditions(licensePlate, status);
+    if (result.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
+        .json({ message: "Failed to update vehicle status" });
+    }
+    return res
+      .status(STATUS_CODE.OK)
+      .json({ message: "Vehicle status updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+module.exports = {
+  createRental,
+  getMyRentals,
+  getRequestsForMyVehicles,
+  approveRental,
+  rejectRental,
+  cancelRental,
+  updateVehicleStatus,
+  
+};

@@ -326,8 +326,26 @@ const getAllVehicles = async (req, res, next) => {
       maxYear,
       minKm,
       maxKm,
+      startDate,
+      endDate,
     } = req.query;
-
+    const canRentSelect =
+    (startDate && endDate) ? `
+      CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM rentals r
+          WHERE r.licensePlate = v.licensePlate
+          AND r.status IN ('pending', 'approved')
+          AND r.startDate < ?
+          AND r.endDate > ?
+        )
+        THEN 0
+        ELSE 1
+      END AS canRent
+    ` : `1 AS canRent`;
+   
+    
     let query = `
       SELECT 
         v.licensePlate,
@@ -354,17 +372,22 @@ const getAllVehicles = async (req, res, next) => {
         u.firstName AS ownerFirstName,
         u.lastName AS ownerLastName,
         u.email AS ownerEmail,
-        u.phone AS ownerPhone
-
+        u.phone AS ownerPhone,
+        
+      ${canRentSelect} 
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
       Join users u ON v.ownerId = u.userId
       WHERE 1 = 1
+      AND v.status = 'available'
     `;
 
     const values = [];
+    if (startDate && endDate) {
+      values.push(endDate, startDate);
+    }
     if (brand) {
       query += ` AND cb.brandName = ?`;
       values.push(brand);
@@ -424,7 +447,6 @@ const getAllVehicles = async (req, res, next) => {
       query += ` AND v.km <= ?`;
       values.push(Number(maxKm));
     }
-
     query += ` ORDER BY v.year DESC`;
 
     const vehicles = await doQuery(query, values);
