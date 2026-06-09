@@ -1,5 +1,6 @@
 import styles from "./HomeMidCards.module.css";
 import HomeMidCardsData from "./HomeMidCardsData";
+import { useNotificationContext } from "../../../context/NotificationContext";
 
 const activityData = [
   {
@@ -16,18 +17,11 @@ const activityData = [
   },
 ];
 
-const notificationsData = [
-  {
-    title: "Insurance renewal",
-    description: "Expires in 30 days — upload a new copy",
-  },
-  {
-    title: "Listing views",
-    description: "Your Yamaha TMAX had 12 views this week",
-  },
-];
-
 const HomeMidCards = ({ title }) => {
+  const { notifications, markAsRead, loading } = useNotificationContext();
+
+  const latestNotifications = notifications.slice(0, 3);
+
   return (
     <div className={styles.HomeMidCards}>
       <h4>{title}</h4>
@@ -37,7 +31,7 @@ const HomeMidCards = ({ title }) => {
           {activityData.map((item) => {
             return (
               <HomeMidCardsData
-                key={crypto.randomUUID()}
+                key={item.title}
                 title={item.title}
                 data={item.data}
               />
@@ -46,15 +40,26 @@ const HomeMidCards = ({ title }) => {
         </>
       ) : (
         <>
-          {notificationsData.map((item) => {
-            return (
-              <HomeMidCardsData
-                key={crypto.randomUUID()}
-                title={item.title}
-                data={item.description}
-              />
-            );
-          })}
+          {loading ? (
+            <p>Loading notifications...</p>
+          ) : notifications.length === 0 ? (
+            <p>No notifications yet</p>
+          ) : (
+            latestNotifications.map((notification) => {
+              return (
+                <div
+                  key={notification.notificationId}
+                  onClick={() => markAsRead(notification.notificationId)}
+                  className={notification.isRead ? styles.read : styles.unread}
+                >
+                  <HomeMidCardsData
+                    title={notification.title}
+                    data={notification.message}
+                  />
+                </div>
+              );
+            })
+          )}
         </>
       )}
     </div>
