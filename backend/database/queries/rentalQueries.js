@@ -41,9 +41,26 @@ async function getRentalById(rentalId) {
   const rental = await doQuery(getRentalById, valuesOfgetRentalById);
   return rental[0];
 }
+async function updateRentalStatus(rentalId, status) {
+  const updateRentalStatus = `update rentals set status = ? where rentalId = ?`;
+  const valuesOfupdateRentalStatus = [status, rentalId];
+  const result = await doQuery(updateRentalStatus, valuesOfupdateRentalStatus);
+  return result;
+}
+
+
+
+ async function updateVehicleConditions(licensePlate, status) {
+  const updateVehicleStatus = `update Vehicles set status = ? where licensePlate = ?`;
+  const valuesOfupdateVehicleStatus = [status, licensePlate];
+  const result = await doQuery(updateVehicleStatus, valuesOfupdateVehicleStatus);
+  return result;
+}
 module.exports = {
   checkIfVehicleIsAvailable,
   getMyRentalsByRenterId,
   getRequestsForMyVehiclesByOwnerId,
   getRentalById,
+  updateRentalStatus,
+  updateVehicleConditions
 };
