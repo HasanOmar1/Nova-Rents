@@ -13,7 +13,11 @@ const VehiclesCards = ({ veh }) => {
       <div className={styles.vehiclesCardsContainer}>
         <div className={styles.vehStatus}>
           <p>{veh.brandName + " " + veh.modelName}</p>
-          <p className={styles.status}>{veh.status}</p>
+          <p
+            className={`${styles.status} ${veh.status === "available" ? styles.available : veh.status === "rented" ? styles.rented : styles.maintenance} `}
+          >
+            {veh.status}
+          </p>
         </div>
 
         <p className={styles.vehType}>{veh.carTypeName}</p>

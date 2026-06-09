@@ -6,10 +6,12 @@ import { useVehicleContext } from "../../context/VehicleContext";
 import AddEditVehicleMenu from "../AddEditVehicleMenu/AddEditVehicleMenu";
 import { Link } from "react-router-dom";
 import { parseImgs } from "../../utils/parseImgs";
+import { useUserContext } from "../../context/UserContext";
 
 const VehiclesCardsTable = ({ veh, admin }) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const { currentUser } = useUserContext();
 
   const { deleteUserVehicle, errorMsg } = useVehicleContext();
 
@@ -26,14 +28,21 @@ const VehiclesCardsTable = ({ veh, admin }) => {
 
   const imageUrl = parseImgs(veh.image);
   const fullName = `${veh.brandName} ${veh.modelName}`;
-  const ownerFullName = `${veh.ownerFirstName} ${veh.ownerLastName}`;
+  const ownerFullName = `${currentUser.firstName} ${currentUser.lastName}`;
+
+  const vehWithUser = {
+    ...veh,
+    ownerFirstName: currentUser?.firstName,
+    ownerLastName: currentUser?.lastName,
+    ownerPhone: currentUser?.phone,
+  };
 
   return (
     <div className={styles.VehiclesCardsTable}>
       <Link
         className={styles.nameContainer}
         to={`/vehicles/${veh.licensePlate}`}
-        state={veh}
+        state={vehWithUser}
       >
         <img src={imageUrl} alt={fullName} />
         <div className={styles.nameAndYear}>

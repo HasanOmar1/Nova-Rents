@@ -34,7 +34,7 @@ async function createRental(req, res, next) {
     }
     const start = new Date(startDate);
     const end = new Date(endDate);
-   
+
     if (start >= end) {
       return res
         .status(STATUS_CODE.BAD_REQUEST)
@@ -77,8 +77,7 @@ async function createRental(req, res, next) {
     }
     return res
       .status(STATUS_CODE.CREATED)
-      .json({ message: "Rental created successfully" ,
-      });
+      .json({ message: "Rental created successfully" });
   } catch (error) {
     next(error);
   }
@@ -120,7 +119,7 @@ async function getRequestsForMyVehicles(req, res, next) {
       message: "Requests fetched successfully",
       count: requests.length,
       results: requests,
-    })
+    });
   } catch (error) {
     next(error);
   }
@@ -156,10 +155,17 @@ async function approveRental(req, res, next) {
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to approve rental" });
     }
-    return res.status(STATUS_CODE.OK).json({ message: "Rental approved successfully" });
+    return res
+      .status(STATUS_CODE.OK)
+      .json({ message: "Rental approved successfully" });
   } catch (error) {
     next(error);
   }
 }
 
-module.exports = { createRental, getMyRentals, getRequestsForMyVehicles, approveRental };
+module.exports = {
+  createRental,
+  getMyRentals,
+  getRequestsForMyVehicles,
+  approveRental,
+};
