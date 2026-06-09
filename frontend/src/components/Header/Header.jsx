@@ -61,27 +61,44 @@ const Header = ({ page }) => {
                 <Bell className={`${styles.iconLarge} icon`} />
               </button>
 
-              <div className={styles.tabsContainer}>
-                <button className={styles.tabsButton} onClick={handleTabs}>
-                  <TableOfContents className={`${styles.iconLarge} icon`} />
-                </button>
+              {currentUser?.role === "user" ? (
+                <>
+                  {" "}
+                  <div className={styles.tabsContainer}>
+                    <button className={styles.tabsButton} onClick={handleTabs}>
+                      <TableOfContents className={`${styles.iconLarge} icon`} />
+                    </button>
 
-                {areMoreTabsOpen && (
-                  <div className={styles.moreTabsContainer}>
-                    <button className={styles.rentsButton}>
-                      <History className={` ${styles.iconSmall} icon `} />
-                      Rents History
-                    </button>
-                    <button
-                      className={styles.logoutButton}
-                      onClick={handleLogOut}
-                    >
-                      <LogOut className={` ${styles.iconSmall} icon `} />
-                      Log out
-                    </button>
+                    {areMoreTabsOpen && (
+                      <div className={styles.moreTabsContainer}>
+                        <Link
+                          className={styles.rentsButton}
+                          to={"/rentsHistory"}
+                          onClick={() => setAreMoreTabsOpen(false)}
+                        >
+                          <History className={` ${styles.iconSmall} icon `} />
+                          Rents History
+                        </Link>
+                        <button
+                          className={styles.logoutButton}
+                          onClick={handleLogOut}
+                        >
+                          <LogOut className={` ${styles.iconSmall} icon `} />
+                          Log out
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              ) : (
+                <button
+                  className={styles.logoutButtonAdmin}
+                  onClick={handleLogOut}
+                >
+                  <LogOut className={` ${styles.iconSmall} icon `} />
+                  Log out
+                </button>
+              )}
             </>
           </div>
         )}

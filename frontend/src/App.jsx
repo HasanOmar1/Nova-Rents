@@ -15,6 +15,7 @@ import AllVehicles from "./pages/AdminUI/AllVehicles/AllVehicles";
 import Statistics from "./pages/AdminUI/Statistics/Statistics";
 import ComplaintsAdmin from "./pages/AdminUI/Complaints/ComplaintsAdmin";
 import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
+import RentsHistory from "./pages/UserUI/RentsHistory/RentsHistory";
 
 function App() {
   const { currentUser, isLoading } = useUserContext();
@@ -43,6 +44,7 @@ function App() {
             <Route path="/myVehicles" element={<MyVehicles />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/complaints" element={<Complaints />} />
+            <Route path="/rentsHistory" element={<RentsHistory />} />
           </>
         ) : currentUser?.role === "admin" ? (
           <>
