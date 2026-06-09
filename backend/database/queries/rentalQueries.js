@@ -22,7 +22,7 @@ async function getRequestsForMyVehiclesByOwnerId(ownerId) {
   const getRequestsForMyVehiclesByOwnerId = ` SELECT r.*
     FROM rentals r
     JOIN vehicles v
-      ON r.licensePlate = v.licensePlate
+    ON r.licensePlate = v.licensePlate
     WHERE v.ownerId = ?
       AND r.status = 'pending'
   `;

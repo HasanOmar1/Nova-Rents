@@ -15,6 +15,10 @@ const {
   updateRentalStatus,
   updateVehicleConditions,
 } = require("../database/queries/rentalQueries");
+
+const {
+  createNotification,
+} = require("../database/queries/notificationQueries");
 async function createRental(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -77,6 +81,17 @@ async function createRental(req, res, next) {
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to create rental" });
     }
+    const {
+      createNotification,
+    } = require("../database/queries/notificationQueries");
+
+    await createNotification(
+      vehicle.ownerId,
+      result.insertId,
+      "rental_request",
+      "New Rental Request",
+      `User ${renterId} requested your vehicle`,
+    );
     return res
       .status(STATUS_CODE.CREATED)
       .json({ message: "Rental created successfully" });
@@ -155,6 +170,13 @@ async function approveRental(req, res, next) {
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to approve rental" });
     }
+    await createNotification(
+      rental.renterId,
+      rentalId,
+      "rental_approved",
+      "Rental Approved",
+      `Your rental has been approved by the owner ${ownerId}`,
+    );
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Rental approved successfully" });
@@ -190,7 +212,15 @@ async function rejectRental(req, res, next) {
       return res
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to reject rental" });
+        
     }
+    await createNotification(
+      rental.renterId,
+      rentalId,
+      "rental_rejected",
+      "Rental Rejected",
+      `Your rental has been rejected by the owner ${ownerId}`,
+    );
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Rental rejected successfully" });
@@ -229,6 +259,13 @@ async function cancelRental(req, res, next) {
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to cancel rental" });
     }
+    await createNotification(
+      rental.ownerId,
+      rentalId,
+      "rental_cancelled",
+      "Rental Cancelled",
+      `Your rental has been cancelled by the renter ${renterId}`,
+    );
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Rental canceled successfully" });
@@ -261,5 +298,4 @@ module.exports = {
   rejectRental,
   cancelRental,
   updateVehicleStatus,
-  
 };
