@@ -90,7 +90,7 @@ async function createRental(req, res, next) {
       result.insertId,
       "rental_request",
       "New Rental Request",
-      `User ${renterId} requested your vehicle`,
+      `User ${renterId} requested your vehicle ${licensePlate}`,
     );
     return res
       .status(STATUS_CODE.CREATED)

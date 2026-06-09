@@ -11,7 +11,7 @@ async function getNotificationsByUserId(userId) {
   const getNotificationsByUserId = `SELECT * FROM notifications WHERE userId = ? ORDER BY createdAt DESC`;
   const valuesOfgetNotificationsByUserId = [userId];
   const result = await doQuery(getNotificationsByUserId, valuesOfgetNotificationsByUserId);
-  return result[0];
+  return result; 
 }
 
 async function markNotificationAsRead(notificationId , userId) {
@@ -22,7 +22,7 @@ async function markNotificationAsRead(notificationId , userId) {
 }
 
 async function getUnreadNotificationsCount(userId) {
-  const query = `SELECT COUNT(*) FROM notifications WHERE userId = ? AND isRead = 0`;
+  const query = `SELECT COUNT(*)  AS unreadCount FROM notifications WHERE userId = ? AND isRead = 0`;
   const valuesOfquery = [userId];
   const result = await doQuery(query, valuesOfquery);
   return result[0];

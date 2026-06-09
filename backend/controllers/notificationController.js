@@ -26,6 +26,8 @@ async function getMyNotifications_controller(req, res, next) {
 }
 async function getUnreadNotificationsCount_controller(req, res, next) {
   try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
     const userId = req.session.user.userId;
     const count = await getUnreadNotificationsCount(userId);
     return res.status(STATUS_CODE.OK).json({ message: "Unread notifications count fetched successfully" ,count});
@@ -37,6 +39,8 @@ async function getUnreadNotificationsCount_controller(req, res, next) {
 
 async function markNotificationAsRead_controller(req, res, next) {
   try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
     const userId = req.session.user.userId;
     const { notificationId } = req.params;
     const result = await markNotificationAsRead(notificationId , userId);

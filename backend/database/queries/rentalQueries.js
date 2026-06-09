@@ -19,13 +19,32 @@ async function getMyRentalsByRenterId(renterId) {
   return myRentals;
 }
 async function getRequestsForMyVehiclesByOwnerId(ownerId) {
-  const getRequestsForMyVehiclesByOwnerId = ` SELECT r.*
-    FROM rentals r
-    JOIN vehicles v
-    ON r.licensePlate = v.licensePlate
-    WHERE v.ownerId = ?
-      AND r.status = 'pending'
-  `;
+  const getRequestsForMyVehiclesByOwnerId = ` SELECT
+  r.rentalId,
+  r.renterId,
+  r.licensePlate,
+  DATE_FORMAT(r.startDate, '%d/%m/%Y') AS startDate,
+  DATE_FORMAT(r.endDate, '%d/%m/%Y') AS endDate,
+  DATE_FORMAT(r.createdAt, '%d/%m/%Y %H:%i:%s') AS createdAt,
+
+  u.email,
+  u.firstName,
+  u.lastName,
+
+  v.image,
+  v.price,
+  v.color,
+  v.year,
+  v.address
+  FROM rentals r
+  JOIN users u
+  ON r.renterId = u.userId
+  JOIN vehicles v
+  ON r.licensePlate = v.licensePlate
+  WHERE v.ownerId = ?
+  AND r.status = 'pending'
+  ORDER BY r.startDate DESC`;
+
   const valuesOfgetRequestsForMyVehiclesByOwnerId = [ownerId];
   const requests = await doQuery(
     getRequestsForMyVehiclesByOwnerId,
@@ -48,13 +67,23 @@ async function updateRentalStatus(rentalId, status) {
   return result;
 }
 
-
-
- async function updateVehicleConditions(licensePlate, status) {
+async function updateVehicleConditions(licensePlate, status) {
   const updateVehicleStatus = `update Vehicles set status = ? where licensePlate = ?`;
   const valuesOfupdateVehicleStatus = [status, licensePlate];
-  const result = await doQuery(updateVehicleStatus, valuesOfupdateVehicleStatus);
+  const result = await doQuery(
+    updateVehicleStatus,
+    valuesOfupdateVehicleStatus,
+  );
   return result;
+}
+async function getRenterEmailByRentalId(rentalId) {
+  const getEmailByRentalId = `select u.email from rentals r join users u on r.renterId = u.userId where rentalId = ?`;
+  const valuesOfgetEmailByRentalId = [rentalId];
+  const renterEmail = await doQuery(
+    getEmailByRentalId,
+    valuesOfgetEmailByRentalId,
+  );
+  return renterEmail[0];
 }
 module.exports = {
   checkIfVehicleIsAvailable,
@@ -62,5 +91,6 @@ module.exports = {
   getRequestsForMyVehiclesByOwnerId,
   getRentalById,
   updateRentalStatus,
-  updateVehicleConditions
+  updateVehicleConditions,
+  getRenterEmailByRentalId,
 };
