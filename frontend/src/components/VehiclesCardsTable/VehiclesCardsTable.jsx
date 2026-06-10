@@ -35,6 +35,7 @@ const VehiclesCardsTable = ({ veh, admin }) => {
     ownerFirstName: currentUser?.firstName,
     ownerLastName: currentUser?.lastName,
     ownerPhone: currentUser?.phone,
+    ownerEmail: currentUser?.email,
   };
 
   return (

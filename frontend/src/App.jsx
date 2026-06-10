@@ -68,7 +68,10 @@ function App() {
         )}
 
         {/* other pages */}
-        <Route path="/vehicles/:id" element={<VehicleDetails />} />
+
+        {currentUser && (
+          <Route path="/vehicles/:id" element={<VehicleDetails />} />
+        )}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

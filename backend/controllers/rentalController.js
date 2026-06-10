@@ -19,6 +19,84 @@ const {
 const {
   createNotification,
 } = require("../database/queries/notificationQueries");
+// async function createRental(req, res, next) {
+//   try {
+//     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+//       return;
+//     const renterId = req.session.user.userId;
+//     const { licensePlate, startDate, endDate } = req.body;
+//     if (!validateRequiredRentalFields(req.body, res)) return;
+
+//     const vehicle = await getVehicleByLicensePlate(licensePlate);
+//     if (!vehicle) {
+//       return res
+//         .status(STATUS_CODE.NOT_FOUND)
+//         .json({ message: "Vehicle not found" });
+//     }
+//     if (renterId === vehicle.ownerId) {
+//       return res
+//         .status(STATUS_CODE.FORBIDDEN)
+//         .json({ message: "You cannot rent your own vehicle" });
+//     }
+//     const start = new Date(startDate);
+//     const end = new Date(endDate);
+
+//     if (start >= end) {
+//       return res
+//         .status(STATUS_CODE.BAD_REQUEST)
+//         .json({ message: "Start date cannot be after end date" });
+//     }
+//     if (start < new Date()) {
+//       return res
+//         .status(STATUS_CODE.BAD_REQUEST)
+//         .json({ message: "Start date cannot be in the past" });
+//     }
+//     if (end < new Date()) {
+//       return res
+//         .status(STATUS_CODE.BAD_REQUEST)
+//         .json({ message: "End date cannot be in the past" });
+//     }
+//     const rentalIsAvailable = await checkIfVehicleIsAvailable(
+//       licensePlate,
+//       startDate,
+//       endDate,
+//     );
+
+//     if (rentalIsAvailable) {
+//       return res
+//         .status(STATUS_CODE.BAD_REQUEST)
+//         .json({ message: "Vehicle is already rented" });
+//     }
+
+//     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+//     const totalPrice = days * vehicle.price;
+
+//     const insertQuery =
+//       "INSERT INTO rentals (renterId, licensePlate, startDate, endDate, totalPrice) VALUES (?, ?, ?, ?, ?)";
+
+//     const values = [renterId, licensePlate, startDate, endDate, totalPrice];
+//     const result = await doQuery(insertQuery, values);
+//     if (result.affectedRows === 0) {
+//       return res
+//         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
+//         .json({ message: "Failed to create rental" });
+//     }
+
+//     await createNotification(
+//       vehicle.ownerId,
+//       result.insertId,
+//       "rental_request",
+//       "New Rental Request",
+//       `User ${renterId} requested your vehicle ${licensePlate}`,
+//     );
+//     return res
+//       .status(STATUS_CODE.CREATED)
+//       .json({ message: "Rental created successfully" });
+//   } catch (error) {
+//     next(error);
+//   }
+// }
+
 async function createRental(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -28,44 +106,43 @@ async function createRental(req, res, next) {
     if (!validateRequiredRentalFields(req.body, res)) return;
 
     const vehicle = await getVehicleByLicensePlate(licensePlate);
-    if (!vehicle) {
+    if (!vehicle)
       return res
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "Vehicle not found" });
-    }
-    if (renterId === vehicle.ownerId) {
+    if (renterId === vehicle.ownerId)
       return res
         .status(STATUS_CODE.FORBIDDEN)
         .json({ message: "You cannot rent your own vehicle" });
-    }
-    const start = new Date(startDate);
-    const end = new Date(endDate);
 
-    if (start >= end) {
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+
+    if (start >= end)
       return res
         .status(STATUS_CODE.BAD_REQUEST)
-        .json({ message: "Start date cannot be after end date" });
-    }
-    if (start < new Date()) {
+        .json({ message: "Start date must be before end date" });
+    if (start <= todayMidnight)
       return res
         .status(STATUS_CODE.BAD_REQUEST)
-        .json({ message: "Start date cannot be in the past" });
-    }
-    if (end < new Date()) {
-      return res
-        .status(STATUS_CODE.BAD_REQUEST)
-        .json({ message: "End date cannot be in the past" });
-    }
-    const rentalIsAvailable = await checkIfVehicleIsAvailable(
+        .json({ message: "Start date must be tomorrow or later" });
+
+    const hasDateCollision = await checkIfVehicleIsAvailable(
       licensePlate,
       startDate,
       endDate,
     );
 
-    if (rentalIsAvailable) {
+    if (hasDateCollision) {
       return res
         .status(STATUS_CODE.BAD_REQUEST)
-        .json({ message: "Vehicle is already rented" });
+        .json({ message: "Vehicle is already booked for these dates" });
     }
 
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
@@ -73,17 +150,13 @@ async function createRental(req, res, next) {
 
     const insertQuery =
       "INSERT INTO rentals (renterId, licensePlate, startDate, endDate, totalPrice) VALUES (?, ?, ?, ?, ?)";
-
     const values = [renterId, licensePlate, startDate, endDate, totalPrice];
     const result = await doQuery(insertQuery, values);
-    if (result.affectedRows === 0) {
+
+    if (result.affectedRows === 0)
       return res
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to create rental" });
-    }
-    const {
-      createNotification,
-    } = require("../database/queries/notificationQueries");
 
     await createNotification(
       vehicle.ownerId,
@@ -92,6 +165,7 @@ async function createRental(req, res, next) {
       "New Rental Request",
       `User ${renterId} requested your vehicle ${licensePlate}`,
     );
+
     return res
       .status(STATUS_CODE.CREATED)
       .json({ message: "Rental created successfully" });
@@ -99,6 +173,26 @@ async function createRental(req, res, next) {
     next(error);
   }
 }
+
+const getBookedDates = async (req, res, next) => {
+  try {
+    const { licensePlate } = req.params;
+
+    const query = `
+      SELECT startDate, endDate 
+      FROM rentals 
+      WHERE licensePlate = ? 
+      AND status IN ('pending', 'approved')
+      AND endDate >= CURDATE()
+    `;
+
+    const bookedDates = await doQuery(query, [licensePlate]);
+
+    res.status(STATUS_CODE.OK).json({ bookedDates });
+  } catch (error) {
+    next(error);
+  }
+};
 
 async function getMyRentals(req, res, next) {
   try {
@@ -212,7 +306,6 @@ async function rejectRental(req, res, next) {
       return res
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to reject rental" });
-        
     }
     await createNotification(
       rental.renterId,
@@ -298,4 +391,5 @@ module.exports = {
   rejectRental,
   cancelRental,
   updateVehicleStatus,
+  getBookedDates,
 };

@@ -43,7 +43,9 @@ const HomeMidCards = ({ title }) => {
           {loading ? (
             <p>Loading notifications...</p>
           ) : notifications.length === 0 ? (
-            <p>No notifications yet</p>
+            <p className={styles.noNotificationsMsg}>
+              You dont have notifications yet
+            </p>
           ) : (
             latestNotifications.map((notification) => {
               return (

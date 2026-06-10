@@ -35,6 +35,12 @@
   opacity: 0.65;
 }
 
+.HomeMidCards .noNotificationsMsg {
+  color: var(--gray);
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
 @media (max-width: 768px) {
   .HomeMidCards {
     padding: 20px;
