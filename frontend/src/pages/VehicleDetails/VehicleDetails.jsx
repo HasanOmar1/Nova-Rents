@@ -61,15 +61,19 @@ const VehicleDetails = () => {
     setRentVehResponse("");
   };
   const ownerFullName = state.ownerFirstName + " " + state.ownerLastName;
-
+  
   const cardsData = [
     {
-      title: "Daily rate",
+      title: "Daily rate + VAT",
       value:
-        state.price && typeof state.price === "string"
-          ? "$" + state.price.split("/")[0]
-          : "$" + state.price,
+        "$" +
+        (
+          (typeof state.price === "string"
+            ? Number(state.price.split("/")[0])
+            : Number(state.price)) * 1.18
+        ).toFixed(2),
     },
+
     {
       title: "Year",
       value: state.year,
