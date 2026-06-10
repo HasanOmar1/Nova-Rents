@@ -85,6 +85,8 @@ async function getRenterEmailByRentalId(rentalId) {
   );
   return renterEmail[0];
 }
+
+
 module.exports = {
   checkIfVehicleIsAvailable,
   getMyRentalsByRenterId,

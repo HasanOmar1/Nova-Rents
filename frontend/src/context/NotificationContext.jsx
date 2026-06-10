@@ -18,6 +18,10 @@ const NotificationContextProvider = ({ children }) => {
 
   useEffect(() => {
     loadNotifications();
+    const intervalId = setInterval(() => {
+      loadNotifications();
+    }, 30000);
+    return () => clearInterval(intervalId);
   }, [ currentUser ]);
 
 
