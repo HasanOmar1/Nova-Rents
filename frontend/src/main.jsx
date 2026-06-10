@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import UserContextProvider from "./context/UserContext.jsx";
 import VehicleContextProvider from "./context/VehicleContext.jsx";
 import NotificationContextProvider from "./context/NotificationContext.jsx";
+import RentContextProvider from "./context/RentContext.jsx";
 
 axios.defaults.baseURL = "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -16,9 +17,11 @@ createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <VehicleContextProvider>
       <UserContextProvider>
-        <NotificationContextProvider>
-          <App />
-        </NotificationContextProvider>
+        <RentContextProvider>
+          <NotificationContextProvider>
+            <App />
+          </NotificationContextProvider>
+        </RentContextProvider>
       </UserContextProvider>
     </VehicleContextProvider>
   </BrowserRouter>,
