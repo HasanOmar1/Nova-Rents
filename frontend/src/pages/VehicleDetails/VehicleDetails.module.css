@@ -41,13 +41,17 @@
 
 .VehicleDetails .allContainer {
   display: flex;
-  gap: 60px;
+  /* gap: 60px; */
   margin-top: 30px;
+  /* border: 3px solid red; */
+  flex-direction: column;
 }
 
 .VehicleDetails .dataContainer {
-  width: 60%;
+  /* width: 60%; */
   min-height: fit-content;
+  /* border: 2px solid blue; */
+  flex: 1;
 }
 
 .VehicleDetails .container {
@@ -74,8 +78,86 @@
   width: 100%;
   border-top-right-radius: 20px;
   border-top-left-radius: 20px;
-  height: min(56vh, 420px);
-  object-fit: cover;
+  /* height: min(56vh, 420px); */
+}
+
+/* --- GALLERY STYLING --- */
+.VehicleDetails .gallery {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  width: 100%;
+}
+
+.VehicleDetails .mainImageWrapper {
+  position: relative; /* Allows thumbnails to float inside */
+  width: 100%;
+  max-height: 500px; /* Gives plenty of breathing room for tall ratios */
+  min-height: 300px; /* Prevents it from collapsing completely */
+  overflow: hidden;
+  border-top-right-radius: 20px;
+  border-top-left-radius: 20px;
+  background-color: #0c0e12; /* Fills empty sides with solid dark background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.VehicleDetails .mainImage {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain; /* Guarantees the entire car is visible, uncropped */
+  display: block;
+  transition: opacity 0.3s ease;
+}
+
+.VehicleDetails .thumbnailsContainer {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  background-color: rgba(20, 20, 25, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  z-index: 10;
+  max-width: 90%; /* Prevents the bar from overflowing the screen */
+}
+
+.VehicleDetails .thumbnailWrapper {
+  width: 65px;
+  height: 65px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+  flex-shrink: 0; /* CRITICAL: Prevents mobile layout from squishing the thumbnail box */
+}
+
+.VehicleDetails .thumbnailWrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Keeps thumbnail crops beautifully square */
+  display: block;
+}
+
+.VehicleDetails .thumbnailWrapper:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+/* Active Highlight Style */
+.VehicleDetails .thumbnailWrapper.active {
+  border-color: #3b82f6;
+  opacity: 1;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 
 .VehicleDetails .typeStatusContainer {
@@ -142,10 +224,13 @@
 }
 
 .VehicleDetails .bookingContainer {
-  width: auto;
-  position: sticky;
-  top: 20px;
-  height: fit-content;
+  /* width: auto; */
+  /* position: sticky; */
+  /* top: 20px; */
+  /* height: fit-content; */
+  width: 50%;
+  margin: 0 auto;
+  margin-bottom: 30px;
 }
 
 .VehicleDetails .bookingContainer .ownerInfoContainer {
@@ -255,6 +340,11 @@
     justify-content: center;
     align-items: center;
   }
+
+  .VehicleDetails .mainImageWrapper,
+  .VehicleDetails .mainImage {
+    max-height: 380px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -274,11 +364,27 @@
     padding: 0 15px;
   }
 
-  .VehicleDetails .infoContainer img {
-    height: 250px;
-  }
-
   .VehicleDetails .allDatesContainer {
     flex-direction: column;
+  }
+
+  .VehicleDetails .mainImageWrapper,
+  .VehicleDetails .mainImage {
+    max-height: 280px;
+    border-radius: 0;
+  }
+
+  .VehicleDetails .thumbnailsContainer {
+    bottom: 10px;
+    padding: 6px;
+    gap: 6px;
+    max-width: 95%;
+  }
+
+  .VehicleDetails .thumbnailWrapper {
+    width: 50px; /* Fixed sizing */
+    height: 50px;
+    border-radius: 6px;
+    flex-shrink: 0; /* Forces browser to render the full 50px square layout */
   }
 }

@@ -3,20 +3,63 @@ import styles from "./VehicleDetails.module.css";
 import { AlertTriangle, MapPin } from "lucide-react";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
-import { parseImgs } from "../../utils/parseImgs";
+import { parseImgs } from "../../utils/parseImgs"; // <--- Keeping this import
+import { useUserContext } from "../../context/UserContext";
+import { useEffect, useState, useRef } from "react";
 
 const VehicleDetails = () => {
+  const [hideBooking, setHideBooking] = useState(false);
+  const { currentUser } = useUserContext();
   const { id } = useParams();
   const { state } = useLocation();
-  console.log(state);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const imageUrl = parseImgs(state.image);
+  const imageUrls = state.image ? parseImgs(state.image, true) : [];
+
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (currentUser?.email === state?.ownerEmail) {
+      setHideBooking(true);
+    } else setHideBooking(false);
+  }, [currentUser, state?.ownerEmail]);
+
+  useEffect(() => {
+    if (imageUrls.length > 1) {
+      startSlideshow();
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [imageUrls.length]);
+
+  const startSlideshow = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    intervalRef.current = setInterval(() => {
+      setCurrentIndex((prevIndex) => {
+        return prevIndex === imageUrls.length - 1 ? 0 : prevIndex + 1;
+      });
+    }, 2000);
+  };
+
+  const handleThumbnailClick = (index) => {
+    setCurrentIndex(index);
+    if (imageUrls.length > 1) {
+      startSlideshow();
+    }
+  };
+
   const ownerFullName = state.ownerFirstName + " " + state.ownerLastName;
 
   const cardsData = [
     {
       title: "Daily rate",
-      value: state.price.split("/")[0],
+      value:
+        state.price && typeof state.price === "string"
+          ? "$" + state.price.split("/")[0]
+          : "$" + state.price,
     },
     {
       title: "Year",
@@ -40,6 +83,8 @@ const VehicleDetails = () => {
     return `${address}, Israel`;
   }
 
+  const mainImageUrl = imageUrls[currentIndex] || "";
+
   return (
     <div className={`${styles.VehicleDetails} page`}>
       <div className={styles.top}>
@@ -58,7 +103,31 @@ const VehicleDetails = () => {
       <div className={styles.allContainer}>
         <div className={styles.dataContainer}>
           <div className={`${styles.infoContainer} ${styles.container}`}>
-            <img src={imageUrl} alt={state.vehName} />
+            <div className={styles.gallery}>
+              <div className={styles.mainImageWrapper}>
+                <img
+                  src={mainImageUrl}
+                  alt={state.vehName}
+                  className={styles.mainImage}
+                />
+
+                {imageUrls.length > 1 && (
+                  <div className={styles.thumbnailsContainer}>
+                    {imageUrls.map((url, index) => {
+                      return (
+                        <div
+                          key={index}
+                          className={`${styles.thumbnailWrapper} ${index === currentIndex ? styles.active : ""}`}
+                          onClick={() => handleThumbnailClick(index)}
+                        >
+                          <img src={url} alt={`thumbnail ${index + 1}`} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
 
             <div className={styles.about}>
               <div className={styles.typeStatusContainer}>
@@ -102,29 +171,31 @@ const VehicleDetails = () => {
           </div>
         </div>
 
-        <div className={`${styles.bookingContainer} ${styles.container}`}>
-          <h4>Booking</h4>
-          <div className={styles.ownerInfoContainer}>
-            <p className={styles.msg}>Rental contract with</p>
-            <p>
-              {ownerFullName} — {state?.ownerPhone}
-            </p>
-          </div>
-
-          <div className={styles.allDatesContainer}>
-            <div className={styles.datesContainer}>
-              <label htmlFor="start">Start</label>
-              <input type="date" name="start" />
+        {!hideBooking && (
+          <div className={`${styles.bookingContainer} ${styles.container}`}>
+            <h4>Booking</h4>
+            <div className={styles.ownerInfoContainer}>
+              <p className={styles.msg}>Rental contract with</p>
+              <p>
+                {ownerFullName} — {state?.ownerPhone}
+              </p>
             </div>
 
-            <div className={styles.datesContainer}>
-              <label htmlFor="end">End</label>
-              <input type="date" name="end" />
-            </div>
-          </div>
+            <div className={styles.allDatesContainer}>
+              <div className={styles.datesContainer}>
+                <label htmlFor="start">Start</label>
+                <input type="date" name="start" />
+              </div>
 
-          <button>Confirm Booking</button>
-        </div>
+              <div className={styles.datesContainer}>
+                <label htmlFor="end">End</label>
+                <input type="date" name="end" />
+              </div>
+            </div>
+
+            <button>Confirm Booking</button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,12 +4,11 @@ import { navByRole, labels, icons } from "./nav";
 import { useUserContext } from "../../context/UserContext";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useNotificationContext  } from "../../context/NotificationContext";
-
+import { useNotificationContext } from "../../context/NotificationContext";
 
 const Header = ({ page }) => {
   const { currentUser, logout } = useUserContext();
-  const { unreadCount  } = useNotificationContext();
+  const { unreadCount } = useNotificationContext();
   const [areMoreTabsOpen, setAreMoreTabsOpen] = useState(false);
   const location = useLocation();
 
@@ -24,7 +23,7 @@ const Header = ({ page }) => {
   const handleTabs = () => {
     setAreMoreTabsOpen((prev) => !prev);
   };
- 
+
   return (
     <header className={styles.Header}>
       <div className={styles.siteDetails}>
@@ -72,7 +71,6 @@ const Header = ({ page }) => {
 
               {currentUser?.role === "user" ? (
                 <>
-                  {" "}
                   <div className={styles.tabsContainer}>
                     <button className={styles.tabsButton} onClick={handleTabs}>
                       <TableOfContents className={`${styles.iconLarge} icon`} />
