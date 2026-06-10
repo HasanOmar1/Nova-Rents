@@ -166,6 +166,11 @@
   align-items: center;
 }
 
+.VehicleDetails .typeAndStatusContainer {
+  display: flex;
+  gap: 15px;
+}
+
 .VehicleDetails .typeStatusContainer p {
   padding: 10px 20px;
   border-radius: 10px;
@@ -181,6 +186,21 @@
 .VehicleDetails .status {
   background-color: #132828;
   color: #a5f5cf;
+}
+
+.VehicleDetails .available {
+  background-color: #102e2b;
+  color: #90dbbb;
+}
+
+.VehicleDetails .rented {
+  color: #f9e081;
+  background-color: #392d1f;
+}
+
+.VehicleDetails .maintenance {
+  color: #f9bb81;
+  background-color: #39251f;
 }
 
 .VehicleDetails .cards {
@@ -253,6 +273,12 @@
   font-size: 0.7rem;
 }
 
+.VehicleDetails .bookingContainer .rentedMsg {
+  font-size: 0.8rem;
+  text-align: center;
+  color: greenyellow;
+}
+
 .VehicleDetails .allDatesContainer {
   display: flex;
   justify-content: space-between;
@@ -294,6 +320,70 @@
 
 .VehicleDetails .bookingContainer button:hover {
   background-color: #1a42c6cb;
+}
+
+.VehicleDetails .priceBreakdown {
+  background-color: #16171a; /* Slightly darker frame for distinction */
+  border: 1px solid #2e3442;
+  border-radius: 12px;
+  padding: 15px 20px;
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.VehicleDetails .priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+.VehicleDetails .priceRow .label {
+  color: var(--gray);
+}
+
+.VehicleDetails .priceBreakdown .divider {
+  border: none;
+  border-top: 1px dashed #2e3442;
+  margin: 2px 0;
+  width: 100%;
+}
+
+.VehicleDetails .totalRow {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.VehicleDetails .totalRow p:last-child {
+  color: #60a5fa;
+}
+
+.VehicleDetails .launchBookingBtn {
+  margin-left: auto;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.VehicleDetails .launchBookingBtn:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 @media (max-width: 1024px) {
@@ -382,9 +472,21 @@
   }
 
   .VehicleDetails .thumbnailWrapper {
-    width: 50px; /* Fixed sizing */
+    width: 50px;
     height: 50px;
     border-radius: 6px;
-    flex-shrink: 0; /* Forces browser to render the full 50px square layout */
+    flex-shrink: 0;
+  }
+
+  .VehicleDetails .launchBookingBtn {
+    margin-left: 0;
+    width: 100%;
+    padding: 14px;
+    font-size: 0.9rem;
+    margin-top: 5px;
+  }
+
+  .VehicleDetails .typeStatusContainer {
+    flex-direction: column;
   }
 }
