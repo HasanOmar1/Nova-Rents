@@ -158,6 +158,12 @@
   cursor: pointer;
 }
 
+.AddEditVehicleMenu .checkboxLabel p {
+  color: white;
+  margin: 0;
+  font-size: 0.7rem;
+}
+
 .AddEditVehicleMenu .checkboxLabel input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -176,10 +182,10 @@
   gap: 10px;
 }
 
-.AddEditVehicleMenu .restoreBanner p {
+.AddEditVehicleMenu .restoreBanner p:first-child {
   color: #fca5a5;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   font-weight: bold;
 }
 

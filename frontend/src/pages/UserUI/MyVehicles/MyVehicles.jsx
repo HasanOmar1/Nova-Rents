@@ -3,7 +3,15 @@ import DeleteMenu from "../../../components/DeleteMenu/DeleteMenu";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 import styles from "./MyVehicles.module.css";
-import { Car, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Car,
+  ChevronLeft,
+  ChevronRight,
+  CircleDollarSign,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldOff,
+} from "lucide-react";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import AddEditVehicleMenu from "../../../components/AddEditVehicleMenu/AddEditVehicleMenu";
 
@@ -47,19 +55,29 @@ const MyVehicles = () => {
 
   const topData = [
     {
-      title: "Active listings",
-      value: vehicleStats?.activeListings || 0,
+      title: "Vehicles Count",
+      value: vehicleStats?.allVehicles || 0,
       icon: <Car size={28} color="#a7d2eb" />,
     },
     {
-      title: "Available now",
+      title: "Available Now",
       value: vehicleStats?.availableNow || 0,
-      icon: <Car size={28} color="#a7d2eb" />,
+      icon: <ShieldCheck size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Under Maintenance",
+      value: vehicleStats?.maintenance || 0,
+      icon: <ShieldAlert size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Inactive",
+      value: vehicleStats?.inactive || 0,
+      icon: <ShieldOff size={28} color="#a7d2eb" />,
     },
     {
       title: "Avg. daily rate",
-      value: `$${vehicleStats?.avgRate || 0}`,
-      icon: <Car size={28} color="#a7d2eb" />,
+      value: `$${(vehicleStats?.avgRate || 0).toLocaleString()}`,
+      icon: <CircleDollarSign size={28} color="#a7d2eb" />,
     },
   ];
 
@@ -73,10 +91,6 @@ const MyVehicles = () => {
         </div>
 
         <div className={styles.headerRight}>
-          <button className={styles.addVehicleBtn} onClick={openAddVehMenu}>
-            Add vehicle
-          </button>
-
           <div className={styles.filterContainer}>
             <label htmlFor="status">Filter:</label>
             <select
@@ -86,11 +100,14 @@ const MyVehicles = () => {
             >
               <option value="all">All Vehicles</option>
               <option value="available">Available</option>
-              <option value="rented">Rented</option>
               <option value="maintenance">Maintenance</option>
-              <option value="inactive">Inactive / Deleted</option>
+              <option value="inactive">Inactive</option>
             </select>
           </div>
+
+          <button className={styles.addVehicleBtn} onClick={openAddVehMenu}>
+            Add vehicle
+          </button>
         </div>
       </div>
 
@@ -127,19 +144,27 @@ const MyVehicles = () => {
 
             <div className={styles.pagination}>
               <p>Total Vehicles: {pagination?.totalVehicles}</p>
-
               <div className={styles.pagBtnsContainer}>
-                <button onClick={handlePrevPage} disabled={currentPage === 1}>
+                <button
+                  onClick={handlePrevPage}
+                  disabled={
+                    pagination?.currentPage === 1 || !pagination?.currentPage
+                  }
+                >
                   <ChevronLeft size={20} /> Prev
                 </button>
 
                 <p>
-                  Page {pagination?.currentPage} / {pagination?.totalPages}
+                  Page {pagination?.currentPage || 1} /{" "}
+                  {pagination?.totalPages || 1}
                 </p>
 
                 <button
                   onClick={handleNextPage}
-                  disabled={currentPage === pagination?.totalPages}
+                  disabled={
+                    pagination?.currentPage === pagination?.totalPages ||
+                    !pagination?.totalPages
+                  }
                 >
                   Next <ChevronRight size={20} />
                 </button>

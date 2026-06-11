@@ -54,7 +54,7 @@ const getUserVehicles = async (req, res, next) => {
       queryParams.push(status);
     }
 
-    query += ` ORDER BY v.year DESC LIMIT ? OFFSET ?`;
+    query += ` ORDER BY v.createdAt DESC LIMIT ? OFFSET ?`;
 
     const vehicles = await doQuery(query, [...queryParams, limit, offset]);
 
@@ -64,17 +64,23 @@ const getUserVehicles = async (req, res, next) => {
 
     const statsQuery = `
       SELECT 
-        COUNT(*) as totalActive,
+        COUNT(*) as allVehicles,
         SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as availableCount,
-        AVG(price) as avgDailyRate
+        SUM(CASE WHEN status = 'rented' THEN 1 ELSE 0 END) as rentedCount,
+        SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenanceCount,
+        SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactiveCount,
+        AVG(CASE WHEN status != 'inactive' THEN price ELSE NULL END) as avgDailyRate
       FROM vehicles 
-      WHERE ownerId = ? AND status != 'inactive'
+      WHERE ownerId = ?
     `;
     const statsResult = await doQuery(statsQuery, [userId]);
 
     const stats = {
-      activeListings: Number(statsResult[0].totalActive) || 0,
+      allVehicles: Number(statsResult[0].allVehicles) || 0,
       availableNow: Number(statsResult[0].availableCount) || 0,
+      rented: Number(statsResult[0].rentedCount) || 0,
+      maintenance: Number(statsResult[0].maintenanceCount) || 0,
+      inactive: Number(statsResult[0].inactiveCount) || 0,
       avgRate: Math.round(Number(statsResult[0].avgDailyRate)) || 0,
     };
 

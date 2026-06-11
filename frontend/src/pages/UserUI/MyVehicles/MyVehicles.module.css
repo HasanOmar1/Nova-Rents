@@ -53,7 +53,7 @@
 .MyVehicles .myVehiclesContainer {
   border: var(--cards-border);
   background-color: var(--bg-gray);
-  min-height: 300px;
+  min-height: 200px;
   margin-top: 30px;
   border-radius: 20px;
   overflow: hidden;

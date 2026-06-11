@@ -385,10 +385,9 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             )}
           </div>
 
-          {/* --- SMART STATUS HANDLING --- */}
           {isEditMode && vehicle?.status === "inactive" ? (
             <div className={styles.restoreBanner}>
-              <p>⚠️ This vehicle is currently deleted (inactive).</p>
+              <p>⚠️ This vehicle is currently inactive.</p>
               <label className={styles.checkboxLabel}>
                 <input
                   type="checkbox"
@@ -400,7 +399,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
                     }));
                   }}
                 />
-                Restore vehicle to "Available"
+                <p>Restore vehicle to "Available"</p>
               </label>
             </div>
           ) : (
@@ -418,7 +417,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
                     }));
                   }}
                 />
-                Mark as "Under Maintenance"
+                <p>Mark as "Under Maintenance"</p>
               </label>
             </div>
           )}
