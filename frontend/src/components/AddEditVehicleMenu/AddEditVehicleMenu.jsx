@@ -14,7 +14,7 @@ const initialFormState = {
   price: "",
   address: "",
   expirationDate: "",
-  status: "available", // <--- Added default status
+  status: "available",
   images: [],
 };
 
@@ -40,14 +40,16 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     getVehType();
   }, []);
 
+  console.log(vehicle);
+
   useEffect(() => {
     if (isOpen) {
       if (vehicle) {
-        // --- EDIT MODE: Pre-fill the form ---
+        // --- EDIT MODE: Force IDs to strings so dropdowns match perfectly! ---
         setFormData({
-          brandId: vehicle.brandId || "0",
-          modelId: vehicle.modelId || "",
-          carTypeId: vehicle.carTypeId || "",
+          brandId: vehicle.brandId ? String(vehicle.brandId) : "0",
+          modelId: vehicle.modelId ? String(vehicle.modelId) : "",
+          carTypeId: vehicle.carTypeId ? String(vehicle.carTypeId) : "",
           licensePlate: vehicle.licensePlate || "",
           year: vehicle.year || "",
           color: vehicle.color || "",
@@ -58,10 +60,11 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           expirationDate: vehicle.expirationDate
             ? vehicle.expirationDate.split("T")[0]
             : "",
-          status: vehicle.status || "available", // <--- Populate existing status
+          status: vehicle.status || "available",
           images: [],
         });
 
+        // Fetch the models for this specific brand so the Model dropdown populates
         if (vehicle.brandId) {
           getModelsByBrand(vehicle.brandId);
         }
@@ -89,11 +92,14 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
 
+      // CASCADING RESETS: If Brand changes, wipe Model and Category
       if (name === "brandId") {
         newData.modelId = "";
         newData.carTypeId = "";
         getModelsByBrand(value);
-      } else if (name === "modelId") {
+      }
+      // CASCADING RESETS: If Model changes, wipe Category
+      else if (name === "modelId") {
         newData.carTypeId = "";
       }
 
@@ -130,7 +136,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     submitData.append("price", formData.price);
     submitData.append("address", formData.address);
     submitData.append("expirationDate", formData.expirationDate);
-    submitData.append("status", formData.status); // <--- Add status to FormData
+    submitData.append("status", formData.status);
 
     if (formData.images && formData.images.length > 0) {
       formData.images.forEach((file) => {
@@ -187,7 +193,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               </option>
               {vehiclesBrands?.map((b) => {
                 return (
-                  <option key={b.brandId} value={b.brandId}>
+                  <option key={b.brandId} value={String(b.brandId)}>
                     {b.brandName}
                   </option>
                 );
@@ -201,17 +207,17 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               name="modelId"
               value={formData.modelId}
               onChange={handleChange}
-              disabled={formData.brandId === "0"}
+              disabled={formData.brandId === "0" || formData.brandId === ""} // <--- Disable until brand picked
               required
             >
               <option value="" disabled hidden>
-                {formData.brandId === "0"
+                {formData.brandId === "0" || formData.brandId === ""
                   ? "Pick a brand first"
                   : "Select Model"}
               </option>
               {vehicleModel?.map((m) => {
                 return (
-                  <option key={m.modelId} value={m.modelId}>
+                  <option key={m.modelId} value={String(m.modelId)}>
                     {m.modelName}
                   </option>
                 );
@@ -225,7 +231,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               name="carTypeId"
               value={formData.carTypeId}
               onChange={handleChange}
-              disabled={formData.modelId === ""}
+              disabled={formData.modelId === ""} // <--- Disable until model picked
               required
             >
               <option value="" disabled hidden>
@@ -235,7 +241,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               </option>
               {vehiclesType?.map((t) => {
                 return (
-                  <option key={t.carTypeId} value={t.carTypeId}>
+                  <option key={t.carTypeId} value={String(t.carTypeId)}>
                     {t.carTypeName}
                   </option>
                 );
@@ -379,22 +385,43 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             )}
           </div>
 
-          <div className={styles.inputGroup}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                name="status"
-                checked={formData.status === "maintenance"}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    status: e.target.checked ? "maintenance" : "available",
-                  }));
-                }}
-              />
-              Under Maintenance
-            </label>
-          </div>
+          {/* --- SMART STATUS HANDLING --- */}
+          {isEditMode && vehicle?.status === "inactive" ? (
+            <div className={styles.restoreBanner}>
+              <p>⚠️ This vehicle is currently deleted (inactive).</p>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={formData.status === "available"}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: e.target.checked ? "available" : "inactive",
+                    }));
+                  }}
+                />
+                Restore vehicle to "Available"
+              </label>
+            </div>
+          ) : (
+            <div className={styles.checkboxGroup}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="status"
+                  checked={formData.status === "maintenance"}
+                  disabled={formData.status === "rented"}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: e.target.checked ? "maintenance" : "available",
+                    }));
+                  }}
+                />
+                Mark as "Under Maintenance"
+              </label>
+            </div>
+          )}
         </div>
 
         <div className={styles.actions}>

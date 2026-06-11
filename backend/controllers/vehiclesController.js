@@ -27,45 +27,62 @@ const getUserVehicles = async (req, res, next) => {
       return;
 
     const { userId } = req.session.user;
+    const status = req.query.status || "all";
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
 
-    const query = `
+    let query = `
       SELECT 
-        v.licensePlate,
-        v.fuelType,
-        v.expirationDate,
-        v.image,
-        v.year,
-        v.km,
-        v.address,
-        v.price,
-        v.color,
-        v.status,
-        v.ownerId,
-
-        cm.modelId,
-        cm.modelName,
-
-        cb.brandId,
-        cb.brandName,
-
-        ct.carTypeId,
-        ct.carTypeName
-
+        v.*, 
+        cm.modelName, 
+        cb.brandId, cb.brandName, 
+        ct.carTypeId, ct.carTypeName
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
-
       WHERE v.ownerId = ?
-      ORDER BY v.year DESC
     `;
 
-    const result = await doQuery(query, [userId]);
+    let countQuery = `SELECT COUNT(*) as totalCount FROM vehicles WHERE ownerId = ?`;
+    let queryParams = [userId];
+
+    if (status !== "all") {
+      query += ` AND v.status = ?`;
+      countQuery += ` AND status = ?`;
+      queryParams.push(status);
+    }
+
+    query += ` ORDER BY v.year DESC LIMIT ? OFFSET ?`;
+
+    const vehicles = await doQuery(query, [...queryParams, limit, offset]);
+
+    const countResult = await doQuery(countQuery, queryParams);
+    const totalVehicles = countResult[0].totalCount;
+    const totalPages = Math.ceil(totalVehicles / limit);
+
+    const statsQuery = `
+      SELECT 
+        COUNT(*) as totalActive,
+        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as availableCount,
+        AVG(price) as avgDailyRate
+      FROM vehicles 
+      WHERE ownerId = ? AND status != 'inactive'
+    `;
+    const statsResult = await doQuery(statsQuery, [userId]);
+
+    const stats = {
+      activeListings: Number(statsResult[0].totalActive) || 0,
+      availableNow: Number(statsResult[0].availableCount) || 0,
+      avgRate: Math.round(Number(statsResult[0].avgDailyRate)) || 0,
+    };
 
     res.status(STATUS_CODE.OK).json({
       message: "User vehicles fetched successfully",
-      count: result.length,
-      vehicles: result,
+      vehicles,
+      stats,
+      pagination: { totalVehicles, totalPages, currentPage: page, limit },
     });
   } catch (error) {
     next(error);
@@ -196,6 +213,54 @@ const getVehicleById = async (req, res, next) => {
     next(error);
   }
 };
+
+// const deleteVehicle = async (req, res, next) => {
+//   try {
+//     const { licensePlate } = req.params;
+
+//     if (
+//       !validateAuthenticatedUser(
+//         req,
+//         res,
+//         "You must be logged in to delete a vehicle",
+//       )
+//     )
+//       return;
+
+//     const existingVehicle = await getVehicleByLicensePlate(licensePlate);
+//     if (!existingVehicle) {
+//       return res.status(STATUS_CODE.NOT_FOUND).json({
+//         message: "No vehicle found with this license plate",
+//       });
+//     }
+
+//     if (existingVehicle.ownerId !== req.session.user.userId) {
+//       return res.status(STATUS_CODE.FORBIDDEN).json({
+//         message: "You do not have permission to delete this vehicle",
+//       });
+//     }
+
+//     if (existingVehicle.status === "rented") {
+//       return res.status(STATUS_CODE.BAD_REQUEST).json({
+//         message: "You cannot delete a vehicle while it is currently rented.",
+//       });
+//     }
+
+//     // const deleteQuery = "DELETE FROM vehicles WHERE licensePlate = ?";
+//     const updateQuery = `UPDATE vehicles SET status = 'inactive' WHERE licensePlate = ?`;
+//     await doQuery(updateQuery, [licensePlate]);
+
+//     // If the DB delete was successful, wipe the images from the hard drive!
+//     // deleteImagesFromDisk(existingVehicle.image);
+
+//     res.status(STATUS_CODE.OK).json({
+//       message: "Vehicle deleted successfully",
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 const deleteVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
@@ -204,32 +269,57 @@ const deleteVehicle = async (req, res, next) => {
       !validateAuthenticatedUser(
         req,
         res,
-        "You must be logged in to delete a vehicle",
+        "You must be logged in to deactivate a vehicle",
       )
-    )
+    ) {
       return;
-
-    const existingVehicle = await getVehicleByLicensePlate(licensePlate);
-    if (!existingVehicle) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "No vehicle found with this license plate",
-      });
     }
 
-    if (existingVehicle.ownerId !== req.session.user.userId) {
+    const { userId } = req.session.user;
+
+    const checkQuery = `SELECT ownerId, status FROM vehicles WHERE licensePlate = ?`;
+    const checkResult = await doQuery(checkQuery, [licensePlate]);
+
+    if (checkResult.length === 0) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "Vehicle not found" });
+    }
+    if (checkResult[0].ownerId !== userId) {
       return res.status(STATUS_CODE.FORBIDDEN).json({
-        message: "You do not have permission to delete this vehicle",
+        message: "You do not have permission to deactivate this vehicle",
+      });
+    }
+    if (checkResult[0].status === "rented") {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message:
+          "You cannot deactivate a vehicle while a customer currently has it rented.",
       });
     }
 
-    const deleteQuery = "DELETE FROM vehicles WHERE licensePlate = ?";
-    await doQuery(deleteQuery, [licensePlate]);
+    const activeRentalsQuery = `
+      SELECT COUNT(*) as upcomingCount 
+      FROM rentals 
+      WHERE licensePlate = ? 
+      AND status IN ('pending', 'approved') 
+      AND endDate >= CURDATE()
+    `;
+    const activeRentalsResult = await doQuery(activeRentalsQuery, [
+      licensePlate,
+    ]);
 
-    // If the DB delete was successful, wipe the images from the hard drive!
-    deleteImagesFromDisk(existingVehicle.image);
+    if (activeRentalsResult[0].upcomingCount > 0) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message:
+          "Cannot deactivate: This vehicle has upcoming approved or pending bookings.",
+      });
+    }
+
+    const updateQuery = `UPDATE vehicles SET status = 'inactive' WHERE licensePlate = ?`;
+    await doQuery(updateQuery, [licensePlate]);
 
     res.status(STATUS_CODE.OK).json({
-      message: "Vehicle deleted successfully",
+      message: "Vehicle deactivated successfully",
     });
   } catch (error) {
     next(error);
@@ -330,7 +420,8 @@ const getAllVehicles = async (req, res, next) => {
       endDate,
     } = req.query;
     const canRentSelect =
-    (startDate && endDate) ? `
+      startDate && endDate
+        ? `
       CASE
         WHEN EXISTS (
           SELECT 1
@@ -343,9 +434,9 @@ const getAllVehicles = async (req, res, next) => {
         THEN 0
         ELSE 1
       END AS canRent
-    ` : `1 AS canRent`;
-   
-    
+    `
+        : `1 AS canRent`;
+
     let query = `
       SELECT 
         v.licensePlate,

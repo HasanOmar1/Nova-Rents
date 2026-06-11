@@ -98,6 +98,125 @@
   color: var(--gray);
 }
 
+/* =========================================
+   HEADER CONTROLS & FILTER
+   ========================================= */
+.MyVehicles .headerControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  gap: 20px;
+}
+
+.MyVehicles .headerLeft p {
+  color: #9ca3af;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.MyVehicles .headerRight {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.MyVehicles .addVehicleBtn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.MyVehicles .addVehicleBtn:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.MyVehicles .filterContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 15px;
+  border-radius: 10px;
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+}
+
+.MyVehicles .filterContainer label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.MyVehicles .filterContainer select {
+  background-color: var(--bg-gray);
+  color: white;
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* =========================================
+   PAGINATION FOOTER
+   ========================================= */
+.MyVehicles .pagination {
+  border-top: var(--cards-border);
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  color: var(--gray);
+  font-size: 0.8rem;
+  align-items: center;
+  font-weight: bold;
+}
+
+.MyVehicles .pagination .pagBtnsContainer {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.MyVehicles .pagination .pagBtnsContainer button {
+  border: none;
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  color: var(--gray);
+  font-weight: bold;
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.MyVehicles .pagination .pagBtnsContainer button:hover {
+  color: white;
+}
+
+.MyVehicles .pagination .pagBtnsContainer button:disabled {
+  cursor: not-allowed;
+  color: var(--gray);
+}
+
+.MyVehicles .noVehicles {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--gray);
+  margin-top: 50px;
+}
+
 /* Responsive Styles */
 @media (max-width: 1024px) {
   .MyVehicles .btnsContainer {
@@ -117,10 +236,40 @@
   .MyVehicles .myVehiclesContainer .titles {
     display: none;
   }
+
+  .MyVehicles .pagination {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 
 @media (max-width: 768px) {
   .MyVehicles .topCardsContainer {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .MyVehicles .headerControls {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .MyVehicles .filterContainer {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .MyVehicles .headerControls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .MyVehicles .headerRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .MyVehicles .pagination {
     flex-direction: column;
     gap: 15px;
   }
@@ -141,5 +290,21 @@
   .MyVehicles .addVehicleBtn {
     width: 100%;
     padding: 15px;
+  }
+
+  .MyVehicles .headerRight {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .MyVehicles .addVehicleBtn,
+  .MyVehicles .filterContainer {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .MyVehicles .pagination .btnsContainer {
+    width: 100%;
+    justify-content: space-between;
   }
 }

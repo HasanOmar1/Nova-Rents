@@ -25,13 +25,13 @@
 .HomeMidCards .data .date {
   color: var(--gray);
 }
-.unread {
+
+.HomeMidCards .unread {
   cursor: pointer;
   font-weight: 700;
 }
 
-.read {
-  cursor: pointer;
+.HomeMidCards .read {
   opacity: 0.65;
 }
 

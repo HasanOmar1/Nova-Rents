@@ -11,6 +11,10 @@ const VehicleContextProvider = ({ children }) => {
   const [vehicleModel, setVehicleModel] = useState([]);
   const [vehiclesType, setVehiclesType] = useState([]);
 
+  const [vehicleStats, setVehicleStats] = useState({});
+  const [pagination, setPagination] = useState({});
+  const [currentStatus, setCurrentStatus] = useState("all");
+
   const getAllVehicles = async () => {
     try {
       const response = await axios.get("/vehicles");
@@ -23,26 +27,31 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
-  const getUserVehicles = async () => {
+  const getUserVehicles = async (page = 1, status = "all") => {
     try {
-      const response = await axios.get("/vehicles/myVehicles");
+      setCurrentStatus(status);
+      const response = await axios.get(
+        `/vehicles/myVehicles?status=${status}&page=${page}`,
+      );
+
       setUserVehicles(response.data.vehicles);
-      console.log("User vehicles:", response.data.vehicles);
+      setVehicleStats(response.data.stats);
+      setPagination(response.data.pagination);
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
     }
   };
 
   const deleteUserVehicle = async (licensePlate) => {
     try {
       await axios.delete(`/vehicles/${licensePlate}`);
-      getUserVehicles();
+      getUserVehicles(pagination.currentPage || 1, currentStatus);
+      setErrorMsg("");
       return true;
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      setErrorMsg(error?.response?.data?.message);
       return false;
     }
   };
@@ -124,6 +133,8 @@ const VehicleContextProvider = ({ children }) => {
         addVehicle,
         setErrorMsg,
         updateVehicle,
+        vehicleStats,
+        pagination,
       }}
     >
       {children}
