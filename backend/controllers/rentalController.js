@@ -25,6 +25,8 @@ async function createRental(req, res, next) {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
     const renterId = req.session.user.userId;
+    const renterFullName =
+      req.session.user.firstName + " " + req.session.user.lastName;
     const { licensePlate, startDate, endDate } = req.body;
     if (!validateRequiredRentalFields(req.body, res)) return;
 
@@ -86,7 +88,7 @@ async function createRental(req, res, next) {
       result.insertId,
       "rental_request",
       "New Rental Request",
-      `User ${renterId} requested your vehicle ${licensePlate}`,
+      `User ${renterFullName} requested your vehicle ${licensePlate}`,
     );
 
     return res
