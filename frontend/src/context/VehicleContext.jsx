@@ -10,20 +10,29 @@ const VehicleContextProvider = ({ children }) => {
   const [vehiclesBrands, setVehiclesBrands] = useState([]);
   const [vehicleModel, setVehicleModel] = useState([]);
   const [vehiclesType, setVehiclesType] = useState([]);
-
   const [vehicleStats, setVehicleStats] = useState({});
   const [pagination, setPagination] = useState({});
   const [currentStatus, setCurrentStatus] = useState("all");
+  const [allVehPagination, setAllVehPagination] = useState({});
+  const [availableFilters, setAvailableFilters] = useState({
+    locations: [],
+    brands: [],
+    models: [],
+    types: [],
+  });
 
-  const getAllVehicles = async () => {
+  const getAllVehicles = async (filters = {}, page = 1) => {
     try {
-      const response = await axios.get("/vehicles");
+      const response = await axios.get("/vehicles", {
+        params: { ...filters, page, limit: 9 },
+      });
       setAllVehicles(response.data.vehicles);
-      console.log("All vehicles:", response.data.vehicles);
+      setAllVehPagination(response.data.pagination);
+      setAvailableFilters(response.data.availableFilters);
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
     }
   };
 
@@ -109,6 +118,8 @@ const VehicleContextProvider = ({ children }) => {
         getAllVehicles(),
         getUserVehicles(pagination.currentPage || 1, currentStatus),
       ]);
+
+      console.log(response.data);
       setErrorMsg("");
       return true;
     } catch (error) {
@@ -138,6 +149,8 @@ const VehicleContextProvider = ({ children }) => {
         updateVehicle,
         vehicleStats,
         pagination,
+        allVehPagination,
+        availableFilters,
       }}
     >
       {children}

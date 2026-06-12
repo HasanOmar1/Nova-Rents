@@ -1,27 +1,102 @@
 import { useEffect, useState } from "react";
 import styles from "./Vehicles.module.css";
-import { Search } from "lucide-react";
 import VehiclesCards from "../../../components/VehiclesCards/VehiclesCards";
 import { Link } from "react-router-dom";
 import { useVehicleContext } from "../../../context/VehicleContext";
-
-const tabs = ["all", "Cars", "Motorcycles", "Event Vehicle"];
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Vehicles = () => {
-  const [activeTab, setActiveTab] = useState("all");
-  const [locations, setLocations] = useState([
-    "All Locations",
-    "Haifa",
-    "Tel Aviv",
-    "Nazareth",
-    "Jerusalem",
-  ]);
-  const [sortBy, setSortBy] = useState(["price", "year"]);
-  const { getAllVehicles, allVehicles } = useVehicleContext();
+  // Filter States
+  const [filterBrand, setFilterBrand] = useState("");
+  const [filterModel, setFilterModel] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [sortOption, setSortOption] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
+  const { getAllVehicles, allVehicles, allVehPagination, availableFilters } =
+    useVehicleContext();
+
+  // Fetch data whenever a filter, sort, or page changes
   useEffect(() => {
-    getAllVehicles();
-  }, []);
+    const filters = {
+      brand: filterBrand,
+      model: filterModel,
+      type: filterType,
+      location: filterLocation,
+      sort: sortOption,
+    };
+    getAllVehicles(filters, currentPage);
+  }, [
+    filterBrand,
+    filterModel,
+    filterType,
+    filterLocation,
+    sortOption,
+    currentPage,
+  ]);
+
+  const handleNextPage = () => {
+    if (allVehPagination?.currentPage < allVehPagination?.totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (allVehPagination?.currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
+  // ==========================================
+  // SMART DROPDOWN CALCULATIONS
+  // ==========================================
+
+  // 1. Models: Only show models for the selected Brand
+  const displayedModels = filterBrand
+    ? availableFilters.models?.filter((m) => m.brand === filterBrand) || []
+    : availableFilters.models || [];
+
+  // 2. Types: Only show types that exist for the selected Brand & Model
+  const displayedTypes = availableFilters.combinations
+    ? [
+        ...new Set(
+          availableFilters.combinations
+            .filter((c) => {
+              const matchBrand = filterBrand
+                ? c.brandName === filterBrand
+                : true;
+              const matchModel = filterModel
+                ? c.modelName === filterModel
+                : true;
+              return matchBrand && matchModel;
+            })
+            .map((c) => c.carTypeName),
+        ),
+      ]
+    : availableFilters.types || [];
+
+  // 3. Locations: Only show locations that have the selected Brand, Model, and Type!
+  const displayedLocations = availableFilters.combinations
+    ? [
+        ...new Set(
+          availableFilters.combinations
+            .filter((c) => {
+              const matchBrand = filterBrand
+                ? c.brandName === filterBrand
+                : true;
+              const matchModel = filterModel
+                ? c.modelName === filterModel
+                : true;
+              const matchType = filterType
+                ? c.carTypeName === filterType
+                : true;
+              return matchBrand && matchModel && matchType;
+            })
+            .map((c) => c.address),
+        ),
+      ]
+    : availableFilters.locations || [];
 
   return (
     <div className={`${styles.Vehicles} page`}>
@@ -34,66 +109,136 @@ const Vehicles = () => {
       </div>
 
       <div className={styles.filterContainer}>
-        <div className={`${styles.vehicleTypeBtnsContainer}`}>
-          {tabs.map((t) => {
-            return (
-              <button
-                key={t}
-                onClick={() => setActiveTab(t)}
-                className={activeTab === t ? styles.active : ""}
-              >
-                {t}
-              </button>
-            );
-          })}
-        </div>
-
-        <hr />
-
         <div className={styles.inputsContainer}>
           <div className={styles.top}>
-            <div className={styles.searchContainer}>
-              <Search size={20} color="gray" className={styles.searchLogo} />
-              <input
-                type="text"
-                placeholder="Search name or location"
-                className={styles.searchNameOrLocationInput}
-              />
-            </div>
-
-            <select name="location" id="location">
-              {locations.map((location) => {
-                return (
-                  <option key={location} value={location}>
-                    {location}
-                  </option>
-                );
-              })}
+            {/* 1. BRAND */}
+            <select
+              value={filterBrand}
+              onChange={(e) => {
+                setFilterBrand(e.target.value);
+                setFilterModel(""); // Clear dependent filters to prevent dead-ends
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">All Brands</option>
+              {availableFilters.brands?.map((brand) => (
+                <option key={brand} value={brand}>
+                  {brand}
+                </option>
+              ))}
             </select>
 
-            <select name="sort" id="sort">
-              {sortBy.map((sort) => {
-                return (
-                  <option key={sort} value={sort}>
-                    Sort: {sort}
-                  </option>
-                );
-              })}
+            {/* 2. MODEL */}
+            <select
+              value={filterModel}
+              onChange={(e) => {
+                setFilterModel(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">All Models</option>
+              {displayedModels.map((m) => (
+                <option key={m.model} value={m.model}>
+                  {m.model}
+                </option>
+              ))}
             </select>
-          </div>
 
-          <div className={styles.bottom}>
-            <input type="date" name="startDate" />
-            <input type="date" name="endDate" />
+            {/* 3. TYPE (Now Smart!) */}
+            <select
+              value={filterType}
+              onChange={(e) => {
+                setFilterType(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">All Categories</option>
+              {displayedTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+
+            {/* 4. LOCATION (Now Smart!) */}
+            <select
+              value={filterLocation}
+              onChange={(e) => {
+                setFilterLocation(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">All Locations</option>
+              {displayedLocations.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
+
+            {/* 5. SORTING */}
+            <select
+              value={sortOption}
+              onChange={(e) => {
+                setSortOption(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">Sort: Newest Added</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="year_desc">Year: Newest</option>
+              <option value="year_asc">Year: Oldest</option>
+            </select>
           </div>
         </div>
       </div>
 
       <div className={styles.vehiclesCardsContainer}>
-        {allVehicles.map((veh) => {
-          return <VehiclesCards key={veh.id} veh={veh} />;
-        })}
+        {allVehicles?.length > 0 ? (
+          allVehicles.map((veh) => (
+            <VehiclesCards key={veh.licensePlate} veh={veh} />
+          ))
+        ) : (
+          <p style={{ color: "gray", marginTop: "20px" }}>
+            No vehicles found matching these filters.
+          </p>
+        )}
       </div>
+
+      {/* PAGINATION CONTROLS */}
+      {allVehicles?.length > 0 && (
+        <div className={styles.pagination}>
+          <p>
+            Showing {allVehicles.length} of {allVehPagination?.totalVehicles}{" "}
+            vehicles
+          </p>
+          <div className={styles.pagBtnsContainer}>
+            <button
+              onClick={handlePrevPage}
+              disabled={
+                allVehPagination?.currentPage === 1 ||
+                !allVehPagination?.currentPage
+              }
+            >
+              <ChevronLeft size={20} /> Prev
+            </button>
+            <p>
+              Page {allVehPagination?.currentPage || 1} /{" "}
+              {allVehPagination?.totalPages || 1}
+            </p>
+            <button
+              onClick={handleNextPage}
+              disabled={
+                allVehPagination?.currentPage ===
+                  allVehPagination?.totalPages || !allVehPagination?.totalPages
+              }
+            >
+              Next <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,13 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import axios from "axios";
 import { useUserContext } from "./UserContext";
-import {
-  getMyNotifications,
-  getUnreadNotificationsCount,
-  markNotificationAsRead,
-} from "../api/notificationAPI";
 
 const NotificationContext = createContext();
-
 
 const NotificationContextProvider = ({ children }) => {
   const { currentUser } = useUserContext();
@@ -17,28 +12,37 @@ const NotificationContextProvider = ({ children }) => {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    loadNotifications();
-    const intervalId = setInterval(() => {
+    if (currentUser) {
       loadNotifications();
-    }, 30000);
-    return () => clearInterval(intervalId);
-  }, [ currentUser ]);
-
+      const intervalId = setInterval(() => {
+        loadNotifications();
+      }, 30000);
+      return () => clearInterval(intervalId);
+    } else {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+    }
+  }, [currentUser]);
 
   const loadNotifications = async () => {
     try {
       setErrorMsg("");
-      const notificationResponse = await getMyNotifications();
-      const unreadCountResponse = await getUnreadNotificationsCount();
-      setNotifications(notificationResponse.notifications || []);
+
+      const [notificationRes, unreadRes] = await Promise.all([
+        axios.get("/notifications/my-notifications"),
+        axios.get("/notifications/unread-notifications-count"),
+      ]);
+
+      setNotifications(notificationRes.data.notifications || []);
       setUnreadCount(
-        unreadCountResponse.unreadCount ||
-          unreadCountResponse.count?.unreadCount ||
-          0,
+        unreadRes.data.unreadCount || unreadRes.data.count?.unreadCount || 0,
       );
     } catch (error) {
-       console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
+      setErrorMsg(
+        error?.response?.data?.message || "Failed to fetch notifications",
+      );
     } finally {
       setLoading(false);
     }
@@ -47,7 +51,10 @@ const NotificationContextProvider = ({ children }) => {
   const markAsRead = async (notificationId) => {
     try {
       setErrorMsg("");
-      await markNotificationAsRead(notificationId);
+
+      await axios.put(
+        `/notifications/mark-notification-as-read/${notificationId}`,
+      );
 
       setNotifications((prev) =>
         prev.map((notification) =>
@@ -59,11 +66,12 @@ const NotificationContextProvider = ({ children }) => {
 
       setUnreadCount((prev) => Math.max(prev - 1, 0));
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
+      setErrorMsg(
+        error?.response?.data?.message || "Failed to update notification",
+      );
     }
   };
-  
 
   return (
     <NotificationContext.Provider
@@ -80,6 +88,7 @@ const NotificationContextProvider = ({ children }) => {
     </NotificationContext.Provider>
   );
 };
+
 export const useNotificationContext = () => useContext(NotificationContext);
 
 export default NotificationContextProvider;

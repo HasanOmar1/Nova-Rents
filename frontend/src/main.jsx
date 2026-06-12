@@ -8,6 +8,7 @@ import UserContextProvider from "./context/UserContext.jsx";
 import VehicleContextProvider from "./context/VehicleContext.jsx";
 import NotificationContextProvider from "./context/NotificationContext.jsx";
 import RentContextProvider from "./context/RentContext.jsx";
+import GovApisContextProvider from "./context/GovApisContext.jsx";
 
 axios.defaults.baseURL = "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -19,7 +20,9 @@ createRoot(document.getElementById("root")).render(
       <UserContextProvider>
         <RentContextProvider>
           <NotificationContextProvider>
-            <App />
+            <GovApisContextProvider>
+              <App />
+            </GovApisContextProvider>
           </NotificationContextProvider>
         </RentContextProvider>
       </UserContextProvider>
