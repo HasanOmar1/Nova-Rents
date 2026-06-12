@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import AddEditVehicleMenu from "../../../components/AddEditVehicleMenu/AddEditVehicleMenu";
+import Pagination from "../../../components/Pagination/Pagination";
 
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -142,34 +143,13 @@ const MyVehicles = () => {
               </div>
             ))}
 
-            <div className={styles.pagination}>
-              <p>Total Vehicles: {pagination?.totalVehicles}</p>
-              <div className={styles.pagBtnsContainer}>
-                <button
-                  onClick={handlePrevPage}
-                  disabled={
-                    pagination?.currentPage === 1 || !pagination?.currentPage
-                  }
-                >
-                  <ChevronLeft size={20} /> Prev
-                </button>
-
-                <p>
-                  Page {pagination?.currentPage || 1} /{" "}
-                  {pagination?.totalPages || 1}
-                </p>
-
-                <button
-                  onClick={handleNextPage}
-                  disabled={
-                    pagination?.currentPage === pagination?.totalPages ||
-                    !pagination?.totalPages
-                  }
-                >
-                  Next <ChevronRight size={20} />
-                </button>
-              </div>
-            </div>
+            <Pagination
+              currentPage={pagination?.currentPage}
+              totalPages={pagination?.totalPages}
+              handlePrevPage={handlePrevPage}
+              handleNextPage={handleNextPage}
+              leftText={`Total Vehicles: ${pagination?.totalVehicles || 0}`}
+            />
           </>
         ) : (
           <p className={styles.noVehicles}>

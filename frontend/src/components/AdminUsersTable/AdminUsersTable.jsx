@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserContext } from "../../context/UserContext";
 import UsersCards from "../UsersCards/UsersCards";
 import styles from "./AdminUsersTable.module.css";
+import Pagination from "../Pagination/Pagination";
 
 const AdminUsersTable = ({ handleNextPage, handlePrevPage }) => {
   const { allUsers, pagination, blockUser, unBlockUser } = useUserContext();
@@ -33,28 +34,13 @@ const AdminUsersTable = ({ handleNextPage, handlePrevPage }) => {
             );
           })}
 
-          <div className={styles.pagination}>
-            <p>Users Count: {pagination?.totalUsers}</p>
-
-            <div className={styles.btnsContainer}>
-              <button
-                onClick={handlePrevPage}
-                disabled={pagination?.currentPage === 1}
-              >
-                <ChevronLeft size={20} /> Prev
-              </button>
-
-              <p>
-                Page {pagination?.currentPage} / {pagination?.totalPages}
-              </p>
-              <button
-                onClick={handleNextPage}
-                disabled={pagination?.currentPage === pagination?.totalPages}
-              >
-                Next <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={pagination?.currentPage}
+            totalPages={pagination?.totalPages}
+            handlePrevPage={handlePrevPage}
+            handleNextPage={handleNextPage}
+            leftText={`Users Count: ${pagination?.totalUsers || 0}`}
+          />
         </>
       ) : (
         <p className={styles.noUsers}>No users found</p>
