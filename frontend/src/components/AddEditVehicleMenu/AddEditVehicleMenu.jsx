@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
+import { useGovApisContext } from "../../context/GovApisContext";
 
 const initialFormState = {
   brandId: "0",
@@ -35,9 +36,12 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     setErrorMsg,
   } = useVehicleContext();
 
+  const { getCities, cities, isLoading } = useGovApisContext();
+
   useEffect(() => {
     getBrands();
     getVehType();
+    getCities();
   }, []);
 
   useEffect(() => {
@@ -324,15 +328,29 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           </div>
 
           <div className={`${styles.inputGroup}`}>
-            <label>Location / Address</label>
-            <input
-              type="text"
+            <label>Location / City</label>
+            <select
               name="address"
               value={formData.address}
               onChange={handleChange}
               required
-              placeholder="e.g. Tel Aviv, Israel"
-            />
+            >
+              <option value="" disabled hidden>
+                {isLoading ? "Loading cities..." : "Select a city"}
+              </option>
+
+              {cities?.map((city) => {
+                const displayName = city.nameEn?.trim()
+                  ? city.nameEn.trim()
+                  : city.name.trim();
+
+                return (
+                  <option key={city.id} value={displayName}>
+                    {displayName}
+                  </option>
+                );
+              })}
+            </select>
           </div>
 
           <div className={styles.inputGroup}>
