@@ -109,6 +109,8 @@ const VehicleContextProvider = ({ children }) => {
         getAllVehicles(),
         getUserVehicles(pagination.currentPage || 1, currentStatus),
       ]);
+
+      console.log(response.data);
       setErrorMsg("");
       return true;
     } catch (error) {

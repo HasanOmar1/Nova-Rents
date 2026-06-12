@@ -220,53 +220,6 @@ const getVehicleById = async (req, res, next) => {
   }
 };
 
-// const deleteVehicle = async (req, res, next) => {
-//   try {
-//     const { licensePlate } = req.params;
-
-//     if (
-//       !validateAuthenticatedUser(
-//         req,
-//         res,
-//         "You must be logged in to delete a vehicle",
-//       )
-//     )
-//       return;
-
-//     const existingVehicle = await getVehicleByLicensePlate(licensePlate);
-//     if (!existingVehicle) {
-//       return res.status(STATUS_CODE.NOT_FOUND).json({
-//         message: "No vehicle found with this license plate",
-//       });
-//     }
-
-//     if (existingVehicle.ownerId !== req.session.user.userId) {
-//       return res.status(STATUS_CODE.FORBIDDEN).json({
-//         message: "You do not have permission to delete this vehicle",
-//       });
-//     }
-
-//     if (existingVehicle.status === "rented") {
-//       return res.status(STATUS_CODE.BAD_REQUEST).json({
-//         message: "You cannot delete a vehicle while it is currently rented.",
-//       });
-//     }
-
-//     // const deleteQuery = "DELETE FROM vehicles WHERE licensePlate = ?";
-//     const updateQuery = `UPDATE vehicles SET status = 'inactive' WHERE licensePlate = ?`;
-//     await doQuery(updateQuery, [licensePlate]);
-
-//     // If the DB delete was successful, wipe the images from the hard drive!
-//     // deleteImagesFromDisk(existingVehicle.image);
-
-//     res.status(STATUS_CODE.OK).json({
-//       message: "Vehicle deleted successfully",
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 const deleteVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;

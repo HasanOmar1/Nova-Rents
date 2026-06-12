@@ -40,12 +40,9 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     getVehType();
   }, []);
 
-  console.log(vehicle);
-
   useEffect(() => {
     if (isOpen) {
       if (vehicle) {
-        // --- EDIT MODE: Force IDs to strings so dropdowns match perfectly! ---
         setFormData({
           brandId: vehicle.brandId ? String(vehicle.brandId) : "0",
           modelId: vehicle.modelId ? String(vehicle.modelId) : "",
@@ -64,12 +61,10 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           images: [],
         });
 
-        // Fetch the models for this specific brand so the Model dropdown populates
         if (vehicle.brandId) {
           getModelsByBrand(vehicle.brandId);
         }
       } else {
-        // --- ADD MODE: Clear the form ---
         setFormData(initialFormState);
       }
     }
@@ -92,15 +87,19 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
 
-      // CASCADING RESETS: If Brand changes, wipe Model and Category
       if (name === "brandId") {
         newData.modelId = "";
         newData.carTypeId = "";
         getModelsByBrand(value);
-      }
-      // CASCADING RESETS: If Model changes, wipe Category
-      else if (name === "modelId") {
-        newData.carTypeId = "";
+      } else if (name === "modelId") {
+        // --- NEW: AUTO-FILL CATEGORY BASED ON MODEL ---
+        // When they pick a model, we find that model in the array and grab its carTypeId
+        const selectedModel = vehicleModel.find(
+          (m) => String(m.modelId) === String(value),
+        );
+        if (selectedModel) {
+          newData.carTypeId = String(selectedModel.carTypeId);
+        }
       }
 
       return newData;
@@ -160,6 +159,14 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     ? `image-upload-${vehicle.licensePlate}`
     : "image-upload-new";
 
+  // --- NEW: Find the matching category name to display in the read-only input ---
+  const selectedCategory = vehiclesType?.find(
+    (t) => String(t.carTypeId) === formData.carTypeId,
+  );
+  const displayCategoryName = selectedCategory
+    ? selectedCategory.carTypeName
+    : "";
+
   return (
     <dialog
       className={styles.AddEditVehicleMenu}
@@ -207,7 +214,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               name="modelId"
               value={formData.modelId}
               onChange={handleChange}
-              disabled={formData.brandId === "0" || formData.brandId === ""} // <--- Disable until brand picked
+              disabled={formData.brandId === "0" || formData.brandId === ""}
               required
             >
               <option value="" disabled hidden>
@@ -226,27 +233,16 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label>Vehicle Category</label>
-            <select
-              name="carTypeId"
-              value={formData.carTypeId}
-              onChange={handleChange}
-              disabled={formData.modelId === ""} // <--- Disable until model picked
-              required
-            >
-              <option value="" disabled hidden>
-                {formData.modelId === ""
-                  ? "Pick a model first"
-                  : "Select Category"}
-              </option>
-              {vehiclesType?.map((t) => {
-                return (
-                  <option key={t.carTypeId} value={String(t.carTypeId)}>
-                    {t.carTypeName}
-                  </option>
-                );
-              })}
-            </select>
+            <label>Category (Auto-filled)</label>
+            <input
+              type="text"
+              value={displayCategoryName}
+              disabled
+              placeholder={
+                formData.modelId === "" ? "Pick a model first" : "Auto-filled"
+              }
+              style={{ opacity: 0.6, cursor: "not-allowed" }}
+            />
           </div>
 
           <div className={styles.inputGroup}>
