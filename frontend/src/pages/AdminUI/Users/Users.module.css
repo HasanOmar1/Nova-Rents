@@ -127,14 +127,4 @@
   .Users .searchContainer {
     padding: 15px;
   }
-
-  .Users .pagination {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .Users .pagination .btnsContainer {
-    width: 100%;
-    justify-content: space-between;
-  }
 }

@@ -38,9 +38,14 @@
 /* 5 Columns for the 5 dropdowns */
 .Vehicles .inputsContainer .top {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0fr;
   gap: 15px;
   width: 100%;
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.Vehicles .inputsContainer .top.hasActiveFilters {
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
 .Vehicles .inputsContainer select {
@@ -68,65 +73,73 @@
   padding-bottom: 30px;
 }
 
-/* =========================================
-   PAGINATION FOOTER
-   ========================================= */
-.Vehicles .pagination {
-  border: var(--cards-border);
+.Vehicles .filterActions {
   display: flex;
-  justify-content: space-between;
-  padding: 20px;
-  color: var(--gray);
-  font-size: 0.85rem;
   align-items: center;
-  font-weight: bold;
-  background-color: var(--bg-gray);
-  border-radius: 20px;
+  justify-content: flex-start;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-.Vehicles .pagination .pagBtnsContainer {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  align-items: center;
+.Vehicles .inputsContainer .top.hasActiveFilters .filterActions {
+  opacity: 1;
+  transition: opacity 0.3s ease 0.1s;
 }
 
-.Vehicles .pagination .pagBtnsContainer button {
-  border: none;
-  border-radius: 10px;
-  background-color: var(--input-bg);
-  color: var(--gray);
-  font-weight: bold;
-  font-size: 0.85rem;
-  padding: 8px 15px;
+.Vehicles .resetBtn {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  background-color: transparent;
+  color: var(--gray);
+  border: 1px solid var(--cards-border);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+  white-space: nowrap;
 }
 
-.Vehicles .pagination .pagBtnsContainer button:hover:not(:disabled) {
+.Vehicles .resetBtn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
   color: white;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.Vehicles .pagination .pagBtnsContainer button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+.Vehicles .resetBtn:active {
+  transform: scale(0.97);
 }
 
-/* =========================================
-   RESPONSIVE DESIGN
-   ========================================= */
+.Vehicles .noVeh {
+  color: var(--gray);
+  margin-top: "20px";
+}
+
 @media (max-width: 1024px) {
   .Vehicles .inputsContainer .top {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .Vehicles .filterActions {
+    max-height: 0;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.3s ease;
+  }
+
+  .Vehicles .inputsContainer .top.hasActiveFilters .filterActions {
+    max-height: 60px;
   }
 }
 
 @media (max-width: 768px) {
   .Vehicles .inputsContainer .top {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 

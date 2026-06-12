@@ -3,7 +3,7 @@ import styles from "./Vehicles.module.css";
 import VehiclesCards from "../../../components/VehiclesCards/VehiclesCards";
 import { Link } from "react-router-dom";
 import { useVehicleContext } from "../../../context/VehicleContext";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import Pagination from "../../../components/Pagination/Pagination";
 
 const Vehicles = () => {
@@ -17,11 +17,54 @@ const Vehicles = () => {
   const { getAllVehicles, allVehicles, allVehPagination, availableFilters } =
     useVehicleContext();
 
+  const displayedBrands = useMemo(() => {
+    if (!availableFilters.combinations) return availableFilters.brands || [];
+    return [
+      ...new Set(
+        availableFilters.combinations
+          .filter((c) => {
+            const matchModel = filterModel ? c.modelName === filterModel : true;
+            const matchType = filterType ? c.carTypeName === filterType : true;
+            const matchLocation = filterLocation
+              ? c.address === filterLocation
+              : true;
+            return matchModel && matchType && matchLocation;
+          })
+          .map((c) => c.brandName),
+      ),
+    ];
+  }, [
+    filterModel,
+    filterType,
+    filterLocation,
+    availableFilters.combinations,
+    availableFilters.brands,
+  ]);
+
   const displayedModels = useMemo(() => {
-    return filterBrand
-      ? availableFilters.models?.filter((m) => m.brand === filterBrand) || []
-      : availableFilters.models || [];
-  }, [filterBrand, availableFilters.models]);
+    if (!availableFilters.combinations)
+      return availableFilters.models?.map((m) => m.model) || [];
+    return [
+      ...new Set(
+        availableFilters.combinations
+          .filter((c) => {
+            const matchBrand = filterBrand ? c.brandName === filterBrand : true;
+            const matchType = filterType ? c.carTypeName === filterType : true;
+            const matchLocation = filterLocation
+              ? c.address === filterLocation
+              : true;
+            return matchBrand && matchType && matchLocation;
+          })
+          .map((c) => c.modelName),
+      ),
+    ];
+  }, [
+    filterBrand,
+    filterType,
+    filterLocation,
+    availableFilters.combinations,
+    availableFilters.models,
+  ]);
 
   const displayedTypes = useMemo(() => {
     if (!availableFilters.combinations) return availableFilters.types || [];
@@ -31,7 +74,10 @@ const Vehicles = () => {
           .filter((c) => {
             const matchBrand = filterBrand ? c.brandName === filterBrand : true;
             const matchModel = filterModel ? c.modelName === filterModel : true;
-            return matchBrand && matchModel;
+            const matchLocation = filterLocation
+              ? c.address === filterLocation
+              : true;
+            return matchBrand && matchModel && matchLocation;
           })
           .map((c) => c.carTypeName),
       ),
@@ -39,6 +85,7 @@ const Vehicles = () => {
   }, [
     filterBrand,
     filterModel,
+    filterLocation,
     availableFilters.combinations,
     availableFilters.types,
   ]);
@@ -66,28 +113,33 @@ const Vehicles = () => {
   ]);
 
   useEffect(() => {
-    let activeModel = filterModel;
-    let activeType = filterType;
-    let activeLocation = filterLocation;
+    if (!availableFilters || !availableFilters.combinations) return;
 
-    if (filterModel && !displayedModels.some((m) => m.model === filterModel)) {
-      activeModel = "";
+    if (filterBrand && !displayedBrands.includes(filterBrand))
+      setFilterBrand("");
+    if (filterModel && !displayedModels.includes(filterModel))
       setFilterModel("");
-    }
-    if (filterType && !displayedTypes.includes(filterType)) {
-      activeType = "";
-      setFilterType("");
-    }
-    if (filterLocation && !displayedLocations.includes(filterLocation)) {
-      activeLocation = "";
+    if (filterType && !displayedTypes.includes(filterType)) setFilterType("");
+    if (filterLocation && !displayedLocations.includes(filterLocation))
       setFilterLocation("");
-    }
+  }, [
+    filterBrand,
+    filterModel,
+    filterType,
+    filterLocation,
+    displayedBrands,
+    displayedModels,
+    displayedTypes,
+    displayedLocations,
+    availableFilters,
+  ]);
 
+  useEffect(() => {
     const filters = {
       brand: filterBrand,
-      model: activeModel,
-      type: activeType,
-      location: activeLocation,
+      model: filterModel,
+      type: filterType,
+      location: filterLocation,
       sort: sortOption,
     };
 
@@ -99,9 +151,6 @@ const Vehicles = () => {
     filterLocation,
     sortOption,
     currentPage,
-    displayedModels,
-    displayedTypes,
-    displayedLocations,
   ]);
 
   const handleNextPage = () => {
@@ -116,6 +165,18 @@ const Vehicles = () => {
     }
   };
 
+  const handleResetFilters = () => {
+    setFilterBrand("");
+    setFilterModel("");
+    setFilterType("");
+    setFilterLocation("");
+    setSortOption("");
+    setCurrentPage(1);
+  };
+
+  const isFilterActive =
+    filterBrand || filterModel || filterType || filterLocation || sortOption;
+
   return (
     <div className={`${styles.Vehicles} page`}>
       <h1>Vehicles</h1>
@@ -128,7 +189,9 @@ const Vehicles = () => {
 
       <div className={styles.filterContainer}>
         <div className={styles.inputsContainer}>
-          <div className={styles.top}>
+          <div
+            className={`${styles.top} ${isFilterActive ? styles.hasActiveFilters : ""}`}
+          >
             {/* 1. BRAND */}
             <select
               value={filterBrand}
@@ -138,13 +201,12 @@ const Vehicles = () => {
               }}
             >
               <option value="">All Brands</option>
-              {availableFilters.brands?.map((brand) => (
+              {displayedBrands.map((brand) => (
                 <option key={brand} value={brand}>
                   {brand}
                 </option>
               ))}
             </select>
-
             {/* 2. MODEL */}
             <select
               value={filterModel}
@@ -154,13 +216,12 @@ const Vehicles = () => {
               }}
             >
               <option value="">All Models</option>
-              {displayedModels.map((m) => (
-                <option key={m.model} value={m.model}>
-                  {m.model}
+              {displayedModels.map((model) => (
+                <option key={model} value={model}>
+                  {model}
                 </option>
               ))}
             </select>
-
             {/* 3. TYPE */}
             <select
               value={filterType}
@@ -176,7 +237,6 @@ const Vehicles = () => {
                 </option>
               ))}
             </select>
-
             {/* 4. LOCATION */}
             <select
               value={filterLocation}
@@ -192,7 +252,6 @@ const Vehicles = () => {
                 </option>
               ))}
             </select>
-
             {/* 5. SORTING */}
             <select
               value={sortOption}
@@ -207,6 +266,15 @@ const Vehicles = () => {
               <option value="year_desc">Year: Newest</option>
               <option value="year_asc">Year: Oldest</option>
             </select>
+            <div className={styles.filterActions}>
+              <button
+                className={styles.resetBtn}
+                onClick={handleResetFilters}
+                tabIndex={isFilterActive ? 0 : -1}
+              >
+                <RotateCcw size={16} /> Reset
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -217,7 +285,7 @@ const Vehicles = () => {
             <VehiclesCards key={veh.licensePlate} veh={veh} />
           ))
         ) : (
-          <p style={{ color: "gray", marginTop: "20px" }}>
+          <p className={styles.noVeh}>
             No vehicles found matching these filters.
           </p>
         )}
