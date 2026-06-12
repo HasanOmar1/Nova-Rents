@@ -4,6 +4,7 @@ import VehiclesCards from "../../../components/VehiclesCards/VehiclesCards";
 import { Link } from "react-router-dom";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Pagination from "../../../components/Pagination/Pagination";
 
 const Vehicles = () => {
   const [filterBrand, setFilterBrand] = useState("");
@@ -222,38 +223,14 @@ const Vehicles = () => {
         )}
       </div>
 
-      {/* PAGINATION CONTROLS */}
       {allVehicles?.length > 0 && (
-        <div className={styles.pagination}>
-          <p>
-            Showing {allVehicles.length} of {allVehPagination?.totalVehicles}{" "}
-            vehicles
-          </p>
-          <div className={styles.pagBtnsContainer}>
-            <button
-              onClick={handlePrevPage}
-              disabled={
-                allVehPagination?.currentPage === 1 ||
-                !allVehPagination?.currentPage
-              }
-            >
-              <ChevronLeft size={20} /> Prev
-            </button>
-            <p>
-              Page {allVehPagination?.currentPage || 1} /{" "}
-              {allVehPagination?.totalPages || 1}
-            </p>
-            <button
-              onClick={handleNextPage}
-              disabled={
-                allVehPagination?.currentPage ===
-                  allVehPagination?.totalPages || !allVehPagination?.totalPages
-              }
-            >
-              Next <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={allVehPagination?.currentPage}
+          totalPages={allVehPagination?.totalPages}
+          handlePrevPage={handlePrevPage}
+          handleNextPage={handleNextPage}
+          leftText={`Showing ${allVehicles?.length || 0} of ${allVehPagination?.totalVehicles || 0} vehicles`}
+        />
       )}
     </div>
   );
