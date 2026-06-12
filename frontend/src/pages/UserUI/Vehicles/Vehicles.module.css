@@ -2,15 +2,10 @@
   font-size: 2.2rem;
 }
 
-/* Top Btn */
 .Vehicles .btnsContainer {
   display: flex;
   gap: 10px;
   margin-left: auto;
-}
-
-.Vehicles .btnsContainer button {
-  border-radius: 10px;
 }
 
 .Vehicles .openMapBtn {
@@ -18,6 +13,7 @@
   color: white;
   border: var(--cards-border);
   border-radius: 10px;
+  padding: 10px 20px;
 }
 
 .Vehicles .openMapBtn:hover {
@@ -25,55 +21,12 @@
   color: rgba(255, 255, 255, 0.75);
 }
 
-.Vehicles .openMapBtn:active {
-  background: rgba(255, 255, 255, 0.03);
-}
-
 .Vehicles .filterContainer {
   background-color: var(--bg-gray);
-  min-height: 200px;
   border-radius: 20px;
   margin-top: 20px;
   padding: 20px;
   border: var(--cards-border);
-}
-
-/* buttons container */
-.Vehicles .filterContainer .vehicleTypeBtnsContainer {
-  display: flex;
-  gap: 20px;
-}
-
-.Vehicles hr {
-  margin: 10px;
-}
-
-.Vehicles .vehicleTypeBtnsContainer button {
-  text-transform: capitalize;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 1rem;
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.Vehicles .vehicleTypeBtnsContainer button:not(.active):hover {
-  background-color: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
-}
-
-.Vehicles .vehicleTypeBtnsContainer button.active {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
 }
 
 .Vehicles .inputsContainer {
@@ -82,57 +35,29 @@
   flex-direction: column;
 }
 
-.Vehicles .inputsContainer .top,
-.Vehicles .bottom {
+/* 5 Columns for the 5 dropdowns */
+.Vehicles .inputsContainer .top {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
   width: 100%;
 }
 
-.Vehicles .inputsContainer .top {
-  margin-top: 10px;
-}
-
-.Vehicles .searchContainer {
-  position: relative;
-  grid-column: span 2;
-}
-
-.Vehicles .searchContainer .searchLogo {
-  position: absolute;
-  top: 18px;
-  left: 10px;
-}
-
-.Vehicles .searchContainer .searchNameOrLocationInput {
-  padding-left: 35px;
-}
-
-.Vehicles .inputsContainer input,
 .Vehicles .inputsContainer select {
   background-color: var(--input-bg);
-  border-radius: 15px;
+  border-radius: 12px;
   outline: none;
   color: #fff;
   width: 100%;
-  padding: 15px;
+  padding: 14px;
   border: var(--cards-border);
   transition: border-color 0.2s;
+  cursor: pointer;
+  font-size: 0.9rem;
 }
 
-.Vehicles .inputsContainer select {
-  grid-column: span 1;
-}
-
-.Vehicles .inputsContainer input:focus,
 .Vehicles .inputsContainer select:focus {
-  outline: none;
   border-color: var(--input-focus-border-color);
-}
-
-.Vehicles .bottom input {
-  grid-column: span 2;
 }
 
 .Vehicles .vehiclesCardsContainer {
@@ -143,25 +68,65 @@
   padding-bottom: 30px;
 }
 
-/* Responsive Styles */
+/* =========================================
+   PAGINATION FOOTER
+   ========================================= */
+.Vehicles .pagination {
+  border: var(--cards-border);
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  color: var(--gray);
+  font-size: 0.85rem;
+  align-items: center;
+  font-weight: bold;
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+}
+
+.Vehicles .pagination .pagBtnsContainer {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.Vehicles .pagination .pagBtnsContainer button {
+  border: none;
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  color: var(--gray);
+  font-weight: bold;
+  font-size: 0.85rem;
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.Vehicles .pagination .pagBtnsContainer button:hover:not(:disabled) {
+  color: white;
+}
+
+.Vehicles .pagination .pagBtnsContainer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+@media (max-width: 1024px) {
+  .Vehicles .inputsContainer .top {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 
 @media (max-width: 768px) {
-  .Vehicles .filterContainer {
-    padding: 15px;
-  }
-
-  .Vehicles .vehicleTypeBtnsContainer {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .Vehicles .inputsContainer .top,
-  .Vehicles .bottom {
+  .Vehicles .inputsContainer .top {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .Vehicles .bottom input {
-    grid-column: span 1;
   }
 }
 
@@ -180,32 +145,15 @@
     width: 100%;
     justify-content: center;
     padding: 12px;
+    display: flex;
   }
 
-  .Vehicles .inputsContainer .top,
-  .Vehicles .bottom {
+  .Vehicles .inputsContainer .top {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
 
-  .Vehicles .searchContainer {
-    grid-column: span 1;
-  }
-
-  .Vehicles .inputsContainer select {
-    grid-column: span 1;
-  }
-
-  .Vehicles .bottom input {
-    grid-column: span 1;
-  }
-
-  .Vehicles .vehicleTypeBtnsContainer button {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-  }
-
-  .Vehicles .vehiclesCardsContainer {
+  .Vehicles .pagination {
+    flex-direction: column;
     gap: 15px;
   }
 }
