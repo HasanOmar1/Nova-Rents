@@ -43,7 +43,7 @@
 }
 
 @media (max-width: 480px) {
-  .Vehicles .pagination {
+  .pagination {
     flex-direction: column;
     gap: 15px;
   }

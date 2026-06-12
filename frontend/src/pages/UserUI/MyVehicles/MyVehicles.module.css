@@ -164,51 +164,6 @@
   cursor: pointer;
 }
 
-/* =========================================
-   PAGINATION FOOTER
-   ========================================= */
-.MyVehicles .pagination {
-  border-top: var(--cards-border);
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 20px;
-  color: var(--gray);
-  font-size: 0.8rem;
-  align-items: center;
-  font-weight: bold;
-}
-
-.MyVehicles .pagination .pagBtnsContainer {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  align-items: center;
-}
-
-.MyVehicles .pagination .pagBtnsContainer button {
-  border: none;
-  border-radius: 10px;
-  background-color: var(--input-bg);
-  color: var(--gray);
-  font-weight: bold;
-  font-size: 0.8rem;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.MyVehicles .pagination .pagBtnsContainer button:hover {
-  color: white;
-}
-
-.MyVehicles .pagination .pagBtnsContainer button:disabled {
-  cursor: not-allowed;
-  color: var(--gray);
-}
-
 .MyVehicles .noVehicles {
   display: flex;
   justify-content: center;
@@ -236,11 +191,6 @@
   .MyVehicles .myVehiclesContainer .titles {
     display: none;
   }
-
-  .MyVehicles .pagination {
-    flex-direction: column;
-    gap: 10px;
-  }
 }
 
 @media (max-width: 768px) {
@@ -267,11 +217,6 @@
   .MyVehicles .headerRight {
     width: 100%;
     justify-content: space-between;
-  }
-
-  .MyVehicles .pagination {
-    flex-direction: column;
-    gap: 15px;
   }
 }
 
@@ -301,10 +246,5 @@
   .MyVehicles .filterContainer {
     width: 100%;
     justify-content: center;
-  }
-
-  .MyVehicles .pagination .btnsContainer {
-    width: 100%;
-    justify-content: space-between;
   }
 }
