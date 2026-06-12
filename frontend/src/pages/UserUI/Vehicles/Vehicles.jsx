@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import styles from "./Vehicles.module.css";
 import VehiclesCards from "../../../components/VehiclesCards/VehiclesCards";
 import { Link } from "react-router-dom";
@@ -6,7 +6,6 @@ import { useVehicleContext } from "../../../context/VehicleContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Vehicles = () => {
-  // Filter States
   const [filterBrand, setFilterBrand] = useState("");
   const [filterModel, setFilterModel] = useState("");
   const [filterType, setFilterType] = useState("");
@@ -17,15 +16,80 @@ const Vehicles = () => {
   const { getAllVehicles, allVehicles, allVehPagination, availableFilters } =
     useVehicleContext();
 
-  // Fetch data whenever a filter, sort, or page changes
+  const displayedModels = useMemo(() => {
+    return filterBrand
+      ? availableFilters.models?.filter((m) => m.brand === filterBrand) || []
+      : availableFilters.models || [];
+  }, [filterBrand, availableFilters.models]);
+
+  const displayedTypes = useMemo(() => {
+    if (!availableFilters.combinations) return availableFilters.types || [];
+    return [
+      ...new Set(
+        availableFilters.combinations
+          .filter((c) => {
+            const matchBrand = filterBrand ? c.brandName === filterBrand : true;
+            const matchModel = filterModel ? c.modelName === filterModel : true;
+            return matchBrand && matchModel;
+          })
+          .map((c) => c.carTypeName),
+      ),
+    ];
+  }, [
+    filterBrand,
+    filterModel,
+    availableFilters.combinations,
+    availableFilters.types,
+  ]);
+
+  const displayedLocations = useMemo(() => {
+    if (!availableFilters.combinations) return availableFilters.locations || [];
+    return [
+      ...new Set(
+        availableFilters.combinations
+          .filter((c) => {
+            const matchBrand = filterBrand ? c.brandName === filterBrand : true;
+            const matchModel = filterModel ? c.modelName === filterModel : true;
+            const matchType = filterType ? c.carTypeName === filterType : true;
+            return matchBrand && matchModel && matchType;
+          })
+          .map((c) => c.address),
+      ),
+    ];
+  }, [
+    filterBrand,
+    filterModel,
+    filterType,
+    availableFilters.combinations,
+    availableFilters.locations,
+  ]);
+
   useEffect(() => {
+    let activeModel = filterModel;
+    let activeType = filterType;
+    let activeLocation = filterLocation;
+
+    if (filterModel && !displayedModels.some((m) => m.model === filterModel)) {
+      activeModel = "";
+      setFilterModel("");
+    }
+    if (filterType && !displayedTypes.includes(filterType)) {
+      activeType = "";
+      setFilterType("");
+    }
+    if (filterLocation && !displayedLocations.includes(filterLocation)) {
+      activeLocation = "";
+      setFilterLocation("");
+    }
+
     const filters = {
       brand: filterBrand,
-      model: filterModel,
-      type: filterType,
-      location: filterLocation,
+      model: activeModel,
+      type: activeType,
+      location: activeLocation,
       sort: sortOption,
     };
+
     getAllVehicles(filters, currentPage);
   }, [
     filterBrand,
@@ -34,6 +98,9 @@ const Vehicles = () => {
     filterLocation,
     sortOption,
     currentPage,
+    displayedModels,
+    displayedTypes,
+    displayedLocations,
   ]);
 
   const handleNextPage = () => {
@@ -47,56 +114,6 @@ const Vehicles = () => {
       setCurrentPage((prev) => prev - 1);
     }
   };
-
-  // ==========================================
-  // SMART DROPDOWN CALCULATIONS
-  // ==========================================
-
-  // 1. Models: Only show models for the selected Brand
-  const displayedModels = filterBrand
-    ? availableFilters.models?.filter((m) => m.brand === filterBrand) || []
-    : availableFilters.models || [];
-
-  // 2. Types: Only show types that exist for the selected Brand & Model
-  const displayedTypes = availableFilters.combinations
-    ? [
-        ...new Set(
-          availableFilters.combinations
-            .filter((c) => {
-              const matchBrand = filterBrand
-                ? c.brandName === filterBrand
-                : true;
-              const matchModel = filterModel
-                ? c.modelName === filterModel
-                : true;
-              return matchBrand && matchModel;
-            })
-            .map((c) => c.carTypeName),
-        ),
-      ]
-    : availableFilters.types || [];
-
-  // 3. Locations: Only show locations that have the selected Brand, Model, and Type!
-  const displayedLocations = availableFilters.combinations
-    ? [
-        ...new Set(
-          availableFilters.combinations
-            .filter((c) => {
-              const matchBrand = filterBrand
-                ? c.brandName === filterBrand
-                : true;
-              const matchModel = filterModel
-                ? c.modelName === filterModel
-                : true;
-              const matchType = filterType
-                ? c.carTypeName === filterType
-                : true;
-              return matchBrand && matchModel && matchType;
-            })
-            .map((c) => c.address),
-        ),
-      ]
-    : availableFilters.locations || [];
 
   return (
     <div className={`${styles.Vehicles} page`}>
@@ -116,7 +133,6 @@ const Vehicles = () => {
               value={filterBrand}
               onChange={(e) => {
                 setFilterBrand(e.target.value);
-                setFilterModel(""); // Clear dependent filters to prevent dead-ends
                 setCurrentPage(1);
               }}
             >
@@ -144,7 +160,7 @@ const Vehicles = () => {
               ))}
             </select>
 
-            {/* 3. TYPE (Now Smart!) */}
+            {/* 3. TYPE */}
             <select
               value={filterType}
               onChange={(e) => {
@@ -160,7 +176,7 @@ const Vehicles = () => {
               ))}
             </select>
 
-            {/* 4. LOCATION (Now Smart!) */}
+            {/* 4. LOCATION */}
             <select
               value={filterLocation}
               onChange={(e) => {
