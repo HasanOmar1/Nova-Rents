@@ -15,6 +15,7 @@ const {
   clearFailedUploads,
 } = require("../utils/handleUploads");
 const { createActivity } = require("../database/queries/activityQueries");
+const { formatDateForInput } = require("../utils/formatDate");
 const { updateVehicleConditions } = require("../database/queries/rentalQueries");
 
 const getUserVehicles = async (req, res, next) => {
@@ -133,19 +134,19 @@ const addVehicle = async (req, res, next) => {
         message: "License plate already exists!",
       });
     }
-    
+
     const insertQuery = `
      INSERT INTO vehicles 
      (licensePlate,fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const formattedExpirationDate = new Date(expirationDate)
-      .toISOString()
-      .split("T")[0];
+    const formattedExpirationDate = formatDateForInput(expirationDate);
+    // .toISOString()
+    // .split("T")[0];
     const values = [
       licensePlate,
       fuelType,
-      formattedExpirationDate,
+      expirationDate,
       image,
       year,
       km,
@@ -343,13 +344,15 @@ const updateVehicle = async (req, res, next) => {
       status,
     } = mergedData;
 
-    const oldExpirationDate = new Date(existingVehicle.expirationDate)
-      .toISOString()
-      .split("T")[0];
+    const oldExpirationDate = formatDateForInput(
+      existingVehicle.expirationDate,
+    );
+    // .toISOString()
+    // .split("T")[0];
 
-    const newExpirationDate = new Date(expirationDate)
-      .toISOString()
-      .split("T")[0];
+    const newExpirationDate = formatDateForInput(expirationDate);
+    // .toISOString()
+    // .split("T")[0];
     const updatedFields = [];
 
     if (Number(modelId) !== Number(existingVehicle.modelId)) {

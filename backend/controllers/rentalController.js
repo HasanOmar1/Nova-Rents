@@ -88,13 +88,13 @@ async function createRental(req, res, next) {
       result.insertId,
       "rental_request",
       "New Rental Request",
-      `User ${renterFullName} requested your vehicle ${licensePlate}`,
+      `User ${renterFullName} requested your vehicle with license plate of ${licensePlate}`,
     );
 
     await createActivity(
       renterId,
-      "rental_created",
-      `Rental created for vehicle ${licensePlate}`,
+      "Rented a vehicle",
+      `Rental created for vehicle with license plate of ${licensePlate}`,
       result.insertId,
     );
 
@@ -316,6 +316,143 @@ async function cancelRental(req, res, next) {
     next(error);
   }
 }
+async function updateVehicleStatus(req, res, next) {
+  try {
+    const { licensePlate } = req.params;
+    const { status } = req.body;
+    const result = await updateVehicleConditions(licensePlate, status);
+    if (result.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
+        .json({ message: "Failed to update vehicle status" });
+    }
+    return res
+      .status(STATUS_CODE.OK)
+      .json({ message: "Vehicle status updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+
+const getDashboardMetrics = async (req, res, next) => {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    const userId = req.session.user.userId;
+
+    // 1. Monthly Earnings (As a Host: SUM of your cars' approved rentals this month)
+    const earningsQuery = `
+      SELECT COALESCE(SUM(r.totalPrice), 0) AS total
+      FROM rentals r
+      JOIN vehicles v ON r.licensePlate = v.licensePlate
+      WHERE v.ownerId = ? 
+      AND r.status = 'approved' 
+      AND MONTH(r.startDate) = MONTH(CURRENT_DATE()) 
+      AND YEAR(r.startDate) = YEAR(CURRENT_DATE())
+    `;
+
+    // 2. Pending Requests (As a Host: Count of pending requests on your cars)
+    const pendingQuery = `
+      SELECT COUNT(*) AS count
+      FROM rentals r
+      JOIN vehicles v ON r.licensePlate = v.licensePlate
+      WHERE v.ownerId = ? AND r.status = 'pending'
+    `;
+
+    // 3. Upcoming Trips (As Host OR Renter: Approved trips starting today or later)
+    const upcomingQuery = `
+      SELECT COUNT(*) AS count
+      FROM rentals r
+      JOIN vehicles v ON r.licensePlate = v.licensePlate
+      WHERE (v.ownerId = ? OR r.renterId = ?) 
+      AND r.status = 'approved' 
+      AND r.startDate >= CURRENT_DATE()
+    `;
+
+    // 4. Trips Taken (As a Renter: Completed or past approved trips you took)
+    const pastTripsQuery = `
+      SELECT COUNT(*) AS count
+      FROM rentals 
+      WHERE renterId = ? 
+      AND status IN ('completed', 'approved') 
+      AND endDate < CURRENT_DATE()
+    `;
+
+    const earnings = await doQuery(earningsQuery, [userId]);
+    const pending = await doQuery(pendingQuery, [userId]);
+    const upcoming = await doQuery(upcomingQuery, [userId, userId]);
+    const pastTrips = await doQuery(pastTripsQuery, [userId]);
+
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const chartData = [];
+    const today = new Date();
+
+    //  empty array of the last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      chartData.push({
+        month: monthNames[d.getMonth()],
+        monthIndex: d.getMonth() + 1,
+        year: d.getFullYear(),
+        earnings: 0, // Default to $0
+        trips: 0, // Default to 0 trips
+      });
+    }
+
+    // Fetch Earnings & Trips Grouped by Month for the last 6 months
+    const chartQuery = `
+      SELECT 
+        MONTH(r.startDate) as monthIndex, 
+        YEAR(r.startDate) as year, 
+        SUM(CASE WHEN v.ownerId = ? THEN r.totalPrice ELSE 0 END) as totalEarnings,
+        COUNT(*) as totalTrips
+      FROM rentals r
+      JOIN vehicles v ON r.licensePlate = v.licensePlate
+      WHERE (v.ownerId = ? OR r.renterId = ?) 
+      AND r.status IN ('approved', 'completed')
+      AND r.startDate >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
+      GROUP BY YEAR(r.startDate), MONTH(r.startDate)
+    `;
+
+    const chartDbData = await doQuery(chartQuery, [userId, userId, userId]);
+
+    // Merge database results into our 6-month array
+    chartDbData.forEach((row) => {
+      const monthObj = chartData.find(
+        (m) => m.monthIndex === row.monthIndex && m.year === row.year,
+      );
+      if (monthObj) {
+        monthObj.earnings = Number(row.totalEarnings) || 0;
+        monthObj.trips = Number(row.totalTrips) || 0;
+      }
+    });
+
+    res.status(200).json({
+      monthlyEarnings: Number(earnings[0].total),
+      pendingRequests: Number(pending[0].count),
+      upcomingTrips: Number(upcoming[0].count),
+      tripsTaken: Number(pastTrips[0].count),
+      chartData: chartData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 module.exports = {
   createRental,
@@ -325,4 +462,5 @@ module.exports = {
   rejectRental,
   cancelRental,
   getBookedDates,
+  getDashboardMetrics,
 };

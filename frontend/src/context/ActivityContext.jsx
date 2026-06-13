@@ -11,24 +11,13 @@ const ActivityContextProvider = ({ children }) => {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    if (currentUser) {
-      loadActivities();
-      const intervalId = setInterval(() => {
-        loadActivities();
-      }, 30000);
-      return () => clearInterval(intervalId);
-    } else {
-      setActivities([]);
-      setActivityLoading(false);
-    }
+    loadActivities();
   }, [currentUser]);
 
   const loadActivities = async () => {
     try {
       setErrorMsg("");
-      const activityRes = await axios.get("/activity/my-activity-logs", {
-        withCredentials: true,
-      });
+      const activityRes = await axios.get("/activity/my-activity-logs");
       setActivities(activityRes.data.activities || []);
     } catch (error) {
       console.log(error?.response?.data?.message);

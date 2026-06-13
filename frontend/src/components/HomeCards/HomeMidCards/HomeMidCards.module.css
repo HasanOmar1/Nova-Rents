@@ -1,70 +1,122 @@
 .HomeMidCards {
   background-color: var(--bg-gray);
   border: var(--cards-border);
-  padding: 30px;
-  border-radius: 20px;
+  padding: 24px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.HomeMidCards .cardHeaderTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+
+.HomeMidCards .listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-grow: 1;
 }
 
 .HomeMidCards .dataContainer .data {
-  margin-top: 20px;
-  background-color: var(--bg-gray);
-  border: var(--cards-border);
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 20px;
-  border-radius: 20px;
-  font-weight: bold;
-  color: #eeeaeaef;
+  gap: 4px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease-in-out;
 }
 
-.HomeMidCards .dataContainer p {
-  font-size: 0.8rem;
-}
-
-.HomeMidCards .data .date {
-  color: var(--gray);
-}
-
-.HomeMidCards .unread {
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.HomeMidCards .read {
-  opacity: 0.65;
-}
-
-.HomeMidCards .noNotificationsMsg {
-  color: var(--gray);
+.HomeMidCards .dataContainer .dataTitle {
   font-size: 0.9rem;
-  margin-top: 10px;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+.HomeMidCards .dataContainer .description {
+  color: #9ca3af;
+  font-size: 0.825rem;
+  line-height: 1.4;
+}
+
+.HomeMidCards .dateText {
+  color: #6b7280;
+  margin-left: 6px;
+  font-weight: 400;
+}
+
+.HomeMidCards .activityItemWrapper .data {
+  border-left: 3px solid rgba(255, 255, 255, 0.15);
+}
+
+.HomeMidCards .notificationWrapper {
+  position: relative;
+  border-radius: 10px;
+}
+
+.HomeMidCards .notificationWrapper.unread {
+  cursor: pointer;
+}
+
+.HomeMidCards .notificationWrapper.unread .data {
+  background-color: rgba(14, 165, 233, 0.03);
+  border: 1px solid rgba(14, 165, 233, 0.15);
+  border-left: 3px solid #0ea5e9;
+}
+
+.HomeMidCards .notificationWrapper.unread:hover .data {
+  background-color: rgba(14, 165, 233, 0.06);
+  border-color: rgba(14, 165, 233, 0.3);
+}
+
+.HomeMidCards .notificationWrapper.read {
+  cursor: default;
+}
+
+.HomeMidCards .notificationWrapper.read .data {
+  opacity: 0.45;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.HomeMidCards .unreadDot {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  background-color: #0ea5e9;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #0ea5e9;
+}
+
+.HomeMidCards .paginationWrapper {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.HomeMidCards .emptyMsg {
+  color: #6b7280;
+  font-size: 0.85rem;
+  padding: 24px 0;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
   .HomeMidCards {
-    padding: 20px;
+    padding: 18px;
   }
-
   .HomeMidCards .dataContainer .data {
-    padding: 15px;
-    margin-top: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .HomeMidCards {
-    padding: 15px;
-    border-radius: 16px;
-  }
-
-  .HomeMidCards h4 {
-    font-size: 1.1rem;
-  }
-
-  .HomeMidCards .dataContainer .data {
-    padding: 12px 15px;
-    margin-top: 12px;
-    border-radius: 16px;
+    padding: 12px 14px;
   }
 }
