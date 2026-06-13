@@ -12,6 +12,7 @@ const rentalRoute = require("./routes/rentalRoute");
 const govRoute = require("./routes/govRoute");
 const notificationRoute = require("./routes/notificationRoute");
 const { startRentalReminderJob } = require("./jobs/rentalReminderJob");
+const activityRoute = require("./routes/activityRoute");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -39,7 +40,7 @@ app.use("/vehicles", vehiclesRoute);
 app.use("/rentals", rentalRoute);
 app.use("/gov", govRoute);
 app.use("/notifications", notificationRoute);
-
+app.use("/activity", activityRoute);
 app.use(errorHandler);
 
 startRentalReminderJob();
