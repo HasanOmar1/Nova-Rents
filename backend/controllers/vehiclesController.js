@@ -4,6 +4,7 @@ const { checkVehicleNumberInGovIL } = require("../services/govApiService");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   getVehicleByLicensePlate,
+  updateVehicleConditions,
 } = require("../database/queries/vehicleQueries");
 const {
   validateAndNormalizeVehicleCreate,
@@ -16,7 +17,6 @@ const {
 } = require("../utils/handleUploads");
 const { createActivity } = require("../database/queries/activityQueries");
 const { formatDateForInput } = require("../utils/formatDate");
-const { updateVehicleConditions } = require("../database/queries/rentalQueries");
 
 const getUserVehicles = async (req, res, next) => {
   try {

@@ -67,15 +67,6 @@ async function updateRentalStatus(rentalId, status) {
   return result;
 }
 
-async function updateVehicleConditions(licensePlate, status) {
-  const updateVehicleStatus = `update Vehicles set status = ? where licensePlate = ?`;
-  const valuesOfupdateVehicleStatus = [status, licensePlate];
-  const result = await doQuery(
-    updateVehicleStatus,
-    valuesOfupdateVehicleStatus,
-  );
-  return result;
-}
 async function getRenterEmailByRentalId(rentalId) {
   const getEmailByRentalId = `select u.email from rentals r join users u on r.renterId = u.userId where rentalId = ?`;
   const valuesOfgetEmailByRentalId = [rentalId];
@@ -127,7 +118,6 @@ module.exports = {
   getRequestsForMyVehiclesByOwnerId,
   getRentalById,
   updateRentalStatus,
-  updateVehicleConditions,
   getRenterEmailByRentalId,
   getRentalsStartingTomorrow,
   getRentalsEndingTomorrow,

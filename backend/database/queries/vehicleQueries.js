@@ -16,5 +16,11 @@ async function getVehicleByLicensePlate(plate) {
   }
 }
 
+async function updateVehicleConditions(licensePlate, status) {
+  const updateVehicleStatus = `update Vehicles set status = ? where licensePlate = ?`;
+  const valuesOfupdateVehicleStatus = [status, licensePlate];
+  const result = await doQuery(updateVehicleStatus, valuesOfupdateVehicleStatus);
+  return result;
+}
 
-module.exports = { getVehicleByLicensePlate };
+module.exports = { getVehicleByLicensePlate, updateVehicleConditions };
