@@ -13,7 +13,6 @@ const {
   getRequestsForMyVehiclesByOwnerId,
   getRentalById,
   updateRentalStatus,
-  updateVehicleConditions,
 } = require("../database/queries/rentalQueries");
 
 const {
@@ -317,24 +316,6 @@ async function cancelRental(req, res, next) {
     next(error);
   }
 }
-async function updateVehicleStatus(req, res, next) {
-  try {
-    const { licensePlate } = req.params;
-    const { status } = req.body;
-    const result = await updateVehicleConditions(licensePlate, status);
-    if (result.affectedRows === 0) {
-      return res
-        .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
-        .json({ message: "Failed to update vehicle status" });
-    }
-    return res
-      .status(STATUS_CODE.OK)
-      .json({ message: "Vehicle status updated successfully" });
-  } catch (error) {
-    next(error);
-  }
-}
-
 const getDashboardMetrics = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -454,6 +435,7 @@ const getDashboardMetrics = async (req, res, next) => {
   }
 };
 
+
 module.exports = {
   createRental,
   getMyRentals,
@@ -461,7 +443,6 @@ module.exports = {
   approveRental,
   rejectRental,
   cancelRental,
-  updateVehicleStatus,
   getBookedDates,
   getDashboardMetrics,
 };
