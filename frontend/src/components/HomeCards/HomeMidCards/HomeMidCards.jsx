@@ -1,25 +1,12 @@
 import styles from "./HomeMidCards.module.css";
 import HomeMidCardsData from "./HomeMidCardsData";
 import { useNotificationContext } from "../../../context/NotificationContext";
+import { useActivityContext } from "../../../context/ActivityContext";
 
-const activityData = [
-  {
-    title: "Booking confirmed - BMW 7 Series",
-    data: "Today · 9:24",
-  },
-  {
-    title: "Document verification completed",
-    data: "Yesterday · 18:40",
-  },
-  {
-    title: "Complaint under review",
-    data: "Yesterday · 13:12",
-  },
-];
 
 const HomeMidCards = ({ title }) => {
   const { notifications, markAsRead, loading } = useNotificationContext();
-
+  const { activities,activityLoading } = useActivityContext();
   const latestNotifications = notifications.slice(0, 3);
 
   return (
@@ -28,12 +15,19 @@ const HomeMidCards = ({ title }) => {
 
       {title === "Recent Activity" ? (
         <>
-          {activityData.map((item) => {
+          {activityLoading ? (
+            <p>Loading activities...</p>
+          ) : activities.length === 0 ? (
+            <p className={styles.noActivitiesMsg}>
+              You dont have activities yet
+            </p>
+          ) : activities.map((item) => {
             return (
               <HomeMidCardsData
-                key={item.title}
-                title={item.title}
-                data={item.data}
+                key={item.logId}
+                title={item.action}
+                data={item.description}
+                date={item.createdAt}
               />
             );
           })}
