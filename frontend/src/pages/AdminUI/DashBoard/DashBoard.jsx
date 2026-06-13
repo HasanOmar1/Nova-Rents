@@ -4,6 +4,8 @@ import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCard
 import AdminComplaints from "../../../components/AdminComplaints/AdminComplaints";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
+import { useActivityContext } from "../../../context/ActivityContext";
+import { useEffect } from "react";
 
 const topData = [
   {
@@ -77,6 +79,12 @@ const barData = [
 ];
 
 const DashBoard = () => {
+  const { loadActivities } = useActivityContext();
+
+  useEffect(() => {
+    loadActivities();
+  }, []);
+
   return (
     <div className={`${styles.DashBoard} page`}>
       <h1>Dashboard</h1>
