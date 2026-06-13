@@ -11,16 +11,7 @@ const ActivityContextProvider = ({ children }) => {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    if (currentUser) {
-      loadActivities();
-      const intervalId = setInterval(() => {
-        loadActivities();
-      }, 30000);
-      return () => clearInterval(intervalId);
-    } else {
-      setActivities([]);
-      setActivityLoading(false);
-    }
+    loadActivities();
   }, [currentUser]);
 
   const loadActivities = async () => {
