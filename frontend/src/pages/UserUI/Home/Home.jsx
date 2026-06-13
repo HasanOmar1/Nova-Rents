@@ -6,6 +6,7 @@ import styles from "./Home.module.css";
 import { CalendarDays, Wallet, ClipboardList, Key } from "lucide-react";
 import { useRentContext } from "../../../context/RentContext";
 import { useEffect } from "react";
+import { useActivityContext } from "../../../context/ActivityContext";
 
 const lineData = [
   { month: "Jan", rentals: 12 },
@@ -27,9 +28,11 @@ const barData = [
 
 const Home = () => {
   const { metrics, fetchDashboardMetrics } = useRentContext();
+  const { loadActivities } = useActivityContext();
 
   useEffect(() => {
     fetchDashboardMetrics();
+    loadActivities();
   }, []);
 
   const topData = [

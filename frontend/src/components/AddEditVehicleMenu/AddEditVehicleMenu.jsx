@@ -49,10 +49,12 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   const { getCities, cities, isLoading } = useGovApisContext();
 
   useEffect(() => {
-    getBrands();
-    getVehType();
-    getCities();
-  }, []);
+    if (isOpen) {
+      if (!vehiclesBrands || vehiclesBrands.length === 0) getBrands();
+      if (!vehiclesType || vehiclesType.length === 0) getVehType();
+      if (!cities || cities.length === 0) getCities();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {

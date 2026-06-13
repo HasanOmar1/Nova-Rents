@@ -21,17 +21,18 @@ const VehicleContextProvider = ({ children }) => {
     models: [],
     types: [],
   });
-
+  const [allVehStats, setAllVehStats] = useState(null);
   const { loadActivities } = useActivityContext();
 
   const getAllVehicles = async (filters = {}, page = 1) => {
     try {
       const response = await axios.get("/vehicles", {
-        params: { ...filters, page, limit: 9 },
+        params: { ...filters, page, limit: 5 },
       });
       setAllVehicles(response.data.vehicles);
       setAllVehPagination(response.data.pagination);
       setAvailableFilters(response.data.availableFilters);
+      setAllVehStats(response.data.allVehStats);
       setErrorMsg("");
     } catch (error) {
       console.log(error?.response?.data?.message);
@@ -157,6 +158,7 @@ const VehicleContextProvider = ({ children }) => {
         pagination,
         allVehPagination,
         availableFilters,
+        allVehStats,
       }}
     >
       {children}
