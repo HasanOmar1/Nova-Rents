@@ -11,6 +11,7 @@ const vehiclesRoute = require("./routes/vehiclesRoute");
 const rentalRoute = require("./routes/rentalRoute");
 const govRoute = require("./routes/govRoute");
 const notificationRoute = require("./routes/notificationRoute");
+const { startRentalReminderJob } = require("./jobs/rentalReminderJob");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -40,6 +41,8 @@ app.use("/gov", govRoute);
 app.use("/notifications", notificationRoute);
 
 app.use(errorHandler);
+
+startRentalReminderJob();
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

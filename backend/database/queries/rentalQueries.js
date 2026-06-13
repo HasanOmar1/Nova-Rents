@@ -86,6 +86,40 @@ async function getRenterEmailByRentalId(rentalId) {
   return renterEmail[0];
 }
 
+async function getRentalsStartingTomorrow() {
+  const query = `
+    SELECT 
+      r.rentalId,
+      r.renterId,
+      r.licensePlate,
+      v.ownerId
+    FROM rentals r
+    JOIN vehicles v
+      ON r.licensePlate = v.licensePlate
+    WHERE r.status = 'approved'
+    AND DATE(r.startDate) = DATE(CURDATE() + INTERVAL 1 DAY)
+  `;
+
+  return await doQuery(query);
+}
+
+async function getRentalsEndingTomorrow() {
+  const query = `
+    SELECT 
+      r.rentalId,
+      r.renterId,
+      r.licensePlate,
+      v.ownerId
+    FROM rentals r
+    JOIN vehicles v
+      ON r.licensePlate = v.licensePlate
+    WHERE r.status = 'approved'
+    AND DATE(r.endDate) = DATE(CURDATE() + INTERVAL 1 DAY)
+  `;
+
+  return await doQuery(query);
+}
+
 
 module.exports = {
   checkIfVehicleIsAvailable,
@@ -95,4 +129,6 @@ module.exports = {
   updateRentalStatus,
   updateVehicleConditions,
   getRenterEmailByRentalId,
+  getRentalsStartingTomorrow,
+  getRentalsEndingTomorrow,
 };
