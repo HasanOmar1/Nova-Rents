@@ -27,4 +27,11 @@ router.post(
   vehicleQueries.addVehicle,
 );
 
+router.put(
+  "/update-vehicle-status/:licensePlate",
+  isAuthenticated,
+  vehicleQueries.updateVehicleStatus,
+);
+
+
 module.exports = router;

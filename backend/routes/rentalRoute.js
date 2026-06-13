@@ -30,9 +30,4 @@ router.put(
   isAuthenticated,
   rentalController.cancelRental,
 );
-router.put(
-  "/update-vehicle-status/:licensePlate",
-  isAuthenticated,
-  rentalController.updateVehicleStatus,
-);
 module.exports = router;
