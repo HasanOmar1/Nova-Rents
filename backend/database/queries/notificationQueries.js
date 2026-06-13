@@ -1,8 +1,8 @@
 const doQuery = require("../query");
 
-async function createNotification(userId , rentalId , type ,title ,message) {
+async function createNotification(userId, rentalId, type, title, message) {
   const createNotification = `INSERT INTO notifications (userId , rentalId , type ,title ,message) VALUES (?, ?, ?, ?, ?)`;
-  const valuesOfcreateNotification = [userId , rentalId , type ,title ,message];
+  const valuesOfcreateNotification = [userId, rentalId, type, title, message];
   const result = await doQuery(createNotification, valuesOfcreateNotification);
   return result;
 }
@@ -10,13 +10,16 @@ async function createNotification(userId , rentalId , type ,title ,message) {
 async function getNotificationsByUserId(userId) {
   const getNotificationsByUserId = `SELECT * FROM notifications WHERE userId = ? ORDER BY createdAt DESC`;
   const valuesOfgetNotificationsByUserId = [userId];
-  const result = await doQuery(getNotificationsByUserId, valuesOfgetNotificationsByUserId);
-  return result; 
+  const result = await doQuery(
+    getNotificationsByUserId,
+    valuesOfgetNotificationsByUserId,
+  );
+  return result;
 }
 
-async function markNotificationAsRead(notificationId , userId) {
+async function markNotificationAsRead(notificationId, userId) {
   const query = `UPDATE notifications SET isRead = 1 WHERE notificationId = ? and userId = ?`;
-  const valuesOfquery = [notificationId , userId];
+  const valuesOfquery = [notificationId, userId];
   const result = await doQuery(query, valuesOfquery);
   return result;
 }
@@ -28,6 +31,24 @@ async function getUnreadNotificationsCount(userId) {
   return result[0];
 }
 
+async function checkIfNotificationExists(userId, rentalId , type) {
+  const query = `
+    SELECT notificationId
+    FROM notifications
+    WHERE userId = ?
+    AND rentalId = ?
+    AND type = ?
+  `;
+  const valuesOfquery = [userId, rentalId, type];
+  const result = await doQuery(query, valuesOfquery);
+  return result.length > 0;
+}
 
 
-module.exports = { createNotification , getNotificationsByUserId , markNotificationAsRead , getUnreadNotificationsCount };
+module.exports = {
+  createNotification,
+  getNotificationsByUserId,
+  markNotificationAsRead,
+  getUnreadNotificationsCount,
+  checkIfNotificationExists,
+};
