@@ -15,21 +15,19 @@ axios.defaults.baseURL = "http://localhost:3000";
 axios.defaults.withCredentials = true;
 
 createRoot(document.getElementById("root")).render(
-  // <StrictMode>
   <BrowserRouter>
-    <VehicleContextProvider>
-      <UserContextProvider>
-        <RentContextProvider>
-          <NotificationContextProvider>
-            <GovApisContextProvider>
-              <ActivityContextProvider>
+    <UserContextProvider>
+      <NotificationContextProvider>
+        <ActivityContextProvider>
+          <VehicleContextProvider>
+            <RentContextProvider>
+              <GovApisContextProvider>
                 <App />
-              </ActivityContextProvider>
-            </GovApisContextProvider>
-          </NotificationContextProvider>
-        </RentContextProvider>
-      </UserContextProvider>
-    </VehicleContextProvider>
+              </GovApisContextProvider>
+            </RentContextProvider>
+          </VehicleContextProvider>
+        </ActivityContextProvider>
+      </NotificationContextProvider>
+    </UserContextProvider>
   </BrowserRouter>,
-  // </StrictMode>,
 );

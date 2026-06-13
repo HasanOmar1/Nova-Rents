@@ -89,13 +89,13 @@ async function createRental(req, res, next) {
       result.insertId,
       "rental_request",
       "New Rental Request",
-      `User ${renterFullName} requested your vehicle ${licensePlate}`,
+      `User ${renterFullName} requested your vehicle with license plate of ${licensePlate}`,
     );
 
     await createActivity(
       renterId,
-      "rental_created",
-      `Rental created for vehicle ${licensePlate}`,
+      "Rented a vehicle",
+      `Rental created for vehicle with license plate of ${licensePlate}`,
       result.insertId,
     );
 

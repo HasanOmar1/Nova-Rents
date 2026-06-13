@@ -26,9 +26,7 @@ const ActivityContextProvider = ({ children }) => {
   const loadActivities = async () => {
     try {
       setErrorMsg("");
-      const activityRes = await axios.get("/activity/my-activity-logs", {
-        withCredentials: true,
-      });
+      const activityRes = await axios.get("/activity/my-activity-logs");
       setActivities(activityRes.data.activities || []);
     } catch (error) {
       console.log(error?.response?.data?.message);
