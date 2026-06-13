@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import UserContextProvider from "./context/UserContext.jsx";
 import VehicleContextProvider from "./context/VehicleContext.jsx";
 import NotificationContextProvider from "./context/NotificationContext.jsx";
+import ActivityContextProvider from "./context/ActivityContext.jsx";
 import RentContextProvider from "./context/RentContext.jsx";
 import GovApisContextProvider from "./context/GovApisContext.jsx";
 
@@ -21,7 +22,9 @@ createRoot(document.getElementById("root")).render(
         <RentContextProvider>
           <NotificationContextProvider>
             <GovApisContextProvider>
-              <App />
+              <ActivityContextProvider>
+                <App />
+              </ActivityContextProvider>
             </GovApisContextProvider>
           </NotificationContextProvider>
         </RentContextProvider>
