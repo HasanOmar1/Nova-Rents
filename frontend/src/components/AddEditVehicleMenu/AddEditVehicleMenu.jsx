@@ -20,6 +20,15 @@ const initialFormState = {
   images: [],
 };
 
+const formatDateForInput = (dateString) => {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   const dialogRef = useRef(null);
   const [formData, setFormData] = useState(initialFormState);
@@ -61,7 +70,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           price: vehicle.price || "",
           address: vehicle.address || "",
           expirationDate: vehicle.expirationDate
-            ? vehicle.expirationDate.split("T")[0]
+            ? formatDateForInput(vehicle.expirationDate)
             : "",
           status: vehicle.status || "available",
           images: [],
