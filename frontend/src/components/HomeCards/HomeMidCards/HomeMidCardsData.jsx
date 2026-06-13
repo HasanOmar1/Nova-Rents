@@ -1,11 +1,13 @@
 import styles from "./HomeMidCards.module.css";
 
-const HomeMidCardsData = ({ title, data }) => {
+const HomeMidCardsData = ({ title, data, date }) => {
   return (
     <div className={styles.dataContainer}>
       <div className={styles.data}>
-        <p>{title}</p>
-        <p className={styles.date}>{data}</p>
+        <p className={styles.dataTitle}>{title}</p>
+        <p className={styles.description}>
+          {data} <span className={styles.dateText}>• {date}</span>
+        </p>
       </div>
     </div>
   );

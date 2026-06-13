@@ -1,62 +1,92 @@
+import { useState } from "react";
 import styles from "./HomeMidCards.module.css";
 import HomeMidCardsData from "./HomeMidCardsData";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import { useActivityContext } from "../../../context/ActivityContext";
-
+import Pagination from "../../Pagination/Pagination";
 
 const HomeMidCards = ({ title }) => {
   const { notifications, markAsRead, loading } = useNotificationContext();
-  const { activities,activityLoading } = useActivityContext();
-  const latestNotifications = notifications.slice(0, 3);
+  const { activities, activityLoading } = useActivityContext();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
+
+  const isActivity = title === "Recent Activity";
+  const isLoading = isActivity ? activityLoading : loading;
+  const dataList = isActivity ? activities : notifications;
+
+  const totalPages = Math.ceil(dataList.length / itemsPerPage);
+  const currentItems = dataList.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
 
   return (
     <div className={styles.HomeMidCards}>
-      <h4>{title}</h4>
+      <h4 className={styles.cardHeaderTitle}>{title}</h4>
 
-      {title === "Recent Activity" ? (
-        <>
-          {activityLoading ? (
-            <p>Loading activities...</p>
-          ) : activities.length === 0 ? (
-            <p className={styles.noActivitiesMsg}>
-              You dont have activities yet
-            </p>
-          ) : activities.map((item) => {
-            return (
-              <HomeMidCardsData
-                key={item.logId}
-                title={item.action}
-                data={item.description}
-                date={item.createdAt}
-              />
-            );
-          })}
-        </>
-      ) : (
-        <>
-          {loading ? (
-            <p>Loading notifications...</p>
-          ) : notifications.length === 0 ? (
-            <p className={styles.noNotificationsMsg}>
-              You dont have notifications yet
-            </p>
-          ) : (
-            latestNotifications.map((notification) => {
+      <div className={styles.listContainer}>
+        {isLoading ? (
+          <p className={styles.emptyMsg}>Loading {title.toLowerCase()}...</p>
+        ) : dataList.length === 0 ? (
+          <p className={styles.emptyMsg}>
+            You don't have {title.toLowerCase()} yet.
+          </p>
+        ) : (
+          currentItems.map((item) => {
+            if (isActivity) {
               return (
-                <div
-                  key={notification.notificationId}
-                  onClick={() => markAsRead(notification.notificationId)}
-                  className={notification.isRead ? styles.read : styles.unread}
-                >
+                <div key={item.logId} className={styles.activityItemWrapper}>
                   <HomeMidCardsData
-                    title={notification.title}
-                    data={notification.message}
+                    title={item.action}
+                    data={item.description}
+                    date={item.createdAt}
                   />
                 </div>
               );
-            })
-          )}
-        </>
+            } else {
+              return (
+                <div
+                  key={item.notificationId}
+                  onClick={() =>
+                    !item.isRead && markAsRead(item.notificationId)
+                  }
+                  className={`${styles.notificationWrapper} ${
+                    item.isRead ? styles.read : styles.unread
+                  }`}
+                >
+                  <HomeMidCardsData
+                    title={item.title}
+                    data={item.message}
+                    date={item.createdAt}
+                  />
+                  {!item.isRead && <span className={styles.unreadDot}></span>}
+                </div>
+              );
+            }
+          })
+        )}
+      </div>
+
+      {dataList.length > 0 && (
+        <div className={styles.paginationWrapper}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            handlePrevPage={handlePrevPage}
+            handleNextPage={handleNextPage}
+            leftText={`${dataList.length} Total`}
+          />
+        </div>
       )}
     </div>
   );

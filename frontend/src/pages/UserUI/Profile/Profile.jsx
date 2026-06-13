@@ -3,7 +3,6 @@ import styles from "./Profile.module.css";
 import DocumentsCards from "../../../components/DocumentsCards/DocumentsCards";
 import { useUserContext } from "../../../context/UserContext";
 
-
 const Profile = () => {
   const [editProfileClicked, setEditProfileClicked] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -16,7 +15,7 @@ const Profile = () => {
     lastName: currentUser?.lastName || "",
     email: currentUser?.email || "",
     phone: currentUser?.phone || "",
-    birthDate:currentUser?.birthDate,
+    birthDate: currentUser?.birthDate,
     password: "",
   });
 

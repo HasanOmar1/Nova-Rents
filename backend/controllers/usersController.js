@@ -22,6 +22,7 @@ const {
 } = require("../utils/validsController");
 
 const { createActivity } = require("../database/queries/activityQueries");
+const { formatDateForInput } = require("../utils/formatDate");
 
 const sendVerificationCode = async (req, res) => {
   const { email } = req.body;
@@ -301,7 +302,7 @@ async function login(req, res, next) {
         .json({ message: "Invalid email or password" });
     }
     //format the birthDate to the format YYYY-MM-DD
-    const birthDate = user.birthDate.toISOString().split("T")[0];
+    const birthDate = formatDateForInput(user.birthDate);
     const emailNormalized = user.email.toLowerCase();
 
     const loggedUser = {
@@ -377,7 +378,7 @@ async function getProfile(req, res, next) {
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "User not found" });
     }
-    const birthDate = user.birthDate.toISOString().split("T")[0];
+    const birthDate = formatDateForInput(user.birthDate);
     const loggedUser = {
       userId: user.userId,
       firstName: user.firstName,
@@ -555,7 +556,6 @@ const updateUserProfile = async (req, res, next) => {
     }
     console.log("birthDate from frontend:", birthDate);
 
-    
     const oldBirthDate = new Date(user.birthDate).toISOString().split("T")[0];
     if (birthDate && birthDate !== oldBirthDate) {
       fields.push("birthDate = ?");
@@ -650,10 +650,8 @@ const updateUserProfile = async (req, res, next) => {
     let safeBirthDate = birthDate;
     if (!safeBirthDate && user?.birthDate) {
       const d = new Date(user.birthDate);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      safeBirthDate = `${year}-${month}-${day}`;
+      const formattedDate = formatDateForInput(d);
+      safeBirthDate = formattedDate;
     }
 
     const loggedUser = {
@@ -672,7 +670,7 @@ const updateUserProfile = async (req, res, next) => {
     await createActivity(
       currentUserId,
       "profile_updated",
-      `Updated: ${updatedFields.join(", ")}`
+      `Updated: ${updatedFields.join(", ")}`,
     );
 
     // Force the session to save BEFORE sending the 200 OK.

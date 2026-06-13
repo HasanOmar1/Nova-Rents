@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
 import { useGovApisContext } from "../../context/GovApisContext";
+import { useActivityContext } from "../../context/ActivityContext";
 
 const initialFormState = {
   brandId: "0",
@@ -17,6 +18,15 @@ const initialFormState = {
   expirationDate: "",
   status: "available",
   images: [],
+};
+
+const formatDateForInput = (dateString) => {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
@@ -37,6 +47,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   } = useVehicleContext();
 
   const { getCities, cities, isLoading } = useGovApisContext();
+  const { loadActivities } = useActivityContext();
 
   useEffect(() => {
     getBrands();
@@ -59,7 +70,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           price: vehicle.price || "",
           address: vehicle.address || "",
           expirationDate: vehicle.expirationDate
-            ? vehicle.expirationDate.split("T")[0]
+            ? formatDateForInput(vehicle.expirationDate)
             : "",
           status: vehicle.status || "available",
           images: [],
@@ -150,6 +161,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     let isSuccess;
     if (vehicle) {
       isSuccess = await updateVehicle(formData.licensePlate, submitData);
+      loadActivities();
     } else {
       isSuccess = await addVehicle(submitData);
     }

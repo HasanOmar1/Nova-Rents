@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createContext, useContext, useState } from "react";
+import { useActivityContext } from "./ActivityContext";
 
 const RentContext = createContext();
 
@@ -7,11 +8,20 @@ const RentContextProvider = ({ children }) => {
   const [rentVehResponse, setRentVehResponse] = useState("");
   const [bookedRanges, setBookedRanges] = useState([]);
   const [dateError, setDateError] = useState("");
+  const { loadActivities } = useActivityContext();
+  const [metrics, setMetrics] = useState({
+    monthlyEarnings: 0,
+    pendingRequests: 0,
+    upcomingTrips: 0,
+    tripsTaken: 0,
+    chartData: [],
+  });
 
   const rentVehicle = async (data) => {
     try {
       const res = await axios.post(`/rentals/rent`, data);
       setRentVehResponse(res.data.message);
+      loadActivities();
       return true;
     } catch (error) {
       console.log(error?.response.data?.message);
@@ -30,6 +40,15 @@ const RentContextProvider = ({ children }) => {
     }
   };
 
+  const fetchDashboardMetrics = async () => {
+    try {
+      const res = await axios.get("/rentals/dashboard-metrics");
+      setMetrics(res.data);
+    } catch (error) {
+      console.log("Failed to fetch dashboard metrics", error);
+    }
+  };
+
   return (
     <RentContext.Provider
       value={{
@@ -40,6 +59,8 @@ const RentContextProvider = ({ children }) => {
         bookedRanges,
         dateError,
         setDateError,
+        fetchDashboardMetrics,
+        metrics,
       }}
     >
       {children}
