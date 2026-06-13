@@ -556,7 +556,7 @@ const updateUserProfile = async (req, res, next) => {
     }
     console.log("birthDate from frontend:", birthDate);
 
-    const oldBirthDate = new Date(user.birthDate).toISOString().split("T")[0];
+    const oldBirthDate = formatDateForInput(user.birthDate);
     if (birthDate && birthDate !== oldBirthDate) {
       fields.push("birthDate = ?");
       values.push(birthDate);
