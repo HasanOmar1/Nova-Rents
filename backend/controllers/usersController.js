@@ -650,10 +650,8 @@ const updateUserProfile = async (req, res, next) => {
     let safeBirthDate = birthDate;
     if (!safeBirthDate && user?.birthDate) {
       const d = new Date(user.birthDate);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      safeBirthDate = `${year}-${month}-${day}`;
+      const formattedDate = formatDateForInput(d);
+      safeBirthDate = formattedDate;
     }
 
     const loggedUser = {
