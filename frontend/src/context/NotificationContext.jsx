@@ -29,12 +29,8 @@ const NotificationContextProvider = ({ children }) => {
     try {
       setErrorMsg("");
       const [notificationRes, unreadRes] = await Promise.all([
-        axios.get("/notifications/my-notifications", {
-          withCredentials: true,
-        }),
-        axios.get("/notifications/unread-notifications-count", {
-          withCredentials: true,
-        }),
+        axios.get("/notifications/my-notifications"),
+        axios.get("/notifications/unread-notifications-count"),
       ]);
       setNotifications(notificationRes.data.notifications || []);
       setUnreadCount(

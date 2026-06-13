@@ -10,7 +10,7 @@ const HomeMidCards = ({ title }) => {
   const { activities, activityLoading } = useActivityContext();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 3;
 
   const isActivity = title === "Recent Activity";
   const isLoading = isActivity ? activityLoading : loading;

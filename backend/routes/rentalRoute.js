@@ -35,4 +35,10 @@ router.put(
   isAuthenticated,
   rentalController.updateVehicleStatus,
 );
+
+router.get(
+  "/dashboard-metrics",
+  isAuthenticated,
+  rentalController.getDashboardMetrics,
+);
 module.exports = router;
