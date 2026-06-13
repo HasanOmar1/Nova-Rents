@@ -14,6 +14,7 @@ const {
   deleteImagesFromDisk,
   clearFailedUploads,
 } = require("../utils/handleUploads");
+const { createActivity } = require("../database/queries/activityQueries");
 
 const getUserVehicles = async (req, res, next) => {
   try {
@@ -131,16 +132,19 @@ const addVehicle = async (req, res, next) => {
         message: "License plate already exists!",
       });
     }
-
+    
     const insertQuery = `
      INSERT INTO vehicles 
      (licensePlate,fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
+    const formattedExpirationDate = new Date(expirationDate)
+      .toISOString()
+      .split("T")[0];
     const values = [
       licensePlate,
       fuelType,
-      expirationDate,
+      formattedExpirationDate,
       image,
       year,
       km,
@@ -151,6 +155,11 @@ const addVehicle = async (req, res, next) => {
       userId,
     ];
     await doQuery(insertQuery, values);
+    await createActivity(
+      userId,
+      "vehicle_added",
+      `Added new vehicle: ${licensePlate}`,
+    );
     const newVehicle = await getVehicleByLicensePlate(licensePlate);
     res.status(STATUS_CODE.CREATED).json({
       message: "Vehicle added successfully",
@@ -277,6 +286,12 @@ const deleteVehicle = async (req, res, next) => {
     const updateQuery = `UPDATE vehicles SET status = 'inactive' WHERE licensePlate = ?`;
     await doQuery(updateQuery, [licensePlate]);
 
+    await createActivity(
+      userId,
+      "vehicle_deactivated",
+      `Deactivated vehicle: ${licensePlate}`,
+    );
+
     res.status(STATUS_CODE.OK).json({
       message: "Vehicle deactivated successfully",
     });
@@ -284,7 +299,6 @@ const deleteVehicle = async (req, res, next) => {
     next(error);
   }
 };
-
 const updateVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
@@ -328,16 +342,67 @@ const updateVehicle = async (req, res, next) => {
       status,
     } = mergedData;
 
+    const oldExpirationDate = new Date(existingVehicle.expirationDate)
+      .toISOString()
+      .split("T")[0];
+
+    const newExpirationDate = new Date(expirationDate)
+      .toISOString()
+      .split("T")[0];
+    const updatedFields = [];
+
+    if (Number(modelId) !== Number(existingVehicle.modelId)) {
+      updatedFields.push("model");
+    }
+
+    if (fuelType !== existingVehicle.fuelType) {
+      updatedFields.push("fuel type");
+    }
+
+    if (newExpirationDate !== oldExpirationDate) {
+      updatedFields.push("expiration date");
+    }
+
+    if (image !== existingVehicle.image) {
+      updatedFields.push("image");
+    }
+
+    if (Number(year) !== Number(existingVehicle.year)) {
+      updatedFields.push("year");
+    }
+
+    if (Number(km) !== Number(existingVehicle.km)) {
+      updatedFields.push("kilometers");
+    }
+
+    if (address !== existingVehicle.address) {
+      updatedFields.push("address");
+    }
+
+    if (Number(price) !== Number(existingVehicle.price)) {
+      updatedFields.push("price");
+    }
+
+    if (color !== existingVehicle.color) {
+      updatedFields.push("color");
+    }
+
+    if (status !== existingVehicle.status) {
+      updatedFields.push("status");
+    }
+    console.log(expirationDate);
+    console.log(existingVehicle.expirationDate);
+
     const updateQuery = `
       UPDATE vehicles
-      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?, status = ?
+      SET modelId = ?, fuelType = ?,expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?, status = ?
       WHERE licensePlate = ?
     `;
 
     const values = [
       modelId,
       fuelType,
-      expirationDate,
+      newExpirationDate,
       image,
       year,
       km,
@@ -349,6 +414,15 @@ const updateVehicle = async (req, res, next) => {
     ];
 
     await doQuery(updateQuery, values);
+
+    if (updatedFields.length > 0) {
+      await createActivity(
+        req.session.user.userId,
+        "vehicle_updated",
+        `Updated vehicle ${licensePlate}: ${updatedFields.join(", ")}`,
+      );
+    }
+
     const updatedVehicle = await getVehicleByLicensePlate(licensePlate);
 
     res.status(STATUS_CODE.OK).json({

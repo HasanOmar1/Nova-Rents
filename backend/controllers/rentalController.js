@@ -19,6 +19,7 @@ const {
 const {
   createNotification,
 } = require("../database/queries/notificationQueries");
+const { createActivity } = require("../database/queries/activityQueries");
 
 async function createRental(req, res, next) {
   try {
@@ -89,6 +90,13 @@ async function createRental(req, res, next) {
       "rental_request",
       "New Rental Request",
       `User ${renterFullName} requested your vehicle ${licensePlate}`,
+    );
+
+    await createActivity(
+      renterId,
+      "rental_created",
+      `Rental created for vehicle ${licensePlate}`,
+      result.insertId,
     );
 
     return res
@@ -196,6 +204,12 @@ async function approveRental(req, res, next) {
       "Rental Approved",
       `Your rental has been approved by the owner ${ownerId}`,
     );
+    await createActivity(
+      rental.renterId,
+      "rental_approved",
+      `Rental approved for vehicle ${rental.licensePlate}`,
+      rentalId,
+    );
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Rental approved successfully" });
@@ -238,6 +252,12 @@ async function rejectRental(req, res, next) {
       "rental_rejected",
       "Rental Rejected",
       `Your rental has been rejected by the owner ${ownerId}`,
+    );
+    await createActivity(
+      rental.renterId,
+      "rental_rejected",
+      `Rental rejected for vehicle ${rental.licensePlate}`,
+      rentalId,
     );
     return res
       .status(STATUS_CODE.OK)
@@ -283,6 +303,12 @@ async function cancelRental(req, res, next) {
       "rental_cancelled",
       "Rental Cancelled",
       `Your rental has been cancelled by the renter ${renterId}`,
+    );
+    await createActivity(
+      rental.renterId,
+      "rental_cancelled",
+      `Rental cancelled for vehicle ${rental.licensePlate}`,
+      rentalId,
     );
     return res
       .status(STATUS_CODE.OK)
