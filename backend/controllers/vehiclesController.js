@@ -140,9 +140,7 @@ const addVehicle = async (req, res, next) => {
      (licensePlate,fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const formattedExpirationDate = formatDateForInput(expirationDate);
-    // .toISOString()
-    // .split("T")[0];
+
     const values = [
       licensePlate,
       fuelType,
@@ -159,8 +157,8 @@ const addVehicle = async (req, res, next) => {
     await doQuery(insertQuery, values);
     await createActivity(
       userId,
-      "vehicle_added",
-      `Added new vehicle: ${licensePlate}`,
+      "Added new vehicle",
+      `Added new vehicle with license plate of ${licensePlate}`,
     );
     const newVehicle = await getVehicleByLicensePlate(licensePlate);
     res.status(STATUS_CODE.CREATED).json({
@@ -290,8 +288,8 @@ const deleteVehicle = async (req, res, next) => {
 
     await createActivity(
       userId,
-      "vehicle_deactivated",
-      `Deactivated vehicle: ${licensePlate}`,
+      "Vehicle Deactivation",
+      `Deactivated vehicle with license plate of ${licensePlate}`,
     );
 
     res.status(STATUS_CODE.OK).json({
@@ -422,8 +420,8 @@ const updateVehicle = async (req, res, next) => {
     if (updatedFields.length > 0) {
       await createActivity(
         req.session.user.userId,
-        "vehicle_updated",
-        `Updated vehicle ${licensePlate}: ${updatedFields.join(", ")}`,
+        "Updated a vehicle",
+        `Updated vehicle with license plate of ${licensePlate}: ${updatedFields.join(", ")}`,
       );
     }
 
@@ -638,8 +636,8 @@ async function updateVehicleStatus(req, res, next) {
     }
     await createActivity(
       req.session.user.userId,
-      "vehicle_status_updated",
-      `Updated vehicle status to ${status}`,
+      "Vehicle Status Update",
+      `Updated vehicle with license plate of ${licensePlate} status to ${status}`,
     );
     return res
       .status(STATUS_CODE.OK)

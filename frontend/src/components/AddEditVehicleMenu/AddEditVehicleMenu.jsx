@@ -47,7 +47,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   } = useVehicleContext();
 
   const { getCities, cities, isLoading } = useGovApisContext();
-  const { loadActivities } = useActivityContext();
 
   useEffect(() => {
     getBrands();
@@ -161,7 +160,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     let isSuccess;
     if (vehicle) {
       isSuccess = await updateVehicle(formData.licensePlate, submitData);
-      loadActivities();
     } else {
       isSuccess = await addVehicle(submitData);
     }

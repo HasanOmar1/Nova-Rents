@@ -205,8 +205,8 @@ async function approveRental(req, res, next) {
     );
     await createActivity(
       rental.renterId,
-      "rental_approved",
-      `Rental approved for vehicle ${rental.licensePlate}`,
+      "Approved a rental",
+      `Rental approved for vehicle with license plate of ${rental.licensePlate}`,
       rentalId,
     );
     return res
@@ -254,8 +254,8 @@ async function rejectRental(req, res, next) {
     );
     await createActivity(
       rental.renterId,
-      "rental_rejected",
-      `Rental rejected for vehicle ${rental.licensePlate}`,
+      "Rejected a rental",
+      `Rental rejected for vehicle with license plate of ${rental.licensePlate}`,
       rentalId,
     );
     return res
@@ -305,8 +305,8 @@ async function cancelRental(req, res, next) {
     );
     await createActivity(
       rental.renterId,
-      "rental_cancelled",
-      `Rental cancelled for vehicle ${rental.licensePlate}`,
+      "Cancelled a rental",
+      `Rental cancelled for vehicle with license plate of${rental.licensePlate}`,
       rentalId,
     );
     return res
@@ -434,7 +434,6 @@ const getDashboardMetrics = async (req, res, next) => {
     next(error);
   }
 };
-
 
 module.exports = {
   createRental,
