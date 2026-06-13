@@ -5,14 +5,9 @@ import { useUserContext } from "./UserContext";
 const ActivityContext = createContext();
 
 const ActivityContextProvider = ({ children }) => {
-  const { currentUser } = useUserContext();
   const [activities, setActivities] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
-
-  useEffect(() => {
-    loadActivities();
-  }, [currentUser]);
 
   const loadActivities = async () => {
     try {

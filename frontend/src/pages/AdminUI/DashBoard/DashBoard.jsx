@@ -3,6 +3,7 @@ import styles from "./DashBoard.module.css";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import AdminComplaints from "../../../components/AdminComplaints/AdminComplaints";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
+import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
 
 const topData = [
   {
@@ -130,6 +131,10 @@ const DashBoard = () => {
             );
           })}
         </div>
+      </div>
+
+      <div className={styles.activitesContainer}>
+        <HomeMidCards title={"Recent Activity"} />
       </div>
 
       <div className={styles.bottomCardsContainer}>
