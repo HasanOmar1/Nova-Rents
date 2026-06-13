@@ -8,7 +8,8 @@ async function createNotification(userId, rentalId, type, title, message) {
 }
 
 async function getNotificationsByUserId(userId) {
-  const getNotificationsByUserId = `SELECT * FROM notifications WHERE userId = ? ORDER BY createdAt DESC`;
+  const getNotificationsByUserId = `SELECT notificationId , userId , rentalId , type , title , message, isRead , DATE_FORMAT(createdAt, '%d/%m/%Y %H:%i:%s') AS createdAt
+ FROM notifications WHERE userId = ? ORDER BY createdAt DESC`;
   const valuesOfgetNotificationsByUserId = [userId];
   const result = await doQuery(
     getNotificationsByUserId,
@@ -31,7 +32,7 @@ async function getUnreadNotificationsCount(userId) {
   return result[0];
 }
 
-async function checkIfNotificationExists(userId, rentalId , type) {
+async function checkIfNotificationExists(userId, rentalId, type) {
   const query = `
     SELECT notificationId
     FROM notifications
@@ -43,7 +44,6 @@ async function checkIfNotificationExists(userId, rentalId , type) {
   const result = await doQuery(query, valuesOfquery);
   return result.length > 0;
 }
-
 
 module.exports = {
   createNotification,
