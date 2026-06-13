@@ -35,6 +35,10 @@
   font-weight: bold;
 }
 
+.DashBoard .activitesContainer {
+  margin-bottom: 30px;
+}
+
 .DashBoard .bottomCardsContainer {
   display: flex;
   justify-content: space-between;

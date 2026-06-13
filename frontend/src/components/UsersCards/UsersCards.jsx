@@ -3,10 +3,10 @@ import styles from "./UsersCards.module.css";
 
 const UsersCards = ({ user, blockUser, unBlockUser }) => {
   const { loadActivities } = useActivityContext();
-  const handleUserAction = () => {
-    if (user.status === "active") blockUser(user.email);
-    if (user.status === "blocked") unBlockUser(user.email);
 
+  const handleUserAction = async () => {
+    if (user.status === "active") await blockUser(user.email);
+    if (user.status === "blocked") await unBlockUser(user.email);
     loadActivities();
   };
 
