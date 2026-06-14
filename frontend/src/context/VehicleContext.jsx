@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import { useActivityContext } from "./ActivityContext";
 
 const VehicleContext = createContext();
 
@@ -20,15 +21,18 @@ const VehicleContextProvider = ({ children }) => {
     models: [],
     types: [],
   });
+  const [allVehStats, setAllVehStats] = useState(null);
+  const { loadActivities } = useActivityContext();
 
   const getAllVehicles = async (filters = {}, page = 1) => {
     try {
       const response = await axios.get("/vehicles", {
-        params: { ...filters, page, limit: 9 },
+        params: { ...filters, page, limit: 5 },
       });
       setAllVehicles(response.data.vehicles);
       setAllVehPagination(response.data.pagination);
       setAvailableFilters(response.data.availableFilters);
+      setAllVehStats(response.data.allVehStats);
       setErrorMsg("");
     } catch (error) {
       console.log(error?.response?.data?.message);
@@ -58,6 +62,7 @@ const VehicleContextProvider = ({ children }) => {
       await axios.delete(`/vehicles/${licensePlate}`);
       getUserVehicles(pagination.currentPage || 1, currentStatus);
       setErrorMsg("");
+      loadActivities();
       return true;
     } catch (error) {
       setErrorMsg(error?.response?.data?.message);
@@ -103,6 +108,7 @@ const VehicleContextProvider = ({ children }) => {
       const response = await axios.post("/vehicles/add", vehData);
       await Promise.all([getAllVehicles(), getUserVehicles(1, currentStatus)]);
       setErrorMsg("");
+      loadActivities();
       return true;
     } catch (error) {
       console.log(error?.response.data?.message);
@@ -119,7 +125,8 @@ const VehicleContextProvider = ({ children }) => {
         getUserVehicles(pagination.currentPage || 1, currentStatus),
       ]);
 
-      console.log(response.data);
+      loadActivities();
+
       setErrorMsg("");
       return true;
     } catch (error) {
@@ -151,6 +158,7 @@ const VehicleContextProvider = ({ children }) => {
         pagination,
         allVehPagination,
         availableFilters,
+        allVehStats,
       }}
     >
       {children}

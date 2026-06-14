@@ -47,13 +47,14 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   } = useVehicleContext();
 
   const { getCities, cities, isLoading } = useGovApisContext();
-  const { loadActivities } = useActivityContext();
 
   useEffect(() => {
-    getBrands();
-    getVehType();
-    getCities();
-  }, []);
+    if (isOpen) {
+      if (!vehiclesBrands || vehiclesBrands.length === 0) getBrands();
+      if (!vehiclesType || vehiclesType.length === 0) getVehType();
+      if (!cities || cities.length === 0) getCities();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -161,7 +162,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     let isSuccess;
     if (vehicle) {
       isSuccess = await updateVehicle(formData.licensePlate, submitData);
-      loadActivities();
     } else {
       isSuccess = await addVehicle(submitData);
     }

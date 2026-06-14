@@ -441,7 +441,7 @@ const blockUserByEmail = async (req, res, next) => {
 
     await createActivity(
       req.session.user.userId,
-      "user_blocked",
+      "Blocked a user",
       `Blocked: ${email}`,
     );
 
@@ -475,7 +475,7 @@ const unblockUserByEmail = async (req, res, next) => {
     }
     await createActivity(
       req.session.user.userId,
-      "user_unblocked",
+      "Unblocked a user",
       `Unblocked: ${email}`,
     );
     res.send({
@@ -669,7 +669,7 @@ const updateUserProfile = async (req, res, next) => {
 
     await createActivity(
       currentUserId,
-      "profile_updated",
+      "Profile Updated",
       `Updated: ${updatedFields.join(", ")}`,
     );
 

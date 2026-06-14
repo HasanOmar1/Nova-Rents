@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import styles from "./Profile.module.css";
 import DocumentsCards from "../../../components/DocumentsCards/DocumentsCards";
 import { useUserContext } from "../../../context/UserContext";
+import { useActivityContext } from "../../../context/ActivityContext";
 
 const Profile = () => {
   const [editProfileClicked, setEditProfileClicked] = useState(false);
@@ -9,6 +10,7 @@ const Profile = () => {
 
   const { currentUser, updateProfile, errorMsg, setErrorMsg } =
     useUserContext();
+  const { loadActivities } = useActivityContext();
 
   const [inputsValues, setInputsValues] = useState({
     firstName: currentUser?.firstName || "",
@@ -87,6 +89,7 @@ const Profile = () => {
       setSuccessMsg("Profile updated successfully!");
       setEditProfileClicked(false);
       setInputsValues((prev) => ({ ...prev, password: "" }));
+      loadActivities();
     }
   };
 

@@ -140,9 +140,7 @@ const addVehicle = async (req, res, next) => {
      (licensePlate,fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const formattedExpirationDate = formatDateForInput(expirationDate);
-    // .toISOString()
-    // .split("T")[0];
+
     const values = [
       licensePlate,
       fuelType,
@@ -159,8 +157,8 @@ const addVehicle = async (req, res, next) => {
     await doQuery(insertQuery, values);
     await createActivity(
       userId,
-      "vehicle_added",
-      `Added new vehicle: ${licensePlate}`,
+      "Added new vehicle",
+      `Added new vehicle with license plate of ${licensePlate}`,
     );
     const newVehicle = await getVehicleByLicensePlate(licensePlate);
     res.status(STATUS_CODE.CREATED).json({
@@ -290,8 +288,8 @@ const deleteVehicle = async (req, res, next) => {
 
     await createActivity(
       userId,
-      "vehicle_deactivated",
-      `Deactivated vehicle: ${licensePlate}`,
+      "Vehicle Deactivation",
+      `Deactivated vehicle with license plate of ${licensePlate}`,
     );
 
     res.status(STATUS_CODE.OK).json({
@@ -422,8 +420,8 @@ const updateVehicle = async (req, res, next) => {
     if (updatedFields.length > 0) {
       await createActivity(
         req.session.user.userId,
-        "vehicle_updated",
-        `Updated vehicle ${licensePlate}: ${updatedFields.join(", ")}`,
+        "Updated a vehicle",
+        `Updated vehicle with license plate of ${licensePlate}: ${updatedFields.join(", ")}`,
       );
     }
 
@@ -446,15 +444,25 @@ const getAllVehicles = async (req, res, next) => {
       type,
       location,
       sort,
+      status,
       page = 1,
-      limit = 9,
+      limit = 5,
     } = req.query;
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const parsedLimit = parseInt(limit);
 
-    let whereClause = `WHERE v.status = 'available'`;
+    // 1. DYNAMIC STATUS FILTERING
+    let whereClause = `WHERE 1=1`;
     const values = [];
+
+    if (status && status !== "all") {
+      whereClause += ` AND v.status = ?`;
+      values.push(status);
+    } else if (!status) {
+      // Default to available for regular users visiting /vehicles
+      whereClause += ` AND v.status = 'available'`;
+    }
 
     if (brand) {
       whereClause += ` AND cb.brandName = ?`;
@@ -479,6 +487,7 @@ const getAllVehicles = async (req, res, next) => {
     if (sort === "year_desc") orderByClause = `ORDER BY v.year DESC`;
     if (sort === "year_asc") orderByClause = `ORDER BY v.year ASC`;
 
+    // 2. FETCH VEHICLES
     let query = `
       SELECT 
         v.licensePlate, v.fuelType, DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
@@ -500,6 +509,7 @@ const getAllVehicles = async (req, res, next) => {
     const queryValues = [...values, parsedLimit, offset];
     const vehicles = await doQuery(query, queryValues);
 
+    // 3. PAGINATION TOTAL
     const countQuery = `
       SELECT COUNT(*) as total
       FROM vehicles v
@@ -508,31 +518,42 @@ const getAllVehicles = async (req, res, next) => {
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
       ${whereClause}
     `;
-
     const countResult = await doQuery(countQuery, values);
     const totalVehicles = countResult[0].total;
     const totalPages = Math.ceil(totalVehicles / parsedLimit);
 
-    // 5. EXTRACT AVAILABLE DROPDOWN OPTIONS (Global)
+    // 4. GLOBAL STATS (For Top Cards)
+    const statsQuery = `
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available,
+        SUM(CASE WHEN status = 'rented' THEN 1 ELSE 0 END) as rented,
+        SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
+        SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
+      FROM vehicles
+    `;
+    const statsResult = await doQuery(statsQuery, []);
+
+    // 5. EXTRACT AVAILABLE DROPDOWN OPTIONS (Respecting Status)
     const optionsQuery = `
       SELECT DISTINCT v.address, cb.brandName, cm.modelName, ct.carTypeName
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
-      WHERE v.status = 'available'
+      ${status === "all" ? "" : whereClause}
     `;
-    const optionsData = await doQuery(optionsQuery, []);
+    const optionsData = await doQuery(
+      optionsQuery,
+      status === "all" ? [] : values,
+    );
 
     const modelsWithBrands = [];
     const seenModels = new Set();
     optionsData.forEach((row) => {
       if (!seenModels.has(row.modelName)) {
         seenModels.add(row.modelName);
-        modelsWithBrands.push({
-          model: row.modelName,
-          brand: row.brandName,
-        });
+        modelsWithBrands.push({ model: row.modelName, brand: row.brandName });
       }
     });
 
@@ -544,10 +565,11 @@ const getAllVehicles = async (req, res, next) => {
       types: [...new Set(optionsData.map((r) => r.carTypeName))],
     };
 
-    res.status(STATUS_CODE.OK).json({
+    res.status(200).json({
       message: "Vehicles fetched successfully",
       vehicles,
       availableFilters,
+      allVehStats: statsResult[0],
       pagination: {
         totalVehicles,
         totalPages,
@@ -638,8 +660,8 @@ async function updateVehicleStatus(req, res, next) {
     }
     await createActivity(
       req.session.user.userId,
-      "vehicle_status_updated",
-      `Updated vehicle status to ${status}`,
+      "Vehicle Status Update",
+      `Updated vehicle with license plate of ${licensePlate} status to ${status}`,
     );
     return res
       .status(STATUS_CODE.OK)

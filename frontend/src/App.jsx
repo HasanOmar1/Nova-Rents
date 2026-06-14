@@ -20,8 +20,6 @@ import RentsHistory from "./pages/UserUI/RentsHistory/RentsHistory";
 function App() {
   const { currentUser, isLoading } = useUserContext();
 
-  console.log(currentUser);
-
   if (isLoading) {
     return (
       <div
