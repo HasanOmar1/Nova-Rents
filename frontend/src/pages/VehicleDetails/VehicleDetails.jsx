@@ -61,7 +61,7 @@ const VehicleDetails = () => {
     setRentVehResponse("");
   };
   const ownerFullName = state.ownerFirstName + " " + state.ownerLastName;
-  
+
   const cardsData = [
     {
       title: "Daily rate + VAT",
@@ -176,11 +176,8 @@ const VehicleDetails = () => {
 
           <div className={`${styles.detailsContainer} ${styles.container}`}>
             <h4>Details</h4>
-            <p>
-              Premium listing for your graduation demo: structured sections,
-              predictable scan order, and no decorative noise.
-            </p>
-            <p>• Seats: 5</p>
+            <p>{state?.details}</p>
+            <p>• Seats: {state?.seats}</p>
           </div>
 
           <div className={`${styles.mapContainer} ${styles.container}`}>

@@ -114,6 +114,8 @@ const addVehicle = async (req, res, next) => {
       address,
       price,
       color,
+      details,
+      seats,
     } = vehicle;
 
     // const isVehicleNumberInGovIL =
@@ -128,7 +130,6 @@ const addVehicle = async (req, res, next) => {
       await getVehicleByLicensePlate(licensePlate);
 
     if (checkIfVehicleAlreadyExists) {
-      //  Wipe the files from the disk because the vehicle exists!
       clearFailedUploads(req.files);
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "License plate already exists!",
@@ -136,9 +137,9 @@ const addVehicle = async (req, res, next) => {
     }
 
     const insertQuery = `
-     INSERT INTO vehicles 
-     (licensePlate,fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO vehicles 
+      (licensePlate, fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId, details, seats)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -153,6 +154,8 @@ const addVehicle = async (req, res, next) => {
       color,
       modelId,
       userId,
+      details,
+      seats,
     ];
     await doQuery(insertQuery, values);
     await createActivity(
@@ -166,7 +169,6 @@ const addVehicle = async (req, res, next) => {
       vehicle: newVehicle,
     });
   } catch (error) {
-    // Wipe the files if the database query crashes for any reason!
     clearFailedUploads(req.files);
     next(error);
   }
@@ -189,6 +191,8 @@ const getVehicleById = async (req, res, next) => {
         v.color,
         v.status,
         v.ownerId,
+        v.details, 
+        v.seats,
 
         cm.modelId,
         cm.modelName,
@@ -299,6 +303,7 @@ const deleteVehicle = async (req, res, next) => {
     next(error);
   }
 };
+
 const updateVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
@@ -340,64 +345,39 @@ const updateVehicle = async (req, res, next) => {
       price,
       color,
       status,
+      details, // <-- ADDED
+      seats, // <-- ADDED
     } = mergedData;
 
     const oldExpirationDate = formatDateForInput(
       existingVehicle.expirationDate,
     );
-    // .toISOString()
-    // .split("T")[0];
-
     const newExpirationDate = formatDateForInput(expirationDate);
-    // .toISOString()
-    // .split("T")[0];
+
     const updatedFields = [];
 
-    if (Number(modelId) !== Number(existingVehicle.modelId)) {
+    if (Number(modelId) !== Number(existingVehicle.modelId))
       updatedFields.push("model");
-    }
-
-    if (fuelType !== existingVehicle.fuelType) {
-      updatedFields.push("fuel type");
-    }
-
-    if (newExpirationDate !== oldExpirationDate) {
+    if (fuelType !== existingVehicle.fuelType) updatedFields.push("fuel type");
+    if (newExpirationDate !== oldExpirationDate)
       updatedFields.push("expiration date");
-    }
-
-    if (image !== existingVehicle.image) {
-      updatedFields.push("image");
-    }
-
-    if (Number(year) !== Number(existingVehicle.year)) {
+    if (image !== existingVehicle.image) updatedFields.push("image");
+    if (Number(year) !== Number(existingVehicle.year))
       updatedFields.push("year");
-    }
-
-    if (Number(km) !== Number(existingVehicle.km)) {
+    if (Number(km) !== Number(existingVehicle.km))
       updatedFields.push("kilometers");
-    }
-
-    if (address !== existingVehicle.address) {
-      updatedFields.push("address");
-    }
-
-    if (Number(price) !== Number(existingVehicle.price)) {
+    if (address !== existingVehicle.address) updatedFields.push("address");
+    if (Number(price) !== Number(existingVehicle.price))
       updatedFields.push("price");
-    }
-
-    if (color !== existingVehicle.color) {
-      updatedFields.push("color");
-    }
-
-    if (status !== existingVehicle.status) {
-      updatedFields.push("status");
-    }
-    console.log(expirationDate);
-    console.log(existingVehicle.expirationDate);
+    if (color !== existingVehicle.color) updatedFields.push("color");
+    if (status !== existingVehicle.status) updatedFields.push("status");
+    if (details !== existingVehicle.details) updatedFields.push("details"); // <-- ADDED
+    if (Number(seats) !== Number(existingVehicle.seats))
+      updatedFields.push("seats"); // <-- ADDED
 
     const updateQuery = `
       UPDATE vehicles
-      SET modelId = ?, fuelType = ?,expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?, status = ?
+      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?, status = ?, details = ?, seats = ?
       WHERE licensePlate = ?
     `;
 
@@ -412,6 +392,8 @@ const updateVehicle = async (req, res, next) => {
       price,
       color,
       status,
+      details, // <-- ADDED
+      seats, // <-- ADDED
       licensePlate,
     ];
 
@@ -491,7 +473,7 @@ const getAllVehicles = async (req, res, next) => {
     let query = `
       SELECT 
         v.licensePlate, v.fuelType, DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
-        v.image, v.year, v.km, v.address, v.price, v.color, v.status, v.ownerId, v.createdAt,
+        v.image, v.year, v.km, v.address, v.price, v.color, v.status, v.ownerId, v.createdAt, v.details, v.seats,
         cm.modelId, cm.modelName, cb.brandId, cb.brandName, ct.carTypeId, ct.carTypeName,
         u.firstName AS ownerFirstName, u.lastName AS ownerLastName,
         u.email AS ownerEmail, u.phone AS ownerPhone,

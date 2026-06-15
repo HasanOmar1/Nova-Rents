@@ -17,6 +17,8 @@ const initialFormState = {
   address: "",
   expirationDate: "",
   status: "available",
+  details: "",
+  seats: "5",
   images: [],
 };
 
@@ -74,6 +76,8 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             ? formatDateForInput(vehicle.expirationDate)
             : "",
           status: vehicle.status || "available",
+          details: vehicle.details || "",
+          seats: vehicle.seats || "5",
           images: [],
         });
 
@@ -152,6 +156,8 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     submitData.append("address", formData.address);
     submitData.append("expirationDate", formData.expirationDate);
     submitData.append("status", formData.status);
+    submitData.append("details", formData.details);
+    submitData.append("seats", formData.seats);
 
     if (formData.images && formData.images.length > 0) {
       formData.images.forEach((file) => {
@@ -373,6 +379,38 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               value={formData.expirationDate}
               onChange={handleChange}
               required
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label>Number of Seats</label>
+            <input
+              type="number"
+              name="seats"
+              value={formData.seats}
+              onChange={handleChange}
+              required
+              min="1"
+              max="15"
+            />
+          </div>
+
+          <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+            <label>Vehicle Details & Description</label>
+            <textarea
+              name="details"
+              value={formData.details}
+              onChange={handleChange}
+              placeholder="Tell renters about the premium features, sound system, or driving experience..."
+              rows="4"
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "8px",
+                backgroundColor: "var(--input-bg)",
+                color: "white",
+                border: "var(--cards-border)",
+              }}
             />
           </div>
 
