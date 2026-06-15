@@ -87,18 +87,26 @@ const getAllUsers = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
-    // Get the search term and wrap it in % for the SQL LIKE operator
     const search = req.query.search || "";
     const searchTerm = `%${search}%`;
+    const status = req.query.status || "all";
+
+    let whereClause = `WHERE u.email LIKE ?`;
+    const queryParams = [searchTerm];
+
+    if (status !== "all") {
+      whereClause += ` AND u.status = ?`;
+      queryParams.push(status);
+    }
 
     const query = ` 
       SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.birthDate, u.role, u.status
       FROM users u
-      WHERE u.email LIKE ? 
+      ${whereClause}
       ORDER BY u.userId DESC
       LIMIT ? OFFSET ?
     `;
-    const users = await doQuery(query, [searchTerm, limit, offset]);
+    const users = await doQuery(query, [...queryParams, limit, offset]);
 
     const formattedUsers = users.map((user) => ({
       ...user,
@@ -107,8 +115,8 @@ const getAllUsers = async (req, res, next) => {
         : "N/A",
     }));
 
-    const countQuery = `SELECT COUNT(*) as totalCount FROM users WHERE email LIKE ?`;
-    const countResult = await doQuery(countQuery, [searchTerm]);
+    const countQuery = `SELECT COUNT(*) as totalCount FROM users u ${whereClause}`;
+    const countResult = await doQuery(countQuery, queryParams);
     const totalPages = Math.ceil(countResult[0].totalCount / limit);
 
     const statsQuery = `
@@ -120,6 +128,51 @@ const getAllUsers = async (req, res, next) => {
     `;
     const statsResult = await doQuery(statsQuery);
 
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const chartData = [];
+    const today = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      chartData.push({
+        month: monthNames[d.getMonth()],
+        monthIndex: d.getMonth() + 1,
+        year: d.getFullYear(),
+        users: 0,
+      });
+    }
+
+    const growthQuery = `
+      SELECT 
+        MONTH(createdAt) as monthIndex, 
+        YEAR(createdAt) as year, 
+        COUNT(*) as newUsers
+      FROM users
+      WHERE createdAt >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
+      GROUP BY YEAR(createdAt), MONTH(createdAt)
+    `;
+
+    const growthResult = await doQuery(growthQuery);
+    growthResult.forEach((row) => {
+      const monthObj = chartData.find(
+        (m) => m.monthIndex === row.monthIndex && m.year === row.year,
+      );
+      if (monthObj) monthObj.users = Number(row.newUsers) || 0;
+    });
+
     res.status(STATUS_CODE.OK).json({
       message: "Users fetched successfully",
       users: formattedUsers,
@@ -129,6 +182,7 @@ const getAllUsers = async (req, res, next) => {
         blocked: Number(statsResult[0].blocked) || 0,
         admins: Number(statsResult[0].admins) || 0,
       },
+      chartData,
       pagination: {
         totalUsers: countResult[0].totalCount,
         totalPages,

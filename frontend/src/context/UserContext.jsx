@@ -14,6 +14,7 @@ const UserContextProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentStatus, setCurrentStatus] = useState("all");
   const [currentSearch, setCurrentSearch] = useState("");
+  const [userChartData, setUserChartData] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -109,6 +110,7 @@ const UserContextProvider = ({ children }) => {
       const res = await axios.get(endpoint);
       setAllUsers(res.data.users);
       setPagination(res.data.pagination);
+      setUserChartData(res.data.chartData);
 
       if (res.data.stats) {
         setUsersStats(res.data.stats);
@@ -166,6 +168,7 @@ const UserContextProvider = ({ children }) => {
         blockUser,
         unBlockUser,
         usersStats,
+        userChartData,
       }}
     >
       {children}

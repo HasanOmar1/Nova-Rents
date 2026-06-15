@@ -149,7 +149,6 @@ function validateEmailInBody(email, res) {
 }
 
 function validateAndNormalizeVehicleCreate(req, res) {
-  // NEW: A tiny wrapper that clears images BEFORE sending the error back
   const handleError = (status, msg) => {
     clearFailedUploads(req.files);
     return sendValidationError(res, status, msg);
@@ -173,12 +172,12 @@ function validateAndNormalizeVehicleCreate(req, res) {
     address,
     price,
     color,
+    details,
+    seats,
   } = req.body;
 
   const uploadedFiles = req.files;
 
-  // We use sendValidationError directly here because if there are no files,
-  // there is nothing to clean up anyway!
   if (!uploadedFiles || uploadedFiles.length === 0) {
     return sendValidationError(
       res,
@@ -196,7 +195,9 @@ function validateAndNormalizeVehicleCreate(req, res) {
     !address ||
     price == null ||
     !color ||
-    modelId == null
+    modelId == null ||
+    !details || // <-- ADDED
+    seats == null // <-- ADDED
   ) {
     return handleError(STATUS_CODE.BAD_REQUEST, "All fields are required.");
   }
@@ -224,10 +225,14 @@ function validateAndNormalizeVehicleCreate(req, res) {
     return handleError(STATUS_CODE.BAD_REQUEST, "KM must be a number.");
   if (Number.isNaN(Number(price)))
     return handleError(STATUS_CODE.BAD_REQUEST, "Price must be a number.");
+  if (Number.isNaN(Number(seats)))
+    // <-- ADDED
+    return handleError(STATUS_CODE.BAD_REQUEST, "Seats must be a number.");
 
   const yearNum = Number(year);
   const kmNum = Number(km);
   const priceNum = Number(price);
+  const seatsNum = Number(seats); // <-- ADDED
   const currentYear = new Date().getFullYear();
 
   if (yearNum < 1900 || yearNum > currentYear + 1) {
@@ -240,6 +245,13 @@ function validateAndNormalizeVehicleCreate(req, res) {
     return handleError(
       STATUS_CODE.BAD_REQUEST,
       "Kilometers and Price cannot be negative.",
+    );
+  }
+  if (seatsNum < 1 || seatsNum > 15) {
+    // <-- ADDED SAFETY CHECK
+    return handleError(
+      STATUS_CODE.BAD_REQUEST,
+      "Seats must be between 1 and 15.",
     );
   }
 
@@ -255,10 +267,13 @@ function validateAndNormalizeVehicleCreate(req, res) {
       price: Number(priceNum),
       color,
       modelId,
+      details,
+      seats: seatsNum,
       image: imageJsonString,
     },
   };
 }
+
 function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   if (
     !validateAuthenticatedUser(
@@ -286,7 +301,9 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     address: body.address ?? existingVehicle.address,
     price: body.price ?? existingVehicle.price,
     color: body.color ?? existingVehicle.color,
-    status: body.status ?? existingVehicle.status, // <-- ADDED STATUS MERGE
+    status: body.status ?? existingVehicle.status,
+    details: body.details ?? existingVehicle.details, // <-- ADDED
+    seats: body.seats ?? existingVehicle.seats, // <-- ADDED
   };
 
   if (
@@ -299,7 +316,9 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     !merged.address ||
     merged.price == null ||
     !merged.color ||
-    !merged.status // <-- ADDED STATUS TO REQUIRED CHECK
+    !merged.status ||
+    !merged.details ||
+    merged.seats == null
   ) {
     return sendValidationError(
       res,
@@ -311,6 +330,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   const yearNum = Number(merged.year);
   const kmNum = Number(merged.km);
   const priceNum = Number(merged.price);
+  const seatsNum = Number(merged.seats);
   const currentYear = new Date().getFullYear();
 
   if (Number.isNaN(yearNum))
@@ -331,6 +351,12 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
       STATUS_CODE.BAD_REQUEST,
       "Price must be a number.",
     );
+  if (Number.isNaN(seatsNum))
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Seats must be a number.",
+    );
 
   if (yearNum < 1900 || yearNum > currentYear + 1) {
     return sendValidationError(
@@ -346,12 +372,20 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
       "Kilometers and Price cannot be negative.",
     );
   }
+  if (seatsNum < 1 || seatsNum > 15) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Seats must be between 1 and 15.",
+    );
+  }
 
   return {
     ...merged,
     year: yearNum,
     km: kmNum,
     price: priceNum,
+    seats: seatsNum, // <-- ADDED
   };
 }
 
