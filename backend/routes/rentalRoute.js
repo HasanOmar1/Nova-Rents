@@ -10,6 +10,7 @@ router.get(
   rentalController.getBookedDates,
 );
 router.get("/my-rentals", isAuthenticated, rentalController.getMyRentals);
+router.get("/history", isAuthenticated, rentalController.getRentalHistory);
 router.get(
   "/requests-for-my-vehicles",
   isAuthenticated,

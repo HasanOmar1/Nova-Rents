@@ -316,12 +316,35 @@ async function cancelRental(req, res, next) {
     next(error);
   }
 }
+
+const autoUpdateRentalStatuses = async () => {
+  try {
+    // 1. If approved and endDate has passed -> change to 'completed'
+    await doQuery(`
+      UPDATE rentals 
+      SET status = 'completed' 
+      WHERE status = 'approved' AND endDate < CURRENT_DATE()
+    `);
+
+    // 2. If still pending and startDate has passed -> change to 'cancelled'
+    await doQuery(`
+      UPDATE rentals 
+      SET status = 'cancelled' 
+      WHERE status = 'pending' AND startDate < CURRENT_DATE()
+    `);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getDashboardMetrics = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
 
     const userId = req.session.user.userId;
+
+    await autoUpdateRentalStatuses();
 
     // 1. Monthly Earnings (As a Host: SUM of your cars' approved rentals this month)
     const earningsQuery = `
@@ -435,6 +458,64 @@ const getDashboardMetrics = async (req, res, next) => {
   }
 };
 
+const getRentalHistory = async (req, res, next) => {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    const userId = req.session.user.userId;
+
+    await autoUpdateRentalStatuses();
+
+    const hostRequestsQuery = `
+      SELECT 
+        r.rentalId, r.startDate, r.endDate, r.totalPrice, r.status AS rentalStatus, r.createdAt AS rentalCreatedAt,
+        v.licensePlate, v.image, v.address, v.color, v.details, v.expirationDate, v.fuelType, v.km, v.price, v.seats, v.status, v.year, v.ownerId, v.createdAt,
+        cb.brandId, cb.brandName, 
+        cm.modelId, cm.modelName, 
+        ct.carTypeId, ct.carTypeName,
+        renter.firstName AS renterFirstName, renter.lastName AS renterLastName,
+        owner.firstName AS ownerFirstName, owner.lastName AS ownerLastName, owner.email AS ownerEmail, owner.phone AS ownerPhone
+      FROM rentals r
+      JOIN vehicles v ON r.licensePlate = v.licensePlate
+      JOIN carModels cm ON v.modelId = cm.modelId
+      JOIN carBrands cb ON cm.brandId = cb.brandId
+      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN users renter ON r.renterId = renter.userId
+      JOIN users owner ON v.ownerId = owner.userId
+      WHERE v.ownerId = ? AND r.status = 'pending'
+      ORDER BY r.createdAt ASC
+    `;
+
+    const myTripsQuery = `
+      SELECT 
+        r.rentalId, r.startDate, r.endDate, r.totalPrice, r.status AS rentalStatus, r.createdAt AS rentalCreatedAt,
+        v.licensePlate, v.image, v.address, v.color, v.details, v.expirationDate, v.fuelType, v.km, v.price, v.seats, v.status, v.year, v.ownerId, v.createdAt,
+        cb.brandId, cb.brandName, 
+        cm.modelId, cm.modelName, 
+        ct.carTypeId, ct.carTypeName,
+        owner.firstName AS ownerFirstName, owner.lastName AS ownerLastName, owner.email AS ownerEmail, owner.phone AS ownerPhone
+      FROM rentals r
+      JOIN vehicles v ON r.licensePlate = v.licensePlate
+      JOIN carModels cm ON v.modelId = cm.modelId
+      JOIN carBrands cb ON cm.brandId = cb.brandId
+      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN users owner ON v.ownerId = owner.userId
+      WHERE r.renterId = ?
+      ORDER BY r.startDate DESC
+    `;
+
+    const pendingRequests = await doQuery(hostRequestsQuery, [userId]);
+    const myTrips = await doQuery(myTripsQuery, [userId]);
+
+    res.status(200).json({
+      pendingRequests,
+      myTrips,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createRental,
   getMyRentals,
@@ -444,4 +525,5 @@ module.exports = {
   cancelRental,
   getBookedDates,
   getDashboardMetrics,
+  getRentalHistory,
 };

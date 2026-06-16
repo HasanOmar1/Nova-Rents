@@ -17,6 +17,12 @@ const RentContextProvider = ({ children }) => {
     chartData: [],
   });
 
+  const [rentalHistory, setRentalHistory] = useState({
+    pendingRequests: [],
+    myTrips: [],
+  });
+  const [historyLoading, setHistoryLoading] = useState(true);
+
   const rentVehicle = async (data) => {
     try {
       const res = await axios.post(`/rentals/rent`, data);
@@ -24,7 +30,7 @@ const RentContextProvider = ({ children }) => {
       loadActivities();
       return true;
     } catch (error) {
-      console.log(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
       setRentVehResponse(error?.response?.data?.message || "Booking failed.");
       return false;
     }
@@ -35,8 +41,8 @@ const RentContextProvider = ({ children }) => {
       const res = await axios.get(`/rentals/booked-dates/${licensePlate}`);
       setBookedRanges(res.data.bookedDates);
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setDateError(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
+      setDateError(error?.response?.data?.message);
     }
   };
 
@@ -46,6 +52,30 @@ const RentContextProvider = ({ children }) => {
       setMetrics(res.data);
     } catch (error) {
       console.log("Failed to fetch dashboard metrics", error);
+    }
+  };
+
+  const fetchRentalHistory = async () => {
+    try {
+      setHistoryLoading(true);
+      const res = await axios.get("/rentals/history");
+      setRentalHistory(res.data);
+    } catch (error) {
+      console.log("Failed to fetch rental history", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const respondToRequest = async (rentalId, action) => {
+    try {
+      await axios.put(`/rentals/${action}-rental/${rentalId}`);
+      await fetchRentalHistory();
+      loadActivities();
+      return true;
+    } catch (error) {
+      console.log(`Failed to ${action} rental`, error);
+      return false;
     }
   };
 
@@ -61,6 +91,10 @@ const RentContextProvider = ({ children }) => {
         setDateError,
         fetchDashboardMetrics,
         metrics,
+        fetchRentalHistory,
+        rentalHistory,
+        historyLoading,
+        respondToRequest,
       }}
     >
       {children}
@@ -69,5 +103,4 @@ const RentContextProvider = ({ children }) => {
 };
 
 export const useRentContext = () => useContext(RentContext);
-
 export default RentContextProvider;
