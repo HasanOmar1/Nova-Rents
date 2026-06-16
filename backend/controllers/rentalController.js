@@ -173,6 +173,9 @@ async function approveRental(req, res, next) {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
     const ownerId = req.session.user.userId;
+    const ownerName =
+      req.session.user.firstName + " " + req.session.user.lastName;
+
     const { rentalId } = req.params;
     const rental = await getRentalById(rentalId);
     if (!rental) {
@@ -201,7 +204,7 @@ async function approveRental(req, res, next) {
       rentalId,
       "rental_approved",
       "Rental Approved",
-      `Your rental has been approved by the owner ${ownerId}`,
+      `Your rental has been approved by the owner ${ownerName}`,
     );
     await createActivity(
       rental.renterId,
@@ -222,6 +225,9 @@ async function rejectRental(req, res, next) {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
     const ownerId = req.session.user.userId;
+    const ownerName =
+      req.session.user.firstName + " " + req.session.user.lastName;
+
     const { rentalId } = req.params;
     const rental = await getRentalById(rentalId);
     if (!rental) {
@@ -250,7 +256,7 @@ async function rejectRental(req, res, next) {
       rentalId,
       "rental_rejected",
       "Rental Rejected",
-      `Your rental has been rejected by the owner ${ownerId}`,
+      `Your rental has been rejected by the owner ${ownerName}`,
     );
     await createActivity(
       rental.renterId,
@@ -270,6 +276,9 @@ async function cancelRental(req, res, next) {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
     const renterId = req.session.user.userId;
+    const ownerName =
+      req.session.user.firstName + " " + req.session.user.lastName;
+
     const { rentalId } = req.params;
     const rental = await getRentalById(rentalId);
     console.log("session renterId:", renterId);
@@ -301,7 +310,7 @@ async function cancelRental(req, res, next) {
       rentalId,
       "rental_cancelled",
       "Rental Cancelled",
-      `Your rental has been cancelled by the renter ${renterId}`,
+      `Your rental has been cancelled by the renter ${ownerName}`,
     );
     await createActivity(
       rental.renterId,
