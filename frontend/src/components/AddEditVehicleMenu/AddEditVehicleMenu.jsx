@@ -44,6 +44,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     vehiclesType,
     addVehicle,
     updateVehicle,
+    updateVehicleStatus,
     errorMsg,
     setErrorMsg,
   } = useVehicleContext();
@@ -155,7 +156,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     submitData.append("price", formData.price);
     submitData.append("address", formData.address);
     submitData.append("expirationDate", formData.expirationDate);
-    submitData.append("status", formData.status);
     submitData.append("details", formData.details);
     submitData.append("seats", formData.seats);
 
@@ -167,7 +167,16 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
 
     let isSuccess;
     if (vehicle) {
+      const statusChanged = formData.status !== vehicle.status;
+
       isSuccess = await updateVehicle(formData.licensePlate, submitData);
+
+      if (isSuccess && statusChanged) {
+        isSuccess = await updateVehicleStatus(
+          formData.licensePlate,
+          formData.status,
+        );
+      }
     } else {
       isSuccess = await addVehicle(submitData);
     }

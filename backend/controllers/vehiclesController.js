@@ -17,7 +17,15 @@ const {
 } = require("../utils/handleUploads");
 const { createActivity } = require("../database/queries/activityQueries");
 const { formatDateForInput } = require("../utils/formatDate");
-
+const {
+  rejectPendingRentalsByLicensePlate,
+  cancelApprovedRentalsByLicensePlate,
+  getAffectedRentersByLicensePlate,
+  hasActiveRentalNow,
+} = require("../database/queries/rentalQueries");
+const {
+  createNotification,
+} = require("../database/queries/notificationQueries");
 const getUserVehicles = async (req, res, next) => {
   try {
     if (
@@ -632,19 +640,67 @@ const getAllCarTypes = async (req, res, next) => {
 };
 async function updateVehicleStatus(req, res, next) {
   try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
     const { licensePlate } = req.params;
     const { status } = req.body;
+
+    if (!status) {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Status is required" });
+        
+    }const existingVehicle = await getVehicleByLicensePlate(licensePlate);
+
+    if (!existingVehicle) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "Vehicle not found" });
+    }
+
+
+    if (status === "maintenance" && existingVehicle.status !== "maintenance") {
+      const hasActiveRental = await hasActiveRentalNow(licensePlate);
+
+      if (hasActiveRental) {
+        return res.status(STATUS_CODE.BAD_REQUEST).json({
+          message:
+            "Cannot put vehicle under maintenance while it has an active rental",
+        });
+      }
+
+      const affectedRentals =
+        await getAffectedRentersByLicensePlate(licensePlate);
+
+      await rejectPendingRentalsByLicensePlate(licensePlate);
+      await cancelApprovedRentalsByLicensePlate(licensePlate);
+
+      for (const rental of affectedRentals) {
+        await createNotification(
+          rental.renterId,
+          rental.rentalId,
+          "vehicle_maintenance",
+          "Vehicle Under Maintenance",
+          `Your rental for vehicle ${licensePlate} was cancelled because the vehicle is now under maintenance.`,
+        );
+      }
+    }
+
     const result = await updateVehicleConditions(licensePlate, status);
+
     if (result.affectedRows === 0) {
       return res
         .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
         .json({ message: "Failed to update vehicle status" });
     }
+
     await createActivity(
       req.session.user.userId,
       "Vehicle Status Update",
       `Updated vehicle with license plate of ${licensePlate} status to ${status}`,
     );
+
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Vehicle status updated successfully" });

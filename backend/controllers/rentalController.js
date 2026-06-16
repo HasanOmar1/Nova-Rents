@@ -13,6 +13,16 @@ const {
   getRequestsForMyVehiclesByOwnerId,
   getRentalById,
   updateRentalStatus,
+  getBookedDatesByPlate,
+  completeExpiredRentals,
+  cancelExpiredRentals,
+  getMonthlyEarningsByOwnerId,
+  getPendingRequestsCountByOwnerId,
+  getUpcomingTripsCountByUserId,
+  getPastTripsCountByRenterId,
+  getDashboardChartDataByUserId,
+  getPendingRentalRequestsForOwner,
+  getMyTripsHistoryByRenterId,
 } = require("../database/queries/rentalQueries");
 
 const {
@@ -106,25 +116,6 @@ async function createRental(req, res, next) {
   }
 }
 
-const getBookedDates = async (req, res, next) => {
-  try {
-    const { licensePlate } = req.params;
-
-    const query = `
-      SELECT startDate, endDate 
-      FROM rentals 
-      WHERE licensePlate = ? 
-      AND status IN ('pending', 'approved')
-      AND endDate >= CURDATE()
-    `;
-
-    const bookedDates = await doQuery(query, [licensePlate]);
-
-    res.status(STATUS_CODE.OK).json({ bookedDates });
-  } catch (error) {
-    next(error);
-  }
-};
 
 async function getMyRentals(req, res, next) {
   try {
@@ -163,6 +154,23 @@ async function getRequestsForMyVehicles(req, res, next) {
       count: requests.length,
       results: requests,
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getBookedDates(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    const { licensePlate } = req.params;
+    const bookedDates = await getBookedDatesByPlate(licensePlate);
+    if (bookedDates.length === 0) {
+      return res
+        .status(STATUS_CODE.OK)
+        .json({ message: "No booked dates found", bookedDates: [] });
+    }
+    return res.status(STATUS_CODE.OK).json({ bookedDates });
   } catch (error) {
     next(error);
   }
@@ -326,27 +334,15 @@ async function cancelRental(req, res, next) {
   }
 }
 
-const autoUpdateRentalStatuses = async () => {
-  try {
+async function autoUpdateRentalStatuses() {
     // 1. If approved and endDate has passed -> change to 'completed'
-    await doQuery(`
-      UPDATE rentals 
-      SET status = 'completed' 
-      WHERE status = 'approved' AND endDate < CURRENT_DATE()
-    `);
+    await completeExpiredRentals();
 
     // 2. If still pending and startDate has passed -> change to 'cancelled'
-    await doQuery(`
-      UPDATE rentals 
-      SET status = 'cancelled' 
-      WHERE status = 'pending' AND startDate < CURRENT_DATE()
-    `);
-  } catch (error) {
-    next(error);
-  }
-};
+    await cancelExpiredRentals();
+}
 
-const getDashboardMetrics = async (req, res, next) => {
+async function getDashboardMetrics(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
@@ -356,47 +352,16 @@ const getDashboardMetrics = async (req, res, next) => {
     await autoUpdateRentalStatuses();
 
     // 1. Monthly Earnings (As a Host: SUM of your cars' approved rentals this month)
-    const earningsQuery = `
-      SELECT COALESCE(SUM(r.totalPrice), 0) AS total
-      FROM rentals r
-      JOIN vehicles v ON r.licensePlate = v.licensePlate
-      WHERE v.ownerId = ? 
-      AND r.status = 'approved' 
-      AND MONTH(r.startDate) = MONTH(CURRENT_DATE()) 
-      AND YEAR(r.startDate) = YEAR(CURRENT_DATE())
-    `;
+    const earnings = await getMonthlyEarningsByOwnerId(userId);
 
     // 2. Pending Requests (As a Host: Count of pending requests on your cars)
-    const pendingQuery = `
-      SELECT COUNT(*) AS count
-      FROM rentals r
-      JOIN vehicles v ON r.licensePlate = v.licensePlate
-      WHERE v.ownerId = ? AND r.status = 'pending'
-    `;
+    const pending = await getPendingRequestsCountByOwnerId(userId);
 
     // 3. Upcoming Trips (As Host OR Renter: Approved trips starting today or later)
-    const upcomingQuery = `
-      SELECT COUNT(*) AS count
-      FROM rentals r
-      JOIN vehicles v ON r.licensePlate = v.licensePlate
-      WHERE (v.ownerId = ? OR r.renterId = ?) 
-      AND r.status = 'approved' 
-      AND r.startDate >= CURRENT_DATE()
-    `;
+    const upcoming = await getUpcomingTripsCountByUserId(userId);
 
     // 4. Trips Taken (As a Renter: Completed or past approved trips you took)
-    const pastTripsQuery = `
-      SELECT COUNT(*) AS count
-      FROM rentals 
-      WHERE renterId = ? 
-      AND status IN ('completed', 'approved') 
-      AND endDate < CURRENT_DATE()
-    `;
-
-    const earnings = await doQuery(earningsQuery, [userId]);
-    const pending = await doQuery(pendingQuery, [userId]);
-    const upcoming = await doQuery(upcomingQuery, [userId, userId]);
-    const pastTrips = await doQuery(pastTripsQuery, [userId]);
+    const pastTrips = await getPastTripsCountByRenterId(userId);
 
     const monthNames = [
       "Jan",
@@ -428,21 +393,7 @@ const getDashboardMetrics = async (req, res, next) => {
     }
 
     // Fetch Earnings & Trips Grouped by Month for the last 6 months
-    const chartQuery = `
-      SELECT 
-        MONTH(r.startDate) as monthIndex, 
-        YEAR(r.startDate) as year, 
-        SUM(CASE WHEN v.ownerId = ? THEN r.totalPrice ELSE 0 END) as totalEarnings,
-        COUNT(*) as totalTrips
-      FROM rentals r
-      JOIN vehicles v ON r.licensePlate = v.licensePlate
-      WHERE (v.ownerId = ? OR r.renterId = ?) 
-      AND r.status IN ('approved', 'completed')
-      AND r.startDate >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
-      GROUP BY YEAR(r.startDate), MONTH(r.startDate)
-    `;
-
-    const chartDbData = await doQuery(chartQuery, [userId, userId, userId]);
+    const chartDbData = await getDashboardChartDataByUserId(userId);
 
     // Merge database results into our 6-month array
     chartDbData.forEach((row) => {
@@ -475,53 +426,18 @@ const getRentalHistory = async (req, res, next) => {
 
     await autoUpdateRentalStatuses();
 
-    const hostRequestsQuery = `
-      SELECT 
-        r.rentalId, r.startDate, r.endDate, r.totalPrice, r.status AS rentalStatus, r.createdAt AS rentalCreatedAt,
-        v.licensePlate, v.image, v.address, v.color, v.details, v.expirationDate, v.fuelType, v.km, v.price, v.seats, v.status, v.year, v.ownerId, v.createdAt,
-        cb.brandId, cb.brandName, 
-        cm.modelId, cm.modelName, 
-        ct.carTypeId, ct.carTypeName,
-        renter.firstName AS renterFirstName, renter.lastName AS renterLastName,
-        owner.firstName AS ownerFirstName, owner.lastName AS ownerLastName, owner.email AS ownerEmail, owner.phone AS ownerPhone
-      FROM rentals r
-      JOIN vehicles v ON r.licensePlate = v.licensePlate
-      JOIN carModels cm ON v.modelId = cm.modelId
-      JOIN carBrands cb ON cm.brandId = cb.brandId
-      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
-      JOIN users renter ON r.renterId = renter.userId
-      JOIN users owner ON v.ownerId = owner.userId
-      WHERE v.ownerId = ? AND r.status = 'pending'
-      ORDER BY r.createdAt ASC
-    `;
+    const pendingRequests = await getPendingRentalRequestsForOwner(userId);
 
-    const myTripsQuery = `
-      SELECT 
-        r.rentalId, r.startDate, r.endDate, r.totalPrice, r.status AS rentalStatus, r.createdAt AS rentalCreatedAt,
-        v.licensePlate, v.image, v.address, v.color, v.details, v.expirationDate, v.fuelType, v.km, v.price, v.seats, v.status, v.year, v.ownerId, v.createdAt,
-        cb.brandId, cb.brandName, 
-        cm.modelId, cm.modelName, 
-        ct.carTypeId, ct.carTypeName,
-        owner.firstName AS ownerFirstName, owner.lastName AS ownerLastName, owner.email AS ownerEmail, owner.phone AS ownerPhone
-      FROM rentals r
-      JOIN vehicles v ON r.licensePlate = v.licensePlate
-      JOIN carModels cm ON v.modelId = cm.modelId
-      JOIN carBrands cb ON cm.brandId = cb.brandId
-      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
-      JOIN users owner ON v.ownerId = owner.userId
-      WHERE r.renterId = ?
-      ORDER BY r.startDate DESC
-    `;
+    const myTrips = await getMyTripsHistoryByRenterId(userId);
 
-    const pendingRequests = await doQuery(hostRequestsQuery, [userId]);
-    const myTrips = await doQuery(myTripsQuery, [userId]);
-
-    res.status(200).json({
+    return res.status(STATUS_CODE.OK).json({
+      message: "Rental history fetched successfully",
+      count: pendingRequests.length + myTrips.length,
       pendingRequests,
       myTrips,
     });
   } catch (error) {
-    next(error);
+    next(error);  
   }
 };
 
