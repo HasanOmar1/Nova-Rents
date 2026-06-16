@@ -1,0 +1,226 @@
+.RentalDashboard .header {
+  margin-bottom: 40px;
+}
+
+.RentalDashboard .header h1 {
+  font-size: 2.2rem;
+  margin-bottom: 5px;
+}
+
+.RentalDashboard .header p {
+  color: var(--gray);
+  font-weight: 500;
+}
+
+.RentalDashboard .section {
+  margin-bottom: 40px;
+}
+
+.RentalDashboard .section h2 {
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.RentalDashboard .divider {
+  border: none;
+  border-top: var(--cards-border);
+  margin: 40px 0;
+}
+
+.RentalDashboard .emptyMsg {
+  color: var(--gray);
+  font-style: italic;
+  background-color: var(--bg-gray);
+  padding: 20px;
+  border-radius: 12px;
+  border: var(--cards-border);
+  text-align: center;
+}
+
+.RentalDashboard .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.RentalDashboard .card {
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.RentalDashboard .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.RentalDashboard .carImg {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-bottom: var(--cards-border);
+}
+
+.RentalDashboard .cardContent {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.RentalDashboard .cardContent h3 {
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+  color: #fff;
+}
+
+.RentalDashboard .plateText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gray);
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.RentalDashboard .imageWrapper {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.RentalDashboard .imageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  gap: 8px;
+  font-weight: bold;
+}
+
+.RentalDashboard .imageWrapper:hover .imageOverlay {
+  opacity: 1;
+}
+
+.RentalDashboard .detailsBtn {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  background-color: transparent;
+  color: var(--icons-color);
+  border: 1px solid rgba(167, 210, 235, 0.4);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.RentalDashboard .detailsBtn:hover {
+  background-color: rgba(167, 210, 235, 0.1);
+  border-color: var(--icons-color);
+}
+
+.RentalDashboard .openModalBtn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: auto;
+}
+
+.RentalDashboard .openModalBtn:hover {
+  background-color: #2563eb;
+}
+
+.RentalDashboard .paginationWrapper {
+  margin-top: 30px;
+  width: 100%;
+}
+
+.RentalDashboard .sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.RentalDashboard .sectionHeader h2 {
+  margin-bottom: 0;
+}
+
+.RentalDashboard .tripCounters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.RentalDashboard .counterBadge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.RentalDashboard .counterBadge.completed {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.RentalDashboard .counterBadge.pending {
+  background-color: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.RentalDashboard .counterBadge.rejected,
+.RentalDashboard .counterBadge.cancelled {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .RentalDashboard .grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+
+  .RentalDashboard .header h1 {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .RentalDashboard .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -80,7 +80,7 @@ const Header = ({ page }) => {
                       <div className={styles.moreTabsContainer}>
                         <Link
                           className={styles.rentsButton}
-                          to={"/rentsHistory"}
+                          to={"/RentalDashboard"}
                           onClick={() => setAreMoreTabsOpen(false)}
                         >
                           <History className={` ${styles.iconSmall} icon `} />
