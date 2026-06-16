@@ -7,6 +7,7 @@ import { parseImgs } from "../../../utils/parseImgs";
 import Pagination from "../../../components/Pagination/Pagination";
 import RentalRequestsModal from "../../../components/RentalRequestsModal/RentalRequestsModal";
 
+// takes an object and returns an array of the object values
 const groupByVehicle = (rentalsArray) => {
   const groupedObj = {};
 
@@ -116,7 +117,7 @@ const RentalDashboard = () => {
     (t) => t.rentalStatus === "pending",
   ).length;
   const rejectedCount = myTrips.filter(
-    (t) => t.rentalStatus === "rejected" || t.rentalStatus === "declined",
+    (t) => t.rentalStatus === "rejected",
   ).length;
   const cancelledCount = myTrips.filter(
     (t) => t.rentalStatus === "cancelled",
