@@ -135,6 +135,26 @@ const VehicleContextProvider = ({ children }) => {
       return false;
     }
   };
+  const updateVehicleStatus = async (licensePlate, status) => {
+    try {
+      await axios.put(`/vehicles/update-vehicle-status/${licensePlate}`, {
+        status,
+      });
+
+      await Promise.all([
+        getAllVehicles(),
+        getUserVehicles(pagination.currentPage || 1, currentStatus),
+      ]);
+
+      loadActivities();
+      setErrorMsg("");
+      return true;
+    } catch (error) {
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
+      return false;
+    }
+  };
 
   return (
     <VehicleContext.Provider
@@ -159,6 +179,7 @@ const VehicleContextProvider = ({ children }) => {
         allVehPagination,
         availableFilters,
         allVehStats,
+        updateVehicleStatus,
       }}
     >
       {children}
