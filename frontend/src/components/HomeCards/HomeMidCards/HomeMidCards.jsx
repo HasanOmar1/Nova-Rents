@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./HomeMidCards.module.css";
 import HomeMidCardsData from "./HomeMidCardsData";
 import { useNotificationContext } from "../../../context/NotificationContext";
@@ -10,11 +10,28 @@ const HomeMidCards = ({ title }) => {
   const { activities, activityLoading } = useActivityContext();
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [filter, setFilter] = useState("all"); // <-- NEW: Filter state
   const itemsPerPage = 3;
 
   const isActivity = title === "Recent Activity";
   const isLoading = isActivity ? activityLoading : loading;
-  const dataList = isActivity ? activities : notifications;
+
+  // --- NEW: Filter notifications before pagination ---
+  let rawDataList = isActivity ? activities : notifications;
+  let dataList = rawDataList;
+
+  if (!isActivity) {
+    if (filter === "read") {
+      dataList = notifications.filter((n) => n.isRead === 1);
+    } else if (filter === "unread") {
+      dataList = notifications.filter((n) => n.isRead === 0);
+    }
+  }
+
+  // Reset to page 1 if filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
 
   const totalPages = Math.ceil(dataList.length / itemsPerPage);
   const currentItems = dataList.slice(
@@ -32,14 +49,30 @@ const HomeMidCards = ({ title }) => {
 
   return (
     <div className={styles.HomeMidCards}>
-      <h4 className={styles.cardHeaderTitle}>{title}</h4>
+      {/* --- UPDATED HEADER WITH DROPDOWN --- */}
+      <div className={styles.headerRow}>
+        <h4 className={styles.cardHeaderTitle}>{title}</h4>
+
+        {!isActivity && (
+          <select
+            className={styles.filterSelect}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            <option value="all">All</option>
+            <option value="unread">Unread</option>
+            <option value="read">Read</option>
+          </select>
+        )}
+      </div>
 
       <div className={styles.listContainer}>
         {isLoading ? (
           <p className={styles.emptyMsg}>Loading {title.toLowerCase()}...</p>
         ) : dataList.length === 0 ? (
           <p className={styles.emptyMsg}>
-            You don't have {title.toLowerCase()} yet.
+            You don't have any {filter !== "all" && !isActivity ? filter : ""}{" "}
+            {title.toLowerCase()} yet.
           </p>
         ) : (
           currentItems.map((item) => {
