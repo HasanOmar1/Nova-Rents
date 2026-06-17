@@ -10,7 +10,7 @@ const HomeMidCards = ({ title }) => {
   const { activities, activityLoading } = useActivityContext();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [filter, setFilter] = useState("all"); // <-- NEW: Filter state
+  const [filter, setFilter] = useState("all");
   const itemsPerPage = 3;
 
   const isActivity = title === "Recent Activity";
@@ -28,7 +28,6 @@ const HomeMidCards = ({ title }) => {
     }
   }
 
-  // Reset to page 1 if filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [filter]);
@@ -49,7 +48,6 @@ const HomeMidCards = ({ title }) => {
 
   return (
     <div className={styles.HomeMidCards}>
-      {/* --- UPDATED HEADER WITH DROPDOWN --- */}
       <div className={styles.headerRow}>
         <h4 className={styles.cardHeaderTitle}>{title}</h4>
 
