@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom"; // <-- Imported useNavigate
 import styles from "./RentalRequestsModal.module.css";
-import { X, Calendar, CheckCircle, XCircle } from "lucide-react";
+import { X, Calendar, CheckCircle, XCircle, ExternalLink } from "lucide-react"; // <-- Added ExternalLink
 
 const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString("en-GB", {
@@ -19,6 +20,7 @@ const RentalRequestsModal = ({
 }) => {
   const dialogRef = useRef(null);
   const [tripFilter, setTripFilter] = useState("all");
+  const navigate = useNavigate(); // <-- Initialized useNavigate
 
   useEffect(() => {
     if (isOpen) {
@@ -115,12 +117,29 @@ const RentalRequestsModal = ({
           filteredRentals.map((rental) => (
             <div key={rental.rentalId} className={styles.rentalItem}>
               <div className={styles.itemHeader}>
-                <p className={styles.renterName}>
-                  {isPendingMode ? "Requested by:" : "Rented by:"}{" "}
-                  <strong>
-                    {rental.renterFirstName} {rental.renterLastName}
-                  </strong>
-                </p>
+                {/* --- UPDATED: Renter Name + User Stats Button --- */}
+                <div className={styles.renterInfoGroup}>
+                  <p className={styles.renterName}>
+                    {isPendingMode ? "Requested by:" : "Rented by:"}{" "}
+                    <strong>
+                      {rental.renterFirstName} {rental.renterLastName}
+                    </strong>
+                  </p>
+
+                  {isPendingMode && rental.renterEmail && (
+                    <button
+                      className={styles.viewUserBtn}
+                      onClick={() =>
+                        navigate(`/userStats/${rental.renterEmail}`, {
+                          state: rental,
+                        })
+                      }
+                    >
+                      <ExternalLink size={14} /> View Profile
+                    </button>
+                  )}
+                </div>
+
                 {!isPendingMode && (
                   <span
                     className={`${styles.statusBadge} ${styles[rental.rentalStatus]}`}

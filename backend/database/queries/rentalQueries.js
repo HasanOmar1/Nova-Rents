@@ -223,6 +223,7 @@ async function getPendingRentalRequestsForOwner(ownerId) {
       ct.carTypeId, ct.carTypeName,
       renter.firstName AS renterFirstName,
       renter.lastName AS renterLastName,
+      renter.email AS renterEmail,
       owner.firstName AS ownerFirstName,
       owner.lastName AS ownerLastName,
       owner.email AS ownerEmail,

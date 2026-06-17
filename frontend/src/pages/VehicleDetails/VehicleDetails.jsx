@@ -1,6 +1,11 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 import styles from "./VehicleDetails.module.css";
-import { AlertTriangle, MapPin, CalendarRange } from "lucide-react";
+import {
+  AlertTriangle,
+  MapPin,
+  CalendarRange,
+  ExternalLink,
+} from "lucide-react";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
 import { parseImgs } from "../../utils/parseImgs";
@@ -60,6 +65,7 @@ const VehicleDetails = () => {
     setIsBookingModalOpen(false);
     setRentVehResponse("");
   };
+
   const ownerFullName = state.ownerFirstName + " " + state.ownerLastName;
 
   const cardsData = [
@@ -88,7 +94,20 @@ const VehicleDetails = () => {
     },
     {
       title: "Owner",
-      value: ownerFullName,
+      value: (
+        <div className={styles.ownerLinkContainer}>
+          <span>{ownerFullName}</span>
+          {/* ---> NEW: View Profile Link <--- */}
+          {state.ownerEmail && (
+            <Link
+              to={`/userStats/${state.ownerEmail}`}
+              className={styles.viewProfileLink}
+            >
+              <ExternalLink size={12} /> View Profile
+            </Link>
+          )}
+        </div>
+      ),
     },
   ];
 
