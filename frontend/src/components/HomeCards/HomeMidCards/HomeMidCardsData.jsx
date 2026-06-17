@@ -4,9 +4,11 @@ const HomeMidCardsData = ({ title, data, date }) => {
   return (
     <div className={styles.dataContainer}>
       <div className={styles.data}>
-        <p className={styles.dataTitle}>{title}</p>
+        <p className={styles.dataTitle}>
+          {title} • <span className={styles.date}>{date}</span>
+        </p>
         <p className={styles.description}>
-          {data} <span className={styles.dateText}>• {date}</span>
+          {data} <span className={styles.dateText}></span>
         </p>
       </div>
     </div>

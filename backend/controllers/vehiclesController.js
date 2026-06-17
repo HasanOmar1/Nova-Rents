@@ -435,6 +435,7 @@ const getAllVehicles = async (req, res, next) => {
       location,
       sort,
       status,
+      seats,
       page = 1,
       limit = 5,
     } = req.query;
@@ -471,11 +472,18 @@ const getAllVehicles = async (req, res, next) => {
       values.push(`%${location}%`);
     }
 
+    if (seats) {
+      whereClause += ` AND v.seats = ?`;
+      values.push(seats);
+    }
+
     let orderByClause = `ORDER BY v.createdAt DESC`;
     if (sort === "price_asc") orderByClause = `ORDER BY v.price ASC`;
     if (sort === "price_desc") orderByClause = `ORDER BY v.price DESC`;
     if (sort === "year_desc") orderByClause = `ORDER BY v.year DESC`;
     if (sort === "year_asc") orderByClause = `ORDER BY v.year ASC`;
+    if (sort === "seats_desc") orderByClause = `ORDER BY v.seats DESC`;
+    if (sort === "seats_asc") orderByClause = `ORDER BY v.seats ASC`;
 
     // 2. FETCH VEHICLES
     let query = `
@@ -524,9 +532,9 @@ const getAllVehicles = async (req, res, next) => {
     `;
     const statsResult = await doQuery(statsQuery, []);
 
-    // 5. EXTRACT AVAILABLE DROPDOWN OPTIONS (Respecting Status)
+    // EXTRACT AVAILABLE DROPDOWN OPTIONS
     const optionsQuery = `
-      SELECT DISTINCT v.address, cb.brandName, cm.modelName, ct.carTypeName
+      SELECT DISTINCT v.address, v.seats, cb.brandName, cm.modelName, ct.carTypeName
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
@@ -650,15 +658,14 @@ async function updateVehicleStatus(req, res, next) {
       return res
         .status(STATUS_CODE.BAD_REQUEST)
         .json({ message: "Status is required" });
-        
-    }const existingVehicle = await getVehicleByLicensePlate(licensePlate);
+    }
+    const existingVehicle = await getVehicleByLicensePlate(licensePlate);
 
     if (!existingVehicle) {
       return res
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "Vehicle not found" });
     }
-
 
     if (status === "maintenance" && existingVehicle.status !== "maintenance") {
       const hasActiveRental = await hasActiveRentalNow(licensePlate);

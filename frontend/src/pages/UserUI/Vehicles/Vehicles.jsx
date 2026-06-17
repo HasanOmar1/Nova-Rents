@@ -1,9 +1,9 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import styles from "./Vehicles.module.css";
 import VehiclesCards from "../../../components/VehiclesCards/VehiclesCards";
 import { Link } from "react-router-dom";
 import { useVehicleContext } from "../../../context/VehicleContext";
-import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import Pagination from "../../../components/Pagination/Pagination";
 
 const Vehicles = () => {
@@ -11,107 +11,141 @@ const Vehicles = () => {
   const [filterModel, setFilterModel] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
+  const [filterSeats, setFilterSeats] = useState(""); // <-- NEW STATE
   const [sortOption, setSortOption] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const { getAllVehicles, allVehicles, allVehPagination, availableFilters } =
     useVehicleContext();
 
-  const displayedBrands = useMemo(() => {
-    if (!availableFilters.combinations) return availableFilters.brands || [];
-    return [
-      ...new Set(
-        availableFilters.combinations
-          .filter((c) => {
-            const matchModel = filterModel ? c.modelName === filterModel : true;
-            const matchType = filterType ? c.carTypeName === filterType : true;
-            const matchLocation = filterLocation
-              ? c.address === filterLocation
-              : true;
-            return matchModel && matchType && matchLocation;
-          })
-          .map((c) => c.brandName),
-      ),
-    ];
-  }, [
-    filterModel,
-    filterType,
-    filterLocation,
-    availableFilters.combinations,
-    availableFilters.brands,
-  ]);
+  const combinations = availableFilters?.combinations || [];
 
-  const displayedModels = useMemo(() => {
-    if (!availableFilters.combinations)
-      return availableFilters.models?.map((m) => m.model) || [];
-    return [
-      ...new Set(
-        availableFilters.combinations
-          .filter((c) => {
-            const matchBrand = filterBrand ? c.brandName === filterBrand : true;
-            const matchType = filterType ? c.carTypeName === filterType : true;
-            const matchLocation = filterLocation
-              ? c.address === filterLocation
-              : true;
-            return matchBrand && matchType && matchLocation;
-          })
-          .map((c) => c.modelName),
-      ),
-    ];
-  }, [
-    filterBrand,
-    filterType,
-    filterLocation,
-    availableFilters.combinations,
-    availableFilters.models,
-  ]);
+  const displayedBrands =
+    combinations.length > 0
+      ? [
+          ...new Set(
+            combinations
+              .filter((c) => {
+                const matchModel = filterModel
+                  ? c.modelName === filterModel
+                  : true;
+                const matchType = filterType
+                  ? c.carTypeName === filterType
+                  : true;
+                const matchLocation = filterLocation
+                  ? c.address === filterLocation
+                  : true;
+                const matchSeats = filterSeats
+                  ? String(c.seats) === String(filterSeats)
+                  : true;
+                return matchModel && matchType && matchLocation && matchSeats;
+              })
+              .map((c) => c.brandName),
+          ),
+        ]
+      : availableFilters?.brands || [];
 
-  const displayedTypes = useMemo(() => {
-    if (!availableFilters.combinations) return availableFilters.types || [];
-    return [
-      ...new Set(
-        availableFilters.combinations
-          .filter((c) => {
-            const matchBrand = filterBrand ? c.brandName === filterBrand : true;
-            const matchModel = filterModel ? c.modelName === filterModel : true;
-            const matchLocation = filterLocation
-              ? c.address === filterLocation
-              : true;
-            return matchBrand && matchModel && matchLocation;
-          })
-          .map((c) => c.carTypeName),
-      ),
-    ];
-  }, [
-    filterBrand,
-    filterModel,
-    filterLocation,
-    availableFilters.combinations,
-    availableFilters.types,
-  ]);
+  const displayedModels =
+    combinations.length > 0
+      ? [
+          ...new Set(
+            combinations
+              .filter((c) => {
+                const matchBrand = filterBrand
+                  ? c.brandName === filterBrand
+                  : true;
+                const matchType = filterType
+                  ? c.carTypeName === filterType
+                  : true;
+                const matchLocation = filterLocation
+                  ? c.address === filterLocation
+                  : true;
+                const matchSeats = filterSeats
+                  ? String(c.seats) === String(filterSeats)
+                  : true;
+                return matchBrand && matchType && matchLocation && matchSeats;
+              })
+              .map((c) => c.modelName),
+          ),
+        ]
+      : availableFilters?.models?.map((m) => m.model) || [];
 
-  const displayedLocations = useMemo(() => {
-    if (!availableFilters.combinations) return availableFilters.locations || [];
-    return [
-      ...new Set(
-        availableFilters.combinations
-          .filter((c) => {
-            const matchBrand = filterBrand ? c.brandName === filterBrand : true;
-            const matchModel = filterModel ? c.modelName === filterModel : true;
-            const matchType = filterType ? c.carTypeName === filterType : true;
-            return matchBrand && matchModel && matchType;
-          })
-          .map((c) => c.address),
-      ),
-    ];
-  }, [
-    filterBrand,
-    filterModel,
-    filterType,
-    availableFilters.combinations,
-    availableFilters.locations,
-  ]);
+  const displayedTypes =
+    combinations.length > 0
+      ? [
+          ...new Set(
+            combinations
+              .filter((c) => {
+                const matchBrand = filterBrand
+                  ? c.brandName === filterBrand
+                  : true;
+                const matchModel = filterModel
+                  ? c.modelName === filterModel
+                  : true;
+                const matchLocation = filterLocation
+                  ? c.address === filterLocation
+                  : true;
+                const matchSeats = filterSeats
+                  ? String(c.seats) === String(filterSeats)
+                  : true;
+                return matchBrand && matchModel && matchLocation && matchSeats;
+              })
+              .map((c) => c.carTypeName),
+          ),
+        ]
+      : availableFilters?.types || [];
 
+  const displayedLocations =
+    combinations.length > 0
+      ? [
+          ...new Set(
+            combinations
+              .filter((c) => {
+                const matchBrand = filterBrand
+                  ? c.brandName === filterBrand
+                  : true;
+                const matchModel = filterModel
+                  ? c.modelName === filterModel
+                  : true;
+                const matchType = filterType
+                  ? c.carTypeName === filterType
+                  : true;
+                const matchSeats = filterSeats
+                  ? String(c.seats) === String(filterSeats)
+                  : true;
+                return matchBrand && matchModel && matchType && matchSeats;
+              })
+              .map((c) => c.address),
+          ),
+        ]
+      : availableFilters?.locations || [];
+
+  const displayedSeats =
+    combinations.length > 0
+      ? [
+          ...new Set(
+            combinations
+              .filter((c) => {
+                const matchBrand = filterBrand
+                  ? c.brandName === filterBrand
+                  : true;
+                const matchModel = filterModel
+                  ? c.modelName === filterModel
+                  : true;
+                const matchType = filterType
+                  ? c.carTypeName === filterType
+                  : true;
+                const matchLocation = filterLocation
+                  ? c.address === filterLocation
+                  : true;
+                return matchBrand && matchModel && matchType && matchLocation;
+              })
+              .map((c) => c.seats),
+          ),
+        ].sort((a, b) => a - b) // Sort seats numerically
+      : [2, 4, 5, 7, 8, 9]; // Fallback defaults
+
+  // --- Auto-clear invalid filters ---
   useEffect(() => {
     if (!availableFilters || !availableFilters.combinations) return;
 
@@ -122,24 +156,30 @@ const Vehicles = () => {
     if (filterType && !displayedTypes.includes(filterType)) setFilterType("");
     if (filterLocation && !displayedLocations.includes(filterLocation))
       setFilterLocation("");
+    if (filterSeats && !displayedSeats.includes(Number(filterSeats)))
+      setFilterSeats("");
   }, [
     filterBrand,
     filterModel,
     filterType,
     filterLocation,
+    filterSeats,
     displayedBrands,
     displayedModels,
     displayedTypes,
     displayedLocations,
+    displayedSeats,
     availableFilters,
   ]);
 
+  // --- Fetch Data ---
   useEffect(() => {
     const filters = {
       brand: filterBrand,
       model: filterModel,
       type: filterType,
       location: filterLocation,
+      seats: filterSeats, // <-- NEW
       sort: sortOption,
     };
 
@@ -149,6 +189,7 @@ const Vehicles = () => {
     filterModel,
     filterType,
     filterLocation,
+    filterSeats,
     sortOption,
     currentPage,
   ]);
@@ -170,12 +211,18 @@ const Vehicles = () => {
     setFilterModel("");
     setFilterType("");
     setFilterLocation("");
+    setFilterSeats(""); // <-- NEW
     setSortOption("");
     setCurrentPage(1);
   };
 
   const isFilterActive =
-    filterBrand || filterModel || filterType || filterLocation || sortOption;
+    filterBrand ||
+    filterModel ||
+    filterType ||
+    filterLocation ||
+    filterSeats ||
+    sortOption;
 
   return (
     <div className={`${styles.Vehicles} page`}>
@@ -207,6 +254,7 @@ const Vehicles = () => {
                 </option>
               ))}
             </select>
+
             {/* 2. MODEL */}
             <select
               value={filterModel}
@@ -222,6 +270,7 @@ const Vehicles = () => {
                 </option>
               ))}
             </select>
+
             {/* 3. TYPE */}
             <select
               value={filterType}
@@ -237,6 +286,7 @@ const Vehicles = () => {
                 </option>
               ))}
             </select>
+
             {/* 4. LOCATION */}
             <select
               value={filterLocation}
@@ -252,7 +302,24 @@ const Vehicles = () => {
                 </option>
               ))}
             </select>
-            {/* 5. SORTING */}
+
+            {/* 5. SEATS (NEW) */}
+            <select
+              value={filterSeats}
+              onChange={(e) => {
+                setFilterSeats(e.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="">All Seats</option>
+              {displayedSeats.map((seatNum) => (
+                <option key={seatNum} value={seatNum}>
+                  {seatNum} Seats
+                </option>
+              ))}
+            </select>
+
+            {/* 6. SORTING */}
             <select
               value={sortOption}
               onChange={(e) => {
@@ -265,7 +332,10 @@ const Vehicles = () => {
               <option value="price_desc">Price: High to Low</option>
               <option value="year_desc">Year: Newest</option>
               <option value="year_asc">Year: Oldest</option>
+              <option value="seats_desc">Seats: Most to Least</option>
+              <option value="seats_asc">Seats: Least to Most</option>
             </select>
+
             <div className={styles.filterActions}>
               <button
                 className={styles.resetBtn}
