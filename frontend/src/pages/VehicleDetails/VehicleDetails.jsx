@@ -151,7 +151,7 @@ const VehicleDetails = () => {
                   </p>
                 </div>
 
-                {!hideBooking && (
+                {!hideBooking && state?.status === "available" && (
                   <button
                     className={styles.launchBookingBtn}
                     onClick={() => setIsBookingModalOpen(true)}

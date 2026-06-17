@@ -11,7 +11,7 @@ const Vehicles = () => {
   const [filterModel, setFilterModel] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
-  const [filterSeats, setFilterSeats] = useState(""); // <-- NEW STATE
+  const [filterSeats, setFilterSeats] = useState("");
   const [sortOption, setSortOption] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 

@@ -1,0 +1,310 @@
+.UserStats {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.UserStats .backBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--icons-color);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+  padding: 0;
+  margin-bottom: 10px;
+  transition: opacity 0.2s ease;
+}
+
+.UserStats .backBtn:hover {
+  opacity: 0.8;
+}
+
+.UserStats .error {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* =========================================
+   HEADER & USER DETAILS
+   ========================================= */
+.UserStats .header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background-color: var(--bg-gray);
+  padding: 25px;
+  border-radius: 16px;
+  border: var(--cards-border);
+}
+
+.UserStats .avatar {
+  background-color: var(--icons-bg-color);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: var(--cards-border);
+}
+
+.UserStats .userInfo h1 {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  color: white;
+}
+
+.UserStats .badges {
+  display: flex;
+  gap: 10px;
+}
+
+.UserStats .badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.UserStats .badge.admin {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+.UserStats .badge.user {
+  background-color: rgba(167, 210, 235, 0.15);
+  color: var(--icons-color);
+}
+.UserStats .badge.active {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+.UserStats .badge.blocked {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.UserStats .detailsCard {
+  display: flex;
+  gap: 30px;
+  background-color: var(--bg-dark);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.UserStats .detailsCard p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--gray);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* =========================================
+   STATISTICS GRID
+   ========================================= */
+.UserStats .sectionTitle {
+  font-size: 1.3rem;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.UserStats .statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.UserStats .statBox {
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  padding: 24px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.UserStats .statBox:hover {
+  transform: translateY(-3px);
+}
+
+.UserStats .statBox h3 {
+  font-size: 2.5rem;
+  margin: 10px 0 5px 0;
+  color: white;
+}
+
+.UserStats .statBox p {
+  color: var(--gray);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* =========================================
+   VEHICLES LIST
+   ========================================= */
+.UserStats .emptyMsg {
+  color: var(--gray);
+  font-style: italic;
+  padding: 20px;
+  background-color: var(--bg-gray);
+  border-radius: 12px;
+  text-align: center;
+  border: var(--cards-border);
+  margin-bottom: 20px;
+}
+
+.UserStats .vehiclesList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.UserStats .vehCard {
+  display: flex;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  border-radius: 12px;
+  overflow: hidden;
+  height: 120px;
+}
+
+.UserStats .vehImg {
+  width: 180px;
+  height: 100%;
+  object-fit: cover;
+  border-right: var(--cards-border);
+}
+
+.UserStats .vehInfo {
+  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.UserStats .vehInfo h4 {
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+  color: white;
+}
+
+.UserStats .vehPlate {
+  color: var(--icons-color);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.UserStats .vehDetails {
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.UserStats .vehStatus {
+  position: absolute;
+  align-self: flex-end;
+  margin-right: 20px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.UserStats .vehStatus.available {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+.UserStats .vehStatus.rented {
+  background-color: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+.UserStats .vehStatus.maintenance {
+  background-color: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.UserStats .paginationWrapper {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.UserStats .vehCard {
+  display: flex;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  border-radius: 12px;
+  overflow: hidden;
+  height: 120px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.UserStats .vehCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+@media (max-width: 768px) {
+  .UserStats .header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .UserStats .badges {
+    justify-content: center;
+  }
+
+  .UserStats .vehCard {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .UserStats .vehImg {
+    width: 100%;
+    height: 160px;
+    border-right: none;
+    border-bottom: var(--cards-border);
+  }
+
+  .UserStats .vehStatus {
+    position: relative;
+    align-self: flex-start;
+    margin-right: 0;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .UserStats .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .UserStats .detailsCard {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
