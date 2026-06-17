@@ -170,7 +170,6 @@ const VehicleDetails = () => {
                   </p>
                 </div>
 
-                {/* FIX: Now checks if the VEHICLE OWNER'S status is blocked */}
                 {!hideBooking &&
                   state?.status === "available" &&
                   state?.ownerStatus !== "blocked" && (
