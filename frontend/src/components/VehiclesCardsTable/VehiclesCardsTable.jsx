@@ -13,10 +13,13 @@ const VehiclesCardsTable = ({ veh, admin }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const { currentUser } = useUserContext();
 
-  const { deleteUserVehicle, errorMsg } = useVehicleContext();
+  const { deleteUserVehicle, errorMsg, setErrorMsg } = useVehicleContext();
 
   const openDeleteMenu = () => setIsDeleteOpen(true);
-  const closeDeleteMenu = () => setIsDeleteOpen(false);
+  const closeDeleteMenu = () => {
+    setIsDeleteOpen(false);
+    setErrorMsg("");
+  };
 
   const openEditMenu = () => setIsEditOpen(true);
   const closeEditMenu = () => setIsEditOpen(false);
@@ -35,6 +38,7 @@ const VehiclesCardsTable = ({ veh, admin }) => {
     ownerFirstName: currentUser?.firstName,
     ownerLastName: currentUser?.lastName,
     ownerPhone: currentUser?.phone,
+    ownerEmail: currentUser?.email,
   };
 
   return (
@@ -66,9 +70,24 @@ const VehiclesCardsTable = ({ veh, admin }) => {
           <p onClick={openEditMenu}>
             <Pencil size={18} className="icon" />
           </p>
-          <p className={styles.delete} onClick={openDeleteMenu}>
-            <Trash2 size={18} />
-          </p>
+
+          {veh.status !== "inactive" && (
+            <>
+              {veh.status === "rented" ? (
+                <p
+                  className={styles.disabledAction}
+                  title="Cannot delete rented vehicle"
+                  style={{ cursor: "not-allowed", opacity: 0.3 }}
+                >
+                  <Trash2 size={18} />
+                </p>
+              ) : (
+                <p className={styles.delete} onClick={openDeleteMenu}>
+                  <Trash2 size={18} />
+                </p>
+              )}
+            </>
+          )}
         </div>
       )}
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import { useActivityContext } from "./ActivityContext";
 
 const VehicleContext = createContext();
 
@@ -10,39 +11,61 @@ const VehicleContextProvider = ({ children }) => {
   const [vehiclesBrands, setVehiclesBrands] = useState([]);
   const [vehicleModel, setVehicleModel] = useState([]);
   const [vehiclesType, setVehiclesType] = useState([]);
+  const [vehicleStats, setVehicleStats] = useState({});
+  const [pagination, setPagination] = useState({});
+  const [currentStatus, setCurrentStatus] = useState("all");
+  const [allVehPagination, setAllVehPagination] = useState({});
+  const [availableFilters, setAvailableFilters] = useState({
+    locations: [],
+    brands: [],
+    models: [],
+    types: [],
+  });
+  const [allVehStats, setAllVehStats] = useState(null);
+  const { loadActivities } = useActivityContext();
 
-  const getAllVehicles = async () => {
+  const getAllVehicles = async (filters = {}, page = 1) => {
     try {
-      const response = await axios.get("/vehicles");
+      const response = await axios.get("/vehicles", {
+        params: { ...filters, page, limit: 9 },
+      });
       setAllVehicles(response.data.vehicles);
-      console.log("All vehicles:", response.data.vehicles);
+      setAllVehPagination(response.data.pagination);
+      setAvailableFilters(response.data.availableFilters);
+      setAllVehStats(response.data.allVehStats);
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
     }
   };
 
-  const getUserVehicles = async () => {
+  const getUserVehicles = async (page = 1, status = "all") => {
     try {
-      const response = await axios.get("/vehicles/myVehicles");
+      setCurrentStatus(status);
+      const response = await axios.get(
+        `/vehicles/myVehicles?status=${status}&page=${page}`,
+      );
+
       setUserVehicles(response.data.vehicles);
-      console.log("User vehicles:", response.data.vehicles);
+      setVehicleStats(response.data.stats);
+      setPagination(response.data.pagination);
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
     }
   };
 
   const deleteUserVehicle = async (licensePlate) => {
     try {
       await axios.delete(`/vehicles/${licensePlate}`);
-      getUserVehicles();
+      getUserVehicles(pagination.currentPage || 1, currentStatus);
+      setErrorMsg("");
+      loadActivities();
       return true;
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      setErrorMsg(error?.response?.data?.message);
       return false;
     }
   };
@@ -83,8 +106,9 @@ const VehicleContextProvider = ({ children }) => {
   const addVehicle = async (vehData) => {
     try {
       const response = await axios.post("/vehicles/add", vehData);
-      await Promise.all([getAllVehicles(), getUserVehicles()]);
+      await Promise.all([getAllVehicles(), getUserVehicles(1, currentStatus)]);
       setErrorMsg("");
+      loadActivities();
       return true;
     } catch (error) {
       console.log(error?.response.data?.message);
@@ -96,7 +120,33 @@ const VehicleContextProvider = ({ children }) => {
   const updateVehicle = async (licensePlate, vehData) => {
     try {
       const response = await axios.put(`/vehicles/${licensePlate}`, vehData);
-      await Promise.all([getAllVehicles(), getUserVehicles()]);
+      await Promise.all([
+        getAllVehicles(),
+        getUserVehicles(pagination.currentPage || 1, currentStatus),
+      ]);
+
+      loadActivities();
+
+      setErrorMsg("");
+      return true;
+    } catch (error) {
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
+      return false;
+    }
+  };
+  const updateVehicleStatus = async (licensePlate, status) => {
+    try {
+      await axios.put(`/vehicles/update-vehicle-status/${licensePlate}`, {
+        status,
+      });
+
+      await Promise.all([
+        getAllVehicles(),
+        getUserVehicles(pagination.currentPage || 1, currentStatus),
+      ]);
+
+      loadActivities();
       setErrorMsg("");
       return true;
     } catch (error) {
@@ -124,6 +174,12 @@ const VehicleContextProvider = ({ children }) => {
         addVehicle,
         setErrorMsg,
         updateVehicle,
+        vehicleStats,
+        pagination,
+        allVehPagination,
+        availableFilters,
+        allVehStats,
+        updateVehicleStatus,
       }}
     >
       {children}

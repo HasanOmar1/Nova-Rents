@@ -25,20 +25,11 @@ import { useEffect } from "react";
 import { useState } from "react";
 import AdminUsersTable from "../../../components/AdminUsersTable/AdminUsersTable";
 
-export const statsData = [
-  { month: "Jan", users: 6 },
-  { month: "Feb", users: 9 },
-  { month: "Mar", users: 12 },
-  { month: "Apr", users: 10 },
-  { month: "May", users: 17 },
-  { month: "Jun", users: 20 },
-];
-
 const axisTick = { fill: "rgba(255,255,255,0.45)", fontSize: 11 };
 const gridStroke = "rgba(255,255,255,0.06)";
 
 const Users = () => {
-  const { getUsers, usersStats, pagination } = useUserContext();
+  const { getUsers, usersStats, pagination, userChartData } = useUserContext();
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -169,7 +160,7 @@ const Users = () => {
         <div className={styles.stats}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={statsData}
+              data={userChartData || []}
               margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
               barCategoryGap="18%"
             >

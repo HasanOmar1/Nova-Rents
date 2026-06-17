@@ -21,6 +21,9 @@ const {
   validateUpdateInputFormats,
 } = require("../utils/validsController");
 
+const { createActivity } = require("../database/queries/activityQueries");
+const { formatDateForInput } = require("../utils/formatDate");
+
 const sendVerificationCode = async (req, res) => {
   const { email } = req.body;
 
@@ -84,18 +87,26 @@ const getAllUsers = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
-    // Get the search term and wrap it in % for the SQL LIKE operator
     const search = req.query.search || "";
     const searchTerm = `%${search}%`;
+    const status = req.query.status || "all";
+
+    let whereClause = `WHERE u.email LIKE ?`;
+    const queryParams = [searchTerm];
+
+    if (status !== "all") {
+      whereClause += ` AND u.status = ?`;
+      queryParams.push(status);
+    }
 
     const query = ` 
       SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.birthDate, u.role, u.status
       FROM users u
-      WHERE u.email LIKE ? 
+      ${whereClause}
       ORDER BY u.userId DESC
       LIMIT ? OFFSET ?
     `;
-    const users = await doQuery(query, [searchTerm, limit, offset]);
+    const users = await doQuery(query, [...queryParams, limit, offset]);
 
     const formattedUsers = users.map((user) => ({
       ...user,
@@ -104,8 +115,8 @@ const getAllUsers = async (req, res, next) => {
         : "N/A",
     }));
 
-    const countQuery = `SELECT COUNT(*) as totalCount FROM users WHERE email LIKE ?`;
-    const countResult = await doQuery(countQuery, [searchTerm]);
+    const countQuery = `SELECT COUNT(*) as totalCount FROM users u ${whereClause}`;
+    const countResult = await doQuery(countQuery, queryParams);
     const totalPages = Math.ceil(countResult[0].totalCount / limit);
 
     const statsQuery = `
@@ -117,6 +128,51 @@ const getAllUsers = async (req, res, next) => {
     `;
     const statsResult = await doQuery(statsQuery);
 
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const chartData = [];
+    const today = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      chartData.push({
+        month: monthNames[d.getMonth()],
+        monthIndex: d.getMonth() + 1,
+        year: d.getFullYear(),
+        users: 0,
+      });
+    }
+
+    const growthQuery = `
+      SELECT 
+        MONTH(createdAt) as monthIndex, 
+        YEAR(createdAt) as year, 
+        COUNT(*) as newUsers
+      FROM users
+      WHERE createdAt >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
+      GROUP BY YEAR(createdAt), MONTH(createdAt)
+    `;
+
+    const growthResult = await doQuery(growthQuery);
+    growthResult.forEach((row) => {
+      const monthObj = chartData.find(
+        (m) => m.monthIndex === row.monthIndex && m.year === row.year,
+      );
+      if (monthObj) monthObj.users = Number(row.newUsers) || 0;
+    });
+
     res.status(STATUS_CODE.OK).json({
       message: "Users fetched successfully",
       users: formattedUsers,
@@ -126,6 +182,7 @@ const getAllUsers = async (req, res, next) => {
         blocked: Number(statsResult[0].blocked) || 0,
         admins: Number(statsResult[0].admins) || 0,
       },
+      chartData,
       pagination: {
         totalUsers: countResult[0].totalCount,
         totalPages,
@@ -298,8 +355,8 @@ async function login(req, res, next) {
         .status(STATUS_CODE.BAD_REQUEST)
         .json({ message: "Invalid email or password" });
     }
-
-    const birthDate = user.birthDate.toLocaleDateString();
+    //format the birthDate to the format YYYY-MM-DD
+    const birthDate = formatDateForInput(user.birthDate);
     const emailNormalized = user.email.toLowerCase();
 
     const loggedUser = {
@@ -375,6 +432,7 @@ async function getProfile(req, res, next) {
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "User not found" });
     }
+    const birthDate = formatDateForInput(user.birthDate);
     const loggedUser = {
       userId: user.userId,
       firstName: user.firstName,
@@ -382,7 +440,7 @@ async function getProfile(req, res, next) {
       email: user.email,
       phone: user.phone,
       role: user.role,
-      birthDate: user.birthDate.toLocaleDateString(),
+      birthDate: birthDate,
       status: user.status,
     };
 
@@ -435,6 +493,12 @@ const blockUserByEmail = async (req, res, next) => {
         .json({ message: "User not found" });
     }
 
+    await createActivity(
+      req.session.user.userId,
+      "Blocked a user",
+      `Blocked: ${email}`,
+    );
+
     res.send({
       success: true,
       message: `User ${email} has been blocked successfully.`,
@@ -463,6 +527,11 @@ const unblockUserByEmail = async (req, res, next) => {
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "User not found" });
     }
+    await createActivity(
+      req.session.user.userId,
+      "Unblocked a user",
+      `Unblocked: ${email}`,
+    );
     res.send({
       success: true,
       message: `User ${email} has been unblocked successfully.`,
@@ -506,6 +575,7 @@ const updateUserProfile = async (req, res, next) => {
 
     const fields = [];
     const values = [];
+    const updatedFields = [];
 
     // -------------------------
     // NAME FIELDS
@@ -514,12 +584,14 @@ const updateUserProfile = async (req, res, next) => {
       const clean = firstName.trim();
       fields.push("firstName = ?");
       values.push(clean[0].toUpperCase() + clean.slice(1));
+      updatedFields.push("firstName");
     }
 
     if (lastName && lastName !== user.lastName) {
       const clean = lastName.trim();
       fields.push("lastName = ?");
       values.push(clean[0].toUpperCase() + clean.slice(1));
+      updatedFields.push("lastName");
     }
 
     // -------------------------
@@ -534,11 +606,15 @@ const updateUserProfile = async (req, res, next) => {
 
       fields.push("phone = ?");
       values.push(phone);
+      updatedFields.push("phone");
     }
+    console.log("birthDate from frontend:", birthDate);
 
-    if (birthDate && birthDate !== user.birthDate) {
+    const oldBirthDate = formatDateForInput(user.birthDate);
+    if (birthDate && birthDate !== oldBirthDate) {
       fields.push("birthDate = ?");
       values.push(birthDate);
+      updatedFields.push("birthDate");
     }
 
     // -------------------------
@@ -554,6 +630,7 @@ const updateUserProfile = async (req, res, next) => {
 
       fields.push("email = ?");
       values.push(newEmail);
+      updatedFields.push("email");
     }
 
     // -------------------------
@@ -563,6 +640,7 @@ const updateUserProfile = async (req, res, next) => {
       const hashedPassword = await hashPassword(password);
       fields.push("password = ?");
       values.push(hashedPassword);
+      updatedFields.push("password");
     }
 
     // we dont use this
@@ -626,10 +704,8 @@ const updateUserProfile = async (req, res, next) => {
     let safeBirthDate = birthDate;
     if (!safeBirthDate && user?.birthDate) {
       const d = new Date(user.birthDate);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      safeBirthDate = `${year}-${month}-${day}`;
+      const formattedDate = formatDateForInput(d);
+      safeBirthDate = formattedDate;
     }
 
     const loggedUser = {
@@ -644,6 +720,12 @@ const updateUserProfile = async (req, res, next) => {
     };
 
     req.session.user = loggedUser;
+
+    await createActivity(
+      currentUserId,
+      "Profile Updated",
+      `Updated: ${updatedFields.join(", ")}`,
+    );
 
     // Force the session to save BEFORE sending the 200 OK.
     // This completely eliminates race conditions with the frontend.

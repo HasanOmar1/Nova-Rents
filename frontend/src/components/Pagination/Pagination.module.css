@@ -1,0 +1,50 @@
+.pagination {
+  border: var(--cards-border);
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  color: var(--gray);
+  font-size: 0.85rem;
+  align-items: center;
+  font-weight: bold;
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+}
+
+.pagination .pagBtnsContainer {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination .pagBtnsContainer button {
+  border: none;
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  color: var(--gray);
+  font-weight: bold;
+  font-size: 0.85rem;
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.pagination .pagBtnsContainer button:hover:not(:disabled) {
+  color: white;
+}
+
+.pagination .pagBtnsContainer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    flex-direction: column;
+    gap: 15px;
+  }
+}

@@ -42,48 +42,6 @@
   border-top: var(--cards-border);
 }
 
-.AdminUsersTable .pagination {
-  border-top: var(--cards-border);
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 20px;
-  color: var(--gray);
-  font-size: 0.8rem;
-  align-items: center;
-  font-weight: bold;
-}
-
-.AdminUsersTable .pagination .btnsContainer {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  align-items: center;
-}
-
-.AdminUsersTable .pagination .btnsContainer button {
-  border: none;
-  border-radius: 10px;
-  background-color: var(--input-bg);
-  color: var(--gray);
-  font-weight: bold;
-  font-size: 0.8rem;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.AdminUsersTable .pagination .btnsContainer button:hover {
-  color: white;
-}
-
-.AdminUsersTable .pagination .btnsContainer button:disabled {
-  cursor: not-allowed;
-  color: var(--gray);
-}
-
 .AdminUsersTable .noUsers {
   display: flex;
   justify-content: center;
@@ -96,10 +54,5 @@
 @media (max-width: 1024px) {
   .AdminUsersTable .titles {
     display: none;
-  }
-
-  .AdminUsersTable .pagination {
-    flex-direction: column;
-    gap: 10px;
   }
 }

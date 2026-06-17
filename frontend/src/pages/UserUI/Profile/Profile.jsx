@@ -2,15 +2,7 @@ import { useState, useEffect } from "react";
 import styles from "./Profile.module.css";
 import DocumentsCards from "../../../components/DocumentsCards/DocumentsCards";
 import { useUserContext } from "../../../context/UserContext";
-
-const normalizeDate = (dateStr) => {
-  if (!dateStr) return "";
-  if (dateStr.includes("/")) {
-    const [day, month, year] = dateStr.split("/");
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-  return dateStr.split("T")[0];
-};
+import { useActivityContext } from "../../../context/ActivityContext";
 
 const Profile = () => {
   const [editProfileClicked, setEditProfileClicked] = useState(false);
@@ -18,15 +10,22 @@ const Profile = () => {
 
   const { currentUser, updateProfile, errorMsg, setErrorMsg } =
     useUserContext();
+  const { loadActivities } = useActivityContext();
 
   const [inputsValues, setInputsValues] = useState({
     firstName: currentUser?.firstName || "",
     lastName: currentUser?.lastName || "",
     email: currentUser?.email || "",
     phone: currentUser?.phone || "",
-    birthDate: normalizeDate(currentUser?.birthDate),
+    birthDate: currentUser?.birthDate,
     password: "",
   });
+
+  const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
+  };
 
   useEffect(() => {
     if (currentUser && !editProfileClicked) {
@@ -35,7 +34,7 @@ const Profile = () => {
         lastName: currentUser.lastName || "",
         email: currentUser.email || "",
         phone: currentUser.phone || "",
-        birthDate: normalizeDate(currentUser.birthDate),
+        birthDate: currentUser?.birthDate || "",
         password: "",
       });
     }
@@ -64,7 +63,7 @@ const Profile = () => {
       lastName: currentUser?.lastName || "",
       email: currentUser?.email || "",
       phone: currentUser?.phone || "",
-      birthDate: normalizeDate(currentUser?.birthDate),
+      birthDate: currentUser?.birthDate || "",
       password: "",
     });
   };
@@ -90,6 +89,7 @@ const Profile = () => {
       setSuccessMsg("Profile updated successfully!");
       setEditProfileClicked(false);
       setInputsValues((prev) => ({ ...prev, password: "" }));
+      loadActivities();
     }
   };
 
@@ -174,7 +174,11 @@ const Profile = () => {
                 type={!editProfileClicked ? "text" : "date"}
                 name="birthDate"
                 id="birthDate"
-                value={inputsValues.birthDate}
+                value={
+                  !editProfileClicked
+                    ? formatDisplayDate(inputsValues.birthDate)
+                    : inputsValues.birthDate
+                }
                 onChange={handleInputChange}
                 disabled={!editProfileClicked}
               />

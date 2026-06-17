@@ -4,6 +4,7 @@ const { checkVehicleNumberInGovIL } = require("../services/govApiService");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   getVehicleByLicensePlate,
+  updateVehicleConditions,
 } = require("../database/queries/vehicleQueries");
 const {
   validateAndNormalizeVehicleCreate,
@@ -14,7 +15,17 @@ const {
   deleteImagesFromDisk,
   clearFailedUploads,
 } = require("../utils/handleUploads");
-
+const { createActivity } = require("../database/queries/activityQueries");
+const { formatDateForInput } = require("../utils/formatDate");
+const {
+  rejectPendingRentalsByLicensePlate,
+  cancelApprovedRentalsByLicensePlate,
+  getAffectedRentersByLicensePlate,
+  hasActiveRentalNow,
+} = require("../database/queries/rentalQueries");
+const {
+  createNotification,
+} = require("../database/queries/notificationQueries");
 const getUserVehicles = async (req, res, next) => {
   try {
     if (
@@ -27,45 +38,68 @@ const getUserVehicles = async (req, res, next) => {
       return;
 
     const { userId } = req.session.user;
+    const status = req.query.status || "all";
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
 
-    const query = `
+    let query = `
       SELECT 
-        v.licensePlate,
-        v.fuelType,
-        v.expirationDate,
-        v.image,
-        v.year,
-        v.km,
-        v.address,
-        v.price,
-        v.color,
-        v.status,
-        v.ownerId,
-
-        cm.modelId,
-        cm.modelName,
-
-        cb.brandId,
-        cb.brandName,
-
-        ct.carTypeId,
-        ct.carTypeName
-
+        v.*, 
+        cm.modelName, 
+        cb.brandId, cb.brandName, 
+        ct.carTypeId, ct.carTypeName
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
-
       WHERE v.ownerId = ?
-      ORDER BY v.year DESC
     `;
 
-    const result = await doQuery(query, [userId]);
+    let countQuery = `SELECT COUNT(*) as totalCount FROM vehicles WHERE ownerId = ?`;
+    let queryParams = [userId];
+
+    if (status !== "all") {
+      query += ` AND v.status = ?`;
+      countQuery += ` AND status = ?`;
+      queryParams.push(status);
+    }
+
+    query += ` ORDER BY v.createdAt DESC LIMIT ? OFFSET ?`;
+
+    const vehicles = await doQuery(query, [...queryParams, limit, offset]);
+
+    const countResult = await doQuery(countQuery, queryParams);
+    const totalVehicles = countResult[0].totalCount;
+    const totalPages = Math.ceil(totalVehicles / limit);
+
+    const statsQuery = `
+      SELECT 
+        COUNT(*) as allVehicles,
+        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as availableCount,
+        SUM(CASE WHEN status = 'rented' THEN 1 ELSE 0 END) as rentedCount,
+        SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenanceCount,
+        SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactiveCount,
+        AVG(CASE WHEN status != 'inactive' THEN price ELSE NULL END) as avgDailyRate
+      FROM vehicles 
+      WHERE ownerId = ?
+    `;
+    const statsResult = await doQuery(statsQuery, [userId]);
+
+    const stats = {
+      allVehicles: Number(statsResult[0].allVehicles) || 0,
+      availableNow: Number(statsResult[0].availableCount) || 0,
+      rented: Number(statsResult[0].rentedCount) || 0,
+      maintenance: Number(statsResult[0].maintenanceCount) || 0,
+      inactive: Number(statsResult[0].inactiveCount) || 0,
+      avgRate: Math.round(Number(statsResult[0].avgDailyRate)) || 0,
+    };
 
     res.status(STATUS_CODE.OK).json({
       message: "User vehicles fetched successfully",
-      count: result.length,
-      vehicles: result,
+      vehicles,
+      stats,
+      pagination: { totalVehicles, totalPages, currentPage: page, limit },
     });
   } catch (error) {
     next(error);
@@ -88,6 +122,8 @@ const addVehicle = async (req, res, next) => {
       address,
       price,
       color,
+      details,
+      seats,
     } = vehicle;
 
     // const isVehicleNumberInGovIL =
@@ -102,7 +138,6 @@ const addVehicle = async (req, res, next) => {
       await getVehicleByLicensePlate(licensePlate);
 
     if (checkIfVehicleAlreadyExists) {
-      //  Wipe the files from the disk because the vehicle exists!
       clearFailedUploads(req.files);
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "License plate already exists!",
@@ -110,10 +145,11 @@ const addVehicle = async (req, res, next) => {
     }
 
     const insertQuery = `
-     INSERT INTO vehicles 
-     (licensePlate,fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO vehicles 
+      (licensePlate, fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId, details, seats)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
+
     const values = [
       licensePlate,
       fuelType,
@@ -126,15 +162,21 @@ const addVehicle = async (req, res, next) => {
       color,
       modelId,
       userId,
+      details,
+      seats,
     ];
     await doQuery(insertQuery, values);
+    await createActivity(
+      userId,
+      "Added new vehicle",
+      `Added new vehicle with license plate of ${licensePlate}`,
+    );
     const newVehicle = await getVehicleByLicensePlate(licensePlate);
     res.status(STATUS_CODE.CREATED).json({
       message: "Vehicle added successfully",
       vehicle: newVehicle,
     });
   } catch (error) {
-    // Wipe the files if the database query crashes for any reason!
     clearFailedUploads(req.files);
     next(error);
   }
@@ -157,6 +199,8 @@ const getVehicleById = async (req, res, next) => {
         v.color,
         v.status,
         v.ownerId,
+        v.details, 
+        v.seats,
 
         cm.modelId,
         cm.modelName,
@@ -196,6 +240,7 @@ const getVehicleById = async (req, res, next) => {
     next(error);
   }
 };
+
 const deleteVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
@@ -204,32 +249,63 @@ const deleteVehicle = async (req, res, next) => {
       !validateAuthenticatedUser(
         req,
         res,
-        "You must be logged in to delete a vehicle",
+        "You must be logged in to deactivate a vehicle",
       )
-    )
+    ) {
       return;
-
-    const existingVehicle = await getVehicleByLicensePlate(licensePlate);
-    if (!existingVehicle) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "No vehicle found with this license plate",
-      });
     }
 
-    if (existingVehicle.ownerId !== req.session.user.userId) {
+    const { userId } = req.session.user;
+
+    const checkQuery = `SELECT ownerId, status FROM vehicles WHERE licensePlate = ?`;
+    const checkResult = await doQuery(checkQuery, [licensePlate]);
+
+    if (checkResult.length === 0) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "Vehicle not found" });
+    }
+    if (checkResult[0].ownerId !== userId) {
       return res.status(STATUS_CODE.FORBIDDEN).json({
-        message: "You do not have permission to delete this vehicle",
+        message: "You do not have permission to deactivate this vehicle",
+      });
+    }
+    if (checkResult[0].status === "rented") {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message:
+          "You cannot deactivate a vehicle while a customer currently has it rented.",
       });
     }
 
-    const deleteQuery = "DELETE FROM vehicles WHERE licensePlate = ?";
-    await doQuery(deleteQuery, [licensePlate]);
+    const activeRentalsQuery = `
+      SELECT COUNT(*) as upcomingCount 
+      FROM rentals 
+      WHERE licensePlate = ? 
+      AND status IN ('pending', 'approved') 
+      AND endDate >= CURDATE()
+    `;
+    const activeRentalsResult = await doQuery(activeRentalsQuery, [
+      licensePlate,
+    ]);
 
-    // If the DB delete was successful, wipe the images from the hard drive!
-    deleteImagesFromDisk(existingVehicle.image);
+    if (activeRentalsResult[0].upcomingCount > 0) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message:
+          "Cannot deactivate: This vehicle has upcoming approved or pending bookings.",
+      });
+    }
+
+    const updateQuery = `UPDATE vehicles SET status = 'inactive' WHERE licensePlate = ?`;
+    await doQuery(updateQuery, [licensePlate]);
+
+    await createActivity(
+      userId,
+      "Vehicle Deactivation",
+      `Deactivated vehicle with license plate of ${licensePlate}`,
+    );
 
     res.status(STATUS_CODE.OK).json({
-      message: "Vehicle deleted successfully",
+      message: "Vehicle deactivated successfully",
     });
   } catch (error) {
     next(error);
@@ -277,18 +353,46 @@ const updateVehicle = async (req, res, next) => {
       price,
       color,
       status,
+      details, // <-- ADDED
+      seats, // <-- ADDED
     } = mergedData;
+
+    const oldExpirationDate = formatDateForInput(
+      existingVehicle.expirationDate,
+    );
+    const newExpirationDate = formatDateForInput(expirationDate);
+
+    const updatedFields = [];
+
+    if (Number(modelId) !== Number(existingVehicle.modelId))
+      updatedFields.push("model");
+    if (fuelType !== existingVehicle.fuelType) updatedFields.push("fuel type");
+    if (newExpirationDate !== oldExpirationDate)
+      updatedFields.push("expiration date");
+    if (image !== existingVehicle.image) updatedFields.push("image");
+    if (Number(year) !== Number(existingVehicle.year))
+      updatedFields.push("year");
+    if (Number(km) !== Number(existingVehicle.km))
+      updatedFields.push("kilometers");
+    if (address !== existingVehicle.address) updatedFields.push("address");
+    if (Number(price) !== Number(existingVehicle.price))
+      updatedFields.push("price");
+    if (color !== existingVehicle.color) updatedFields.push("color");
+    if (status !== existingVehicle.status) updatedFields.push("status");
+    if (details !== existingVehicle.details) updatedFields.push("details"); // <-- ADDED
+    if (Number(seats) !== Number(existingVehicle.seats))
+      updatedFields.push("seats"); // <-- ADDED
 
     const updateQuery = `
       UPDATE vehicles
-      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?, status = ?
+      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?, status = ?, details = ?, seats = ?
       WHERE licensePlate = ?
     `;
 
     const values = [
       modelId,
       fuelType,
-      expirationDate,
+      newExpirationDate,
       image,
       year,
       km,
@@ -296,10 +400,21 @@ const updateVehicle = async (req, res, next) => {
       price,
       color,
       status,
+      details, // <-- ADDED
+      seats, // <-- ADDED
       licensePlate,
     ];
 
     await doQuery(updateQuery, values);
+
+    if (updatedFields.length > 0) {
+      await createActivity(
+        req.session.user.userId,
+        "Updated a vehicle",
+        `Updated vehicle with license plate of ${licensePlate}: ${updatedFields.join(", ")}`,
+      );
+    }
+
     const updatedVehicle = await getVehicleByLicensePlate(licensePlate);
 
     res.status(STATUS_CODE.OK).json({
@@ -317,122 +432,140 @@ const getAllVehicles = async (req, res, next) => {
       brand,
       model,
       type,
-      color,
-      fuelType,
       location,
-      minPrice,
-      maxPrice,
-      minYear,
-      maxYear,
-      minKm,
-      maxKm,
+      sort,
+      status,
+      page = 1,
+      limit = 5,
     } = req.query;
 
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const parsedLimit = parseInt(limit);
+
+    // 1. DYNAMIC STATUS FILTERING
+    let whereClause = `WHERE 1=1`;
+    const values = [];
+
+    if (status && status !== "all") {
+      whereClause += ` AND v.status = ?`;
+      values.push(status);
+    } else if (!status) {
+      // Default to available for regular users visiting /vehicles
+      whereClause += ` AND v.status = 'available'`;
+    }
+
+    if (brand) {
+      whereClause += ` AND cb.brandName = ?`;
+      values.push(brand);
+    }
+    if (model) {
+      whereClause += ` AND cm.modelName = ?`;
+      values.push(model);
+    }
+    if (type) {
+      whereClause += ` AND ct.carTypeName = ?`;
+      values.push(type);
+    }
+    if (location) {
+      whereClause += ` AND v.address LIKE ?`;
+      values.push(`%${location}%`);
+    }
+
+    let orderByClause = `ORDER BY v.createdAt DESC`;
+    if (sort === "price_asc") orderByClause = `ORDER BY v.price ASC`;
+    if (sort === "price_desc") orderByClause = `ORDER BY v.price DESC`;
+    if (sort === "year_desc") orderByClause = `ORDER BY v.year DESC`;
+    if (sort === "year_asc") orderByClause = `ORDER BY v.year ASC`;
+
+    // 2. FETCH VEHICLES
     let query = `
       SELECT 
-        v.licensePlate,
-        v.fuelType,
-        DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
-        v.image,
-        v.year,
-        v.km,
-        v.address,
-        v.price,
-        v.color,
-        v.status,
-        v.ownerId,
-        
-
-        cm.modelId,
-        cm.modelName,
-
-        cb.brandId,
-        cb.brandName,
-
-        ct.carTypeId,
-        ct.carTypeName,
-        u.firstName AS ownerFirstName,
-        u.lastName AS ownerLastName,
-        u.email AS ownerEmail,
-        u.phone AS ownerPhone
-
+        v.licensePlate, v.fuelType, DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
+        v.image, v.year, v.km, v.address, v.price, v.color, v.status, v.ownerId, v.createdAt, v.details, v.seats,
+        cm.modelId, cm.modelName, cb.brandId, cb.brandName, ct.carTypeId, ct.carTypeName,
+        u.firstName AS ownerFirstName, u.lastName AS ownerLastName,
+        u.email AS ownerEmail, u.phone AS ownerPhone,
+        1 AS canRent
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
-      Join users u ON v.ownerId = u.userId
-      WHERE 1 = 1
+      JOIN users u ON v.ownerId = u.userId
+      ${whereClause}
+      ${orderByClause}
+      LIMIT ? OFFSET ?
     `;
 
-    const values = [];
-    if (brand) {
-      query += ` AND cb.brandName = ?`;
-      values.push(brand);
-    }
+    const queryValues = [...values, parsedLimit, offset];
+    const vehicles = await doQuery(query, queryValues);
 
-    if (model) {
-      query += ` AND cm.modelName = ?`;
-      values.push(model);
-    }
+    // 3. PAGINATION TOTAL
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM vehicles v
+      JOIN carModels cm ON v.modelId = cm.modelId
+      JOIN carBrands cb ON cm.brandId = cb.brandId
+      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      ${whereClause}
+    `;
+    const countResult = await doQuery(countQuery, values);
+    const totalVehicles = countResult[0].total;
+    const totalPages = Math.ceil(totalVehicles / parsedLimit);
 
-    if (type) {
-      query += ` AND ct.carTypeName = ?`;
-      values.push(type);
-    }
+    // 4. GLOBAL STATS (For Top Cards)
+    const statsQuery = `
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available,
+        SUM(CASE WHEN status = 'rented' THEN 1 ELSE 0 END) as rented,
+        SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
+        SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
+      FROM vehicles
+    `;
+    const statsResult = await doQuery(statsQuery, []);
 
-    if (color) {
-      query += ` AND v.color = ?`;
-      values.push(color);
-    }
+    // 5. EXTRACT AVAILABLE DROPDOWN OPTIONS (Respecting Status)
+    const optionsQuery = `
+      SELECT DISTINCT v.address, cb.brandName, cm.modelName, ct.carTypeName
+      FROM vehicles v
+      JOIN carModels cm ON v.modelId = cm.modelId
+      JOIN carBrands cb ON cm.brandId = cb.brandId
+      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      ${status === "all" ? "" : whereClause}
+    `;
+    const optionsData = await doQuery(
+      optionsQuery,
+      status === "all" ? [] : values,
+    );
 
-    if (fuelType) {
-      query += ` AND v.fuelType = ?`;
-      values.push(fuelType);
-    }
+    const modelsWithBrands = [];
+    const seenModels = new Set();
+    optionsData.forEach((row) => {
+      if (!seenModels.has(row.modelName)) {
+        seenModels.add(row.modelName);
+        modelsWithBrands.push({ model: row.modelName, brand: row.brandName });
+      }
+    });
 
-    if (location) {
-      query += ` AND v.address LIKE ?`;
-      values.push(`%${location}%`);
-    }
+    const availableFilters = {
+      combinations: optionsData,
+      locations: [...new Set(optionsData.map((r) => r.address))],
+      brands: [...new Set(optionsData.map((r) => r.brandName))],
+      models: modelsWithBrands,
+      types: [...new Set(optionsData.map((r) => r.carTypeName))],
+    };
 
-    if (minPrice) {
-      query += ` AND v.price >= ?`;
-      values.push(Number(minPrice));
-    }
-
-    if (maxPrice) {
-      query += ` AND v.price <= ?`;
-      values.push(Number(maxPrice));
-    }
-
-    if (minYear) {
-      query += ` AND v.year >= ?`;
-      values.push(Number(minYear));
-    }
-
-    if (maxYear) {
-      query += ` AND v.year <= ?`;
-      values.push(Number(maxYear));
-    }
-
-    if (minKm) {
-      query += ` AND v.km >= ?`;
-      values.push(Number(minKm));
-    }
-
-    if (maxKm) {
-      query += ` AND v.km <= ?`;
-      values.push(Number(maxKm));
-    }
-
-    query += ` ORDER BY v.year DESC`;
-
-    const vehicles = await doQuery(query, values);
-
-    res.status(STATUS_CODE.OK).json({
+    res.status(200).json({
       message: "Vehicles fetched successfully",
-      count: vehicles.length,
       vehicles,
+      availableFilters,
+      allVehStats: statsResult[0],
+      pagination: {
+        totalVehicles,
+        totalPages,
+        currentPage: parseInt(page),
+        limit: parsedLimit,
+      },
     });
   } catch (error) {
     next(error);
@@ -505,6 +638,76 @@ const getAllCarTypes = async (req, res, next) => {
     next(error);
   }
 };
+async function updateVehicleStatus(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    const { licensePlate } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Status is required" });
+        
+    }const existingVehicle = await getVehicleByLicensePlate(licensePlate);
+
+    if (!existingVehicle) {
+      return res
+        .status(STATUS_CODE.NOT_FOUND)
+        .json({ message: "Vehicle not found" });
+    }
+
+
+    if (status === "maintenance" && existingVehicle.status !== "maintenance") {
+      const hasActiveRental = await hasActiveRentalNow(licensePlate);
+
+      if (hasActiveRental) {
+        return res.status(STATUS_CODE.BAD_REQUEST).json({
+          message:
+            "Cannot put vehicle under maintenance while it has an active rental",
+        });
+      }
+
+      const affectedRentals =
+        await getAffectedRentersByLicensePlate(licensePlate);
+
+      await rejectPendingRentalsByLicensePlate(licensePlate);
+      await cancelApprovedRentalsByLicensePlate(licensePlate);
+
+      for (const rental of affectedRentals) {
+        await createNotification(
+          rental.renterId,
+          rental.rentalId,
+          "vehicle_maintenance",
+          "Vehicle Under Maintenance",
+          `Your rental for vehicle ${licensePlate} was cancelled because the vehicle is now under maintenance.`,
+        );
+      }
+    }
+
+    const result = await updateVehicleConditions(licensePlate, status);
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
+        .json({ message: "Failed to update vehicle status" });
+    }
+
+    await createActivity(
+      req.session.user.userId,
+      "Vehicle Status Update",
+      `Updated vehicle with license plate of ${licensePlate} status to ${status}`,
+    );
+
+    return res
+      .status(STATUS_CODE.OK)
+      .json({ message: "Vehicle status updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
 
 module.exports = {
   addVehicle,
@@ -516,4 +719,5 @@ module.exports = {
   getAllCarBrands,
   getAllCarModels,
   getAllCarTypes,
+  updateVehicleStatus,
 };

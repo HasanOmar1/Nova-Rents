@@ -11,15 +11,14 @@
 
 .HomeTopCards .top {
   display: flex;
-  gap: 2rem;
+  gap: 10px;
   justify-content: space-between;
 }
 
 .HomeTopCards .top p {
-  width: 10ch;
   color: var(--gray);
   text-transform: uppercase;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: bold;
 }
 
@@ -30,7 +29,7 @@
 }
 
 .HomeTopCards .bottom p {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
 }
 
@@ -57,7 +56,6 @@
 @media (max-width: 480px) {
   .HomeTopCards {
     padding: 12px 15px;
-    border-radius: 12px;
   }
 
   .HomeTopCards .top {

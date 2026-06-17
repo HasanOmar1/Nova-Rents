@@ -3,30 +3,10 @@ import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeB
 import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import styles from "./Home.module.css";
-import { Car, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
-
-const topData = [
-  {
-    title: "Available Vehicles",
-    value: 3,
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Your Listings",
-    value: 5,
-    icon: <CheckCircle2 size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Open Complaints",
-    value: 1,
-    icon: <AlertTriangle size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Upcoming Rentals",
-    value: 3,
-    icon: <Clock size={28} color="#a7d2eb" />,
-  },
-];
+import { CalendarDays, Wallet, ClipboardList, Key } from "lucide-react";
+import { useRentContext } from "../../../context/RentContext";
+import { useEffect } from "react";
+import { useActivityContext } from "../../../context/ActivityContext";
 
 const lineData = [
   { month: "Jan", rentals: 12 },
@@ -47,6 +27,37 @@ const barData = [
 ];
 
 const Home = () => {
+  const { metrics, fetchDashboardMetrics } = useRentContext();
+  const { loadActivities } = useActivityContext();
+
+  useEffect(() => {
+    fetchDashboardMetrics();
+    loadActivities();
+  }, []);
+
+  const topData = [
+    {
+      title: "Monthly Earnings",
+      value: `$${metrics.monthlyEarnings.toLocaleString()}`,
+      icon: <Wallet size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Pending Requests",
+      value: metrics.pendingRequests,
+      icon: <ClipboardList size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Upcoming Trips",
+      value: metrics.upcomingTrips,
+      icon: <CalendarDays size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Trips Taken",
+      value: metrics.tripsTaken,
+      icon: <Key size={28} color="#a7d2eb" />,
+    },
+  ];
+
   return (
     <div className={`${styles.Home} page`}>
       <h1>Welcome back</h1>
@@ -79,13 +90,13 @@ const Home = () => {
 
       <div className={styles.bottomCardsContainer}>
         <HomeBottomCards
-          title={"Rentals over time"}
+          title={"Earnings Overview ($)"}
           type="line"
-          data={lineData}
-          dataKey="rentals"
+          data={metrics.chartData || []}
+          dataKey="earnings"
         />
         <HomeBottomCards
-          title={"Platform usage"}
+          title={"Platform Usage"}
           type="bar"
           data={barData}
           dataKey="usage"

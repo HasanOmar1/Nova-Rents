@@ -1,0 +1,297 @@
+.BookingModal {
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  padding: 30px;
+  color: white;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+
+  /* Bulletproof centering style across all desktop viewports */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  outline: none;
+  overflow-y: auto;
+  max-height: 85vh;
+}
+
+.BookingModal::backdrop {
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.BookingModal .header {
+  margin-bottom: 20px;
+  padding-right: 25px; /* Leave space for close button */
+}
+
+.BookingModal .header h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.BookingModal .header p {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  margin: 5px 0 0 0;
+}
+
+.BookingModal .closeModalBtn {
+  position: absolute;
+  top: 25px;
+  right: 25px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.BookingModal .closeModalBtn:hover {
+  color: white;
+}
+
+.BookingModal .successMsg {
+  font-size: 0.85rem;
+  text-align: center;
+  color: #90dbbb;
+  background-color: #102e2b;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.BookingModal .errorMsg {
+  font-size: 0.85rem;
+  text-align: center;
+  color: #ffa3a3;
+  background-color: #2a171c;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.BookingModal .ownerInfoContainer {
+  background-color: #111c27;
+  border-radius: 12px;
+  padding: 15px;
+  border: 1px solid #0e3144;
+  margin-bottom: 20px;
+}
+
+.BookingModal .ownerInfoContainer p {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.BookingModal .ownerInfoContainer .msg {
+  color: #8fb5c9;
+  font-weight: bold;
+  font-size: 0.7rem;
+  margin-bottom: 3px;
+}
+
+.BookingModal .allDatesContainer {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.BookingModal .datesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.BookingModal .datesContainer label {
+  color: var(--gray);
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+/* Custom Overrides for input fields */
+.BookingModal .datePickerInput {
+  background-color: var(--input-bg);
+  border: var(--cards-border);
+  border-radius: 10px;
+  color: #fff;
+  width: 100%;
+  padding: 12px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.BookingModal .datePickerInput:focus {
+  border-color: var(--input-focus-border-color);
+}
+
+/* --- PRICE BREAKDOWN --- */
+.BookingModal .priceBreakdown {
+  background-color: #16171a;
+  border: 1px solid #2e3442;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.BookingModal .priceRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.BookingModal .priceBreakdown .divider {
+  border: none;
+  border-top: 1px dashed #2e3442;
+  margin: 2px 0;
+}
+
+.BookingModal .totalRow {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.BookingModal .totalRow p:last-child {
+  color: #60a5fa;
+}
+
+/* --- ACTIONS CONTROLS --- */
+.BookingModal .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px solid #2e3442;
+}
+
+.BookingModal .cancelBtn {
+  background: transparent;
+  color: #cbd5e1;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.BookingModal .cancelBtn:hover {
+  background-color: #2e3442;
+}
+
+.BookingModal .submitBtn {
+  background-color: #1a42c6;
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.BookingModal .submitBtn:hover {
+  background-color: #1a42c6cb;
+}
+
+/* ==========================================================================
+   MEDIA QUERIES FOR MODAL RESPONSIVENESS
+   ========================================================================== */
+
+@media (max-width: 480px) {
+  .BookingModal {
+    width: 95%;
+    padding: 20px;
+    max-height: 90vh;
+  }
+
+  .BookingModal .header h2 {
+    font-size: 1.25rem;
+  }
+
+  /* Stack inputs vertically so the calendar inputs don't squeeze out of view */
+  .BookingModal .allDatesContainer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Make date pickers stretch across the entire modal block width */
+  .BookingModal :global(.react-datepicker-wrapper) {
+    width: 100%;
+  }
+
+  .BookingModal .actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .BookingModal .cancelBtn,
+  .BookingModal .submitBtn {
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+  }
+}
+
+/* ==========================================================================
+   THEME OVERRIDES FOR THE CALENDAR DROPDOWN POPUP
+   ========================================================================== */
+:global(.react-datepicker) {
+  background-color: #1c1d21 !important;
+  border: 1px solid #2e3442 !important;
+  font-family: inherit !important;
+}
+:global(.react-datepicker__header) {
+  background-color: #16171a !important;
+  border-bottom: 1px solid #2e3442 !important;
+}
+:global(.react-datepicker__current-month),
+:global(.react-datepicker__day-name) {
+  color: #cbd5e1 !important;
+}
+
+/* Fix text contrast for standard, clickable days */
+:global(.react-datepicker__day) {
+  color: #ffffff !important;
+}
+
+/* Hover effects ONLY on days that are not disabled */
+:global(.react-datepicker__day:not(.react-datepicker__day--disabled):hover) {
+  background-color: #2e3442 !important;
+  border-radius: 4px;
+}
+
+/* Perfect styling for selected dates */
+:global(.react-datepicker__day--selected),
+:global(.react-datepicker__day--in-selecting-range),
+:global(.react-datepicker__day--in-range) {
+  background-color: #3b82f6 !important; /* Premium Blue */
+  color: white !important;
+  border-radius: 4px;
+}
+
+/* Completely dull out the disabled/booked dates */
+:global(.react-datepicker__day--disabled) {
+  color: #4b5563 !important; /* Very dark gray */
+  background-color: transparent !important;
+  text-decoration: line-through;
+  cursor: not-allowed !important;
+}
+
+/* Ensure disabled dates don't get a blue background even if hovered */
+:global(.react-datepicker__day--disabled:hover) {
+  background-color: transparent !important;
+}

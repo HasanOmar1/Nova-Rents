@@ -4,9 +4,11 @@ import { navByRole, labels, icons } from "./nav";
 import { useUserContext } from "../../context/UserContext";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 const Header = ({ page }) => {
   const { currentUser, logout } = useUserContext();
+  const { unreadCount } = useNotificationContext();
   const [areMoreTabsOpen, setAreMoreTabsOpen] = useState(false);
   const location = useLocation();
 
@@ -57,13 +59,18 @@ const Header = ({ page }) => {
         {currentUser && (
           <div className={styles.logOutContainer}>
             <>
-              <button className={styles.notifyButton}>
+              <Link to="/home" className={styles.notifyButton}>
                 <Bell className={`${styles.iconLarge} icon`} />
-              </button>
+
+                {unreadCount > 0 && (
+                  <span className={styles.notificationBadge}>
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
 
               {currentUser?.role === "user" ? (
                 <>
-                  {" "}
                   <div className={styles.tabsContainer}>
                     <button className={styles.tabsButton} onClick={handleTabs}>
                       <TableOfContents className={`${styles.iconLarge} icon`} />
@@ -73,7 +80,7 @@ const Header = ({ page }) => {
                       <div className={styles.moreTabsContainer}>
                         <Link
                           className={styles.rentsButton}
-                          to={"/rentsHistory"}
+                          to={"/RentalDashboard"}
                           onClick={() => setAreMoreTabsOpen(false)}
                         >
                           <History className={` ${styles.iconSmall} icon `} />

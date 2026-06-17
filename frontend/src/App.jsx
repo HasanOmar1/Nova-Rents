@@ -15,7 +15,7 @@ import AllVehicles from "./pages/AdminUI/AllVehicles/AllVehicles";
 import Statistics from "./pages/AdminUI/Statistics/Statistics";
 import ComplaintsAdmin from "./pages/AdminUI/Complaints/ComplaintsAdmin";
 import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
-import RentsHistory from "./pages/UserUI/RentsHistory/RentsHistory";
+import RentalDashboard from "./pages/UserUI/RentalDashboard/RentalDashboard";
 
 function App() {
   const { currentUser, isLoading } = useUserContext();
@@ -44,7 +44,7 @@ function App() {
             <Route path="/myVehicles" element={<MyVehicles />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/complaints" element={<Complaints />} />
-            <Route path="/rentsHistory" element={<RentsHistory />} />
+            <Route path="/rentalDashboard" element={<RentalDashboard />} />
           </>
         ) : currentUser?.role === "admin" ? (
           <>
@@ -68,7 +68,10 @@ function App() {
         )}
 
         {/* other pages */}
-        <Route path="/vehicles/:id" element={<VehicleDetails />} />
+
+        {currentUser && (
+          <Route path="/vehicles/:id" element={<VehicleDetails />} />
+        )}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

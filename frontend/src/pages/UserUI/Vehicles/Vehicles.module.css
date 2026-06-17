@@ -2,15 +2,10 @@
   font-size: 2.2rem;
 }
 
-/* Top Btn */
 .Vehicles .btnsContainer {
   display: flex;
   gap: 10px;
   margin-left: auto;
-}
-
-.Vehicles .btnsContainer button {
-  border-radius: 10px;
 }
 
 .Vehicles .openMapBtn {
@@ -18,6 +13,7 @@
   color: white;
   border: var(--cards-border);
   border-radius: 10px;
+  padding: 10px 20px;
 }
 
 .Vehicles .openMapBtn:hover {
@@ -25,55 +21,12 @@
   color: rgba(255, 255, 255, 0.75);
 }
 
-.Vehicles .openMapBtn:active {
-  background: rgba(255, 255, 255, 0.03);
-}
-
 .Vehicles .filterContainer {
   background-color: var(--bg-gray);
-  min-height: 200px;
   border-radius: 20px;
   margin-top: 20px;
   padding: 20px;
   border: var(--cards-border);
-}
-
-/* buttons container */
-.Vehicles .filterContainer .vehicleTypeBtnsContainer {
-  display: flex;
-  gap: 20px;
-}
-
-.Vehicles hr {
-  margin: 10px;
-}
-
-.Vehicles .vehicleTypeBtnsContainer button {
-  text-transform: capitalize;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 1rem;
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.Vehicles .vehicleTypeBtnsContainer button:not(.active):hover {
-  background-color: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
-}
-
-.Vehicles .vehicleTypeBtnsContainer button.active {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
 }
 
 .Vehicles .inputsContainer {
@@ -82,86 +35,111 @@
   flex-direction: column;
 }
 
-.Vehicles .inputsContainer .top,
-.Vehicles .bottom {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  width: 100%;
-}
-
+/* 5 Columns for the 5 dropdowns */
 .Vehicles .inputsContainer .top {
-  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0fr;
+  gap: 15px;
+  width: 100%;
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.Vehicles .searchContainer {
-  position: relative;
-  grid-column: span 2;
+.Vehicles .inputsContainer .top.hasActiveFilters {
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
-.Vehicles .searchContainer .searchLogo {
-  position: absolute;
-  top: 18px;
-  left: 10px;
-}
-
-.Vehicles .searchContainer .searchNameOrLocationInput {
-  padding-left: 35px;
-}
-
-.Vehicles .inputsContainer input,
 .Vehicles .inputsContainer select {
   background-color: var(--input-bg);
-  border-radius: 15px;
+  border-radius: 12px;
   outline: none;
   color: #fff;
   width: 100%;
-  padding: 15px;
+  padding: 14px;
   border: var(--cards-border);
   transition: border-color 0.2s;
+  cursor: pointer;
+  font-size: 0.9rem;
 }
 
-.Vehicles .inputsContainer select {
-  grid-column: span 1;
-}
-
-.Vehicles .inputsContainer input:focus,
 .Vehicles .inputsContainer select:focus {
-  outline: none;
   border-color: var(--input-focus-border-color);
-}
-
-.Vehicles .bottom input {
-  grid-column: span 2;
 }
 
 .Vehicles .vehiclesCardsContainer {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 30px;
   margin-top: 30px;
   padding-bottom: 30px;
 }
 
-/* Responsive Styles */
+.Vehicles .filterActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.Vehicles .inputsContainer .top.hasActiveFilters .filterActions {
+  opacity: 1;
+  transition: opacity 0.3s ease 0.1s;
+}
+
+.Vehicles .resetBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  color: var(--gray);
+  border: 1px solid var(--cards-border);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.Vehicles .resetBtn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.Vehicles .resetBtn:active {
+  transform: scale(0.97);
+}
+
+.Vehicles .noVeh {
+  color: var(--gray);
+  margin-top: "20px";
+}
+
+@media (max-width: 1024px) {
+  .Vehicles .inputsContainer .top {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .Vehicles .filterActions {
+    max-height: 0;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.3s ease;
+  }
+
+  .Vehicles .inputsContainer .top.hasActiveFilters .filterActions {
+    max-height: 60px;
+  }
+}
 
 @media (max-width: 768px) {
-  .Vehicles .filterContainer {
-    padding: 15px;
-  }
-
-  .Vehicles .vehicleTypeBtnsContainer {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .Vehicles .inputsContainer .top,
-  .Vehicles .bottom {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .Vehicles .bottom input {
-    grid-column: span 1;
+  .Vehicles .inputsContainer .top {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
@@ -180,32 +158,15 @@
     width: 100%;
     justify-content: center;
     padding: 12px;
+    display: flex;
   }
 
-  .Vehicles .inputsContainer .top,
-  .Vehicles .bottom {
+  .Vehicles .inputsContainer .top {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
 
-  .Vehicles .searchContainer {
-    grid-column: span 1;
-  }
-
-  .Vehicles .inputsContainer select {
-    grid-column: span 1;
-  }
-
-  .Vehicles .bottom input {
-    grid-column: span 1;
-  }
-
-  .Vehicles .vehicleTypeBtnsContainer button {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-  }
-
-  .Vehicles .vehiclesCardsContainer {
+  .Vehicles .pagination {
+    flex-direction: column;
     gap: 15px;
   }
 }

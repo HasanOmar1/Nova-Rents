@@ -17,7 +17,12 @@ const HomeBottomCards = ({ title, type, data, dataKey }) => {
       <h3>{title}</h3>
 
       <div className={style.statistics}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={0}
+          minHeight={200}
+        >
           {type === "line" ? (
             <LineChart
               data={data}

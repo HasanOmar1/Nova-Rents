@@ -1,9 +1,13 @@
+import { useActivityContext } from "../../context/ActivityContext";
 import styles from "./UsersCards.module.css";
 
 const UsersCards = ({ user, blockUser, unBlockUser }) => {
-  const handleUserAction = () => {
-    if (user.status === "active") blockUser(user.email);
-    if (user.status === "blocked") unBlockUser(user.email);
+  const { loadActivities } = useActivityContext();
+
+  const handleUserAction = async () => {
+    if (user.status === "active") await blockUser(user.email);
+    if (user.status === "blocked") await unBlockUser(user.email);
+    loadActivities();
   };
 
   const fullName = user.firstName + " " + user.lastName;

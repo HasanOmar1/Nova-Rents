@@ -27,7 +27,7 @@ const DeleteMenu = ({
   return (
     <dialog className={styles.DeleteMenu} ref={dialogRef} onClose={closeMenu}>
       <div className={styles.top}>
-        <p>CONFIRM DELETION</p>
+        <p>DEACTIVATE VEHICLE</p>
         <p>
           <TriangleAlert size={18} color="#c02424" />
         </p>
@@ -36,7 +36,7 @@ const DeleteMenu = ({
       <div className={styles.container}>
         {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
         <p className={styles.sureMsg}>
-          Are you sure you want to delete the vehicle listed below?
+          Are you sure you want to deactivate the vehicle listed below?
         </p>
         <div className={styles.mid}>
           <div className={styles.imgContainer}>
@@ -49,8 +49,8 @@ const DeleteMenu = ({
         </div>
 
         <p className={styles.warningMsg}>
-          This action cannot be undone. All related listing data and history
-          will be permanently removed from your account.
+          This will hide the vehicle from public listings and stop new bookings.
+          You can restore it to "Available" at any time by editing the vehicle.
         </p>
 
         <div className={styles.btnsContainer}>
@@ -58,7 +58,7 @@ const DeleteMenu = ({
             Cancel
           </button>
           <button className={styles.deleteBtn} onClick={handleDeleteVehicle}>
-            DELETE permanently
+            Deactivate Vehicle
           </button>
         </div>
       </div>
