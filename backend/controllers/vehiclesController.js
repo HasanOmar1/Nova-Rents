@@ -433,9 +433,9 @@ const getAllVehicles = async (req, res, next) => {
       model,
       type,
       location,
+      seats,
       sort,
       status,
-      seats,
       page = 1,
       limit = 5,
     } = req.query;
@@ -446,6 +446,9 @@ const getAllVehicles = async (req, res, next) => {
     // 1. DYNAMIC STATUS FILTERING
     let whereClause = `WHERE 1=1`;
     const values = [];
+
+    // --- NEW: Exclude vehicles if the owner is blocked! ---
+    whereClause += ` AND u.status != 'blocked'`;
 
     if (status && status !== "all") {
       whereClause += ` AND v.status = ?`;
@@ -471,7 +474,6 @@ const getAllVehicles = async (req, res, next) => {
       whereClause += ` AND v.address LIKE ?`;
       values.push(`%${location}%`);
     }
-
     if (seats) {
       whereClause += ` AND v.seats = ?`;
       values.push(seats);
@@ -492,7 +494,7 @@ const getAllVehicles = async (req, res, next) => {
         v.image, v.year, v.km, v.address, v.price, v.color, v.status, v.ownerId, v.createdAt, v.details, v.seats,
         cm.modelId, cm.modelName, cb.brandId, cb.brandName, ct.carTypeId, ct.carTypeName,
         u.firstName AS ownerFirstName, u.lastName AS ownerLastName,
-        u.email AS ownerEmail, u.phone AS ownerPhone,
+        u.email AS ownerEmail, u.phone AS ownerPhone, u.status AS ownerStatus,
         1 AS canRent
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
@@ -507,13 +509,14 @@ const getAllVehicles = async (req, res, next) => {
     const queryValues = [...values, parsedLimit, offset];
     const vehicles = await doQuery(query, queryValues);
 
-    // 3. PAGINATION TOTAL
+    // 3. PAGINATION TOTAL (Added JOIN users)
     const countQuery = `
       SELECT COUNT(*) as total
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN users u ON v.ownerId = u.userId
       ${whereClause}
     `;
     const countResult = await doQuery(countQuery, values);
@@ -521,25 +524,29 @@ const getAllVehicles = async (req, res, next) => {
     const totalPages = Math.ceil(totalVehicles / parsedLimit);
 
     // 4. GLOBAL STATS (For Top Cards)
+    // We also join users here so the top cards don't count blocked users' cars
     const statsQuery = `
       SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available,
-        SUM(CASE WHEN status = 'rented' THEN 1 ELSE 0 END) as rented,
-        SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
-        SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive
-      FROM vehicles
+        SUM(CASE WHEN v.status = 'available' THEN 1 ELSE 0 END) as available,
+        SUM(CASE WHEN v.status = 'rented' THEN 1 ELSE 0 END) as rented,
+        SUM(CASE WHEN v.status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
+        SUM(CASE WHEN v.status = 'inactive' THEN 1 ELSE 0 END) as inactive
+      FROM vehicles v
+      JOIN users u ON v.ownerId = u.userId
+      WHERE u.status != 'blocked'
     `;
     const statsResult = await doQuery(statsQuery, []);
 
-    // EXTRACT AVAILABLE DROPDOWN OPTIONS
+    // 5. EXTRACT AVAILABLE DROPDOWN OPTIONS (Added JOIN users)
     const optionsQuery = `
       SELECT DISTINCT v.address, v.seats, cb.brandName, cm.modelName, ct.carTypeName
       FROM vehicles v
       JOIN carModels cm ON v.modelId = cm.modelId
       JOIN carBrands cb ON cm.brandId = cb.brandId
       JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
-      ${status === "all" ? "" : whereClause}
+      JOIN users u ON v.ownerId = u.userId
+      ${status === "all" ? "WHERE u.status != 'blocked'" : whereClause}
     `;
     const optionsData = await doQuery(
       optionsQuery,

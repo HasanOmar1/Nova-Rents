@@ -227,7 +227,8 @@ async function getPendingRentalRequestsForOwner(ownerId) {
       owner.firstName AS ownerFirstName,
       owner.lastName AS ownerLastName,
       owner.email AS ownerEmail,
-      owner.phone AS ownerPhone
+      owner.phone AS ownerPhone,
+      owner.status AS ownerStatus
     FROM rentals r
     JOIN vehicles v ON r.licensePlate = v.licensePlate
     JOIN carModels cm ON v.modelId = cm.modelId
@@ -257,7 +258,7 @@ async function getMyTripsHistoryByRenterId(renterId) {
       owner.lastName AS ownerLastName,
       owner.email AS ownerEmail,
       owner.phone AS ownerPhone,
-
+      owner.status AS ownerStatus,
       renter.firstName AS renterFirstName,
       renter.lastName AS renterLastName
 

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./VehiclesCards.module.css";
-import { MapPin, User, Users } from "lucide-react"; // <-- Imported Users
+import { MapPin, User, Users } from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
 
 const VehiclesCards = ({ veh }) => {

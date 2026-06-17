@@ -95,9 +95,8 @@ const VehicleDetails = () => {
     {
       title: "Owner",
       value: (
-        <div className={styles.ownerLinkContainer}>
+        <span className={styles.ownerLinkContainer}>
           <span>{ownerFullName}</span>
-          {/* ---> NEW: View Profile Link <--- */}
           {state.ownerEmail && (
             <Link
               to={`/userStats/${state.ownerEmail}`}
@@ -106,7 +105,7 @@ const VehicleDetails = () => {
               <ExternalLink size={12} /> View Profile
             </Link>
           )}
-        </div>
+        </span>
       ),
     },
   ];
@@ -158,26 +157,30 @@ const VehicleDetails = () => {
                 )}
               </div>
             </div>
-
             <div className={styles.about}>
               <div className={styles.typeStatusContainer}>
                 <div className={styles.typeAndStatusContainer}>
                   <p className={styles.vehType}>{state.carTypeName}</p>
                   <p
-                    className={`${styles.status} ${state?.status === "available" ? styles.available : state?.status === "rented" ? styles.rented : styles.maintenance}`}
+                    className={`${styles.status} ${state?.status === "available" ? styles.available : state?.status === "rented" ? styles.rented : styles.maintenance} ${state.ownerStatus === "blocked" && styles.maintenance}`}
                   >
-                    {state.status}
+                    {state.ownerStatus !== "blocked"
+                      ? state.status
+                      : "Unavailable"}
                   </p>
                 </div>
 
-                {!hideBooking && state?.status === "available" && (
-                  <button
-                    className={styles.launchBookingBtn}
-                    onClick={() => setIsBookingModalOpen(true)}
-                  >
-                    <CalendarRange size={16} /> Rent Vehicle
-                  </button>
-                )}
+                {/* FIX: Now checks if the VEHICLE OWNER'S status is blocked */}
+                {!hideBooking &&
+                  state?.status === "available" &&
+                  state?.ownerStatus !== "blocked" && (
+                    <button
+                      className={styles.launchBookingBtn}
+                      onClick={() => setIsBookingModalOpen(true)}
+                    >
+                      <CalendarRange size={16} /> Rent Vehicle
+                    </button>
+                  )}
               </div>
 
               <div className={styles.cards}>

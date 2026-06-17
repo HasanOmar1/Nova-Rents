@@ -51,6 +51,7 @@ const UserStats = () => {
       ownerLastName: user.lastName,
       ownerEmail: user.email,
       ownerPhone: user.phone,
+      ownerStatus: user.status,
     };
     navigate(`/vehicles/${veh.licensePlate}`, { state: formattedVehicle });
   };
