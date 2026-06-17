@@ -741,6 +741,83 @@ const updateUserProfile = async (req, res, next) => {
   }
 };
 
+const getUserStatsByEmail = async (req, res, next) => {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    const { email } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 3;
+    const offset = (page - 1) * limit;
+
+    const userQuery = `SELECT userId, firstName, lastName, email, phone, role, status, createdAt FROM users WHERE email = ?`;
+    const userResult = await doQuery(userQuery, [email]);
+
+    if (userResult.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const targetUser = userResult[0];
+
+    if (req.session.user.role !== "admin" && targetUser.role === "admin") {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to view admin profiles." });
+    }
+
+    const tripsQuery = `
+      SELECT 
+        COUNT(*) as totalTrips,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
+        SUM(CASE WHEN status = 'rejected' OR status = 'declined' THEN 1 ELSE 0 END) as rejected
+      FROM rentals 
+      WHERE renterId = ?
+    `;
+    const tripsResult = await doQuery(tripsQuery, [targetUser.userId]);
+
+    const vehiclesQuery = `
+      SELECT 
+        v.licensePlate, v.image, v.price, v.year, v.status, v.address, v.details, v.seats, 
+        cb.brandName, cm.modelName, ct.carTypeName 
+      FROM vehicles v
+      JOIN carModels cm ON v.modelId = cm.modelId
+      JOIN carBrands cb ON cm.brandId = cb.brandId
+      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      WHERE v.ownerId = ?
+      ORDER BY v.createdAt DESC
+      LIMIT ? OFFSET ?
+    `;
+    const vehicles = await doQuery(vehiclesQuery, [
+      targetUser.userId,
+      limit,
+      offset,
+    ]);
+
+    const countVehiclesQuery = `SELECT COUNT(*) as total FROM vehicles WHERE ownerId = ?`;
+    const countResult = await doQuery(countVehiclesQuery, [targetUser.userId]);
+    const totalVehicles = countResult[0].total;
+    const totalPages = Math.ceil(totalVehicles / limit);
+
+    res.status(200).json({
+      user: targetUser,
+      stats: {
+        trips: tripsResult[0],
+        totalVehicles,
+      },
+      vehicles,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalVehicles,
+        limit,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllUsers,
   register,
@@ -752,4 +829,5 @@ module.exports = {
   getUserDetailsByEmail,
   updateUserProfile,
   getUsersByStatus,
+  getUserStatsByEmail,
 };

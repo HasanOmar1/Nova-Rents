@@ -1,6 +1,11 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 import styles from "./VehicleDetails.module.css";
-import { AlertTriangle, MapPin, CalendarRange } from "lucide-react";
+import {
+  AlertTriangle,
+  MapPin,
+  CalendarRange,
+  ExternalLink,
+} from "lucide-react";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
 import { parseImgs } from "../../utils/parseImgs";
@@ -60,6 +65,7 @@ const VehicleDetails = () => {
     setIsBookingModalOpen(false);
     setRentVehResponse("");
   };
+
   const ownerFullName = state.ownerFirstName + " " + state.ownerLastName;
 
   const cardsData = [
@@ -88,7 +94,19 @@ const VehicleDetails = () => {
     },
     {
       title: "Owner",
-      value: ownerFullName,
+      value: (
+        <span className={styles.ownerLinkContainer}>
+          <span>{ownerFullName}</span>
+          {state.ownerEmail && (
+            <Link
+              to={`/userStats/${state.ownerEmail}`}
+              className={styles.viewProfileLink}
+            >
+              <ExternalLink size={12} /> View Profile
+            </Link>
+          )}
+        </span>
+      ),
     },
   ];
 
@@ -139,26 +157,29 @@ const VehicleDetails = () => {
                 )}
               </div>
             </div>
-
             <div className={styles.about}>
               <div className={styles.typeStatusContainer}>
                 <div className={styles.typeAndStatusContainer}>
                   <p className={styles.vehType}>{state.carTypeName}</p>
                   <p
-                    className={`${styles.status} ${state?.status === "available" ? styles.available : state?.status === "rented" ? styles.rented : styles.maintenance}`}
+                    className={`${styles.status} ${state?.status === "available" ? styles.available : state?.status === "rented" ? styles.rented : styles.maintenance} ${state.ownerStatus === "blocked" && styles.maintenance}`}
                   >
-                    {state.status}
+                    {state.ownerStatus !== "blocked"
+                      ? state.status
+                      : "Unavailable"}
                   </p>
                 </div>
 
-                {!hideBooking && (
-                  <button
-                    className={styles.launchBookingBtn}
-                    onClick={() => setIsBookingModalOpen(true)}
-                  >
-                    <CalendarRange size={16} /> Rent Vehicle
-                  </button>
-                )}
+                {!hideBooking &&
+                  state?.status === "available" &&
+                  state?.ownerStatus !== "blocked" && (
+                    <button
+                      className={styles.launchBookingBtn}
+                      onClick={() => setIsBookingModalOpen(true)}
+                    >
+                      <CalendarRange size={16} /> Rent Vehicle
+                    </button>
+                  )}
               </div>
 
               <div className={styles.cards}>

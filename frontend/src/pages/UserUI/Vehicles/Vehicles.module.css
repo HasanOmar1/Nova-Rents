@@ -38,14 +38,14 @@
 /* 5 Columns for the 5 dropdowns */
 .Vehicles .inputsContainer .top {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 0fr;
   gap: 15px;
   width: 100%;
   transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .Vehicles .inputsContainer .top.hasActiveFilters {
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
 .Vehicles .inputsContainer select {
@@ -122,7 +122,7 @@
 
 @media (max-width: 1024px) {
   .Vehicles .inputsContainer .top {
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(4, 1fr) !important;
   }
 
   .Vehicles .filterActions {

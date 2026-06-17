@@ -84,7 +84,7 @@ const Header = ({ page }) => {
                           onClick={() => setAreMoreTabsOpen(false)}
                         >
                           <History className={` ${styles.iconSmall} icon `} />
-                          Rents History
+                          Rental Dashboard
                         </Link>
                         <button
                           className={styles.logoutButton}

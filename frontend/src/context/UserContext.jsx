@@ -15,6 +15,8 @@ const UserContextProvider = ({ children }) => {
   const [currentStatus, setCurrentStatus] = useState("all");
   const [currentSearch, setCurrentSearch] = useState("");
   const [userChartData, setUserChartData] = useState([]);
+  const [userStatsPerEmail, setUserStatsPerEmail] = useState({});
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -151,6 +153,21 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  const fetchUserStats = async (email, currentPage) => {
+    try {
+      setIsStatsLoading(true);
+      const res = await axios.get(
+        `/users/stats/${email}?page=${currentPage}&limit=3`,
+      );
+      setUserStatsPerEmail(res.data);
+      setErrorMsg("");
+    } catch (err) {
+      setErrorMsg(err?.response?.data?.message || "Failed to load user stats.");
+    } finally {
+      setIsStatsLoading(false);
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -169,6 +186,9 @@ const UserContextProvider = ({ children }) => {
         unBlockUser,
         usersStats,
         userChartData,
+        fetchUserStats,
+        userStatsPerEmail,
+        isStatsLoading,
       }}
     >
       {children}
