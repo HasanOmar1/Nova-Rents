@@ -9,13 +9,39 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
+/* --- NEW HEADER ROW STYLES --- */
+.HomeMidCards .headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 .HomeMidCards .cardHeaderTitle {
   font-size: 1.2rem;
   font-weight: 600;
   color: #ffffff;
-  margin-bottom: 20px;
+  margin-bottom: 0; /* Reset from previous */
   letter-spacing: -0.02em;
 }
+
+.HomeMidCards .filterSelect {
+  background-color: var(--input-bg, #0f1523);
+  color: #fff;
+  border: var(--cards-border);
+  padding: 6px 12px;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: border-color 0.2s;
+}
+
+.HomeMidCards .filterSelect:focus {
+  border-color: var(--input-focus-border-color, #3b82f6);
+}
+/* ----------------------------- */
 
 .HomeMidCards .listContainer {
   display: flex;
@@ -45,6 +71,11 @@
   color: #9ca3af;
   font-size: 0.825rem;
   line-height: 1.4;
+}
+
+.HomeMidCards .dataContainer .date {
+  font-size: 0.75rem;
+  color: var(--icons-color);
 }
 
 .HomeMidCards .dateText {

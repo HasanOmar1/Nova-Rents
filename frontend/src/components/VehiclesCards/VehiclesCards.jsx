@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./VehiclesCards.module.css";
-import { MapPin, User, AlertTriangle } from "lucide-react";
+import { MapPin, User, Users } from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
 
 const VehiclesCards = ({ veh }) => {
@@ -33,9 +33,19 @@ const VehiclesCards = ({ veh }) => {
             <p className={styles.detailsData}>{veh.year}</p>
           </div>
 
+          {/* NEW SEATS SECTION */}
+          <div>
+            <p className={styles.title}>Seats</p>
+            <div className={styles.detailsData}>
+              <p>
+                <Users size={15} className="icon" />
+              </p>
+              <p>{veh.seats}</p>
+            </div>
+          </div>
+
           <div>
             <p className={styles.title}>Location</p>
-
             <div className={styles.detailsData}>
               <p>
                 <MapPin size={15} className="icon" />

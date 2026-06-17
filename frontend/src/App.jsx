@@ -16,6 +16,7 @@ import Statistics from "./pages/AdminUI/Statistics/Statistics";
 import ComplaintsAdmin from "./pages/AdminUI/Complaints/ComplaintsAdmin";
 import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
 import RentalDashboard from "./pages/UserUI/RentalDashboard/RentalDashboard";
+import UserStats from "./pages/UserStats/UserStats";
 
 function App() {
   const { currentUser, isLoading } = useUserContext();
@@ -70,8 +71,12 @@ function App() {
         {/* other pages */}
 
         {currentUser && (
-          <Route path="/vehicles/:id" element={<VehicleDetails />} />
+          <>
+            <Route path="/vehicles/:id" element={<VehicleDetails />} />
+            <Route path="/userStats/:email" element={<UserStats />} />
+          </>
         )}
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
