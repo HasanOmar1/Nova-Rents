@@ -28,6 +28,27 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  const putUpdateComplaintStatus = async (complaintId, status, adminNotes) => {
+    try {
+      await axios.put(`/complaints/${complaintId}/status`, { status, adminNotes });
+      setErrorMsg("");
+      return true;
+    } catch (error) {
+      setErrorMsg(error?.response?.data?.message);
+    }
+  };
+  
+
+  const getAllComplaints = async () => {
+    try {
+      const response = await axios.get("/complaints");
+      setComplaints(response.data.complaints);
+      setErrorMsg("");
+    } catch (error) {
+      setErrorMsg(error?.response?.data?.message);
+    }
+  };
+
   return (
     <ComplaintContext.Provider
       value={{
@@ -36,6 +57,8 @@ const ComplaintContextProvider = ({ children }) => {
         setErrorMsg,
         createComplaint,
         getMyComplaints,
+        putUpdateComplaintStatus,
+        getAllComplaints,
       }}
     >
       {children}

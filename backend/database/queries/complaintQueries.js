@@ -77,13 +77,18 @@ async function getAllComplaints() {
       complainer.firstName AS complainerFirstName,
       complainer.lastName AS complainerLastName,
       complainer.email AS complainerEmail,
-      complainer.phone AS complainerPhone
+      complainer.phone AS complainerPhone,
+      vehicleOwner.firstName AS vehicleOwnerFirstName,
+      vehicleOwner.lastName AS vehicleOwnerLastName,
+      vehicleOwner.email AS vehicleOwnerEmail,
+      vehicleOwner.phone AS vehicleOwnerPhone
     FROM complaints c
     LEFT JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
     LEFT JOIN carModels cm ON v.modelId = cm.modelId
     LEFT JOIN carBrands cb ON cm.brandId = cb.brandId
     LEFT JOIN users u ON c.ownerId = u.userId
     LEFT JOIN users complainer ON c.userId = complainer.userId
+    LEFT JOIN users vehicleOwner ON v.ownerId = vehicleOwner.userId
     ORDER BY c.createdAt DESC
   `;
 
