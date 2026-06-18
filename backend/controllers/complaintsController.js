@@ -1,0 +1,195 @@
+const STATUS_CODE = require("../constants/statusCodes");
+const doQuery = require("../database/query");
+
+const {
+  getVehicleByLicensePlate,
+} = require("../database/queries/vehicleQueries");
+
+const {
+  createComplaint,
+  getComplaintsByUserId,
+  getAllComplaints,
+  updateComplaintStatus,
+} = require("../database/queries/complaintQueries");
+
+
+const { createActivity } = require("../database/queries/activityQueries");
+
+const {
+  validateAuthenticatedUser,
+  validateComplaintFields,
+} = require("../utils/validsController");
+
+const { getUserByEmail } = require("../database/queries/userQueries");
+
+async function createComplaint_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    const userId = req.session.user.userId;
+    const {
+      complaintType,
+      vehicleLicensePlate,
+      ownerEmail,
+      title,
+      description,
+    } = req.body;
+
+    const images =
+      req.files && req.files.length > 0
+        ? JSON.stringify(req.files.map((file) => file.filename))
+        : null;
+    if (!validateComplaintFields(req.body, res)) return;
+
+    if (complaintType === "vehicle") {
+      const vehicle = await getVehicleByLicensePlate(vehicleLicensePlate);
+
+      if (!vehicle) {
+        return res
+          .status(STATUS_CODE.NOT_FOUND)
+          .json({ message: "Vehicle not found" });
+      }
+
+      if (vehicle.ownerId === userId) {
+        return res
+          .status(STATUS_CODE.FORBIDDEN)
+          .json({ message: "You cannot complain against your own vehicle" });
+      }
+    }
+    let resolvedOwnerId = null;
+    if (complaintType === "owner") {
+      const ownerRows = await getUserByEmail(ownerEmail);
+      if (!ownerRows) {
+        return res
+          .status(STATUS_CODE.NOT_FOUND)
+          .json({ message: "Owner not found" });
+      }
+      resolvedOwnerId = ownerRows.userId;
+      if (Number(resolvedOwnerId) === Number(userId)) {
+        return res
+          .status(STATUS_CODE.FORBIDDEN)
+          .json({ message: "You cannot complain against yourself" });
+      }
+
+     
+    }
+
+    const result = await createComplaint(
+      userId,
+      complaintType,
+      complaintType === "vehicle" ? vehicleLicensePlate : null,
+      complaintType === "owner" ? resolvedOwnerId : null,
+      title,
+      description,
+      images,
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(STATUS_CODE.INTERNAL_SERVER_ERROR).json({
+        message: "Failed to create complaint",
+      });
+    }
+
+    await createActivity(
+      userId,
+      "complaint_created",
+      `Filed ${complaintType} complaint: ${title}`,
+    );
+
+    return res.status(STATUS_CODE.CREATED).json({
+      message: "Complaint submitted successfully",
+      complaintId: result.insertId,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function updateComplaintStatus_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+    if (req.session.user.role !== "admin") {
+      return res
+        .status(STATUS_CODE.FORBIDDEN)
+        .json({ message: "You are not authorized to update complaint status" });
+    }
+    const { complaintId } = req.params;
+    const { status, adminNotes } = req.body;
+
+    const allowedStatuses = ["open", "in_review", "resolved", "closed"];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid complaint status",
+      });
+    }
+
+    const result = await updateComplaintStatus(
+      complaintId,
+      status,
+      adminNotes || null,
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "Complaint not found",
+      });
+    }
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Complaint status updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+async function getMyComplaints_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    const userId = req.session.user.userId;
+
+    const complaints = await getComplaintsByUserId(userId);
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Complaints fetched successfully",
+      count: complaints.length,
+      complaints,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getAllComplaints_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    if (req.session.user.role !== "admin") {
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "Admin access only",
+      });
+    }
+
+    const complaints = await getAllComplaints();
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Complaints fetched successfully",
+      count: complaints.length,
+      complaints,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = {
+  createComplaint_controller,
+  updateComplaintStatus_controller,
+  getMyComplaints_controller,
+  getAllComplaints_controller,
+};

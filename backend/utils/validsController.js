@@ -388,6 +388,43 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     seats: seatsNum, // <-- ADDED
   };
 }
+function validateComplaintFields(body, res) {
+  const { complaintType, title, description } = body;
+
+  if (!complaintType || !title?.trim() || !description?.trim()) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "complaintType, title, and description are required",
+    );
+  }
+
+  if (!["vehicle", "owner"].includes(complaintType)) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "complaintType must be 'vehicle' or 'owner'",
+    );
+  }
+
+  if (complaintType === "vehicle" && !body.vehicleLicensePlate) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "vehicleLicensePlate is required for vehicle complaints",
+    );
+  }
+
+  if (complaintType === "owner" && !body.ownerEmail) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "ownerEmail is required for owner complaints",
+    );
+  }
+
+  return true;
+}
 
 module.exports = {
   validateRequiredRegisterFields,
@@ -399,4 +436,5 @@ module.exports = {
   validateAndMergeVehicleUpdate,
   validateUpdateInputFormats,
   validateRequiredRentalFields,
+  validateComplaintFields,
 };
