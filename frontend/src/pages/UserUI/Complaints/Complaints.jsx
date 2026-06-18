@@ -243,9 +243,8 @@ const Complaints = () => {
             ) : (
               <div className={styles.imagePreviewContainer}>
                 {previewUrls.map((image, index) => (
-                  <div className={styles.previewCard}>
+                  <div className={styles.previewCard} key={index}>
                     <img
-                      key={index}
                       src={image}
                       alt="preview"
                       className={styles.previewImage}

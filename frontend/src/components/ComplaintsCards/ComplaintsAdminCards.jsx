@@ -8,6 +8,7 @@ const ComplaintsAdminCards = ({
   status,
   reporter,
   action,
+  onReview,
 }) => {
   return (
     <div className={styles.ComplaintsAdminCards}>
@@ -17,8 +18,15 @@ const ComplaintsAdminCards = ({
       <p className={styles.owner}>{owner}</p>
       <p className={styles.status}>{status}</p>
       <p className={styles.reporter}>{reporter}</p>
-      <p className={styles.action}>{action}</p>
+      <button
+        type="button"
+        className={styles.action}
+        onClick={onReview}
+      >
+        {action}
+      </button>
     </div>
+    
   );
 };
 

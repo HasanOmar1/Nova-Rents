@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import ComplaintsAdminCards from "../../../components/ComplaintsCards/ComplaintsAdminCards";
+import { useComplaintContext } from "../../../context/ComplaintContext";
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -39,27 +41,6 @@ const topData = [
   },
 ];
 
-const complaintsData = [
-  {
-    type: "Vehicle",
-    title: "Suspicious listing photos",
-    target: "Wedding Limousine (#3)",
-    owner: "Hasan",
-    status: "Open",
-    reporter: "hasan@autolux.com",
-    action: "Review",
-  },
-  {
-    type: "Owner",
-    title: "Late return issue",
-    target: "Essa Lwabne",
-    owner: "Essa Lwabne",
-    status: "Under Review",
-    reporter: "essa@autolux.com",
-    action: "Review",
-  },
-];
-
 const lineData = [
   { month: "Jan", cases: 6 },
   { month: "Feb", cases: 9 },
@@ -68,7 +49,53 @@ const lineData = [
   { month: "May", cases: 17 },
   { month: "Jun", cases: 20 },
 ];
+
 const ComplaintsAdmin = () => {
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [modalStatus, setModalStatus] = useState("open");
+  const [adminNote, setAdminNote] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const { putUpdateComplaintStatus, getAllComplaints, complaints } =
+    useComplaintContext();
+
+  useEffect(() => {
+    getAllComplaints();
+  }, []);
+
+  const openReviewModal = (complaint) => {
+    setSelectedComplaint(complaint);
+    setModalStatus(complaint.status);
+    setAdminNote("");
+    setSubmitSuccess(false);
+  };
+
+  const closeModal = () => {
+    setSelectedComplaint(null);
+    setAdminNote("");
+    setSubmitSuccess(false);
+  };
+
+  const handleUpdatestatus = async () => {
+    try {
+      setIsSubmitting(true);
+      const success = await putUpdateComplaintStatus(
+        selectedComplaint.complaintId,
+        modalStatus,
+        adminNote,
+      );
+      if (success) {
+        setSubmitSuccess(true);
+        setTimeout(() => {
+          closeModal();
+        }, 1800);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <div className={`${styles.ComplaintsAdmin} page`}>
       <h1>Complaints</h1>
@@ -114,20 +141,30 @@ const ComplaintsAdmin = () => {
           <p>Action</p>
         </div>
         <hr />
+        {complaints.map((comp, i) => {
+          const listedOwner =
+            comp.complaintType === "vehicle"
+              ? `${comp.vehicleOwnerFirstName || ""} ${comp.vehicleOwnerLastName || ""}`
+              : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
 
-        {complaintsData.map((comp, i) => {
+          const target =
+            comp.complaintType === "vehicle"
+              ? `${comp.brandName || ""} ${comp.modelName || ""} ${comp.vehicleLicensePlate || ""}`
+              : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
+
           return (
-            <div key={i}>
+            <div key={comp.complaintId}>
               <ComplaintsAdminCards
-                action={comp.action}
-                owner={comp.owner}
-                reporter={comp.reporter}
+                action="Review"
+                owner={listedOwner}
+                reporter={comp.complainerEmail}
                 status={comp.status}
-                target={comp.target}
+                target={target}
                 title={comp.title}
-                type={comp.type}
+                type={comp.complaintType === "vehicle" ? "Vehicle" : "Owner"}
+                onReview={() => openReviewModal(comp)}
               />
-              {i < complaintsData.length - 1 && <hr />}
+              {i < complaints.length - 1 && <hr />}
             </div>
           );
         })}
