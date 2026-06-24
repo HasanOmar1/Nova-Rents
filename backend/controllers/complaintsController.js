@@ -9,9 +9,10 @@ const {
   createComplaint,
   getComplaintsByUserId,
   getAllComplaints,
+  countAllComplaints,
+  getComplaintStats,
   updateComplaintStatus,
 } = require("../database/queries/complaintQueries");
-
 
 const { createActivity } = require("../database/queries/activityQueries");
 
@@ -40,6 +41,7 @@ async function createComplaint_controller(req, res, next) {
       req.files && req.files.length > 0
         ? JSON.stringify(req.files.map((file) => file.filename))
         : null;
+
     if (!validateComplaintFields(req.body, res)) return;
 
     if (complaintType === "vehicle") {
@@ -57,6 +59,7 @@ async function createComplaint_controller(req, res, next) {
           .json({ message: "You cannot complain against your own vehicle" });
       }
     }
+
     let resolvedOwnerId = null;
     if (complaintType === "owner") {
       const ownerRows = await getUserByEmail(ownerEmail);
@@ -71,8 +74,6 @@ async function createComplaint_controller(req, res, next) {
           .status(STATUS_CODE.FORBIDDEN)
           .json({ message: "You cannot complain against yourself" });
       }
-
-     
     }
 
     const result = await createComplaint(
@@ -96,6 +97,22 @@ async function createComplaint_controller(req, res, next) {
       "complaint_created",
       `Filed ${complaintType} complaint: ${title}`,
     );
+
+    // --- NEW: Notify all Admins ---
+    const admins = await doQuery(
+      "SELECT userId FROM users WHERE role = 'admin'",
+    );
+    for (let admin of admins) {
+      await doQuery(
+        "INSERT INTO notifications (userId, type, title, message) VALUES (?, ?, ?, ?)",
+        [
+          admin.userId,
+          "system",
+          "New Complaint Received",
+          `A new ${complaintType} complaint requires your review.`,
+        ],
+      );
+    }
 
     return res.status(STATUS_CODE.CREATED).json({
       message: "Complaint submitted successfully",
@@ -145,13 +162,13 @@ async function updateComplaintStatus_controller(req, res, next) {
     next(error);
   }
 }
+
 async function getMyComplaints_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
 
     const userId = req.session.user.userId;
-
     const complaints = await getComplaintsByUserId(userId);
 
     return res.status(STATUS_CODE.OK).json({
@@ -175,12 +192,25 @@ async function getAllComplaints_controller(req, res, next) {
       });
     }
 
-    const complaints = await getAllComplaints();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+    const status = req.query.status || "all";
+
+    const complaints = await getAllComplaints(status, limit, offset);
+    const totalComplaints = await countAllComplaints(status);
+    const stats = await getComplaintStats();
 
     return res.status(STATUS_CODE.OK).json({
       message: "Complaints fetched successfully",
-      count: complaints.length,
       complaints,
+      stats,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalComplaints / limit),
+        totalComplaints,
+        limit,
+      },
     });
   } catch (error) {
     next(error);

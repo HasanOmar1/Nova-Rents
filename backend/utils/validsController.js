@@ -7,9 +7,8 @@ const {
 } = require("./Valids");
 const { clearFailedUploads } = require("./handleUploads");
 
-function sendValidationError(res, status, message) {
-  res.status(status).json({ message });
-  return null;
+function sendValidationError(res, code, message) {
+  return res.status(code).json({ message });
 }
 
 function validateRequiredRegisterFields(body, res) {
@@ -385,9 +384,10 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     year: yearNum,
     km: kmNum,
     price: priceNum,
-    seats: seatsNum, // <-- ADDED
+    seats: seatsNum,
   };
 }
+
 function validateComplaintFields(body, res) {
   const { complaintType, title, description } = body;
 

@@ -59,7 +59,10 @@ const Header = ({ page }) => {
         {currentUser && (
           <div className={styles.logOutContainer}>
             <>
-              <Link to="/home" className={styles.notifyButton}>
+              <Link
+                to={currentUser.role === "admin" ? "/dashboard" : "/home"}
+                className={styles.notifyButton}
+              >
                 <Bell className={`${styles.iconLarge} icon`} />
 
                 {unreadCount > 0 && (

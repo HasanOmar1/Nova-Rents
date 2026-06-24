@@ -6,6 +6,8 @@ const ComplaintContext = createContext();
 const ComplaintContextProvider = ({ children }) => {
   const [complaints, setComplaints] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
+  const [pagination, setPagination] = useState({});
+  const [complaintStats, setComplaintStats] = useState({});
 
   const createComplaint = async (complaintData) => {
     try {
@@ -30,19 +32,25 @@ const ComplaintContextProvider = ({ children }) => {
 
   const putUpdateComplaintStatus = async (complaintId, status, adminNotes) => {
     try {
-      await axios.put(`/complaints/${complaintId}/status`, { status, adminNotes });
+      await axios.put(`/complaints/${complaintId}/status`, {
+        status,
+        adminNotes,
+      });
       setErrorMsg("");
       return true;
     } catch (error) {
       setErrorMsg(error?.response?.data?.message);
     }
   };
-  
 
-  const getAllComplaints = async () => {
+  const getAllComplaints = async (page = 1, status = "all") => {
     try {
-      const response = await axios.get("/complaints");
+      const response = await axios.get(
+        `/complaints?page=${page}&status=${status}&limit=5`,
+      );
       setComplaints(response.data.complaints);
+      setPagination(response.data.pagination);
+      setComplaintStats(response.data.stats);
       setErrorMsg("");
     } catch (error) {
       setErrorMsg(error?.response?.data?.message);
@@ -59,6 +67,8 @@ const ComplaintContextProvider = ({ children }) => {
         getMyComplaints,
         putUpdateComplaintStatus,
         getAllComplaints,
+        pagination,
+        complaintStats,
       }}
     >
       {children}

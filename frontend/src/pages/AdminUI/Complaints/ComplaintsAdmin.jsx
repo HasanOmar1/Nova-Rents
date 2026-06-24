@@ -3,43 +3,25 @@ import {
   FileWarning,
   Clock,
   AlertTriangle,
-  Search,
   ChevronLeft,
   ChevronRight,
+  BookCheck,
 } from "lucide-react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import ComplaintsAdminCards from "../../../components/ComplaintsCards/ComplaintsAdminCards";
 import { useComplaintContext } from "../../../context/ComplaintContext";
 import { useEffect, useState } from "react";
+import Pagination from "../../../components/Pagination/Pagination";
+import ComplaintReviewModal from "../../../components/ComplaintReviewModal/ComplaintReviewModal";
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const topData = [
-  {
-    title: "All",
-    value: "2",
-    icon: <FileWarning size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Open",
-    value: "1",
-    icon: <AlertTriangle size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Review",
-    value: "1",
-    icon: <Clock size={28} color="#a7d2eb" />,
-  },
-];
 
 const lineData = [
   { month: "Jan", cases: 6 },
@@ -52,81 +34,110 @@ const lineData = [
 
 const ComplaintsAdmin = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [modalStatus, setModalStatus] = useState("open");
-  const [adminNote, setAdminNote] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const { putUpdateComplaintStatus, getAllComplaints, complaints } =
-    useComplaintContext();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
+  const {
+    putUpdateComplaintStatus,
+    getAllComplaints,
+    complaints,
+    pagination,
+    complaintStats,
+  } = useComplaintContext();
+
+  // Fetch data when page or filter changes
   useEffect(() => {
-    getAllComplaints();
-  }, []);
+    getAllComplaints(currentPage, filterStatus);
+  }, [currentPage, filterStatus]);
+
+  // Reset to page 1 if filter changes
+  const handleFilterChange = (e) => {
+    setFilterStatus(e.target.value);
+    setCurrentPage(1);
+  };
 
   const openReviewModal = (complaint) => {
     setSelectedComplaint(complaint);
-    setModalStatus(complaint.status);
-    setAdminNote("");
-    setSubmitSuccess(false);
+    setIsModalOpen(true);
   };
 
-  const closeModal = () => {
+  const closeReviewModal = () => {
     setSelectedComplaint(null);
-    setAdminNote("");
-    setSubmitSuccess(false);
+    setIsModalOpen(false);
   };
 
-  const handleUpdatestatus = async () => {
-    try {
-      setIsSubmitting(true);
-      const success = await putUpdateComplaintStatus(
-        selectedComplaint.complaintId,
-        modalStatus,
-        adminNote,
-      );
-      if (success) {
-        setSubmitSuccess(true);
-        setTimeout(() => {
-          closeModal();
-        }, 1800);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
+  const handleUpdateStatus = async (complaintId, status, adminNote) => {
+    const success = await putUpdateComplaintStatus(
+      complaintId,
+      status,
+      adminNote,
+    );
+    if (success) {
+      closeReviewModal();
+      getAllComplaints(currentPage, filterStatus);
     }
   };
+
+  const topData = [
+    {
+      title: "Total Complaints",
+      value: complaintStats?.total || 0,
+      icon: <FileWarning size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Open",
+      value: complaintStats?.open || 0,
+      icon: <AlertTriangle size={28} color="#eab308" />,
+    },
+    {
+      title: "Under Review",
+      value: complaintStats?.review || 0,
+      icon: <Clock size={28} color="#3b82f6" />,
+    },
+    {
+      title: "Resolved",
+      value: complaintStats?.resolved || 0,
+      icon: <BookCheck size={28} color="#3b82f6" />,
+    },
+  ];
+
   return (
     <div className={`${styles.ComplaintsAdmin} page`}>
       <h1>Complaints</h1>
 
+      <ComplaintReviewModal
+        isOpen={isModalOpen}
+        onClose={closeReviewModal}
+        complaint={selectedComplaint}
+        onUpdate={handleUpdateStatus}
+      />
+
       <div className={styles.topCardsContainer}>
-        {topData.map((item) => {
-          return (
-            <HomeTopCards
-              key={crypto.randomUUID()}
-              title={item.title}
-              value={item.value}
-              icon={item.icon}
-            />
-          );
-        })}
+        {topData.map((item) => (
+          <HomeTopCards
+            key={crypto.randomUUID()}
+            title={item.title}
+            value={item.value}
+            icon={item.icon}
+          />
+        ))}
       </div>
 
       <div className={styles.searchContainer}>
         <div className={styles.left}>
           <label htmlFor="status">Status</label>
-          <select name="status">
+          <select
+            name="status"
+            value={filterStatus}
+            onChange={handleFilterChange}
+          >
             <option value="all">All</option>
             <option value="open">Open</option>
-            <option value="under-review">Under Review</option>
+            <option value="in_review">Under Review</option>
             <option value="resolved">Resolved</option>
+            {/* <option value="closed">Closed</option> */}
           </select>
-        </div>
-
-        <div className={styles.right}>
-          <label htmlFor="date">From date</label>
-          <input type="date" name="date" />
         </div>
       </div>
 
@@ -141,45 +152,51 @@ const ComplaintsAdmin = () => {
           <p>Action</p>
         </div>
         <hr />
-        {complaints.map((comp, i) => {
-          const listedOwner =
-            comp.complaintType === "vehicle"
-              ? `${comp.vehicleOwnerFirstName || ""} ${comp.vehicleOwnerLastName || ""}`
-              : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
 
-          const target =
-            comp.complaintType === "vehicle"
-              ? `${comp.brandName || ""} ${comp.modelName || ""} ${comp.vehicleLicensePlate || ""}`
-              : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
+        {complaints.length === 0 ? (
+          <p className={styles.emptyMsg}>
+            No complaints found for this filter.
+          </p>
+        ) : (
+          complaints.map((comp, i) => {
+            const listedOwner =
+              comp.complaintType === "vehicle"
+                ? `${comp.vehicleOwnerFirstName || ""} ${comp.vehicleOwnerLastName || ""}`
+                : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
 
-          return (
-            <div key={comp.complaintId}>
-              <ComplaintsAdminCards
-                action="Review"
-                owner={listedOwner}
-                reporter={comp.complainerEmail}
-                status={comp.status}
-                target={target}
-                title={comp.title}
-                type={comp.complaintType === "vehicle" ? "Vehicle" : "Owner"}
-                onReview={() => openReviewModal(comp)}
-              />
-              {i < complaints.length - 1 && <hr />}
-            </div>
-          );
-        })}
-        <div className={styles.pagination}>
-          <p>Showing 1-2 of 2</p>
+            const target =
+              comp.complaintType === "vehicle"
+                ? `${comp.brandName || ""} ${comp.modelName || ""} ${comp.vehicleLicensePlate || ""}`
+                : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
 
-          <div className={styles.btnsContainer}>
-            <button>
-              <ChevronLeft size={20} /> Prev
-            </button>
-            <p>Page 1 / 1</p>
-            <button>
-              Next <ChevronRight size={20} />
-            </button>
-          </div>
+            return (
+              <div key={comp.complaintId}>
+                <ComplaintsAdminCards
+                  action="Review"
+                  owner={listedOwner}
+                  reporter={comp.complainerEmail || comp.userId}
+                  status={comp.status}
+                  target={target}
+                  title={comp.title}
+                  type={comp.complaintType === "vehicle" ? "Vehicle" : "Owner"}
+                  onReview={() => openReviewModal(comp)}
+                />
+                {i < complaints.length - 1 && <hr />}
+              </div>
+            );
+          })
+        )}
+
+        <div className={styles.paginationWrapper}>
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            handlePrevPage={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            handleNextPage={() =>
+              setCurrentPage((p) => Math.min(p + 1, pagination.totalPages))
+            }
+            leftText={`Total Complaints: ${pagination.totalComplaints}`}
+          />
         </div>
       </div>
 

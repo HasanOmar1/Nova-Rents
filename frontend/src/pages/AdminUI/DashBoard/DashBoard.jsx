@@ -102,46 +102,8 @@ const DashBoard = () => {
         })}
       </div>
 
-      <div className={styles.complaintsContainer}>
-        <div className={styles.left}>
-          <div className={styles.titleContainer}>
-            <h4>Open complaints — action required</h4>
-            <p>Open and under review only</p>
-          </div>
-
-          {complaintsData.map((comp, i) => {
-            return (
-              <AdminComplaints
-                key={i}
-                title={comp.title}
-                description={comp.description}
-                state={comp.state}
-                type={comp.type}
-              />
-            );
-          })}
-        </div>
-        <div className={styles.right}>
-          <div className={styles.titleContainer}>
-            <h4>Closed complaints — history</h4>
-            <p>Archived and resolved issues</p>
-          </div>
-
-          {closedComplaintsData.map((comp, i) => {
-            return (
-              <AdminComplaints
-                key={i}
-                title={comp.title}
-                description={comp.description}
-                state={comp.state}
-                type={comp.type}
-              />
-            );
-          })}
-        </div>
-      </div>
-
       <div className={styles.activitesContainer}>
+        <HomeMidCards title={"Notification"} />
         <HomeMidCards title={"Recent Activity"} />
       </div>
 

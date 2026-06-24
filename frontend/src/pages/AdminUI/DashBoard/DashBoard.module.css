@@ -36,7 +36,10 @@
 }
 
 .DashBoard .activitesContainer {
-  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin: 30px 0;
 }
 
 .DashBoard .bottomCardsContainer {
