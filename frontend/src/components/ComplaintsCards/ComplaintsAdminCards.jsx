@@ -16,17 +16,16 @@ const ComplaintsAdminCards = ({
       <p className={styles.title}>{title}</p>
       <p className={styles.target}>{target}</p>
       <p className={styles.owner}>{owner}</p>
-      <p className={styles.status}>{status}</p>
+      <p className={styles.status}>
+        {status === "in_review"
+          ? "Under_Review".toUpperCase()
+          : status.toUpperCase()}
+      </p>
       <p className={styles.reporter}>{reporter}</p>
-      <button
-        type="button"
-        className={styles.action}
-        onClick={onReview}
-      >
+      <button type="button" className={styles.action} onClick={onReview}>
         {action}
       </button>
     </div>
-    
   );
 };
 
