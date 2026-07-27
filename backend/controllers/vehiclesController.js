@@ -16,6 +16,9 @@ const {
   clearFailedUploads,
 } = require("../utils/handleUploads");
 const { createActivity } = require("../database/queries/activityQueries");
+const {
+  createSystemHistory,
+} = require("../database/queries/systemHistoryQueries");
 const { formatDateForInput } = require("../utils/formatDate");
 const {
   rejectPendingRentalsByLicensePlate,
@@ -171,6 +174,17 @@ const addVehicle = async (req, res, next) => {
       "Added new vehicle",
       `Added new vehicle with license plate of ${licensePlate}`,
     );
+    await createSystemHistory(
+      userId,
+      "vehicle",
+      "create",
+      "vehicle_created",
+      "vehicle",
+      String(licensePlate),
+      null,
+      licensePlate,
+      `Added new vehicle with license plate of ${licensePlate}`,
+    );
     const newVehicle = await getVehicleByLicensePlate(licensePlate);
     res.status(STATUS_CODE.CREATED).json({
       message: "Vehicle added successfully",
@@ -257,7 +271,13 @@ const deleteVehicle = async (req, res, next) => {
 
     const { userId } = req.session.user;
 
-    const checkQuery = `SELECT ownerId, status FROM vehicles WHERE licensePlate = ?`;
+    const checkQuery = `
+      SELECT v.ownerId, v.status, cb.brandName, cm.modelName
+      FROM vehicles v
+      LEFT JOIN carModels cm ON v.modelId = cm.modelId
+      LEFT JOIN carBrands cb ON cm.brandId = cb.brandId
+      WHERE v.licensePlate = ?
+    `;
     const checkResult = await doQuery(checkQuery, [licensePlate]);
 
     if (checkResult.length === 0) {
@@ -296,12 +316,42 @@ const deleteVehicle = async (req, res, next) => {
     }
 
     const updateQuery = `UPDATE vehicles SET status = 'inactive' WHERE licensePlate = ?`;
-    await doQuery(updateQuery, [licensePlate]);
+    const updateResult = await doQuery(updateQuery, [licensePlate]);
+
+    if (updateResult.affectedRows === 0) {
+      return res
+        .status(STATUS_CODE.INTERNAL_SERVER_ERROR)
+        .json({ message: "Failed to deactivate vehicle" });
+    }
 
     await createActivity(
       userId,
       "Vehicle Deactivation",
       `Deactivated vehicle with license plate of ${licensePlate}`,
+    );
+
+    const actorName =
+      `${req.session.user.firstName || ""} ${
+        req.session.user.lastName || ""
+      }`.trim() ||
+      req.session.user.email ||
+      "A user";
+    const { brandName, modelName } = checkResult[0];
+    const vehicleLabel =
+      brandName && modelName
+        ? `${brandName} ${modelName} (${licensePlate})`
+        : `vehicle ${licensePlate}`;
+
+    await createSystemHistory(
+      userId,
+      "vehicle",
+      "update",
+      "vehicle_deactivated",
+      "vehicle",
+      String(licensePlate),
+      null,
+      licensePlate,
+      `${actorName} deactivated ${vehicleLabel}`,
     );
 
     res.status(STATUS_CODE.OK).json({
@@ -411,6 +461,17 @@ const updateVehicle = async (req, res, next) => {
       await createActivity(
         req.session.user.userId,
         "Updated a vehicle",
+        `Updated vehicle with license plate of ${licensePlate}: ${updatedFields.join(", ")}`,
+      );
+      await createSystemHistory(
+        req.session.user.userId,
+        "vehicle",
+        "update",
+        "vehicle_updated",
+        "vehicle",
+        String(licensePlate),
+        null,
+        licensePlate,
         `Updated vehicle with license plate of ${licensePlate}: ${updatedFields.join(", ")}`,
       );
     }
@@ -712,6 +773,25 @@ async function updateVehicleStatus(req, res, next) {
     await createActivity(
       req.session.user.userId,
       "Vehicle Status Update",
+      `Updated vehicle with license plate of ${licensePlate} status to ${status}`,
+    );
+
+    let statusEventName = "vehicle_status_updated";
+    if (status === "maintenance") {
+      statusEventName = "vehicle_moved_to_maintenance";
+    } else if (status === "available") {
+      statusEventName = "vehicle_returned_to_available";
+    }
+
+    await createSystemHistory(
+      req.session.user.userId,
+      "vehicle",
+      "update",
+      statusEventName,
+      "vehicle",
+      String(licensePlate),
+      null,
+      licensePlate,
       `Updated vehicle with license plate of ${licensePlate} status to ${status}`,
     );
 

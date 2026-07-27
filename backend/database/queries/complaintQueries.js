@@ -136,14 +136,34 @@ async function getComplaintStats() {
   return result[0];
 }
 
-async function updateComplaintStatus(complaintId, status, adminNotes) {
+async function updateComplaintStatus(complaintId, status, responseToUser) {
   const query = `
     UPDATE complaints 
-    SET status = ?, adminNotes = ?
+    SET status = ?, adminNotes = ?, respondedAt = NOW()
     WHERE complaintId = ?
   `;
 
-  return doQuery(query, [status, adminNotes, complaintId]);
+  return doQuery(query, [status, responseToUser, complaintId]);
+}
+
+async function getComplaintReporterById(complaintId) {
+  const query = `
+    SELECT
+      c.complaintId,
+      c.complaintType,
+      c.title,
+      c.status,
+      c.respondedAt,
+      c.userId AS reporterId,
+      u.email AS reporterEmail,
+      u.firstName AS reporterFirstName
+    FROM complaints c
+    INNER JOIN users u ON c.userId = u.userId
+    WHERE c.complaintId = ?
+  `;
+
+  const result = await doQuery(query, [complaintId]);
+  return result[0];
 }
 
 async function getComplaintChartData(startDate, endDate) {
@@ -166,5 +186,6 @@ module.exports = {
   countAllComplaints,
   getComplaintStats,
   updateComplaintStatus,
+  getComplaintReporterById,
   getComplaintChartData,
 };

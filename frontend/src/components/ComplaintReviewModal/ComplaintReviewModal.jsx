@@ -6,7 +6,7 @@ import { parseImgs } from "../../utils/parseImgs";
 const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const dialogRef = useRef(null);
   const [status, setStatus] = useState("open");
-  const [adminNote, setAdminNote] = useState("");
+  const [responseToUser, setResponseToUser] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
 
     if (isOpen && complaint) {
       setStatus(complaint.status || "open");
-      setAdminNote(complaint.adminNotes || "");
+      setResponseToUser(complaint.adminNotes || "");
       dialog.showModal();
       document.body.style.overflow = "hidden";
     } else {
@@ -36,7 +36,7 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await onUpdate(complaint.complaintId, status, adminNote);
+    await onUpdate(complaint.complaintId, status, responseToUser);
     setIsSubmitting(false);
   };
 
@@ -97,11 +97,11 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label htmlFor="adminNote">Response to User</label>
+            <label htmlFor="responseToUser">Response to User</label>
             <textarea
-              id="adminNote"
-              value={adminNote}
-              onChange={(e) => setAdminNote(e.target.value)}
+              id="responseToUser"
+              value={responseToUser}
+              onChange={(e) => setResponseToUser(e.target.value)}
               placeholder="Write your response to the user here..."
               rows={4}
               disabled={isClosed && complaint.status === "resolved"}
