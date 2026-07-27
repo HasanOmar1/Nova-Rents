@@ -125,6 +125,26 @@ async function getBookedDatesByPlate(licensePlate) {
   return bookedDates;
 }
 
+async function getRentalsToComplete() {
+  const query = `
+    SELECT rentalId, licensePlate 
+    FROM rentals 
+    WHERE status = 'approved' AND endDate < CURRENT_DATE()
+  `;
+
+  return doQuery(query);
+}
+
+async function getRentalsToExpire() {
+  const query = `
+    SELECT rentalId, licensePlate 
+    FROM rentals 
+    WHERE status = 'pending' AND startDate < CURRENT_DATE()
+  `;
+
+  return doQuery(query);
+}
+
 async function completeExpiredRentals() {
   const query = `
     UPDATE rentals 
@@ -337,6 +357,8 @@ module.exports = {
   getRentalsStartingTomorrow,
   getRentalsEndingTomorrow,
   getBookedDatesByPlate,
+  getRentalsToComplete,
+  getRentalsToExpire,
   completeExpiredRentals,
   cancelExpiredRentals,
   getMonthlyEarningsByOwnerId,

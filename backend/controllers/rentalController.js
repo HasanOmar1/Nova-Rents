@@ -14,6 +14,8 @@ const {
   getRentalById,
   updateRentalStatus,
   getBookedDatesByPlate,
+  getRentalsToComplete,
+  getRentalsToExpire,
   completeExpiredRentals,
   cancelExpiredRentals,
   getMonthlyEarningsByOwnerId,
@@ -29,6 +31,9 @@ const {
   createNotification,
 } = require("../database/queries/notificationQueries");
 const { createActivity } = require("../database/queries/activityQueries");
+const {
+  createSystemHistory,
+} = require("../database/queries/systemHistoryQueries");
 
 async function createRental(req, res, next) {
   try {
@@ -106,6 +111,17 @@ async function createRental(req, res, next) {
       "Rented a vehicle",
       `Rental created for vehicle with license plate of ${licensePlate}`,
       result.insertId,
+    );
+    await createSystemHistory(
+      renterId,
+      "rental",
+      "create",
+      "rental_requested",
+      "rental",
+      String(result.insertId),
+      result.insertId,
+      licensePlate,
+      `Rental requested for vehicle with license plate of ${licensePlate}`,
     );
 
     return res
@@ -220,6 +236,17 @@ async function approveRental(req, res, next) {
       `Rental approved for vehicle with license plate of ${rental.licensePlate}`,
       rentalId,
     );
+    await createSystemHistory(
+      ownerId,
+      "rental",
+      "approve",
+      "rental_approved",
+      "rental",
+      String(rentalId),
+      rentalId,
+      rental.licensePlate,
+      `Rental approved for vehicle with license plate of ${rental.licensePlate}`,
+    );
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Rental approved successfully" });
@@ -271,6 +298,17 @@ async function rejectRental(req, res, next) {
       "Rejected a rental",
       `Rental rejected for vehicle with license plate of ${rental.licensePlate}`,
       rentalId,
+    );
+    await createSystemHistory(
+      ownerId,
+      "rental",
+      "reject",
+      "rental_rejected",
+      "rental",
+      String(rentalId),
+      rentalId,
+      rental.licensePlate,
+      `Rental rejected for vehicle with license plate of ${rental.licensePlate}`,
     );
     return res
       .status(STATUS_CODE.OK)
@@ -326,6 +364,17 @@ async function cancelRental(req, res, next) {
       `Rental cancelled for vehicle with license plate of${rental.licensePlate}`,
       rentalId,
     );
+    await createSystemHistory(
+      renterId,
+      "rental",
+      "cancel",
+      "rental_cancelled",
+      "rental",
+      String(rentalId),
+      rentalId,
+      rental.licensePlate,
+      `Rental cancelled for vehicle with license plate of ${rental.licensePlate}`,
+    );
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Rental canceled successfully" });
@@ -336,10 +385,38 @@ async function cancelRental(req, res, next) {
 
 async function autoUpdateRentalStatuses() {
     // 1. If approved and endDate has passed -> change to 'completed'
+    const rentalsToComplete = await getRentalsToComplete();
     await completeExpiredRentals();
+    for (const rental of rentalsToComplete) {
+      await createSystemHistory(
+        null,
+        "system",
+        "complete",
+        "rental_completed",
+        "rental",
+        String(rental.rentalId),
+        rental.rentalId,
+        rental.licensePlate,
+        `Rental completed for vehicle with license plate of ${rental.licensePlate}`,
+      );
+    }
 
     // 2. If still pending and startDate has passed -> change to 'cancelled'
+    const rentalsToExpire = await getRentalsToExpire();
     await cancelExpiredRentals();
+    for (const rental of rentalsToExpire) {
+      await createSystemHistory(
+        null,
+        "system",
+        "cancel",
+        "rental_expired",
+        "rental",
+        String(rental.rentalId),
+        rental.rentalId,
+        rental.licensePlate,
+        `Rental request expired for vehicle with license plate of ${rental.licensePlate}`,
+      );
+    }
 }
 
 async function getDashboardMetrics(req, res, next) {

@@ -42,10 +42,62 @@
   margin: 30px 0;
 }
 
+/* Filter toolbar above the full-width chart */
+.DashBoard .chartFilters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  background-color: var(--bg-gray);
+  border: var(--cards-border);
+  border-radius: 12px;
+  padding: 14px 20px;
+}
+
+.DashBoard .chartFilters .filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.DashBoard .chartFilters label {
+  color: var(--gray);
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.DashBoard .chartFilters input,
+.DashBoard .chartFilters select {
+  background-color: #2a2a2a;
+  border: var(--cards-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: inherit;
+  color-scheme: dark;
+}
+
+.DashBoard .chartFilters .toggleSeriesBtn {
+  background-color: #2a2a2a;
+  border: var(--cards-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.DashBoard .chartFilters .toggleSeriesBtn:hover {
+  background-color: #333;
+}
+
 .DashBoard .bottomCardsContainer {
   display: flex;
-  justify-content: space-between;
   padding-bottom: 30px;
+  width: 100%;
 }
 
 /* Responsive Styles */

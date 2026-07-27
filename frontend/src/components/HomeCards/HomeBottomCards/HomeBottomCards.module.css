@@ -6,13 +6,151 @@
   border: var(--cards-border);
   border-radius: 20px;
   padding: 30px;
-  height: 300px;
-  gap: 30px;
+  min-height: 300px;
+  gap: 20px;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Full-width variant: card spans the whole row with a taller plot area */
+.HomeBottomCards.fullWidth {
+  width: 100%;
+  min-height: 460px;
+}
+
+.HomeBottomCards .header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.HomeBottomCards .subtitle {
+  color: var(--gray);
+  font-size: 0.78rem;
+  margin: 0;
 }
 
 .HomeBottomCards .statistics {
   width: 100%;
   flex: 1;
+  min-width: 0;
+}
+
+/* Custom legend rendered below the plot in its own reserved area */
+.HomeBottomCards .legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 14px;
+  max-height: 72px;
+  overflow-y: auto;
+  border-top: var(--cards-border);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+/* The wider card fits more legend columns, so allow a bit more height */
+.HomeBottomCards.fullWidth .legend {
+  max-height: 96px;
+}
+
+.HomeBottomCards .legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.HomeBottomCards .legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.HomeBottomCards .legendName {
+  color: var(--gray);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Compact dark tooltip */
+.tooltip {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 150px;
+  max-width: 280px;
+  max-height: 180px;
+  overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.tooltipLabel {
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin: 0 0 6px;
+}
+
+.tooltipEmpty {
+  color: var(--gray);
+  font-size: 0.72rem;
+  margin: 0;
+}
+
+.tooltipEntries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltipEntry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #ddd;
+}
+
+.tooltipDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tooltipName {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tooltipValue {
+  color: #fff;
+  font-weight: bold;
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Centered empty/loading state that fills the chart area */
+.HomeBottomCards .emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 20px;
+  min-height: 220px;
+}
+
+.HomeBottomCards.fullWidth .emptyState {
+  min-height: 300px;
 }
 
 @media (max-width: 1024px) {
@@ -26,13 +164,21 @@
   .HomeBottomCards {
     width: 100%;
   }
+
+  .HomeBottomCards .legend {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
 }
 
 @media (max-width: 480px) {
   .HomeBottomCards {
     padding: 15px;
     gap: 15px;
-    height: 250px;
+    min-height: 250px;
     border-radius: 16px;
+  }
+
+  .HomeBottomCards.fullWidth {
+    min-height: 380px;
   }
 }

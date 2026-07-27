@@ -16,6 +16,9 @@ const {
 } = require("../database/queries/complaintQueries");
 
 const { createActivity } = require("../database/queries/activityQueries");
+const {
+  createSystemHistory,
+} = require("../database/queries/systemHistoryQueries");
 
 const {
   validateAuthenticatedUser,
@@ -24,13 +27,14 @@ const {
 
 const { getUserByEmail } = require("../database/queries/userQueries");
 const { sendComplaintResponseEmail } = require("../services/emailService");
-
 async function createComplaint_controller(req, res, next) {
   try {
-    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
       return;
+    }
 
     const userId = req.session.user.userId;
+
     const {
       complaintType,
       vehicleLicensePlate,
@@ -44,40 +48,49 @@ async function createComplaint_controller(req, res, next) {
         ? JSON.stringify(req.files.map((file) => file.filename))
         : null;
 
-    if (!validateComplaintFields(req.body, res)) return;
+    if (!validateComplaintFields(req.body, res)) {
+      return;
+    }
 
+    // Validate vehicle complaint
     if (complaintType === "vehicle") {
       const vehicle = await getVehicleByLicensePlate(vehicleLicensePlate);
 
       if (!vehicle) {
-        return res
-          .status(STATUS_CODE.NOT_FOUND)
-          .json({ message: "Vehicle not found" });
+        return res.status(STATUS_CODE.NOT_FOUND).json({
+          message: "Vehicle not found",
+        });
       }
 
-      if (vehicle.ownerId === userId) {
-        return res
-          .status(STATUS_CODE.FORBIDDEN)
-          .json({ message: "You cannot complain against your own vehicle" });
+      if (Number(vehicle.ownerId) === Number(userId)) {
+        return res.status(STATUS_CODE.FORBIDDEN).json({
+          message: "You cannot complain against your own vehicle",
+        });
       }
     }
 
+    // Validate owner complaint
     let resolvedOwnerId = null;
+
     if (complaintType === "owner") {
-      const ownerRows = await getUserByEmail(ownerEmail);
-      if (!ownerRows) {
-        return res
-          .status(STATUS_CODE.NOT_FOUND)
-          .json({ message: "Owner not found" });
+      const owner = await getUserByEmail(ownerEmail);
+
+      if (!owner) {
+        return res.status(STATUS_CODE.NOT_FOUND).json({
+          message: "Owner not found",
+        });
       }
-      resolvedOwnerId = ownerRows.userId;
+
+      resolvedOwnerId = owner.userId;
+
       if (Number(resolvedOwnerId) === Number(userId)) {
-        return res
-          .status(STATUS_CODE.FORBIDDEN)
-          .json({ message: "You cannot complain against yourself" });
+        return res.status(STATUS_CODE.FORBIDDEN).json({
+          message: "You cannot complain against yourself",
+        });
       }
     }
 
+    // Create the complaint
     const result = await createComplaint(
       userId,
       complaintType,
@@ -88,30 +101,68 @@ async function createComplaint_controller(req, res, next) {
       images,
     );
 
-    if (result.affectedRows === 0) {
+    if (!result || result.affectedRows === 0) {
       return res.status(STATUS_CODE.INTERNAL_SERVER_ERROR).json({
         message: "Failed to create complaint",
       });
     }
 
+    // Build readable user name
+    const fullName = `${req.session.user.firstName || ""} ${
+      req.session.user.lastName || ""
+    }`.trim();
+    
+    const actorName = fullName
+      ? `${fullName} (${req.session.user.email})`
+      : req.session.user.email || "A user";
+
+    // Choose "a" or "an"
+    // vehicle -> a vehicle complaint
+    // owner   -> an owner complaint
+    const typeArticle = /^[aeiou]/i.test(complaintType) ? "an" : "a";
+
+    const userActivityDescription = `You filed ${typeArticle} ${complaintType} complaint: ${title}`;
+
+    const adminHistoryDescription = `${actorName} filed ${typeArticle} ${complaintType} complaint: ${title}`;
+
+    // Personal user activity
     await createActivity(
       userId,
       "complaint_created",
-      `Filed ${complaintType} complaint: ${title}`,
+      userActivityDescription,
+      result.insertId,
     );
 
-    // --- NEW: Notify all Admins ---
+    // System-wide history for admin analytics
+    await createSystemHistory(
+      userId, // actorUserId
+      "complaint", // category
+      "create", // operation
+      "complaint_created", // eventName
+      "complaint", // entityType
+      String(result.insertId), // entityId = complaint ID
+      null, // rentalId
+      complaintType === "vehicle" ? vehicleLicensePlate : null,
+      adminHistoryDescription,
+    );
+
+    // Notify all admins
     const admins = await doQuery(
       "SELECT userId FROM users WHERE role = 'admin'",
     );
-    for (let admin of admins) {
+
+    for (const admin of admins) {
       await doQuery(
-        "INSERT INTO notifications (userId, type, title, message) VALUES (?, ?, ?, ?)",
+        `
+          INSERT INTO notifications
+          (userId, type, title, message)
+          VALUES (?, ?, ?, ?)
+        `,
         [
           admin.userId,
           "system",
           "New Complaint Received",
-          `A new ${complaintType} complaint requires your review.`,
+          adminHistoryDescription,
         ],
       );
     }
@@ -124,7 +175,6 @@ async function createComplaint_controller(req, res, next) {
     next(error);
   }
 }
-
 async function updateComplaintStatus_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -176,7 +226,28 @@ async function updateComplaintStatus_controller(req, res, next) {
       });
     }
 
+    let statusEventName = "complaint_status_updated";
+    let statusOperation = "update";
+    if (status === "in_review") {
+      statusEventName = "complaint_moved_to_review";
+    } else if (status === "resolved") {
+      statusEventName = "complaint_resolved";
+      statusOperation = "resolve";
+    } else if (status === "closed") {
+      statusEventName = "complaint_closed";
+    }
 
+    await createSystemHistory(
+      req.session.user.userId,
+      "admin",
+      statusOperation,
+      statusEventName,
+      "complaint",
+      String(complaintId),
+      null,
+      null,
+      `Complaint #${complaintId} status updated to ${status}`,
+    );
 
     try {
       await sendComplaintResponseEmail({

@@ -17,6 +17,7 @@ async function getActivitiesByUserId(userId) {
       userId,
       action,
       description,
+      relatedId,
       DATE_FORMAT(createdAt, '%d/%m/%Y %H:%i:%s') AS createdAt
     FROM activity_logs
     WHERE userId = ?

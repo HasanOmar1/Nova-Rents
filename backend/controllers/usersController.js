@@ -22,6 +22,9 @@ const {
 } = require("../utils/validsController");
 
 const { createActivity } = require("../database/queries/activityQueries");
+const {
+  createSystemHistory,
+} = require("../database/queries/systemHistoryQueries");
 const { formatDateForInput } = require("../utils/formatDate");
 
 const sendVerificationCode = async (req, res) => {
@@ -321,6 +324,18 @@ async function register(req, res, next) {
 
     req.session.user = loggedUser;
 
+    await createSystemHistory(
+      result.insertId,
+      "user",
+      "create",
+      "user_registered",
+      "user",
+      String(result.insertId),
+      null,
+      null,
+      `New user registered: ${emailLower}`,
+    );
+
     return res.status(STATUS_CODE.CREATED).json({
       message: "User registered successfully",
       user: loggedUser,
@@ -498,6 +513,17 @@ const blockUserByEmail = async (req, res, next) => {
       "Blocked a user",
       `Blocked: ${email}`,
     );
+    await createSystemHistory(
+      req.session.user.userId,
+      "admin",
+      "block",
+      "user_blocked",
+      "user",
+      email,
+      null,
+      null,
+      `Blocked: ${email}`,
+    );
 
     res.send({
       success: true,
@@ -530,6 +556,17 @@ const unblockUserByEmail = async (req, res, next) => {
     await createActivity(
       req.session.user.userId,
       "Unblocked a user",
+      `Unblocked: ${email}`,
+    );
+    await createSystemHistory(
+      req.session.user.userId,
+      "admin",
+      "unblock",
+      "user_unblocked",
+      "user",
+      email,
+      null,
+      null,
       `Unblocked: ${email}`,
     );
     res.send({
@@ -724,6 +761,17 @@ const updateUserProfile = async (req, res, next) => {
     await createActivity(
       currentUserId,
       "Profile Updated",
+      `Updated: ${updatedFields.join(", ")}`,
+    );
+    await createSystemHistory(
+      currentUserId,
+      "user",
+      "update",
+      "user_profile_updated",
+      "user",
+      String(currentUserId),
+      null,
+      null,
       `Updated: ${updatedFields.join(", ")}`,
     );
 
