@@ -30,16 +30,21 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
-  const putUpdateComplaintStatus = async (complaintId, status, adminNotes) => {
+  const putUpdateComplaintStatus = async (
+    complaintId,
+    status,
+    responseToUser,
+  ) => {
     try {
-      await axios.put(`/complaints/${complaintId}/status`, {
+      const response = await axios.put(`/complaints/${complaintId}/status`, {
         status,
-        adminNotes,
+        responseToUser,
       });
       setErrorMsg("");
-      return true;
+      return response.data;
     } catch (error) {
       setErrorMsg(error?.response?.data?.message);
+      return null;
     }
   };
 

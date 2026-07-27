@@ -67,13 +67,13 @@ const ComplaintsAdmin = () => {
     setIsModalOpen(false);
   };
 
-  const handleUpdateStatus = async (complaintId, status, adminNote) => {
-    const success = await putUpdateComplaintStatus(
+  const handleUpdateStatus = async (complaintId, status, responseToUser) => {
+    const result = await putUpdateComplaintStatus(
       complaintId,
       status,
-      adminNote,
+      responseToUser,
     );
-    if (success) {
+    if (result) {
       closeReviewModal();
       getAllComplaints(currentPage, filterStatus);
     }

@@ -12,6 +12,7 @@ const {
   countAllComplaints,
   getComplaintStats,
   updateComplaintStatus,
+  getComplaintReporterById,
 } = require("../database/queries/complaintQueries");
 
 const { createActivity } = require("../database/queries/activityQueries");
@@ -22,6 +23,7 @@ const {
 } = require("../utils/validsController");
 
 const { getUserByEmail } = require("../database/queries/userQueries");
+const { sendComplaintResponseEmail } = require("../services/emailService");
 
 async function createComplaint_controller(req, res, next) {
   try {
@@ -132,10 +134,16 @@ async function updateComplaintStatus_controller(req, res, next) {
         .status(STATUS_CODE.FORBIDDEN)
         .json({ message: "You are not authorized to update complaint status" });
     }
-    const { complaintId } = req.params;
-    const { status, adminNotes } = req.body;
+    const complaintId = Number(req.params.complaintId);
+    const { status, responseToUser } = req.body;
 
     const allowedStatuses = ["open", "in_review", "resolved", "closed"];
+
+    if (!Number.isInteger(complaintId) || complaintId <= 0) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid complaint ID",
+      });
+    }
 
     if (!allowedStatuses.includes(status)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
@@ -143,10 +151,23 @@ async function updateComplaintStatus_controller(req, res, next) {
       });
     }
 
+    if (typeof responseToUser !== "string" || !responseToUser.trim()) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "A response to the user is required",
+      });
+    }
+
+    const complaint = await getComplaintReporterById(complaintId);
+    if (!complaint) {
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "Complaint not found",
+      });
+    }
+
     const result = await updateComplaintStatus(
       complaintId,
       status,
-      adminNotes || null,
+      responseToUser.trim(),
     );
 
     if (result.affectedRows === 0) {
@@ -155,8 +176,34 @@ async function updateComplaintStatus_controller(req, res, next) {
       });
     }
 
+
+
+    try {
+      await sendComplaintResponseEmail({
+        to: complaint.reporterEmail,
+        firstName: complaint.reporterFirstName,
+        complaintId: complaint.complaintId,
+        complaintType: complaint.complaintType,
+        complaintTitle: complaint.title,
+        status,
+        responseToUser: responseToUser.trim(),
+        respondedAt: complaint?.respondedAt,
+      });
+    } catch (emailError) {
+      console.error("Complaint response email could not be sent", {
+        complaintId,
+        errorCode: emailError.code || "EMAIL_SEND_FAILED",
+      });
+
+      return res.status(STATUS_CODE.OK).json({
+        message: "Complaint updated, but the email could not be sent.",
+        emailSent: false,
+      });
+    }
+
     return res.status(STATUS_CODE.OK).json({
-      message: "Complaint status updated successfully",
+      message: "Complaint updated and email sent successfully",
+      emailSent: true,
     });
   } catch (error) {
     next(error);
