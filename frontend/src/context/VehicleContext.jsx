@@ -27,7 +27,7 @@ const VehicleContextProvider = ({ children }) => {
   const getAllVehicles = async (filters = {}, page = 1) => {
     try {
       const response = await axios.get("/vehicles", {
-        params: { ...filters, page, limit: 9 },
+        params: { ...filters, page, limit: 6 },
       });
       setAllVehicles(response.data.vehicles);
       setAllVehPagination(response.data.pagination);

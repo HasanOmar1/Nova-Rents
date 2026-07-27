@@ -195,8 +195,8 @@ function validateAndNormalizeVehicleCreate(req, res) {
     price == null ||
     !color ||
     modelId == null ||
-    !details || // <-- ADDED
-    seats == null // <-- ADDED
+    !details ||
+    seats == null
   ) {
     return handleError(STATUS_CODE.BAD_REQUEST, "All fields are required.");
   }
@@ -225,13 +225,12 @@ function validateAndNormalizeVehicleCreate(req, res) {
   if (Number.isNaN(Number(price)))
     return handleError(STATUS_CODE.BAD_REQUEST, "Price must be a number.");
   if (Number.isNaN(Number(seats)))
-    // <-- ADDED
     return handleError(STATUS_CODE.BAD_REQUEST, "Seats must be a number.");
 
   const yearNum = Number(year);
   const kmNum = Number(km);
   const priceNum = Number(price);
-  const seatsNum = Number(seats); // <-- ADDED
+  const seatsNum = Number(seats);
   const currentYear = new Date().getFullYear();
 
   if (yearNum < 1900 || yearNum > currentYear + 1) {
@@ -247,7 +246,6 @@ function validateAndNormalizeVehicleCreate(req, res) {
     );
   }
   if (seatsNum < 1 || seatsNum > 15) {
-    // <-- ADDED SAFETY CHECK
     return handleError(
       STATUS_CODE.BAD_REQUEST,
       "Seats must be between 1 and 15.",
@@ -301,8 +299,8 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     price: body.price ?? existingVehicle.price,
     color: body.color ?? existingVehicle.color,
     status: body.status ?? existingVehicle.status,
-    details: body.details ?? existingVehicle.details, // <-- ADDED
-    seats: body.seats ?? existingVehicle.seats, // <-- ADDED
+    details: body.details ?? existingVehicle.details,
+    seats: body.seats ?? existingVehicle.seats,
   };
 
   if (
