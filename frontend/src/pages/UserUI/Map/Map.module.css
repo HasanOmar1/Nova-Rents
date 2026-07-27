@@ -1,4 +1,4 @@
-.Map .btnsContainer {
+/* .Map .btnsContainer {
   display: flex;
   gap: 10px;
   margin-left: auto;
@@ -178,6 +178,279 @@
 
   .Map .mapAndDataContainer .left {
     height: 300px;
+    padding: 10px;
+  }
+} */
+.Map .btnsContainer {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  width: 100%;
+}
+
+.Map .btnsContainer p {
+  color: var(--gray);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto;
+  margin-right: auto;
+  font-weight: 700;
+}
+
+.Map .btnsContainer a {
+  border-radius: 10px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.Map .vehiclesListBtn,
+.Map .useLocationBtn {
+  border-radius: 0.75rem;
+  color: #ffffff;
+  background-image: linear-gradient(
+    to right,
+    #0ea5e9,
+    #1d4ed8,
+    #0ea4e99a,
+    #1d4ed8
+  );
+  background-size: 200% auto;
+  transition: background-position 1s ease;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.Map .vehiclesListBtn:hover,
+.Map .useLocationBtn:hover {
+  background-position: center;
+}
+
+.Map .useLocationBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.Map .editFiltersBtn {
+  background: var(--bg-gray);
+  color: white;
+  border: var(--cards-border);
+}
+
+.Map .editFiltersBtn:hover {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.Map .editFiltersBtn:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.Map .filterContainer {
+  background-color: var(--bg-gray);
+  min-height: 150px;
+  border-radius: 20px;
+  margin-top: 30px;
+  padding: 20px 30px;
+  border: var(--cards-border);
+}
+
+.Map .filterContainer hr {
+  margin-top: 15px;
+  border: none;
+  border-top: var(--cards-border);
+}
+
+.Map .filterContainer .titleContainer {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding-bottom: 10px;
+}
+
+.Map .filterContainer .filters {
+  color: var(--gray);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.Map .useLocationBtn {
+  padding: 10px 30px;
+  margin-top: 15px;
+}
+
+.Map .mapAndDataContainer {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  margin-top: 30px;
+  padding-bottom: 30px;
+  height: 750px;
+}
+
+.Map .mapAndDataContainer .left {
+  border-radius: 20px;
+  width: 55%;
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  padding: 20px;
+  height: 100%;
+}
+
+.Map .mapAndDataContainer .left iframe {
+  border-radius: 12px;
+}
+
+.Map .mapAndDataContainer .right {
+  border-radius: 20px;
+  width: 45%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.Map .mapAndDataContainer .right::-webkit-scrollbar {
+  width: 8px;
+}
+
+.Map .mapAndDataContainer .right::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+.Map .mapAndDataContainer .right::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.Map .mapAndDataContainer .right::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.Map .cardWrapper {
+  cursor: pointer;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  background-color: var(--bg-gray);
+}
+
+.Map .cardWrapper:hover {
+  transform: translateY(-2px);
+}
+
+.Map .cardWrapper.active {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+}
+
+.Map .cardsListWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.Map .paginationWrapper {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.Map .noVehicles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--gray);
+  gap: 15px;
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+  border: var(--cards-border);
+}
+
+@media (max-width: 1024px) {
+  .Map .btnsContainer {
+    flex-wrap: wrap;
+  }
+
+  .Map .btnsContainer p {
+    width: 100%;
+    margin-bottom: 10px;
+    justify-content: flex-start;
+  }
+
+  .Map .mapAndDataContainer {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .Map .mapAndDataContainer .left,
+  .Map .mapAndDataContainer .right {
+    width: 100%;
+  }
+
+  .Map .mapAndDataContainer .left {
+    height: 500px;
+  }
+
+  .Map .mapAndDataContainer .right {
+    height: 600px;
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .Map .filterContainer {
+    padding: 15px 20px;
+  }
+
+  .Map .mapAndDataContainer .left {
+    height: 400px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .Map .btnsContainer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .Map .btnsContainer p {
+    font-size: 0.85rem;
+    text-align: left;
+  }
+
+  .Map .btnsContainer a {
+    width: 100%;
+  }
+
+  .Map .filterContainer {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .Map .useLocationBtn {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .Map .mapAndDataContainer .left {
+    height: 350px;
     padding: 10px;
   }
 }

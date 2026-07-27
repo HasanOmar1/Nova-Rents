@@ -1,60 +1,71 @@
+import { useEffect, useState } from "react";
 import styles from "./Map.module.css";
 import { Link } from "react-router-dom";
-import { SlidersHorizontal, Crosshair } from "lucide-react";
+import { SlidersHorizontal, Crosshair, MapPin } from "lucide-react";
 import GoogleMapEmbed from "../../../components/GoogleMapEmbed/GoogleMapEmbed";
 import MapVehiclesCards from "../../../components/MapVehiclesCards/MapVehiclesCards";
+import { useVehicleContext } from "../../../context/VehicleContext";
+import { parseImgs } from "../../../utils/parseImgs";
+import Pagination from "../../../components/Pagination/Pagination";
 
 const Map = () => {
-  const vehicleData = [
-    {
-      id: 1,
-      img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=800&auto=format&fit=crop",
-      vehName: "Porsche 911 Carrera",
-      price: "$450/day",
-      location: "Tel Aviv",
-      type: "Car",
-      ownerName: "Ward Najjar",
-    },
-    {
-      id: 2,
-      img: "https://nsimgall.s3.amazonaws.com/wp-content/uploads/2026/02/24134709/20250729_163726-scaled.jpg",
-      vehName: "Harley Davidson Iron 883",
-      price: "$120/day",
-      location: "Haifa",
-      type: "Motorcycle",
-      ownerName: "Sarah Levi",
-    },
-    {
-      id: 3,
-      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRd9BgMMtTIPaZ08cY7jXWyQsvEsgBqZEvO-A&s",
-      vehName: "Vintage Wedding Rolls-Royce",
-      price: "$850/day",
-      location: "Jerusalem",
-      type: "Event Vehicle",
-      ownerName: "David Mizrahi",
-    },
-    {
-      id: 4,
-      img: "https://www.shop4tesla.com/cdn/shop/articles/lohnt-sich-ein-gebrauchtes-tesla-model-3-vor-und-nachteile-833053.jpg?format=pjpg&pad_color=ffffff&v=1733570691&width=2752",
-      vehName: "Tesla Model 3",
-      price: "$200/day",
-      location: "Nazareth",
-      type: "Car",
-      ownerName: "Yousef Abbas",
-    },
-  ];
+  const { allVehicles, getAllVehicles, allVehPagination } = useVehicleContext();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [mapQuery, setMapQuery] = useState("Israel");
+  const [activePlate, setActivePlate] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Fetch data whenever page changes
+  useEffect(() => {
+    getAllVehicles({}, currentPage);
+  }, [currentPage]);
+
+  useEffect(() => {
+    if (allVehicles && allVehicles.length > 0) {
+      setMapQuery(`${allVehicles[0].address}, Israel`);
+      setActivePlate(allVehicles[0].licensePlate);
+    }
+  }, [allVehicles]);
+
+  const handleCardClick = (veh) => {
+    setMapQuery(`${veh.address}, Israel`);
+    setActivePlate(veh.licensePlate);
+  };
+
+  const handleUseLocation = () => {
+    setIsLocating(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setMapQuery(`${latitude},${longitude}`);
+          setActivePlate(null);
+          setIsLocating(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setIsLocating(false);
+          alert(
+            "Could not get your location. Please check your browser permissions.",
+          );
+        },
+      );
+    } else {
+      setIsLocating(false);
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
 
   return (
     <div className={`${styles.Map} page`}>
-      <h1>Map</h1>
+      <h1>Map View</h1>
       <div className={styles.btnsContainer}>
         <p>
-          The vehicles shown match your current filters — sorted by distance if
-          location access is granted.
+          Showing {allVehicles?.length || 0} vehicles matching your current
+          filters.
         </p>
-        <Link to={"/vehicles"} className={styles.editFiltersBtn}>
-          Edit Filters
-        </Link>
+
         <Link to={"/vehicles"} className={styles.vehiclesListBtn}>
           Vehicle List
         </Link>
@@ -65,30 +76,77 @@ const Map = () => {
           <p>
             <SlidersHorizontal size={28} className="icon" />
           </p>
-          <p className={styles.title}>Active Filters</p>
+          <p className={styles.title}>Location Services</p>
         </div>
 
         <p className={styles.filters}>
-          No active filters — showing all matching vehicles
+          Click on any vehicle card below to see its exact location on the map,
+          or use your current location to explore the area.
         </p>
         <hr />
 
         <button
+          onClick={handleUseLocation}
+          disabled={isLocating}
           className={`${styles.vehiclesListBtn} ${styles.useLocationBtn}`}
         >
           <Crosshair size={28} className="icon" />
-          Use My Location
+          {isLocating ? "Locating..." : "Use My Location"}
         </button>
       </div>
 
       <div className={styles.mapAndDataContainer}>
         <div className={styles.left}>
-          <GoogleMapEmbed query={"Haifa"} title="Map preview" />
+          <GoogleMapEmbed query={mapQuery} title="Vehicle Location Map" />
         </div>
+
         <div className={styles.right}>
-          {vehicleData.map((veh) => {
-            return <MapVehiclesCards key={veh.id} veh={veh} />;
-          })}
+          <div className={styles.cardsListWrapper}>
+            {allVehicles && allVehicles.length > 0 ? (
+              allVehicles.map((veh) => {
+                const mappedVehicle = {
+                  ...veh,
+                  img: parseImgs(veh.image),
+                  vehName: `${veh.brandName} ${veh.modelName}`,
+                  location: veh.address,
+                  type: veh.carTypeName,
+                  ownerName: `${veh.ownerFirstName} ${veh.ownerLastName}`,
+                };
+
+                return (
+                  <div
+                    key={veh.licensePlate}
+                    className={`${styles.cardWrapper} ${activePlate === veh.licensePlate ? styles.active : ""}`}
+                    onClick={() => handleCardClick(veh)}
+                  >
+                    <MapVehiclesCards veh={mappedVehicle} />
+                  </div>
+                );
+              })
+            ) : (
+              <div className={styles.noVehicles}>
+                <MapPin size={40} />
+                <p>Loading vehicles...</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination Component */}
+          {allVehPagination?.totalPages > 1 && (
+            <div className={styles.paginationWrapper}>
+              <Pagination
+                currentPage={allVehPagination.currentPage}
+                totalPages={allVehPagination.totalPages}
+                handlePrevPage={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                handleNextPage={() =>
+                  setCurrentPage((p) =>
+                    Math.min(p + 1, allVehPagination.totalPages),
+                  )
+                }
+                leftText={`Total Vehicles: ${allVehPagination.totalVehicles || 0}`}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

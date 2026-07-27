@@ -1,37 +1,40 @@
 import { Link } from "react-router-dom";
 import styles from "./MapVehiclesCards.module.css";
 import { MapPin, User } from "lucide-react";
+import { parseImgs } from "../../utils/parseImgs";
 
 const MapVehiclesCards = ({ veh }) => {
+  const imageUrl = veh.image ? parseImgs(veh.image) : "";
+  const vehName = `${veh.brandName} ${veh.modelName}`;
+  const ownerName = `${veh.ownerFirstName} ${veh.ownerLastName}`;
+
+  const formattedVehicle = {
+    ...veh,
+    vehName: vehName,
+  };
+
   return (
     <div className={styles.MapVehiclesCards}>
       <div className={styles.dataContainer}>
-        <div className={styles.id}>
-          <p>{veh.id}</p>
-        </div>
-
-        <div>
-          <img src={veh.img} alt={veh.vehName} />
+        <div className={styles.imageWrapper}>
+          <img src={imageUrl} alt={vehName} />
+          <div className={styles.plateBadge}>{veh.licensePlate}</div>
         </div>
 
         <div className={styles.vehInfo}>
-          <p className={styles.vehName}>{veh.vehName}</p>
-          <p className={styles.vehType}>{veh.type}</p>
+          <p className={styles.vehName}>{vehName}</p>
+          <p className={styles.vehType}>{veh.carTypeName}</p>
 
           <div className={styles.locationContainer}>
-            <p>
-              <MapPin size={15} />
-            </p>
-            <p>{veh.location}</p>
+            <MapPin size={14} />
+            <span>{veh.address}</span>
           </div>
 
-          <p className={styles.price}>{veh.price}</p>
+          <p className={styles.price}>${veh.price}/day</p>
 
           <div className={styles.ownerContainer}>
-            <p>
-              <User size={15} className="icon" />
-            </p>
-            <p className={styles.host}>{veh.ownerName}</p>
+            <User size={14} className="icon" />
+            <span className={styles.host}>{ownerName}</span>
           </div>
         </div>
       </div>
@@ -40,8 +43,8 @@ const MapVehiclesCards = ({ veh }) => {
 
       <div className={styles.btnsContainer}>
         <Link
-          to={`/vehicles/${veh.id}`}
-          state={veh}
+          to={`/vehicles/${veh.licensePlate}`}
+          state={formattedVehicle}
           className={styles.detailsBtn}
         >
           View Details
