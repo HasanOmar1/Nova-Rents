@@ -1,123 +1,141 @@
 .MapVehiclesCards {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  gap: 10px;
+  padding: 16px;
+  gap: 12px;
   border: var(--cards-border);
   background-color: var(--bg-gray);
-  border-radius: 20px;
-  min-height: 200px;
-  padding-bottom: 15px;
-}
-
-.MapVehiclesCards p {
-  font-size: 0.8rem;
+  border-radius: 16px;
+  min-height: 180px;
 }
 
 .MapVehiclesCards .dataContainer {
   display: flex;
-  gap: 15px;
+  gap: 16px;
 }
 
-.MapVehiclesCards .dataContainer .id {
-  background-color: #10374f;
-  color: var(--icons-color);
-  height: fit-content;
-  padding: 10px 15px;
-  border-radius: 10px;
-  font-weight: bold;
-  width: fit-content;
+.MapVehiclesCards .imageWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.MapVehiclesCards .dataContainer img {
-  width: 130px;
+.MapVehiclesCards .imageWrapper img {
+  width: 120px;
   height: 100px;
-  border-radius: 20px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.MapVehiclesCards .plateBadge {
+  background-color: #10374f;
+  color: #60a5fa;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: center;
+  width: 100%;
 }
 
 .MapVehiclesCards .vehInfo {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
+  justify-content: center;
 }
 
 .MapVehiclesCards .vehName {
-  font-weight: bold;
-  font-size: 1.2rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #ffffff;
+  line-height: 1.2;
 }
 
 .MapVehiclesCards .vehType {
   color: #83a3b7;
-  font-weight: bold;
-  padding-bottom: 10px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
 }
 
 .MapVehiclesCards .locationContainer {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   display: flex;
-  flex-direction: row;
+  align-items: center;
   color: var(--gray);
-  font-weight: bold;
-  gap: 2px;
+  font-weight: 600;
+  gap: 4px;
 }
 
 .MapVehiclesCards .price {
-  font-weight: bold;
-  color: #abacb0;
-  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  margin-top: 2px;
 }
 
 .MapVehiclesCards .ownerContainer {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   color: var(--gray);
-  margin-top: 5px;
+  margin-top: 4px;
   align-items: center;
 }
 
 .MapVehiclesCards .host {
   color: var(--gray);
-  font-weight: bold;
-  font-size: 0.6rem;
+  font-weight: 600;
+  font-size: 0.75rem;
 }
 
 .MapVehiclesCards hr {
-  margin: 5px;
+  margin: 4px 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .MapVehiclesCards .btnsContainer {
-  margin-left: auto;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .MapVehiclesCards .detailsBtn {
   background: #20222b;
-  color: white;
-  border: var(--cards-border);
-  border-radius: 20px;
-  font-size: 0.8rem;
-  letter-spacing: 1.1px;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+  text-decoration: none;
 }
 
 .MapVehiclesCards .detailsBtn:hover {
-  background: transparent;
-  color: #83a3b7;
+  background: rgba(255, 255, 255, 0.05);
+  color: #60a5fa;
+  border-color: #60a5fa;
 }
 
 .MapVehiclesCards .detailsBtn:active {
-  background: rgba(255, 255, 255, 0.03);
+  transform: scale(0.98);
 }
 
 @media (max-width: 768px) {
   .MapVehiclesCards {
-    padding: 15px;
+    padding: 14px;
   }
 
   .MapVehiclesCards .dataContainer {
-    gap: 10px;
+    gap: 12px;
   }
 
-  .MapVehiclesCards .dataContainer img {
-    width: 110px;
+  .MapVehiclesCards .imageWrapper img {
+    width: 100px;
     height: 90px;
   }
 }
@@ -127,15 +145,13 @@
     flex-direction: column;
   }
 
-  .MapVehiclesCards .dataContainer img {
+  .MapVehiclesCards .imageWrapper img {
     width: 100%;
     height: 160px;
   }
 
   .MapVehiclesCards .btnsContainer {
     width: 100%;
-    margin-left: 0;
-    display: flex;
   }
 
   .MapVehiclesCards .detailsBtn {
