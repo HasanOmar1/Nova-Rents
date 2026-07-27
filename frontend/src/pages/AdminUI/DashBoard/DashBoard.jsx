@@ -1,64 +1,34 @@
 import { Car, Users, Shield, CircleDollarSign } from "lucide-react";
 import styles from "./DashBoard.module.css";
-import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
+// import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import AdminComplaints from "../../../components/AdminComplaints/AdminComplaints";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useEffect } from "react";
 
-const topData = [
-  {
-    title: "Total Users",
-    value: 4,
-    icon: <Users size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Active Vehicles",
-    value: 3,
-    icon: <Car size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Blocked Users",
-    value: 1,
-    icon: <Shield size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Total Rentals",
-    value: 142,
-    icon: <CircleDollarSign size={28} color="#a7d2eb" />,
-  },
-];
-
-const complaintsData = [
-  {
-    title: "Suspicious listing photos",
-    description: "Wedding Limousine",
-    state: "Review",
-    type: "vehicle",
-  },
-  {
-    title: "Late return issue",
-    description: "Essa Lwabne",
-    state: "Review",
-    type: "owner",
-  },
-];
-
-const closedComplaintsData = [
-  {
-    title: "Cleaning fee dispute",
-    description: "Toyota Camry ",
-    state: "Closed",
-    type: "vehicle",
-  },
-  {
-    title: "Insurance documentation missing",
-    description: "David Miller",
-    state: "Closed",
-    type: "owner",
-  },
-];
+// const topData = [
+//   {
+//     title: "Total Users",
+//     value: 4,
+//     icon: <Users size={28} color="#a7d2eb" />,
+//   },
+//   {
+//     title: "Active Vehicles",
+//     value: 3,
+//     icon: <Car size={28} color="#a7d2eb" />,
+//   },
+//   {
+//     title: "Blocked Users",
+//     value: 1,
+//     icon: <Shield size={28} color="#a7d2eb" />,
+//   },
+//   {
+//     title: "Total Rentals",
+//     value: 142,
+//     icon: <CircleDollarSign size={28} color="#a7d2eb" />,
+//   },
+// ];
 
 const lineData = [
   { month: "Jan", rentals: 12 },
@@ -89,7 +59,7 @@ const DashBoard = () => {
     <div className={`${styles.DashBoard} page`}>
       <h1>Dashboard</h1>
 
-      <div className={styles.topCardsContainer}>
+      {/* <div className={styles.topCardsContainer}>
         {topData.map((item) => {
           return (
             <HomeTopCards
@@ -100,7 +70,7 @@ const DashBoard = () => {
             />
           );
         })}
-      </div>
+      </div> */}
 
       <div className={styles.activitesContainer}>
         <HomeMidCards title={"Notification"} />
