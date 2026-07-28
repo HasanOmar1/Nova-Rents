@@ -10,13 +10,11 @@ import Pagination from "../../../components/Pagination/Pagination";
 
 const Map = () => {
   const { allVehicles, getAllVehicles, allVehPagination } = useVehicleContext();
-
   const [currentPage, setCurrentPage] = useState(1);
   const [mapQuery, setMapQuery] = useState("Israel");
   const [activePlate, setActivePlate] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
 
-  // Fetch data whenever page changes
   useEffect(() => {
     getAllVehicles({}, currentPage);
   }, [currentPage]);
@@ -67,7 +65,7 @@ const Map = () => {
         </p>
 
         <Link to={"/vehicles"} className={styles.vehiclesListBtn}>
-          Vehicle List
+          Vehicles List
         </Link>
       </div>
 
