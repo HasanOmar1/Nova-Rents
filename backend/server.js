@@ -15,6 +15,7 @@ const { startRentalReminderJob } = require("./jobs/rentalReminderJob");
 const activityRoute = require("./routes/activityRoute");
 const complaintsRoute = require("./routes/complaintsRoute");
 const reportRoute = require("./routes/reportRoute");
+const paymentsRoute = require("./routes/paymentsRoute");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -45,6 +46,7 @@ app.use("/notifications", notificationRoute);
 app.use("/activity", activityRoute);
 app.use("/complaints", complaintsRoute);
 app.use("/reports", reportRoute);
+app.use("/payments", paymentsRoute);
 app.use(errorHandler);
 
 startRentalReminderJob();

@@ -26,4 +26,16 @@ async function getUserByPhone(phone) {
   }
 }
 
-module.exports = { getUserByEmail, getUserByPhone };
+// Public profile fields only — used to resolve a reported owner by userId
+// without putting email in the URL.
+async function getUserById(userId) {
+  const result = await doQuery(
+    `SELECT userId, firstName, lastName, email, role, status, createdAt
+     FROM users
+     WHERE userId = ?`,
+    [userId],
+  );
+  return result[0];
+}
+
+module.exports = { getUserByEmail, getUserByPhone, getUserById };

@@ -3,34 +3,27 @@ import {
   FileWarning,
   Clock,
   AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
   BookCheck,
 } from "lucide-react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
+import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import ComplaintsAdminCards from "../../../components/ComplaintsCards/ComplaintsAdminCards";
 import { useComplaintContext } from "../../../context/ComplaintContext";
 import { useEffect, useState } from "react";
 import Pagination from "../../../components/Pagination/Pagination";
 import ComplaintReviewModal from "../../../components/ComplaintReviewModal/ComplaintReviewModal";
 import {
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+  formatPeriodTick,
+  formatPeriodTooltip,
+} from "../../../utils/periodFormat";
 
-const lineData = [
-  { month: "Jan", cases: 6 },
-  { month: "Feb", cases: 9 },
-  { month: "Mar", cases: 12 },
-  { month: "Apr", cases: 10 },
-  { month: "May", cases: 17 },
-  { month: "Jun", cases: 20 },
-];
+// Local-time date formatting (toISOString would shift the day near midnight)
+const formatDateForInput = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const ComplaintsAdmin = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -38,18 +31,49 @@ const ComplaintsAdmin = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
 
+  const today = new Date();
+  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+
+  // Editable input values — changing these sends no request.
+  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
+  const [toDate, setToDate] = useState(formatDateForInput(today));
+  // Applied query values — only updated when the user presses Apply, so the
+  // chart never refetches with a half-edited range.
+  const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
+  const [appliedToDate, setAppliedToDate] = useState(toDate);
+
+  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
+
   const {
     putUpdateComplaintStatus,
     getAllComplaints,
     complaints,
     pagination,
     complaintStats,
+    complaintTrendsData,
+    isComplaintTrendsLoading,
+    complaintTrendsErrorMsg,
+    getComplaintTrends,
   } = useComplaintContext();
 
   // Fetch data when page or filter changes
   useEffect(() => {
     getAllComplaints(currentPage, filterStatus);
   }, [currentPage, filterStatus]);
+
+  // The chart shares the table's status filter but not its pagination,
+  // so page changes never refetch or skew the chart totals. It always uses
+  // the applied dates, never the in-progress input values.
+  useEffect(() => {
+    getComplaintTrends(appliedFromDate, appliedToDate, filterStatus);
+  }, [filterStatus, appliedFromDate, appliedToDate]);
+
+  const handleApplyDates = () => {
+    if (isRangeValid && !isComplaintTrendsLoading) {
+      setAppliedFromDate(fromDate);
+      setAppliedToDate(toDate);
+    }
+  };
 
   // Reset to page 1 if filter changes
   const handleFilterChange = (e) => {
@@ -125,9 +149,10 @@ const ComplaintsAdmin = () => {
       </div>
 
       <div className={styles.searchContainer}>
-        <div className={styles.left}>
+        <div className={styles.filterGroup}>
           <label htmlFor="status">Status</label>
           <select
+            id="status"
             name="status"
             value={filterStatus}
             onChange={handleFilterChange}
@@ -139,6 +164,34 @@ const ComplaintsAdmin = () => {
             {/* <option value="closed">Closed</option> */}
           </select>
         </div>
+        <div className={styles.filterGroup}>
+          <label htmlFor="trendsFromDate">From</label>
+          <input
+            id="trendsFromDate"
+            type="date"
+            value={fromDate}
+            max={toDate}
+            onChange={(e) => setFromDate(e.target.value)}
+          />
+        </div>
+        <div className={styles.filterGroup}>
+          <label htmlFor="trendsToDate">To</label>
+          <input
+            id="trendsToDate"
+            type="date"
+            value={toDate}
+            min={fromDate}
+            onChange={(e) => setToDate(e.target.value)}
+          />
+        </div>
+        <button
+          type="button"
+          className={styles.applyBtn}
+          onClick={handleApplyDates}
+          disabled={!isRangeValid || isComplaintTrendsLoading}
+        >
+          {isComplaintTrendsLoading ? "Loading..." : "Apply"}
+        </button>
       </div>
 
       <div className={styles.complaintsContainer}>
@@ -166,8 +219,8 @@ const ComplaintsAdmin = () => {
 
             const target =
               comp.complaintType === "vehicle"
-                ? `${comp.brandName || ""} ${comp.modelName || ""} ${comp.vehicleLicensePlate || ""}`
-                : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
+                ? comp.vehicleLicensePlate || "—"
+                : comp.ownerEmail || "—";
 
             return (
               <div key={comp.complaintId}>
@@ -200,60 +253,31 @@ const ComplaintsAdmin = () => {
         </div>
       </div>
 
-      <div className={styles.bottomStats}>
-        <h4>Complaint trends</h4>
-
-        <div
-          className={styles.stats}
-          style={{ height: "300px", marginTop: "20px" }}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={lineData}
-              margin={{ top: 20, right: 30, left: -30, bottom: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#2a2a2a"
-              />
-              <XAxis
-                dataKey="month"
-                stroke="#888"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis
-                stroke="#888"
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 12 }}
-                domain={[0, 20]}
-                ticks={[0, 5, 10, 15, 20]}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1e1e1e",
-                  borderColor: "#333",
-                  borderRadius: "8px",
-                  color: "#fff",
-                }}
-                itemStyle={{ color: "#5494ff" }}
-                cursor={{ stroke: "#333", strokeWidth: 2 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="cases"
-                stroke="#5494ff"
-                strokeWidth={3}
-                dot={false}
-                activeDot={{ r: 6, fill: "#5494ff", strokeWidth: 0 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      <div className={styles.trendsContainer}>
+        {complaintTrendsErrorMsg && (
+          <p className={styles.trendsError}>{complaintTrendsErrorMsg}</p>
+        )}
+        <HomeBottomCards
+          title={"Complaint trends"}
+          subtitle="Complaints submitted during the selected period"
+          type="line"
+          data={
+            complaintTrendsData.some((point) => point.complaints > 0)
+              ? complaintTrendsData
+              : []
+          }
+          series={[
+            { dataKey: "complaints", name: "Complaints", color: "#5494ff" },
+          ]}
+          xKey="period"
+          xTickFormatter={formatPeriodTick}
+          tooltipLabelFormatter={formatPeriodTooltip}
+          isLoading={isComplaintTrendsLoading}
+          fullWidth
+          showLegend={false}
+          chartHeight={360}
+          emptyMessage="No complaints found for the selected period."
+        />
       </div>
     </div>
   );

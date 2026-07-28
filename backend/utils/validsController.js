@@ -413,11 +413,11 @@ function validateComplaintFields(body, res) {
     );
   }
 
-  if (complaintType === "owner" && !body.ownerEmail) {
+  if (complaintType === "owner" && !body.ownerEmail && !body.ownerId) {
     return sendValidationError(
       res,
       STATUS_CODE.BAD_REQUEST,
-      "ownerEmail is required for owner complaints",
+      "ownerEmail or ownerId is required for owner complaints",
     );
   }
 

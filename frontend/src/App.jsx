@@ -16,6 +16,7 @@ import Statistics from "./pages/AdminUI/Statistics/Statistics";
 import ComplaintsAdmin from "./pages/AdminUI/Complaints/ComplaintsAdmin";
 import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
 import RentalDashboard from "./pages/UserUI/RentalDashboard/RentalDashboard";
+import Payment from "./pages/UserUI/Payment/Payment";
 import UserStats from "./pages/UserStats/UserStats";
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/complaints" element={<Complaints />} />
             <Route path="/rentalDashboard" element={<RentalDashboard />} />
+            <Route path="/payments/:paymentToken" element={<Payment />} />
           </>
         ) : currentUser?.role === "admin" ? (
           <>

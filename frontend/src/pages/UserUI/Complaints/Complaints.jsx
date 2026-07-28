@@ -1,38 +1,64 @@
 import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import styles from "./Complaints.module.css";
 import ComplaintsHistoryCards from "../../../components/ComplaintsHistoryCards/ComplaintsHistoryCards";
+import Pagination from "../../../components/Pagination/Pagination";
 import { useComplaintContext } from "../../../context/ComplaintContext";
-const dummyComplaints = [
-  {
-    id: 1,
-    title: "Suspicious listing photos",
-    status: "Open",
-    relatedVehOrOwner: "Wedding Limousine (#3)",
-    date: "2026-04-08",
-    type: "vehicle",
-    owner: "John Smith",
-    description:
-      "The uploaded photos do not match the actual event vehicle details.",
-  },
-  {
-    id: 2,
-    title: "Unprofessional Conduct",
-    status: "Closed",
-    relatedVehOrOwner: "Michael Brown",
-    date: "2026-01-10",
-    type: "user",
-    owner: "Sarah Wilson",
-    description:
-      "The driver was extremely rude during the handover process and arrived 40 minutes late without any prior notice or apology.",
-  },
-];
+import { useVehicleContext } from "../../../context/VehicleContext";
+import { useUserContext } from "../../../context/UserContext";
+import { parseImgs } from "../../../utils/parseImgs";
+
+const formatDateForInput = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatSubmittedDate = (value) => {
+  if (!value) return "Unknown date";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown date";
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const displayName = (firstName, lastName, email) => {
+  const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+  return fullName || email || "Unknown user";
+};
 
 const Complaints = () => {
-  const { createComplaint, errorMsg } = useComplaintContext();
+  const {
+    createComplaint,
+    errorMsg,
+    setErrorMsg,
+    getMyComplaints,
+    myComplaints,
+    myComplaintsPagination,
+    isMyComplaintsLoading,
+    myComplaintsError,
+  } = useComplaintContext();
+  const { getVehicleByLicensePlate } = useVehicleContext();
+  const { getUserById } = useUserContext();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("vehicle");
   const [successMsg, setSuccessMsg] = useState("");
   const [localErrorMsg, setLocalErrorMsg] = useState("");
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVehicleLocked, setIsVehicleLocked] = useState(false);
+  const [reportedVehicle, setReportedVehicle] = useState(null);
+  const [isVehicleLoading, setIsVehicleLoading] = useState(false);
+  const [isOwnerLocked, setIsOwnerLocked] = useState(false);
+  const [reportedOwner, setReportedOwner] = useState(null);
+  const [lockedOwnerId, setLockedOwnerId] = useState(null);
+  const [isOwnerLoading, setIsOwnerLoading] = useState(false);
   const [formData, setFormData] = useState({
     relatedTarget: "",
     title: "",
@@ -40,6 +66,138 @@ const Complaints = () => {
     images: [],
   });
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const today = new Date();
+  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+
+  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
+  const [toDate, setToDate] = useState(formatDateForInput(today));
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
+  const [appliedToDate, setAppliedToDate] = useState(toDate);
+  const [appliedStatus, setAppliedStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
+  const isTargetLoading = isVehicleLoading || isOwnerLoading;
+
+  // Prefill from URL params (UX only). Invalid params fall back to the
+  // normal unprefilled form without crashing.
+  useEffect(() => {
+    const complaintType = searchParams.get("complaintType");
+    const plate = searchParams.get("vehicleLicensePlate")?.trim() || "";
+    const ownerIdParam = searchParams.get("ownerId")?.trim() || "";
+
+    if (!complaintType && !plate && !ownerIdParam) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const clearLocks = () => {
+      setIsVehicleLocked(false);
+      setReportedVehicle(null);
+      setIsVehicleLoading(false);
+      setIsOwnerLocked(false);
+      setReportedOwner(null);
+      setLockedOwnerId(null);
+      setIsOwnerLoading(false);
+    };
+
+    if (complaintType === "vehicle") {
+      if (!/^\d{7,8}$/.test(plate)) {
+        setLocalErrorMsg(
+          "Invalid report link. Please select the complaint type and target manually.",
+        );
+        clearLocks();
+        return;
+      }
+
+      const resolveReportedVehicle = async () => {
+        setIsOwnerLocked(false);
+        setReportedOwner(null);
+        setLockedOwnerId(null);
+        setIsVehicleLoading(true);
+        setActiveTab("vehicle");
+        setFormData((prev) => ({ ...prev, relatedTarget: plate }));
+        setIsVehicleLocked(true);
+
+        const vehicle = await getVehicleByLicensePlate(plate);
+        if (cancelled) return;
+
+        if (!vehicle) {
+          setLocalErrorMsg(
+            "Vehicle not found. Please enter a valid plate number manually.",
+          );
+          setIsVehicleLocked(false);
+          setReportedVehicle(null);
+          setFormData((prev) => ({ ...prev, relatedTarget: "" }));
+        } else {
+          setReportedVehicle(vehicle);
+          setLocalErrorMsg("");
+          setErrorMsg("");
+        }
+        setIsVehicleLoading(false);
+      };
+
+      resolveReportedVehicle();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (complaintType === "owner") {
+      const ownerId = Number(ownerIdParam);
+      if (!Number.isInteger(ownerId) || ownerId <= 0) {
+        setLocalErrorMsg(
+          "Invalid report link. Please select the complaint type and target manually.",
+        );
+        clearLocks();
+        return;
+      }
+
+      const resolveReportedOwner = async () => {
+        setIsVehicleLocked(false);
+        setReportedVehicle(null);
+        setIsOwnerLoading(true);
+        setActiveTab("owner");
+        setIsOwnerLocked(true);
+        setLockedOwnerId(ownerId);
+
+        const owner = await getUserById(ownerId);
+        if (cancelled) return;
+
+        if (!owner) {
+          setLocalErrorMsg(
+            "Owner not found. Please enter a valid owner email manually.",
+          );
+          setIsOwnerLocked(false);
+          setReportedOwner(null);
+          setLockedOwnerId(null);
+          setFormData((prev) => ({ ...prev, relatedTarget: "" }));
+        } else {
+          setReportedOwner(owner);
+          setFormData((prev) => ({
+            ...prev,
+            relatedTarget: owner.email || "",
+          }));
+          setLocalErrorMsg("");
+          setErrorMsg("");
+        }
+        setIsOwnerLoading(false);
+      };
+
+      resolveReportedOwner();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setLocalErrorMsg(
+      "Invalid report link. Please select the complaint type and target manually.",
+    );
+    clearLocks();
+  }, [searchParams]);
 
   useEffect(() => {
     const urls = formData.images.map((image) => URL.createObjectURL(image));
@@ -51,8 +209,45 @@ const Complaints = () => {
     };
   }, [formData.images]);
 
+  useEffect(() => {
+    getMyComplaints({
+      startDate: appliedFromDate,
+      endDate: appliedToDate,
+      status: appliedStatus,
+      page: currentPage,
+    });
+  }, [appliedFromDate, appliedToDate, appliedStatus, currentPage]);
+
+  const refreshMyComplaints = () => {
+    getMyComplaints({
+      startDate: appliedFromDate,
+      endDate: appliedToDate,
+      status: appliedStatus,
+      page: currentPage,
+    });
+  };
+
+  const handleApplyFilters = () => {
+    if (!isRangeValid || isMyComplaintsLoading) return;
+    setAppliedFromDate(fromDate);
+    setAppliedToDate(toDate);
+    setAppliedStatus(statusFilter);
+    setCurrentPage(1);
+  };
+
+  const clearPrefills = () => {
+    setIsVehicleLocked(false);
+    setReportedVehicle(null);
+    setIsVehicleLoading(false);
+    setIsOwnerLocked(false);
+    setReportedOwner(null);
+    setLockedOwnerId(null);
+    setIsOwnerLoading(false);
+  };
+
   const handleSubmitForm = async (e) => {
     e.preventDefault();
+    if (isSubmitting || isTargetLoading) return;
 
     const relatedTarget = formData.relatedTarget.trim();
 
@@ -64,6 +259,12 @@ const Complaints = () => {
         );
         return;
       }
+    } else if (isOwnerLocked) {
+      if (!lockedOwnerId) {
+        setSuccessMsg("");
+        setLocalErrorMsg("Reported owner is missing. Please try again.");
+        return;
+      }
     } else if (!emailRegex.test(relatedTarget)) {
       setSuccessMsg("");
       setLocalErrorMsg("Enter a valid owner email address.");
@@ -71,6 +272,7 @@ const Complaints = () => {
     }
 
     setLocalErrorMsg("");
+    setIsSubmitting(true);
 
     const complaintData = new FormData();
 
@@ -80,6 +282,8 @@ const Complaints = () => {
 
     if (activeTab === "vehicle") {
       complaintData.append("vehicleLicensePlate", relatedTarget);
+    } else if (isOwnerLocked && lockedOwnerId) {
+      complaintData.append("ownerId", String(lockedOwnerId));
     } else {
       complaintData.append("ownerEmail", relatedTarget);
     }
@@ -91,6 +295,7 @@ const Complaints = () => {
     }
 
     const success = await createComplaint(complaintData);
+    setIsSubmitting(false);
 
     if (success) {
       setFormData({
@@ -99,24 +304,36 @@ const Complaints = () => {
         description: "",
         images: [],
       });
+      clearPrefills();
       setSuccessMsg("Your complaint was submitted successfully!");
       setTimeout(() => setSuccessMsg(""), 5000);
+      refreshMyComplaints();
+      if (
+        searchParams.has("complaintType") ||
+        searchParams.has("vehicleLicensePlate") ||
+        searchParams.has("ownerId")
+      ) {
+        navigate("/complaints", { replace: true });
+      }
     }
   };
 
   const switchActiveTabToOwner = () => {
     setActiveTab("owner");
     setLocalErrorMsg("");
+    clearPrefills();
     setFormData((prev) => ({ ...prev, relatedTarget: "" }));
   };
 
   const switchActiveTabToVehicle = () => {
     setActiveTab("vehicle");
     setLocalErrorMsg("");
+    clearPrefills();
     setFormData((prev) => ({ ...prev, relatedTarget: "" }));
   };
 
   const handleRelatedTargetChange = (e) => {
+    if (isVehicleLocked || isOwnerLocked) return;
     let value = e.target.value;
     if (activeTab === "vehicle") {
       value = value.replace(/\D/g, "").slice(0, 8);
@@ -141,6 +358,45 @@ const Complaints = () => {
       images: prev.images.filter((_, index) => index !== indexToRemove),
     }));
   };
+
+  const emptyMessage =
+    appliedStatus !== "all" ||
+    appliedFromDate !== formatDateForInput(sixMonthsAgo) ||
+    appliedToDate !== formatDateForInput(today)
+      ? "No complaints found for the selected period."
+      : "You have not submitted any complaints yet.";
+
+  const reportedOwnerName = reportedOwner
+    ? displayName(
+        reportedOwner.firstName,
+        reportedOwner.lastName,
+        null,
+      )
+    : "";
+
+  const reportedOwnerJoined = reportedOwner?.createdAt
+    ? new Date(reportedOwner.createdAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+
+  const reportedOwnerNameVehicle = reportedVehicle
+    ? displayName(
+        reportedVehicle.ownerFirstName,
+        reportedVehicle.ownerLastName,
+        reportedVehicle.ownerEmail,
+      )
+    : "";
+
+  const reportedVehicleName = reportedVehicle
+    ? `${reportedVehicle.brandName || ""} ${reportedVehicle.modelName || ""}`.trim()
+    : "";
+
+  const reportedImageUrl = reportedVehicle?.image
+    ? parseImgs(reportedVehicle.image)
+    : "";
 
   return (
     <div className={`${styles.Complaints} page`}>
@@ -170,6 +426,69 @@ const Complaints = () => {
           </div>
         )}
 
+        {isTargetLoading && (
+          <p className={styles.vehicleLoading}>
+            {isOwnerLoading
+              ? "Loading reported owner..."
+              : "Loading reported vehicle..."}
+          </p>
+        )}
+
+        {reportedVehicle && isVehicleLocked && (
+          <div className={styles.reportedVehicleCard}>
+            <p className={styles.reportedVehicleTitle}>Reporting vehicle</p>
+            <div className={styles.reportedVehicleBody}>
+              {reportedImageUrl && (
+                <img
+                  src={reportedImageUrl}
+                  alt={reportedVehicleName || "Reported vehicle"}
+                  className={styles.reportedVehicleImage}
+                />
+              )}
+              <div className={styles.reportedVehicleMeta}>
+                <p className={styles.reportedVehicleName}>
+                  {reportedVehicleName || "Unknown vehicle"}
+                </p>
+                <p>
+                  <span className={styles.metaLabel}>License plate:</span>{" "}
+                  {reportedVehicle.licensePlate}
+                </p>
+                <p>
+                  <span className={styles.metaLabel}>Listed owner:</span>{" "}
+                  {reportedOwnerNameVehicle}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {reportedOwner && isOwnerLocked && (
+          <div className={styles.reportedVehicleCard}>
+            <p className={styles.reportedVehicleTitle}>Reporting owner</p>
+            <div className={styles.reportedVehicleBody}>
+              <div className={styles.reportedOwnerAvatar} aria-hidden="true">
+                {(reportedOwnerName || "U").charAt(0).toUpperCase()}
+              </div>
+              <div className={styles.reportedVehicleMeta}>
+                <p className={styles.reportedVehicleName}>
+                  {reportedOwnerName || "Unknown owner"}
+                </p>
+                <p>
+                  <span className={styles.metaLabel}>Account:</span>{" "}
+                  {reportedOwner.role || "user"}
+                  {reportedOwner.status ? ` · ${reportedOwner.status}` : ""}
+                </p>
+                {reportedOwnerJoined && (
+                  <p>
+                    <span className={styles.metaLabel}>Member since:</span>{" "}
+                    {reportedOwnerJoined}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className={styles.complaintTypeContainer}>
           <div className={styles.labelAndInputContainer}>
             <p>Complaint Type</p>
@@ -178,6 +497,7 @@ const Complaints = () => {
                 type="button"
                 onClick={switchActiveTabToVehicle}
                 className={`${styles.againstVehicleBtn} ${activeTab === "vehicle" && styles.activeBtn}`}
+                disabled={isSubmitting}
               >
                 Against vehicle
               </button>
@@ -185,28 +505,32 @@ const Complaints = () => {
                 type="button"
                 onClick={switchActiveTabToOwner}
                 className={`${styles.againstOwnerBtn} ${activeTab === "owner" && styles.activeBtn}`}
+                disabled={isSubmitting}
               >
                 Against owner
               </button>
             </div>
           </div>
 
-          <div className={styles.labelAndInputContainer}>
-            <p>Related {activeTab === "vehicle" ? "vehicle" : "owner"}</p>
-            <input
-              type={activeTab === "vehicle" ? "text" : "email"}
-              name="relatedTarget"
-              inputMode={activeTab === "vehicle" ? "numeric" : "email"}
-              maxLength={activeTab === "vehicle" ? 8 : undefined}
-              value={formData.relatedTarget}
-              onChange={handleRelatedTargetChange}
-              placeholder={
-                activeTab === "vehicle"
-                  ? "Vehicle plate number (7-8 digits)"
-                  : "owner email"
-              }
-            />
-          </div>
+          {!(isOwnerLocked && activeTab === "owner") && (
+            <div className={styles.labelAndInputContainer}>
+              <p>Related {activeTab === "vehicle" ? "vehicle" : "owner"}</p>
+              <input
+                type={activeTab === "vehicle" ? "text" : "email"}
+                name="relatedTarget"
+                inputMode={activeTab === "vehicle" ? "numeric" : "email"}
+                maxLength={activeTab === "vehicle" ? 8 : undefined}
+                value={formData.relatedTarget}
+                onChange={handleRelatedTargetChange}
+                readOnly={isVehicleLocked && activeTab === "vehicle"}
+                placeholder={
+                  activeTab === "vehicle"
+                    ? "Vehicle plate number (7-8 digits)"
+                    : "owner email"
+                }
+              />
+            </div>
+          )}
 
           <div className={styles.labelAndInputContainer}>
             <p>Title</p>
@@ -217,6 +541,7 @@ const Complaints = () => {
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
+              disabled={isSubmitting}
             />
           </div>
 
@@ -228,6 +553,7 @@ const Complaints = () => {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
+              disabled={isSubmitting}
             ></textarea>
           </div>
           <label className={styles.customFileUpload}>
@@ -236,6 +562,7 @@ const Complaints = () => {
               multiple
               accept="image/*"
               onChange={handleImageChange}
+              disabled={isSubmitting}
             />
 
             {formData.images.length === 0 ? (
@@ -267,25 +594,133 @@ const Complaints = () => {
           </label>
         </div>
 
-        <button className={styles.submitBtn}>Submit Complaint</button>
+        <button
+          className={styles.submitBtn}
+          disabled={isSubmitting || isTargetLoading}
+        >
+          {isSubmitting ? "Submitting..." : "Submit Complaint"}
+        </button>
       </form>
 
       <div className={styles.complaintsHistoryContainer}>
         <h4>Previous complaints</h4>
-        {dummyComplaints.map((comp) => {
-          return (
-            <ComplaintsHistoryCards
-              key={comp.id}
-              title={comp.title}
-              relatedVehOrOwner={comp.relatedVehOrOwner}
-              date={comp.date}
-              description={comp.description}
-              owner={comp.owner}
-              status={comp.status}
-              type={comp.type}
+
+        <div className={styles.historyFilters}>
+          <div className={styles.filterGroup}>
+            <label htmlFor="myComplaintsFrom">From</label>
+            <input
+              id="myComplaintsFrom"
+              type="date"
+              value={fromDate}
+              max={toDate}
+              onChange={(e) => setFromDate(e.target.value)}
             />
-          );
-        })}
+          </div>
+          <div className={styles.filterGroup}>
+            <label htmlFor="myComplaintsTo">To</label>
+            <input
+              id="myComplaintsTo"
+              type="date"
+              value={toDate}
+              min={fromDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </div>
+          <div className={styles.filterGroup}>
+            <label htmlFor="myComplaintsStatus">Status</label>
+            <select
+              id="myComplaintsStatus"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="open">Open</option>
+              <option value="in_review">In Review</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            className={styles.applyBtn}
+            onClick={handleApplyFilters}
+            disabled={!isRangeValid || isMyComplaintsLoading}
+          >
+            {isMyComplaintsLoading ? "Loading..." : "Apply"}
+          </button>
+        </div>
+
+        {myComplaintsError && (
+          <p className={styles.historyError}>{myComplaintsError}</p>
+        )}
+
+        {isMyComplaintsLoading ? (
+          <p className={styles.historyEmpty}>Loading your complaints...</p>
+        ) : myComplaints.length === 0 && !myComplaintsError ? (
+          <p className={styles.historyEmpty}>{emptyMessage}</p>
+        ) : (
+          myComplaints.map((comp) => {
+            const isVehicle = comp.complaintType === "vehicle";
+            const vehicleLabel = [
+              comp.brandName,
+              comp.modelName,
+              comp.vehicleLicensePlate
+                ? `(${comp.vehicleLicensePlate})`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" ");
+
+            const ownerTarget = displayName(
+              comp.ownerFirstName,
+              comp.ownerLastName,
+              comp.ownerEmail,
+            );
+
+            const listedOwner = isVehicle
+              ? displayName(
+                  comp.vehicleOwnerFirstName,
+                  comp.vehicleOwnerLastName,
+                  comp.vehicleOwnerEmail,
+                )
+              : null;
+
+            return (
+              <ComplaintsHistoryCards
+                key={comp.complaintId}
+                title={comp.title}
+                status={comp.status}
+                targetLabel={isVehicle ? "Reported vehicle" : "Reported owner"}
+                targetValue={
+                  isVehicle ? vehicleLabel || "Unknown vehicle" : ownerTarget
+                }
+                listedOwner={listedOwner}
+                submittedDate={formatSubmittedDate(comp.createdAt)}
+                description={comp.description}
+                adminResponse={comp.adminNotes?.trim() || null}
+              />
+            );
+          })
+        )}
+
+        {!isMyComplaintsLoading &&
+          myComplaintsPagination?.totalPages > 1 && (
+            <div className={styles.paginationWrapper}>
+              <Pagination
+                currentPage={myComplaintsPagination.currentPage}
+                totalPages={myComplaintsPagination.totalPages}
+                handlePrevPage={() =>
+                  setCurrentPage((p) => Math.max(p - 1, 1))
+                }
+                handleNextPage={() =>
+                  setCurrentPage((p) =>
+                    Math.min(p + 1, myComplaintsPagination.totalPages),
+                  )
+                }
+                leftText={`Total: ${myComplaintsPagination.totalComplaints || 0}`}
+              />
+            </div>
+          )}
       </div>
     </div>
   );

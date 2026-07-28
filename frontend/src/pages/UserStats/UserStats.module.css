@@ -4,6 +4,14 @@
   gap: 20px;
 }
 
+.UserStats .topActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .UserStats .backBtn {
   display: flex;
   align-items: center;
@@ -16,12 +24,31 @@
   cursor: pointer;
   width: fit-content;
   padding: 0;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   transition: opacity 0.2s ease;
 }
 
 .UserStats .backBtn:hover {
   opacity: 0.8;
+}
+
+.UserStats .reportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #f9e081;
+  background-color: #211e1f;
+  border: 1px solid #593d17;
+  border-radius: 15px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: scale 0.3s;
+}
+
+.UserStats .reportBtn:hover {
+  scale: 1.05;
 }
 
 .UserStats .error {

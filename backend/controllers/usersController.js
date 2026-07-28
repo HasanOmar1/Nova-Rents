@@ -10,6 +10,7 @@ const hashPassword = require("../utils/hashPassword");
 const {
   getUserByEmail,
   getUserByPhone,
+  getUserById,
 } = require("../database/queries/userQueries");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
@@ -866,6 +867,42 @@ const getUserStatsByEmail = async (req, res, next) => {
   }
 };
 
+// Resolve a user by id for complaint prefill / public profile summary.
+// Returns the same non-private field set used by the stats profile header.
+const getUserPublicById = async (req, res, next) => {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid user ID",
+      });
+    }
+
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "User not found",
+      });
+    }
+
+    if (req.session.user.role !== "admin" && user.role === "admin") {
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "You are not authorized to view admin profiles.",
+      });
+    }
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "User fetched successfully",
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllUsers,
   register,
@@ -878,4 +915,5 @@ module.exports = {
   updateUserProfile,
   getUsersByStatus,
   getUserStatsByEmail,
+  getUserPublicById,
 };

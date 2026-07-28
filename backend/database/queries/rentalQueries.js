@@ -179,6 +179,66 @@ async function getMonthlyEarningsByOwnerId(ownerId) {
   return doQuery(query, [ownerId]);
 }
 
+// Total value of approved + completed booking requests created in the range
+// (admin statistics). Uses the exact same WHERE conditions as
+// getBookingsChartByRange so the Booking Value card always describes the same
+// rental rows as the Bookings card and chart. createdAt is a TIMESTAMP, so the
+// end bound uses < DATE_ADD(end, 1 DAY) to include the whole final day.
+async function getBookingValueByRange(startDate, endDate) {
+  const query = `
+    SELECT COALESCE(SUM(totalPrice), 0) AS total
+    FROM rentals
+    WHERE status IN ('approved', 'completed')
+    AND createdAt >= ?
+    AND createdAt < DATE_ADD(?, INTERVAL 1 DAY)
+  `;
+  return doQuery(query, [startDate, endDate]);
+}
+
+// Approved + completed booking requests bucketed by creation time.
+// Must keep the same WHERE conditions as getBookingValueByRange.
+// dateFormat is a DATE_FORMAT pattern chosen by the caller.
+async function getBookingsChartByRange(startDate, endDate, dateFormat) {
+  const query = `
+    SELECT
+      DATE_FORMAT(createdAt, ?) AS periodKey,
+      COUNT(*) AS bookings
+    FROM rentals
+    WHERE status IN ('approved', 'completed')
+    AND createdAt >= ?
+    AND createdAt < DATE_ADD(?, INTERVAL 1 DAY)
+    GROUP BY periodKey
+    ORDER BY periodKey ASC
+  `;
+  return doQuery(query, [dateFormat, startDate, endDate]);
+}
+
+// Completed-rental earnings for vehicles one user owns, bucketed by rental
+// endDate (the schema has no completion timestamp; a rental is auto-completed
+// once endDate passes, so endDate is when the owner earned the amount).
+// rentals→vehicles on licensePlate is one-to-one, so SUM sees no duplicates.
+async function getOwnerEarningsChartByRange(
+  ownerId,
+  startDate,
+  endDate,
+  dateFormat,
+) {
+  const query = `
+    SELECT
+      DATE_FORMAT(r.endDate, ?) AS periodKey,
+      COALESCE(SUM(r.totalPrice), 0) AS earnings
+    FROM rentals r
+    JOIN vehicles v ON r.licensePlate = v.licensePlate
+    WHERE v.ownerId = ?
+    AND r.status = 'completed'
+    AND r.endDate >= ?
+    AND r.endDate < DATE_ADD(?, INTERVAL 1 DAY)
+    GROUP BY periodKey
+    ORDER BY periodKey ASC
+  `;
+  return doQuery(query, [dateFormat, ownerId, startDate, endDate]);
+}
+
 async function getPendingRequestsCountByOwnerId(ownerId) {
   const query = `
     SELECT COUNT(*) AS count
@@ -280,7 +340,9 @@ async function getMyTripsHistoryByRenterId(renterId) {
       owner.phone AS ownerPhone,
       owner.status AS ownerStatus,
       renter.firstName AS renterFirstName,
-      renter.lastName AS renterLastName
+      renter.lastName AS renterLastName,
+      p.paymentToken,
+      p.status AS paymentStatus
 
     FROM rentals r
     JOIN vehicles v ON r.licensePlate = v.licensePlate
@@ -289,10 +351,48 @@ async function getMyTripsHistoryByRenterId(renterId) {
     JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
     JOIN users owner ON v.ownerId = owner.userId
     JOIN users renter ON r.renterId = renter.userId
+    LEFT JOIN rental_payments p ON r.rentalId = p.rentalId
     WHERE r.renterId = ?
     ORDER BY r.startDate DESC
   `;
   return doQuery(query, [renterId]);
+}
+
+// Authoritative data set for rental lifecycle emails. Owner is resolved
+// strictly through rentals.licensePlate -> vehicles.licensePlate ->
+// vehicles.ownerId -> users.userId (never from client input), and the
+// renter/owner aliases keep the two users impossible to confuse.
+async function getRentalEmailDataByRentalId(rentalId) {
+  const query = `
+    SELECT
+      r.rentalId,
+      r.startDate,
+      r.endDate,
+      r.totalPrice,
+      r.status AS rentalStatus,
+      r.licensePlate,
+      v.address AS vehicleAddress,
+      cb.brandName,
+      cm.modelName,
+      v.ownerId,
+      owner.firstName AS ownerFirstName,
+      owner.lastName AS ownerLastName,
+      owner.email AS ownerEmail,
+      r.renterId,
+      renter.firstName AS renterFirstName,
+      renter.lastName AS renterLastName,
+      renter.email AS renterEmail,
+      renter.phone AS renterPhone
+    FROM rentals r
+    JOIN vehicles v ON r.licensePlate = v.licensePlate
+    JOIN carModels cm ON v.modelId = cm.modelId
+    JOIN carBrands cb ON cm.brandId = cb.brandId
+    JOIN users owner ON v.ownerId = owner.userId
+    JOIN users renter ON r.renterId = renter.userId
+    WHERE r.rentalId = ?
+  `;
+  const result = await doQuery(query, [rentalId]);
+  return result[0];
 }
 
 async function rejectPendingRentalsByLicensePlate(licensePlate) {
@@ -362,12 +462,16 @@ module.exports = {
   completeExpiredRentals,
   cancelExpiredRentals,
   getMonthlyEarningsByOwnerId,
+  getBookingValueByRange,
+  getBookingsChartByRange,
+  getOwnerEarningsChartByRange,
   getPendingRequestsCountByOwnerId,
   getUpcomingTripsCountByUserId,
   getPastTripsCountByRenterId,
   getDashboardChartDataByUserId,
   getPendingRentalRequestsForOwner,
   getMyTripsHistoryByRenterId,
+  getRentalEmailDataByRentalId,
   rejectPendingRentalsByLicensePlate,
   cancelApprovedRentalsByLicensePlate,
   getAffectedRentersByLicensePlate,
