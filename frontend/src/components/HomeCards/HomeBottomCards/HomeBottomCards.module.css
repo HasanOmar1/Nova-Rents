@@ -12,10 +12,11 @@
   max-width: 100%;
 }
 
-/* Full-width variant: card spans the whole row with a taller plot area */
+/* Full-width variant: card spans the whole row with a taller plot area.
+   Height is content-based so cards without a legend don't reserve blank
+   space; the emptyState min-height keeps loading/empty cards stable. */
 .HomeBottomCards.fullWidth {
   width: 100%;
-  min-height: 460px;
 }
 
 .HomeBottomCards .header {
@@ -30,9 +31,11 @@
   margin: 0;
 }
 
+/* Fixed-height plot area: must not flex-grow, otherwise a stretched card
+   leaves blank space below the explicitly sized chart */
 .HomeBottomCards .statistics {
   width: 100%;
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
@@ -150,7 +153,7 @@
 }
 
 .HomeBottomCards.fullWidth .emptyState {
-  min-height: 300px;
+  min-height: 360px;
 }
 
 @media (max-width: 1024px) {
@@ -176,9 +179,5 @@
     gap: 15px;
     min-height: 250px;
     border-radius: 16px;
-  }
-
-  .HomeBottomCards.fullWidth {
-    min-height: 380px;
   }
 }

@@ -13,7 +13,7 @@ import {
 
 // Generic compact tooltip: hides zero values, sorts descending,
 // shows "No activity" when every series is 0 for the hovered point.
-const ChartTooltip = ({ active, payload, label, labelFormatter }) => {
+const ChartTooltip = ({ active, payload, label, labelFormatter, valueFormatter }) => {
   if (!active || !payload?.length) return null;
 
   const visibleEntries = payload
@@ -36,7 +36,9 @@ const ChartTooltip = ({ active, payload, label, labelFormatter }) => {
                 style={{ backgroundColor: entry.color }}
               />
               <span className={style.tooltipName}>{entry.name}</span>
-              <span className={style.tooltipValue}>{entry.value}</span>
+              <span className={style.tooltipValue}>
+                {valueFormatter ? valueFormatter(entry.value) : entry.value}
+              </span>
             </div>
           ))}
         </div>
@@ -60,14 +62,19 @@ const HomeBottomCards = ({
   fullWidth = false,
   showLegend = true,
   chartHeight,
+  valueFormatter,
+  yAxisWidth,
 }) => {
   const isEmpty =
     !data?.length || (series !== undefined && series.length === 0);
 
   const plotHeight = chartHeight ?? (fullWidth ? 300 : 220);
+  // Wider Y-axis values (e.g. currency) need their full width; the default
+  // compact variant pulls the plot left because counts are short.
+  const resolvedYAxisWidth = yAxisWidth ?? (fullWidth ? 36 : 30);
   const lineMargin = fullWidth
     ? { top: 12, right: 20, left: 4, bottom: 28 }
-    : { top: 10, right: 16, left: -16, bottom: 8 };
+    : { top: 10, right: 16, left: yAxisWidth ? 0 : -16, bottom: 8 };
 
   return (
     <div
@@ -88,11 +95,13 @@ const HomeBottomCards = ({
             className={style.statistics}
             style={{ height: plotHeight, minHeight: plotHeight }}
           >
+            {/* Explicit pixel height: with height="100%" inside a flex item,
+                recharts v3 can fall back to its minHeight and leave a blank
+                band below the plot. */}
             <ResponsiveContainer
               width="100%"
-              height="100%"
+              height={plotHeight}
               minWidth={0}
-              minHeight={200}
             >
               {type === "line" ? (
                 <LineChart data={data} margin={lineMargin}>
@@ -118,11 +127,14 @@ const HomeBottomCards = ({
                     axisLine={false}
                     tick={{ fontSize: 12, fill: "#888" }}
                     allowDecimals={false}
-                    width={fullWidth ? 36 : 30}
+                    width={resolvedYAxisWidth}
                   />
                   <Tooltip
                     content={
-                      <ChartTooltip labelFormatter={tooltipLabelFormatter} />
+                      <ChartTooltip
+                        labelFormatter={tooltipLabelFormatter}
+                        valueFormatter={valueFormatter}
+                      />
                     }
                     wrapperStyle={{ outline: "none", zIndex: 10 }}
                   />

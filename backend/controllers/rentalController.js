@@ -25,6 +25,7 @@ const {
   getDashboardChartDataByUserId,
   getPendingRentalRequestsForOwner,
   getMyTripsHistoryByRenterId,
+  getRentalEmailDataByRentalId,
 } = require("../database/queries/rentalQueries");
 
 const {
@@ -34,6 +35,19 @@ const { createActivity } = require("../database/queries/activityQueries");
 const {
   createSystemHistory,
 } = require("../database/queries/systemHistoryQueries");
+const {
+  createRentalPayment,
+  getPaymentByRentalId,
+  markPaymentLinkEmailSent,
+} = require("../database/queries/paymentQueries");
+const { generatePaymentToken } = require("./paymentsController");
+const {
+  sendTestPaymentRequestEmail,
+  sendRentalRequestEmail,
+  sendRentalRejectedEmail,
+} = require("../services/emailService");
+
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 async function createRental(req, res, next) {
   try {
@@ -124,9 +138,39 @@ async function createRental(req, res, next) {
       `Rental requested for vehicle with license plate of ${licensePlate}`,
     );
 
-    return res
-      .status(STATUS_CODE.CREATED)
-      .json({ message: "Rental created successfully" });
+    // Email the vehicle owner. Owner is resolved from the DB (never from the
+    // request body); a delivery failure must not undo the created rental.
+    let emailSent = false;
+    try {
+      const emailData = await getRentalEmailDataByRentalId(result.insertId);
+      await sendRentalRequestEmail({
+        to: emailData.ownerEmail,
+        ownerFirstName: emailData.ownerFirstName,
+        ownerLastName: emailData.ownerLastName,
+        renterFirstName: emailData.renterFirstName,
+        renterLastName: emailData.renterLastName,
+        renterEmail: emailData.renterEmail,
+        renterPhone: emailData.renterPhone,
+        brandName: emailData.brandName,
+        modelName: emailData.modelName,
+        licensePlate: emailData.licensePlate,
+        startDate: emailData.startDate,
+        endDate: emailData.endDate,
+        totalPrice: emailData.totalPrice,
+        currency: "USD",
+        rentalId: emailData.rentalId,
+        requestsUrl: `${FRONTEND_URL}/rentalDashboard`,
+      });
+      emailSent = true;
+    } catch (emailError) {
+      console.error("Rental request email failed:", emailError.message);
+    }
+
+    return res.status(STATUS_CODE.CREATED).json({
+      message: "Rental created successfully",
+      rentalId: result.insertId,
+      emailSent,
+    });
   } catch (error) {
     next(error);
   }
@@ -247,6 +291,44 @@ async function approveRental(req, res, next) {
       rental.licensePlate,
       `Rental approved for vehicle with license plate of ${rental.licensePlate}`,
     );
+
+    // Test payment: snapshot rentals.totalPrice, notify the requester, and
+    // email them the secure payment link.
+    const paymentToken = generatePaymentToken();
+    await createRentalPayment(rentalId, paymentToken, rental.totalPrice);
+    const payment = await getPaymentByRentalId(rentalId);
+
+    await createNotification(
+      rental.renterId,
+      rentalId,
+      "payment_request",
+      "Test Payment Required",
+      `Complete the Test payment for your ${payment.brandName} ${payment.modelName} rental to confirm your booking`,
+    );
+
+    try {
+      await sendTestPaymentRequestEmail({
+        to: payment.renterEmail,
+        renterFirstName: payment.renterFirstName,
+        renterLastName: payment.renterLastName,
+        ownerFirstName: payment.ownerFirstName,
+        ownerLastName: payment.ownerLastName,
+        brandName: payment.brandName,
+        modelName: payment.modelName,
+        licensePlate: payment.licensePlate,
+        vehicleAddress: payment.vehicleAddress,
+        startDate: payment.startDate,
+        endDate: payment.endDate,
+        amount: payment.amount,
+        currency: payment.currency,
+        rentalId: payment.rentalId,
+        paymentUrl: `${FRONTEND_URL}/payments/${paymentToken}`,
+      });
+      await markPaymentLinkEmailSent(payment.paymentId);
+    } catch (emailError) {
+      console.error("Failed to send payment request email:", emailError);
+    }
+
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Rental approved successfully" });
@@ -310,6 +392,27 @@ async function rejectRental(req, res, next) {
       rental.licensePlate,
       `Rental rejected for vehicle with license plate of ${rental.licensePlate}`,
     );
+
+    try {
+      const emailData = await getRentalEmailDataByRentalId(rentalId);
+      await sendRentalRejectedEmail({
+        to: emailData.renterEmail,
+        renterFirstName: emailData.renterFirstName,
+        renterLastName: emailData.renterLastName,
+        ownerFirstName: emailData.ownerFirstName,
+        ownerLastName: emailData.ownerLastName,
+        brandName: emailData.brandName,
+        modelName: emailData.modelName,
+        licensePlate: emailData.licensePlate,
+        startDate: emailData.startDate,
+        endDate: emailData.endDate,
+        rentalId: emailData.rentalId,
+        browseUrl: `${FRONTEND_URL}/vehicles`,
+      });
+    } catch (emailError) {
+      console.error("Rental rejection email failed:", emailError.message);
+    }
+
     return res
       .status(STATUS_CODE.OK)
       .json({ message: "Rental rejected successfully" });

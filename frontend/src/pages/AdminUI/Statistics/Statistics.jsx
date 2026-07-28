@@ -2,48 +2,109 @@ import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeB
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import styles from "./Statistics.module.css";
 import { BadgeDollarSign, Calendar } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useReportContext } from "../../../context/ReportContext";
+import {
+  formatPeriodTick,
+  formatPeriodTooltip,
+} from "../../../utils/periodFormat";
 
-const topData = [
-  {
-    title: "Monthly revenue",
-    value: "$8900",
-    icon: <BadgeDollarSign size={28} color="#a7d2eb" />,
-  },
-  {
-    title: "Bookings",
-    value: 35,
-    icon: <Calendar size={28} color="#a7d2eb" />,
-  },
-];
-
-const lineData = [
-  { month: "Jan", rentals: 12 },
-  { month: "Feb", rentals: 18 },
-  { month: "Mar", rentals: 24 },
-  { month: "Apr", rentals: 21 },
-  { month: "May", rentals: 32 },
-  { month: "Jun", rentals: 35 },
-];
-
-const barData = [
-  { month: "Jan", usage: 48 },
-  { month: "Feb", usage: 60 },
-  { month: "Mar", usage: 70 },
-  { month: "Apr", usage: 65 },
-  { month: "May", usage: 85 },
-  { month: "Jun", usage: 95 },
-];
+// Local-time date formatting (toISOString would shift the day near midnight)
+const formatDateForInput = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const Statistics = () => {
+  const {
+    statisticsData,
+    isStatisticsLoading,
+    statisticsErrorMsg,
+    getStatistics,
+  } = useReportContext();
+
+  const today = new Date();
+  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+
+  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
+  const [toDate, setToDate] = useState(formatDateForInput(today));
+
+  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
+
+  useEffect(() => {
+    getStatistics(fromDate, toDate);
+  }, []);
+
+  const handleApply = () => {
+    if (isRangeValid && !isStatisticsLoading) {
+      getStatistics(fromDate, toDate);
+    }
+  };
+
+  // No commission column exists in the DB, so this is the gross totalPrice of
+  // approved + completed bookings created in the range, not platform revenue.
+  const topData = [
+    {
+      title: "Booking Value",
+      value: isStatisticsLoading
+        ? "..."
+        : `$${(Number(statisticsData.bookingValue) || 0).toLocaleString()}`,
+      icon: <BadgeDollarSign size={28} color="#a7d2eb" />,
+    },
+    {
+      title: "Bookings",
+      value: isStatisticsLoading
+        ? "..."
+        : (Number(statisticsData.bookings) || 0).toLocaleString(),
+      icon: <Calendar size={28} color="#a7d2eb" />,
+    },
+  ];
+
+  const hasBookings = statisticsData.bookingsChartData.some(
+    (point) => point.bookings > 0,
+  );
+
   return (
     <div className={`${styles.Statistics} page`}>
       <h1>Statistics</h1>
+
+      <div className={styles.filtersToolbar}>
+        <label htmlFor="statsFromDate">From</label>
+        <input
+          id="statsFromDate"
+          type="date"
+          value={fromDate}
+          max={toDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
+        <label htmlFor="statsToDate">To</label>
+        <input
+          id="statsToDate"
+          type="date"
+          value={toDate}
+          min={fromDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
+        <button
+          type="button"
+          className={styles.applyBtn}
+          onClick={handleApply}
+          disabled={!isRangeValid || isStatisticsLoading}
+        >
+          {isStatisticsLoading ? "Loading..." : "Apply"}
+        </button>
+        {statisticsErrorMsg && (
+          <p className={styles.errorText}>{statisticsErrorMsg}</p>
+        )}
+      </div>
 
       <div className={styles.topCardsContainer}>
         {topData.map((item) => {
           return (
             <HomeTopCards
-              key={crypto.randomUUID()}
+              key={item.title}
               title={item.title}
               value={item.value}
               icon={item.icon}
@@ -54,16 +115,18 @@ const Statistics = () => {
 
       <div className={styles.bottomCardsContainer}>
         <HomeBottomCards
-          title={"Rentals by month"}
+          title={"Bookings over time"}
+          subtitle="Approved and completed booking requests created during the selected period"
           type="line"
-          data={lineData}
-          dataKey="rentals"
-        />
-        <HomeBottomCards
-          title={"Engagement"}
-          type="bar"
-          data={barData}
-          dataKey="usage"
+          data={hasBookings ? statisticsData.bookingsChartData : []}
+          series={[{ dataKey: "bookings", name: "Bookings", color: "#5494ff" }]}
+          xKey="period"
+          xTickFormatter={formatPeriodTick}
+          tooltipLabelFormatter={formatPeriodTooltip}
+          isLoading={isStatisticsLoading}
+          fullWidth
+          showLegend={false}
+          emptyMessage="No approved bookings found for the selected period."
         />
       </div>
     </div>

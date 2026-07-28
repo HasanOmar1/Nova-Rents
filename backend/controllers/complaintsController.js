@@ -8,12 +8,19 @@ const {
 const {
   createComplaint,
   getComplaintsByUserId,
+  countComplaintsByUserId,
   getAllComplaints,
   countAllComplaints,
   getComplaintStats,
   updateComplaintStatus,
   getComplaintReporterById,
+  getComplaintTrendsByRange,
 } = require("../database/queries/complaintQueries");
+const {
+  parseLocalDate,
+  resolveGranularity,
+  buildPeriodKeys,
+} = require("../utils/periodBuckets");
 
 const { createActivity } = require("../database/queries/activityQueries");
 const {
@@ -25,7 +32,7 @@ const {
   validateComplaintFields,
 } = require("../utils/validsController");
 
-const { getUserByEmail } = require("../database/queries/userQueries");
+const { getUserByEmail, getUserById } = require("../database/queries/userQueries");
 const { sendComplaintResponseEmail } = require("../services/emailService");
 async function createComplaint_controller(req, res, next) {
   try {
@@ -39,6 +46,7 @@ async function createComplaint_controller(req, res, next) {
       complaintType,
       vehicleLicensePlate,
       ownerEmail,
+      ownerId,
       title,
       description,
     } = req.body;
@@ -69,11 +77,24 @@ async function createComplaint_controller(req, res, next) {
       }
     }
 
-    // Validate owner complaint
+    // Validate owner complaint — prefer ownerId (stable, no email in URL);
+    // ownerEmail remains supported for the manual complaint form.
     let resolvedOwnerId = null;
 
     if (complaintType === "owner") {
-      const owner = await getUserByEmail(ownerEmail);
+      let owner = null;
+
+      if (ownerId) {
+        const parsedOwnerId = Number(ownerId);
+        if (!Number.isInteger(parsedOwnerId) || parsedOwnerId <= 0) {
+          return res.status(STATUS_CODE.BAD_REQUEST).json({
+            message: "Invalid owner ID",
+          });
+        }
+        owner = await getUserById(parsedOwnerId);
+      } else if (ownerEmail) {
+        owner = await getUserByEmail(ownerEmail);
+      }
 
       if (!owner) {
         return res.status(STATUS_CODE.NOT_FOUND).json({
@@ -286,13 +307,59 @@ async function getMyComplaints_controller(req, res, next) {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
       return;
 
+    // Identity always from the session — never from client params.
     const userId = req.session.user.userId;
-    const complaints = await getComplaintsByUserId(userId);
+    const { startDate, endDate } = req.query;
+    const status = req.query.status || "all";
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 5;
+    const offset = (page - 1) * limit;
+
+    const allowedStatuses = ["all", "open", "in_review", "resolved", "closed"];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid complaint status",
+      });
+    }
+
+    if (!startDate || !endDate) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "startDate and endDate are required",
+      });
+    }
+
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
+
+    if (!start || !end) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid date format, use YYYY-MM-DD",
+      });
+    }
+
+    if (start > end) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "startDate must be before endDate",
+      });
+    }
+
+    const filters = { status, startDate, endDate, limit, offset };
+    const complaints = await getComplaintsByUserId(userId, filters);
+    const totalComplaints = await countComplaintsByUserId(userId, {
+      status,
+      startDate,
+      endDate,
+    });
 
     return res.status(STATUS_CODE.OK).json({
       message: "Complaints fetched successfully",
-      count: complaints.length,
       complaints,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalComplaints / limit) || 1,
+        totalComplaints,
+        limit,
+      },
     });
   } catch (error) {
     next(error);
@@ -335,9 +402,77 @@ async function getAllComplaints_controller(req, res, next) {
   }
 }
 
+// Complaints submitted over time (by createdAt), zero-filled per period,
+// for the admin Complaint Trends chart. Uses the same bucketing policy as
+// the other report charts. Not affected by pagination.
+async function getComplaintTrends_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+      return;
+
+    if (req.session.user.role !== "admin") {
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "Admin access only",
+      });
+    }
+
+    const { startDate, endDate } = req.query;
+    const status = req.query.status || "all";
+
+    if (!startDate || !endDate) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "startDate and endDate are required",
+      });
+    }
+
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
+
+    if (!start || !end) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid date format, use YYYY-MM-DD",
+      });
+    }
+
+    if (start > end) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "startDate must be before endDate",
+      });
+    }
+
+    const { granularity, dateFormat } = resolveGranularity(start, end);
+
+    const rows = await getComplaintTrendsByRange(
+      startDate,
+      endDate,
+      status,
+      dateFormat,
+    );
+
+    const countsByPeriod = new Map(
+      rows.map((row) => [row.periodKey, Number(row.complaints)]),
+    );
+    const chartData = buildPeriodKeys(start, end, granularity).map(
+      (period) => ({
+        period,
+        complaints: countsByPeriod.get(period) || 0,
+      }),
+    );
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Complaint trends fetched successfully",
+      granularity,
+      chartData,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createComplaint_controller,
   updateComplaintStatus_controller,
   getMyComplaints_controller,
   getAllComplaints_controller,
+  getComplaintTrends_controller,
 };

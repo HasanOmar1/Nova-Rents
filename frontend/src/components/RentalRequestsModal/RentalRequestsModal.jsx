@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom"; // <-- Imported useNavigate
 import styles from "./RentalRequestsModal.module.css";
-import { X, Calendar, CheckCircle, XCircle, ExternalLink } from "lucide-react"; // <-- Added ExternalLink
+import {
+  X,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  ExternalLink,
+  CreditCard,
+} from "lucide-react";
 
 const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString("en-GB", {
@@ -157,6 +164,25 @@ const RentalRequestsModal = ({
                 </p>
                 <p className={styles.price}>Total: ${rental.totalPrice}</p>
               </div>
+
+              {/* Test payment entry for the renter's own approved trips */}
+              {!isPendingMode &&
+                rental.rentalStatus === "approved" &&
+                rental.paymentStatus === "pending" &&
+                rental.paymentToken && (
+                  <button
+                    className={styles.payNowBtn}
+                    onClick={() => navigate(`/payments/${rental.paymentToken}`)}
+                  >
+                    <CreditCard size={16} /> Pay Now (Test payment)
+                  </button>
+                )}
+
+              {!isPendingMode && rental.paymentStatus === "paid" && (
+                <p className={styles.paidLabel}>
+                  <CheckCircle size={14} /> Test payment completed
+                </p>
+              )}
 
               {isPendingMode && (
                 <div className={styles.actionBtns}>
