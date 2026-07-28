@@ -7,8 +7,6 @@ import Pagination from "../Pagination/Pagination";
 const AdminUsersTable = ({ handleNextPage, handlePrevPage }) => {
   const { allUsers, pagination, blockUser, unBlockUser } = useUserContext();
 
-  console.log(pagination);
-
   return (
     <div className={styles.AdminUsersTable}>
       <div className={styles.titles}>
