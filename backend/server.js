@@ -55,8 +55,11 @@ app.use(errorHandler);
 
 startRentalReminderJob();
 
+const isProduction = process.env.NODE_ENV === "production";
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(
+    `Server is running on ${isProduction ? "https://nova-rents.onrender.com/" : "http://localhost:${port}"} `,
+  );
 });
 
 module.exports = app;
