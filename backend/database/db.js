@@ -12,7 +12,7 @@ const dbConfig = {
 
 if (isProduction) {
   dbConfig.ssl = {
-    rejectUnauthorized: true,
+    rejectUnauthorized: false,
   };
 }
 
