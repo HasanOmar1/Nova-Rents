@@ -9,6 +9,11 @@
   flex: 1;
 }
 
+.HomeTopCards.isLink:hover {
+  cursor: pointer;
+  opacity: 0.9;
+}
+
 .HomeTopCards .top {
   display: flex;
   gap: 10px;

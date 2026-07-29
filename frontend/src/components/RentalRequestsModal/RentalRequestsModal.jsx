@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom"; // <-- Imported useNavigate
+import { useNavigate } from "react-router-dom";
 import styles from "./RentalRequestsModal.module.css";
 import {
   X,
@@ -27,7 +27,7 @@ const RentalRequestsModal = ({
 }) => {
   const dialogRef = useRef(null);
   const [tripFilter, setTripFilter] = useState("all");
-  const navigate = useNavigate(); // <-- Initialized useNavigate
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
