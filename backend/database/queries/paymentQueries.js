@@ -34,8 +34,8 @@ const PAYMENT_SELECT = `
   FROM rental_payments p
   JOIN rentals r ON p.rentalId = r.rentalId
   JOIN vehicles v ON r.licensePlate = v.licensePlate
-  JOIN carModels cm ON v.modelId = cm.modelId
-  JOIN carBrands cb ON cm.brandId = cb.brandId
+  JOIN carmodels cm ON v.modelId = cm.modelId
+  JOIN carbrands cb ON cm.brandId = cb.brandId
   JOIN users renter ON r.renterId = renter.userId
   JOIN users owner ON v.ownerId = owner.userId
 `;

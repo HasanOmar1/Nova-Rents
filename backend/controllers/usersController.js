@@ -830,9 +830,9 @@ const getUserStatsByEmail = async (req, res, next) => {
         v.licensePlate, v.image, v.price, v.year, v.status, v.address, v.details, v.seats, 
         cb.brandName, cm.modelName, ct.carTypeName 
       FROM vehicles v
-      JOIN carModels cm ON v.modelId = cm.modelId
-      JOIN carBrands cb ON cm.brandId = cb.brandId
-      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN carmodels cm ON v.modelId = cm.modelId
+      JOIN carbrands cb ON cm.brandId = cb.brandId
+      JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       WHERE v.ownerId = ?
       ORDER BY v.createdAt DESC
       LIMIT ? OFFSET ?

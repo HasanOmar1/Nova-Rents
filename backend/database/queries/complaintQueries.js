@@ -33,7 +33,13 @@ async function createComplaint(
 // targeted owner (c.ownerId) so listed-owner text works for vehicle rows.
 async function getComplaintsByUserId(
   userId,
-  { status = "all", startDate = null, endDate = null, limit = 5, offset = 0 } = {},
+  {
+    status = "all",
+    startDate = null,
+    endDate = null,
+    limit = 5,
+    offset = 0,
+  } = {},
 ) {
   let whereClause = "WHERE c.userId = ?";
   const values = [userId];
@@ -73,8 +79,8 @@ async function getComplaintsByUserId(
       vehicleOwner.email AS vehicleOwnerEmail
     FROM complaints c
     LEFT JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
-    LEFT JOIN carModels cm ON v.modelId = cm.modelId
-    LEFT JOIN carBrands cb ON cm.brandId = cb.brandId
+    LEFT JOIN carmodels cm ON v.modelId = cm.modelId
+    LEFT JOIN carbrands cb ON cm.brandId = cb.brandId
     LEFT JOIN users u ON c.ownerId = u.userId
     LEFT JOIN users vehicleOwner ON v.ownerId = vehicleOwner.userId
     ${whereClause}
@@ -148,8 +154,8 @@ async function getAllComplaints(status, limit, offset) {
       vehicleOwner.phone AS vehicleOwnerPhone
     FROM complaints c
     LEFT JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
-    LEFT JOIN carModels cm ON v.modelId = cm.modelId
-    LEFT JOIN carBrands cb ON cm.brandId = cb.brandId
+    LEFT JOIN carmodels cm ON v.modelId = cm.modelId
+    LEFT JOIN carbrands cb ON cm.brandId = cb.brandId
     LEFT JOIN users u ON c.ownerId = u.userId
     LEFT JOIN users complainer ON c.userId = complainer.userId
     LEFT JOIN users vehicleOwner ON v.ownerId = vehicleOwner.userId
@@ -225,7 +231,12 @@ async function getComplaintReporterById(complaintId) {
 // caller's DATE_FORMAT pattern. createdAt is a DATETIME, so the end bound
 // uses < DATE_ADD(end, 1 DAY) to include the whole final day.
 // An optional status narrows the count to one complaint status.
-async function getComplaintTrendsByRange(startDate, endDate, status, dateFormat) {
+async function getComplaintTrendsByRange(
+  startDate,
+  endDate,
+  status,
+  dateFormat,
+) {
   let whereClause = `
     WHERE createdAt >= ?
     AND createdAt < DATE_ADD(?, INTERVAL 1 DAY)

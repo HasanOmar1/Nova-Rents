@@ -311,9 +311,9 @@ async function getPendingRentalRequestsForOwner(ownerId) {
       owner.status AS ownerStatus
     FROM rentals r
     JOIN vehicles v ON r.licensePlate = v.licensePlate
-    JOIN carModels cm ON v.modelId = cm.modelId
-    JOIN carBrands cb ON cm.brandId = cb.brandId
-    JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+    JOIN carmodels cm ON v.modelId = cm.modelId
+    JOIN carbrands cb ON cm.brandId = cb.brandId
+    JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
     JOIN users renter ON r.renterId = renter.userId
     JOIN users owner ON v.ownerId = owner.userId
     WHERE v.ownerId = ?
@@ -346,9 +346,9 @@ async function getMyTripsHistoryByRenterId(renterId) {
 
     FROM rentals r
     JOIN vehicles v ON r.licensePlate = v.licensePlate
-    JOIN carModels cm ON v.modelId = cm.modelId
-    JOIN carBrands cb ON cm.brandId = cb.brandId
-    JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+    JOIN carmodels cm ON v.modelId = cm.modelId
+    JOIN carbrands cb ON cm.brandId = cb.brandId
+    JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
     JOIN users owner ON v.ownerId = owner.userId
     JOIN users renter ON r.renterId = renter.userId
     LEFT JOIN rental_payments p ON r.rentalId = p.rentalId
@@ -385,8 +385,8 @@ async function getRentalEmailDataByRentalId(rentalId) {
       renter.phone AS renterPhone
     FROM rentals r
     JOIN vehicles v ON r.licensePlate = v.licensePlate
-    JOIN carModels cm ON v.modelId = cm.modelId
-    JOIN carBrands cb ON cm.brandId = cb.brandId
+    JOIN carmodels cm ON v.modelId = cm.modelId
+    JOIN carbrands cb ON cm.brandId = cb.brandId
     JOIN users owner ON v.ownerId = owner.userId
     JOIN users renter ON r.renterId = renter.userId
     WHERE r.rentalId = ?
