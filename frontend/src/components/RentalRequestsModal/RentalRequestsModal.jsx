@@ -105,6 +105,7 @@ const RentalRequestsModal = ({
               <option value="completed">Completed</option>
               <option value="rejected">Rejected</option>
               <option value="cancelled">Cancelled</option>
+              <option value="approved">Approved</option>
             </select>
           )}
           <button
@@ -174,7 +175,7 @@ const RentalRequestsModal = ({
                     className={styles.payNowBtn}
                     onClick={() => navigate(`/payments/${rental.paymentToken}`)}
                   >
-                    <CreditCard size={16} /> Pay Now (Test payment)
+                    <CreditCard size={16} /> Pay Now 
                   </button>
                 )}
 

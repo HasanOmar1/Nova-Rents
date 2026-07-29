@@ -353,7 +353,7 @@ async function getMyTripsHistoryByRenterId(renterId) {
     JOIN users renter ON r.renterId = renter.userId
     LEFT JOIN rental_payments p ON r.rentalId = p.rentalId
     WHERE r.renterId = ?
-    ORDER BY r.startDate DESC
+    ORDER BY (r.status = 'approved') DESC, r.startDate DESC 
   `;
   return doQuery(query, [renterId]);
 }
