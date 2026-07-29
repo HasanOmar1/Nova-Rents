@@ -1,21 +1,26 @@
-// Simple MySQL connection helper: creates and reuses a single connection
 const mysql = require("mysql2/promise");
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const dbConfig = {
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "Nova_rents",
+  host: isProduction ? process.env.DB_HOST : "localhost",
+  user: isProduction ? process.env.DB_USER : "root",
+  password: isProduction ? process.env.DB_PASSWORD : "",
+  database: isProduction ? process.env.DB_NAME : "Nova_rents",
+  port: isProduction ? Number(process.env.DB_PORT) : 3306,
+  ssl: {
+    rejectUnauthorized: isProduction ? true : false,
+  },
 };
 
-let connection;
+let pool;
 
-async function getDbConnection() {
-  if (!connection) {
-    connection = await mysql.createConnection(dbConfig);
+function getDbConnection() {
+  if (!pool) {
+    pool = mysql.createPool(dbConfig);
   }
 
-  return connection;
+  return pool;
 }
 
 module.exports = getDbConnection;
