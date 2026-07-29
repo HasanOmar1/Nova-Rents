@@ -700,7 +700,7 @@ const getAllCarTypes = async (req, res, next) => {
   try {
     const query = `
       SELECT carTypeId, carTypeName
-      FROM carTypes
+      FROM cartypes
       ORDER BY carTypeName ASC
     `;
 

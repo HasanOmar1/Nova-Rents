@@ -67,7 +67,7 @@ startRentalReminderJob();
 
 app.listen(port, () => {
   console.log(
-    `Server is running on ${isProduction ? "https://nova-rents.onrender.com/" : "http://localhost:${port}"} `,
+    `Server is running on ${isProduction ? "https://nova-rents.onrender.com/" : `http://localhost:${port}`} `,
   );
 });
 
