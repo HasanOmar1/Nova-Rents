@@ -168,6 +168,19 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  // Resolve a public user profile by id (complaint prefill). Returns the user
+  // or null when not found / unauthorized.
+  const getUserById = async (userId) => {
+    try {
+      const response = await axios.get(`/users/id/${userId}`);
+      setErrorMsg("");
+      return response.data.user || null;
+    } catch (error) {
+      setErrorMsg(error?.response?.data?.message);
+      return null;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -189,6 +202,7 @@ const UserContextProvider = ({ children }) => {
         fetchUserStats,
         userStatsPerEmail,
         isStatsLoading,
+        getUserById,
       }}
     >
       {children}

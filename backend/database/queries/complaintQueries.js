@@ -26,9 +26,31 @@ async function createComplaint(
   ]);
 }
 
-async function getComplaintsByUserId(userId) {
+// Personal complaint history for one reporter. Always scoped by userId.
+// Optional date/status filters use the same half-open createdAt pattern as
+// other reports. LEFT JOINs keep both vehicle and owner complaints visible
+// even when a related record is missing. vehicleOwner is separate from the
+// targeted owner (c.ownerId) so listed-owner text works for vehicle rows.
+async function getComplaintsByUserId(
+  userId,
+  { status = "all", startDate = null, endDate = null, limit = 5, offset = 0 } = {},
+) {
+  let whereClause = "WHERE c.userId = ?";
+  const values = [userId];
+
+  if (status && status !== "all") {
+    whereClause += " AND c.status = ?";
+    values.push(status);
+  }
+
+  if (startDate && endDate) {
+    whereClause +=
+      " AND c.createdAt >= ? AND c.createdAt < DATE_ADD(?, INTERVAL 1 DAY)";
+    values.push(startDate, endDate);
+  }
+
   const query = `
-    SELECT 
+    SELECT
       c.complaintId,
       c.complaintType,
       c.vehicleLicensePlate,
@@ -38,22 +60,55 @@ async function getComplaintsByUserId(userId) {
       c.images,
       c.status,
       c.adminNotes,
+      c.respondedAt,
       c.createdAt,
       v.modelId,
       cm.modelName,
       cb.brandName,
       u.firstName AS ownerFirstName,
-      u.lastName AS ownerLastName
+      u.lastName AS ownerLastName,
+      u.email AS ownerEmail,
+      vehicleOwner.firstName AS vehicleOwnerFirstName,
+      vehicleOwner.lastName AS vehicleOwnerLastName,
+      vehicleOwner.email AS vehicleOwnerEmail
     FROM complaints c
     LEFT JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
     LEFT JOIN carModels cm ON v.modelId = cm.modelId
     LEFT JOIN carBrands cb ON cm.brandId = cb.brandId
     LEFT JOIN users u ON c.ownerId = u.userId
-    WHERE c.userId = ?
+    LEFT JOIN users vehicleOwner ON v.ownerId = vehicleOwner.userId
+    ${whereClause}
     ORDER BY c.createdAt DESC
+    LIMIT ? OFFSET ?
   `;
 
-  return doQuery(query, [userId]);
+  values.push(limit, offset);
+  return doQuery(query, values);
+}
+
+async function countComplaintsByUserId(
+  userId,
+  { status = "all", startDate = null, endDate = null } = {},
+) {
+  let whereClause = "WHERE userId = ?";
+  const values = [userId];
+
+  if (status && status !== "all") {
+    whereClause += " AND status = ?";
+    values.push(status);
+  }
+
+  if (startDate && endDate) {
+    whereClause +=
+      " AND createdAt >= ? AND createdAt < DATE_ADD(?, INTERVAL 1 DAY)";
+    values.push(startDate, endDate);
+  }
+
+  const result = await doQuery(
+    `SELECT COUNT(*) AS total FROM complaints ${whereClause}`,
+    values,
+  );
+  return result[0].total;
 }
 
 // --- UPDATED: Added status filtering, limit, and offset ---
@@ -166,26 +221,42 @@ async function getComplaintReporterById(complaintId) {
   return result[0];
 }
 
-async function getComplaintChartData(startDate, endDate) {
-  const query = `
-    SELECT 
-      DATE_FORMAT(createdAt, '%Y-%m') as monthKey,
-      COUNT(*) as cases
-    FROM complaints
-    WHERE createdAt >= ? AND createdAt <= ?
-    GROUP BY YEAR(createdAt), MONTH(createdAt), monthKey
-    ORDER BY monthKey ASC
+// Complaints counted by submission time (createdAt), bucketed with the
+// caller's DATE_FORMAT pattern. createdAt is a DATETIME, so the end bound
+// uses < DATE_ADD(end, 1 DAY) to include the whole final day.
+// An optional status narrows the count to one complaint status.
+async function getComplaintTrendsByRange(startDate, endDate, status, dateFormat) {
+  let whereClause = `
+    WHERE createdAt >= ?
+    AND createdAt < DATE_ADD(?, INTERVAL 1 DAY)
   `;
-  return doQuery(query, [startDate, endDate]);
+  const values = [dateFormat, startDate, endDate];
+
+  if (status && status !== "all") {
+    whereClause += " AND status = ?";
+    values.push(status);
+  }
+
+  const query = `
+    SELECT
+      DATE_FORMAT(createdAt, ?) AS periodKey,
+      COUNT(*) AS complaints
+    FROM complaints
+    ${whereClause}
+    GROUP BY periodKey
+    ORDER BY periodKey ASC
+  `;
+  return doQuery(query, values);
 }
 
 module.exports = {
   createComplaint,
   getComplaintsByUserId,
+  countComplaintsByUserId,
   getAllComplaints,
   countAllComplaints,
   getComplaintStats,
   updateComplaintStatus,
   getComplaintReporterById,
-  getComplaintChartData,
+  getComplaintTrendsByRange,
 };

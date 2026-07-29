@@ -7,6 +7,7 @@ const userQueries = require("../controllers/usersController");
 router.get("/", userQueries.getAllUsers);
 router.get("/status/:status", isAdmin, userQueries.getUsersByStatus);
 router.get("/stats/:email", isAuthenticated, userQueries.getUserStatsByEmail);
+router.get("/id/:userId", isAuthenticated, userQueries.getUserPublicById);
 router.get("/details", isAuthenticated, userQueries.getUserDetailsByEmail);
 router.post("/register", userQueries.register);
 router.post("/login", userQueries.login);

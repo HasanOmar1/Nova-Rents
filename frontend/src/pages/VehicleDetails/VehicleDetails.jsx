@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import styles from "./VehicleDetails.module.css";
 import {
   AlertTriangle,
@@ -20,17 +20,19 @@ const VehicleDetails = () => {
   const { currentUser } = useUserContext();
   const { id } = useParams();
   const { state } = useLocation();
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const { fetchBookedDates, setRentVehResponse } = useRentContext();
   const intervalRef = useRef(null);
   const imageUrls = state.image ? parseImgs(state.image, true) : [];
+  const isOwnVehicle = currentUser?.email === state?.ownerEmail;
 
   useEffect(() => {
-    if (currentUser?.email === state?.ownerEmail) {
+    if (isOwnVehicle) {
       setHideBooking(true);
     } else setHideBooking(false);
-  }, [currentUser, state?.ownerEmail]);
+  }, [isOwnVehicle]);
 
   useEffect(() => {
     if (imageUrls.length > 1) {
@@ -64,6 +66,16 @@ const VehicleDetails = () => {
   const handleCloseModal = () => {
     setIsBookingModalOpen(false);
     setRentVehResponse("");
+  };
+
+  // Navigate to the existing complaint form with type + plate only.
+  // The complaint page re-resolves the vehicle from the backend.
+  const handleReportVehicle = () => {
+    const plate = state?.licensePlate || id;
+    if (!plate) return;
+    navigate(
+      `/complaints?complaintType=vehicle&vehicleLicensePlate=${encodeURIComponent(plate)}`,
+    );
   };
 
   const ownerFullName = state.ownerFirstName + " " + state.ownerLastName;
@@ -124,10 +136,16 @@ const VehicleDetails = () => {
           <Link to={"/vehicles"} className={styles.backBtn}>
             Back to vehicles
           </Link>
-          <button className={styles.reportBtn}>
-            <AlertTriangle size={20} className="icon" color="#f9e081" />
-            Report Vehicle
-          </button>
+          {!isOwnVehicle && (
+            <button
+              type="button"
+              className={styles.reportBtn}
+              onClick={handleReportVehicle}
+            >
+              <AlertTriangle size={20} className="icon" color="#f9e081" />
+              Report Vehicle
+            </button>
+          )}
         </div>
       </div>
 

@@ -156,6 +156,19 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  // Fetch a single vehicle by plate via the existing GET /vehicles/:licensePlate.
+  // Returns the vehicle object, or null when not found / request failed.
+  const getVehicleByLicensePlate = async (licensePlate) => {
+    try {
+      const response = await axios.get(`/vehicles/${licensePlate}`);
+      setErrorMsg("");
+      return response.data.vehicle || null;
+    } catch (error) {
+      setErrorMsg(error?.response?.data?.message);
+      return null;
+    }
+  };
+
   return (
     <VehicleContext.Provider
       value={{
@@ -180,6 +193,7 @@ const VehicleContextProvider = ({ children }) => {
         availableFilters,
         allVehStats,
         updateVehicleStatus,
+        getVehicleByLicensePlate,
       }}
     >
       {children}

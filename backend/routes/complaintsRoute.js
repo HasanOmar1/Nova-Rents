@@ -18,6 +18,12 @@ router.get(
 );
 
 router.get(
+  "/trends",
+  isAuthenticated,
+  complaintsController.getComplaintTrends_controller,
+);
+
+router.get(
   "/",
   isAuthenticated,
   complaintsController.getAllComplaints_controller,

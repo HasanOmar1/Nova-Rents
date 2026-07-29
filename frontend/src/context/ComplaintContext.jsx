@@ -8,6 +8,19 @@ const ComplaintContextProvider = ({ children }) => {
   const [errorMsg, setErrorMsg] = useState("");
   const [pagination, setPagination] = useState({});
   const [complaintStats, setComplaintStats] = useState({});
+  const [complaintTrendsData, setComplaintTrendsData] = useState([]);
+  const [complaintTrendsGranularity, setComplaintTrendsGranularity] =
+    useState("month");
+  const [isComplaintTrendsLoading, setIsComplaintTrendsLoading] =
+    useState(false);
+  const [complaintTrendsErrorMsg, setComplaintTrendsErrorMsg] = useState("");
+
+  // Personal "Previous complaints" list — separate from the admin table
+  // so getAllComplaints and getMyComplaints never overwrite each other.
+  const [myComplaints, setMyComplaints] = useState([]);
+  const [myComplaintsPagination, setMyComplaintsPagination] = useState({});
+  const [isMyComplaintsLoading, setIsMyComplaintsLoading] = useState(false);
+  const [myComplaintsError, setMyComplaintsError] = useState("");
 
   const createComplaint = async (complaintData) => {
     try {
@@ -20,13 +33,28 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
-  const getMyComplaints = async () => {
+  const getMyComplaints = async ({
+    startDate,
+    endDate,
+    status = "all",
+    page = 1,
+    limit = 5,
+  } = {}) => {
     try {
-      const response = await axios.get("/complaints/my");
-      setComplaints(response.data.complaints);
-      setErrorMsg("");
+      setIsMyComplaintsLoading(true);
+      const response = await axios.get("/complaints/my", {
+        params: { startDate, endDate, status, page, limit },
+      });
+      setMyComplaints(response.data.complaints || []);
+      setMyComplaintsPagination(response.data.pagination || {});
+      setMyComplaintsError("");
     } catch (error) {
-      setErrorMsg(error?.response?.data?.message);
+      setMyComplaintsError(
+        error?.response?.data?.message || "Failed to load your complaints",
+      );
+      setMyComplaints([]);
+    } finally {
+      setIsMyComplaintsLoading(false);
     }
   };
 
@@ -62,6 +90,26 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  // Chart data for the admin Complaint Trends chart. Independent from the
+  // paginated complaints table so page changes never refetch or skew it.
+  const getComplaintTrends = async (startDate, endDate, status = "all") => {
+    try {
+      setIsComplaintTrendsLoading(true);
+      const response = await axios.get(
+        `/complaints/trends?startDate=${startDate}&endDate=${endDate}&status=${status}`,
+      );
+      setComplaintTrendsData(response.data.chartData);
+      setComplaintTrendsGranularity(response.data.granularity);
+      setComplaintTrendsErrorMsg("");
+    } catch (error) {
+      setComplaintTrendsErrorMsg(
+        error?.response?.data?.message || "Failed to load complaint trends",
+      );
+    } finally {
+      setIsComplaintTrendsLoading(false);
+    }
+  };
+
   return (
     <ComplaintContext.Provider
       value={{
@@ -70,10 +118,19 @@ const ComplaintContextProvider = ({ children }) => {
         setErrorMsg,
         createComplaint,
         getMyComplaints,
+        myComplaints,
+        myComplaintsPagination,
+        isMyComplaintsLoading,
+        myComplaintsError,
         putUpdateComplaintStatus,
         getAllComplaints,
         pagination,
         complaintStats,
+        complaintTrendsData,
+        complaintTrendsGranularity,
+        isComplaintTrendsLoading,
+        complaintTrendsErrorMsg,
+        getComplaintTrends,
       }}
     >
       {children}

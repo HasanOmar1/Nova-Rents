@@ -11,6 +11,7 @@ import {
   XCircle,
   Ban,
   ArrowLeft,
+  AlertTriangle,
 } from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
 import Pagination from "../../components/Pagination/Pagination";
@@ -19,8 +20,13 @@ import { useUserContext } from "../../context/UserContext";
 const UserStats = () => {
   const { email } = useParams();
   const navigate = useNavigate();
-  const { fetchUserStats, userStatsPerEmail, isStatsLoading, errorMsg } =
-    useUserContext();
+  const {
+    fetchUserStats,
+    userStatsPerEmail,
+    isStatsLoading,
+    errorMsg,
+    currentUser,
+  } = useUserContext();
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -56,6 +62,13 @@ const UserStats = () => {
     navigate(`/vehicles/${veh.licensePlate}`, { state: formattedVehicle });
   };
 
+  const handleReportOwner = () => {
+    if (!user?.userId) return;
+    navigate(
+      `/complaints?complaintType=owner&ownerId=${encodeURIComponent(user.userId)}`,
+    );
+  };
+
   if (isStatsLoading) {
     return (
       <div className={`${styles.UserStats} page`}>
@@ -71,6 +84,8 @@ const UserStats = () => {
   if (!userStatsPerEmail?.user) return null;
 
   const { user, stats, vehicles, pagination } = userStatsPerEmail;
+  const isOwnProfile =
+    Number(user.userId) === Number(currentUser?.userId);
 
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -80,9 +95,21 @@ const UserStats = () => {
 
   return (
     <div className={`${styles.UserStats} page`}>
-      <button className={styles.backBtn} onClick={() => navigate(-1)}>
-        <ArrowLeft size={18} /> Back
-      </button>
+      <div className={styles.topActions}>
+        <button className={styles.backBtn} onClick={() => navigate(-1)}>
+          <ArrowLeft size={18} /> Back
+        </button>
+        {!isOwnProfile && (
+          <button
+            type="button"
+            className={styles.reportBtn}
+            onClick={handleReportOwner}
+          >
+            <AlertTriangle size={18} color="#f9e081" />
+            Report Owner
+          </button>
+        )}
+      </div>
 
       <div className={styles.header}>
         <div className={styles.avatar}>

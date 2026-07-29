@@ -79,6 +79,34 @@ const RentContextProvider = ({ children }) => {
     }
   };
 
+  // Test payment (no real money). Returns the payment or null.
+  const getPaymentByToken = async (paymentToken) => {
+    try {
+      const res = await axios.get(`/payments/${paymentToken}`);
+      return res.data.payment || null;
+    } catch (error) {
+      console.log(
+        "Failed to fetch payment",
+        error?.response?.data?.message,
+      );
+      return null;
+    }
+  };
+
+  const payByToken = async (paymentToken) => {
+    try {
+      const res = await axios.post(`/payments/${paymentToken}/pay`);
+      loadActivities();
+      return { success: true, payment: res.data.payment };
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error?.response?.data?.message || "Test payment failed. Try again.",
+      };
+    }
+  };
+
   return (
     <RentContext.Provider
       value={{
@@ -95,6 +123,8 @@ const RentContextProvider = ({ children }) => {
         rentalHistory,
         historyLoading,
         respondToRequest,
+        getPaymentByToken,
+        payByToken,
       }}
     >
       {children}
