@@ -53,9 +53,9 @@ const getUserVehicles = async (req, res, next) => {
         cb.brandId, cb.brandName, 
         ct.carTypeId, ct.carTypeName
       FROM vehicles v
-      JOIN carModels cm ON v.modelId = cm.modelId
-      JOIN carBrands cb ON cm.brandId = cb.brandId
-      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN carmodels cm ON v.modelId = cm.modelId
+      JOIN carbrands cb ON cm.brandId = cb.brandId
+      JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       WHERE v.ownerId = ?
     `;
 
@@ -231,9 +231,9 @@ const getVehicleById = async (req, res, next) => {
         u.phone AS ownerPhone
 
       FROM vehicles v
-      JOIN carModels cm ON v.modelId = cm.modelId
-      JOIN carBrands cb ON cm.brandId = cb.brandId
-      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN carmodels cm ON v.modelId = cm.modelId
+      JOIN carbrands cb ON cm.brandId = cb.brandId
+      JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       JOIN users u ON v.ownerId = u.userId
       WHERE v.licensePlate = ?
     `;
@@ -274,8 +274,8 @@ const deleteVehicle = async (req, res, next) => {
     const checkQuery = `
       SELECT v.ownerId, v.status, cb.brandName, cm.modelName
       FROM vehicles v
-      LEFT JOIN carModels cm ON v.modelId = cm.modelId
-      LEFT JOIN carBrands cb ON cm.brandId = cb.brandId
+      LEFT JOIN carmodels cm ON v.modelId = cm.modelId
+      LEFT JOIN carbrands cb ON cm.brandId = cb.brandId
       WHERE v.licensePlate = ?
     `;
     const checkResult = await doQuery(checkQuery, [licensePlate]);
@@ -558,9 +558,9 @@ const getAllVehicles = async (req, res, next) => {
         u.email AS ownerEmail, u.phone AS ownerPhone, u.status AS ownerStatus,
         1 AS canRent
       FROM vehicles v
-      JOIN carModels cm ON v.modelId = cm.modelId
-      JOIN carBrands cb ON cm.brandId = cb.brandId
-      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN carmodels cm ON v.modelId = cm.modelId
+      JOIN carbrands cb ON cm.brandId = cb.brandId
+      JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       JOIN users u ON v.ownerId = u.userId
       ${whereClause}
       ${orderByClause}
@@ -574,9 +574,9 @@ const getAllVehicles = async (req, res, next) => {
     const countQuery = `
       SELECT COUNT(*) as total
       FROM vehicles v
-      JOIN carModels cm ON v.modelId = cm.modelId
-      JOIN carBrands cb ON cm.brandId = cb.brandId
-      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN carmodels cm ON v.modelId = cm.modelId
+      JOIN carbrands cb ON cm.brandId = cb.brandId
+      JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       JOIN users u ON v.ownerId = u.userId
       ${whereClause}
     `;
@@ -603,9 +603,9 @@ const getAllVehicles = async (req, res, next) => {
     const optionsQuery = `
       SELECT DISTINCT v.address, v.seats, cb.brandName, cm.modelName, ct.carTypeName
       FROM vehicles v
-      JOIN carModels cm ON v.modelId = cm.modelId
-      JOIN carBrands cb ON cm.brandId = cb.brandId
-      JOIN carTypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN carmodels cm ON v.modelId = cm.modelId
+      JOIN carbrands cb ON cm.brandId = cb.brandId
+      JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       JOIN users u ON v.ownerId = u.userId
       ${status === "all" ? "WHERE u.status != 'blocked'" : whereClause}
     `;
@@ -700,7 +700,7 @@ const getAllCarTypes = async (req, res, next) => {
   try {
     const query = `
       SELECT carTypeId, carTypeName
-      FROM carTypes
+      FROM cartypes
       ORDER BY carTypeName ASC
     `;
 

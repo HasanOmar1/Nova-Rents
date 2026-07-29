@@ -28,6 +28,11 @@ const TOKEN_REGEX = /^[a-f0-9]{64}$/;
 
 const generatePaymentToken = () => crypto.randomBytes(32).toString("hex");
 
+const FRONTEND_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL
+    : "http://localhost:5173";
+
 // Shape returned to the frontend — one contract for both endpoints.
 const toPaymentResponse = (payment) => ({
   paymentId: payment.paymentId,
@@ -189,7 +194,7 @@ async function completeTestPayment(req, res, next) {
         currency: payment.currency,
         rentalId: payment.rentalId,
         paidAt: updatedPayment.paidAt,
-        rentalUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/rentalDashboard`,
+        rentalUrl: `${FRONTEND_URL || "http://localhost:5173"}/rentalDashboard`,
       });
       await markRenterConfirmationEmailSent(payment.paymentId);
     } catch (emailError) {
@@ -211,7 +216,7 @@ async function completeTestPayment(req, res, next) {
         amount: payment.amount,
         currency: payment.currency,
         rentalId: payment.rentalId,
-        rentalUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/rentalDashboard`,
+        rentalUrl: `${FRONTEND_URL || "http://localhost:5173"}/rentalDashboard`,
       });
       await markOwnerConfirmationEmailSent(payment.paymentId);
     } catch (emailError) {

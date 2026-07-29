@@ -17,24 +17,38 @@ const complaintsRoute = require("./routes/complaintsRoute");
 const reportRoute = require("./routes/reportRoute");
 const paymentsRoute = require("./routes/paymentsRoute");
 
+const isProduction = process.env.NODE_ENV === "production";
 const app = express();
 const port = process.env.PORT || 3000;
+const FRONTEND_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL
+    : "http://localhost:5173";
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: FRONTEND_URL,
     credentials: true,
   }),
 );
 
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
+
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.use(
   session({
-    secret: "your-secret-key",
+    secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
+    saveUninitialized: false,
+    cookie: {
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
   }),
 );
 
@@ -52,7 +66,9 @@ app.use(errorHandler);
 startRentalReminderJob();
 
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(
+    `Server is running on ${isProduction ? "https://nova-rents.onrender.com/" : `http://localhost:${port}`} `,
+  );
 });
 
 module.exports = app;

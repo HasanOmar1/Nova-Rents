@@ -5,7 +5,7 @@
   border-radius: 16px;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
@@ -69,7 +69,7 @@
 
 .HomeMidCards .dataContainer .description {
   color: #9ca3af;
-  font-size: 0.825rem;
+  font-size: 0.65rem;
   line-height: 1.4;
 }
 

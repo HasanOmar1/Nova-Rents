@@ -3,7 +3,7 @@ import { Car, Bell, LogOut, TableOfContents, History } from "lucide-react";
 import { navByRole, labels, icons } from "./nav";
 import { useUserContext } from "../../context/UserContext";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useNotificationContext } from "../../context/NotificationContext";
 
 const Header = ({ page }) => {
@@ -13,8 +13,6 @@ const Header = ({ page }) => {
   const location = useLocation();
 
   const visible = navByRole[currentUser?.role] || [];
-
-  const navigate = useNavigate();
 
   const handleLogOut = () => {
     logout();
