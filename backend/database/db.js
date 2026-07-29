@@ -8,10 +8,13 @@ const dbConfig = {
   password: isProduction ? process.env.DB_PASSWORD : "",
   database: isProduction ? process.env.DB_NAME : "Nova_rents",
   port: isProduction ? Number(process.env.DB_PORT) : 3306,
-  ssl: {
-    rejectUnauthorized: isProduction ? true : false,
-  },
 };
+
+if (isProduction) {
+  dbConfig.ssl = {
+    rejectUnauthorized: true,
+  };
+}
 
 let pool;
 
