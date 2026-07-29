@@ -10,7 +10,7 @@ const formattedMaxDate = maxAgeDate.toISOString().split("T")[0];
 
 // 3. Calculate 100 years ago for the MIN date
 const minAgeDate = new Date(
-  today.getFullYear() - 100,
+  today.getFullYear() - 70,
   today.getMonth(),
   today.getDate(),
 );
