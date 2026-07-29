@@ -3,6 +3,7 @@ import styles from "./Profile.module.css";
 import DocumentsCards from "../../../components/DocumentsCards/DocumentsCards";
 import { useUserContext } from "../../../context/UserContext";
 import { useActivityContext } from "../../../context/ActivityContext";
+import { formattedMaxDate, formattedMinDate } from "../../../utils/minMaxDate";
 
 const Profile = () => {
   const [editProfileClicked, setEditProfileClicked] = useState(false);
@@ -15,7 +16,7 @@ const Profile = () => {
   const [inputsValues, setInputsValues] = useState({
     firstName: currentUser?.firstName || "",
     lastName: currentUser?.lastName || "",
-    email: currentUser?.email || "",
+    email: currentUser?.email.toLowerCase() || "",
     phone: currentUser?.phone || "",
     birthDate: currentUser?.birthDate,
     password: "",
@@ -32,7 +33,7 @@ const Profile = () => {
       setInputsValues({
         firstName: currentUser.firstName || "",
         lastName: currentUser.lastName || "",
-        email: currentUser.email || "",
+        email: currentUser.email.toLowerCase() || "",
         phone: currentUser.phone || "",
         birthDate: currentUser?.birthDate || "",
         password: "",
@@ -61,7 +62,7 @@ const Profile = () => {
     setInputsValues({
       firstName: currentUser?.firstName || "",
       lastName: currentUser?.lastName || "",
-      email: currentUser?.email || "",
+      email: currentUser?.email.toLowerCase() || "",
       phone: currentUser?.phone || "",
       birthDate: currentUser?.birthDate || "",
       password: "",
@@ -75,7 +76,7 @@ const Profile = () => {
     const newData = {
       firstName: inputsValues.firstName,
       lastName: inputsValues.lastName,
-      newEmail: inputsValues.email,
+      newEmail: inputsValues.email.toLowerCase(),
       phone: inputsValues.phone,
       birthDate: inputsValues.birthDate,
     };
@@ -181,6 +182,8 @@ const Profile = () => {
                 }
                 onChange={handleInputChange}
                 disabled={!editProfileClicked}
+                min={formattedMinDate}
+                max={formattedMaxDate}
               />
             </div>
 
