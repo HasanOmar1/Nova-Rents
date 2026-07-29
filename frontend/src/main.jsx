@@ -13,7 +13,10 @@ import GovApisContextProvider from "./context/GovApisContext.jsx";
 import ComplaintContextProvider from "./context/ComplaintContext.jsx";
 import ReportContextProvider from "./context/ReportContext.jsx";
 
-axios.defaults.baseURL = "http://localhost:3000";
+axios.defaults.baseURL = import.meta.env.PROD
+  ? import.meta.env.VITE_API_URL
+  : "http://localhost:3000";
+
 axios.defaults.withCredentials = true;
 
 createRoot(document.getElementById("root")).render(
