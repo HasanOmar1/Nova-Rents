@@ -19,10 +19,14 @@ const paymentsRoute = require("./routes/paymentsRoute");
 
 const app = express();
 const port = process.env.PORT || 3000;
+const FRONTEND_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL
+    : "http://localhost:5173";
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: FRONTEND_URL,
     credentials: true,
   }),
 );
