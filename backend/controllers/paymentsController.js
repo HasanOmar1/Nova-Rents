@@ -4,10 +4,19 @@ const { validateAuthenticatedUser } = require("../utils/validsController");
 
 const {
   getPaymentByToken,
-  markPaymentPaidByToken,
   markRenterConfirmationEmailSent,
   markOwnerConfirmationEmailSent,
 } = require("../database/queries/paymentQueries");
+
+const {
+  getVehicleExactPickupByLicensePlate,
+  isExactPickupComplete,
+  insertPickupSnapshotFromVehicle,
+  markPaymentPaidByTokenOnConnection,
+  getPickupSnapshotByRentalId,
+} = require("../database/queries/rentalPickupLocationQueries");
+
+const { withTransaction } = require("../database/withTransaction");
 
 const {
   createNotification,
@@ -21,6 +30,10 @@ const {
   sendTestPaymentReceiptEmail,
   sendOwnerPaymentReceivedEmail,
 } = require("../services/emailService");
+const {
+  omitPrivatePickupFields,
+} = require("../utils/omitPrivatePickupFields");
+const { buildMapsDirectionsUrl } = require("../utils/mapsDirections");
 
 // Tokens are generated with crypto.randomBytes(32).toString("hex") = 64 hex
 // chars (rental_payments.paymentToken is VARCHAR(128)).
@@ -34,26 +47,55 @@ const FRONTEND_URL =
     : "http://localhost:5173";
 
 // Shape returned to the frontend — one contract for both endpoints.
-const toPaymentResponse = (payment) => ({
-  paymentId: payment.paymentId,
-  rentalId: payment.rentalId,
-  paymentToken: payment.paymentToken,
-  amount: payment.amount,
-  currency: payment.currency,
-  paymentStatus: payment.paymentStatus,
-  paidAt: payment.paidAt,
-  paymentCreatedAt: payment.paymentCreatedAt,
-  rentalStatus: payment.rentalStatus,
-  licensePlate: payment.licensePlate,
-  startDate: payment.startDate,
-  endDate: payment.endDate,
-  totalPrice: payment.totalPrice,
-  brandName: payment.brandName,
-  modelName: payment.modelName,
-  image: payment.image,
-  ownerFirstName: payment.ownerFirstName,
-  ownerLastName: payment.ownerLastName,
-});
+// Public city only (vehicleAddress). Exact pickup snapshot fields are attached
+// only after payment when a rental_pickup_locations row exists.
+const toPaymentResponse = (payment, snapshot = null) => {
+  const safe = omitPrivatePickupFields(payment);
+  const paid = safe.paymentStatus === "paid";
+  const hasSnapshot = Boolean(
+    snapshot?.pickupAddress &&
+      snapshot?.pickupLatitude != null &&
+      snapshot?.pickupLongitude != null,
+  );
+  const mapsDirectionsUrl = hasSnapshot
+    ? buildMapsDirectionsUrl(
+        snapshot.pickupLatitude,
+        snapshot.pickupLongitude,
+      )
+    : null;
+
+  return {
+    paymentId: safe.paymentId,
+    rentalId: safe.rentalId,
+    paymentToken: safe.paymentToken,
+    amount: safe.amount,
+    currency: safe.currency,
+    paymentStatus: safe.paymentStatus,
+    paidAt: safe.paidAt,
+    paymentCreatedAt: safe.paymentCreatedAt,
+    rentalStatus: safe.rentalStatus,
+    licensePlate: safe.licensePlate,
+    startDate: safe.startDate,
+    endDate: safe.endDate,
+    totalPrice: safe.totalPrice,
+    brandName: safe.brandName,
+    modelName: safe.modelName,
+    image: safe.image,
+    ownerFirstName: safe.ownerFirstName,
+    ownerLastName: safe.ownerLastName,
+    vehicleAddress: safe.vehicleAddress || null,
+    exactPickupAvailable: paid && hasSnapshot && Boolean(mapsDirectionsUrl),
+    ...(paid && hasSnapshot && mapsDirectionsUrl
+      ? {
+          pickupAddress: snapshot.pickupAddress,
+          pickupLatitude: snapshot.pickupLatitude,
+          pickupLongitude: snapshot.pickupLongitude,
+          pickupInstructions: snapshot.pickupInstructions || null,
+          mapsDirectionsUrl,
+        }
+      : {}),
+  };
+};
 
 async function getPayment(req, res, next) {
   try {
@@ -84,9 +126,14 @@ async function getPayment(req, res, next) {
         .json({ message: "You are not the requester of this rental" });
     }
 
+    let snapshot = null;
+    if (payment.paymentStatus === "paid") {
+      snapshot = await getPickupSnapshotByRentalId(payment.rentalId);
+    }
+
     return res.status(STATUS_CODE.OK).json({
       message: "Payment fetched successfully",
-      payment: toPaymentResponse(payment),
+      payment: toPaymentResponse(payment, snapshot),
     });
   } catch (error) {
     next(error);
@@ -137,8 +184,58 @@ async function completeTestPayment(req, res, next) {
       });
     }
 
-    const result = await markPaymentPaidByToken(paymentToken);
-    if (result.affectedRows === 0) {
+    // Pre-payment: exact pickup must exist on the live vehicle (DB only).
+    const vehiclePickup = await getVehicleExactPickupByLicensePlate(
+      payment.licensePlate,
+    );
+    if (!isExactPickupComplete(vehiclePickup)) {
+      console.error(
+        `Payment blocked: missing exact pickup for rentalId=${payment.rentalId} plate=${payment.licensePlate}`,
+      );
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message:
+          "Pickup location must be completed by the vehicle owner before payment can be confirmed.",
+      });
+    }
+
+    // Atomic: pending → paid + one immutable snapshot. Emails only after COMMIT.
+    let transitionSucceeded = false;
+    try {
+      await withTransaction(async (connection) => {
+        const payResult = await markPaymentPaidByTokenOnConnection(
+          connection,
+          paymentToken,
+        );
+
+        if (payResult.affectedRows !== 1) {
+          const err = new Error("Payment was already completed");
+          err.code = "PAYMENT_ALREADY_PAID";
+          throw err;
+        }
+
+        await insertPickupSnapshotFromVehicle(connection, payment.rentalId);
+        transitionSucceeded = true;
+      });
+    } catch (txError) {
+      if (txError.code === "PAYMENT_ALREADY_PAID") {
+        return res
+          .status(STATUS_CODE.BAD_REQUEST)
+          .json({ message: "This Test payment was already completed" });
+      }
+      if (
+        txError.code === "PICKUP_SNAPSHOT_INSERT_FAILED" ||
+        txError.code === "PICKUP_SNAPSHOT_COUNT_INVALID"
+      ) {
+        console.error("Pickup snapshot transaction failed:", txError.message);
+        return res.status(STATUS_CODE.BAD_REQUEST).json({
+          message:
+            "Pickup location must be completed by the vehicle owner before payment can be confirmed.",
+        });
+      }
+      throw txError;
+    }
+
+    if (!transitionSucceeded) {
       return res
         .status(STATUS_CODE.BAD_REQUEST)
         .json({ message: "This Test payment was already completed" });
@@ -175,6 +272,7 @@ async function completeTestPayment(req, res, next) {
     );
 
     const updatedPayment = await getPaymentByToken(paymentToken);
+    const snapshot = await getPickupSnapshotByRentalId(payment.rentalId);
 
     try {
       await sendTestPaymentReceiptEmail({
@@ -187,7 +285,10 @@ async function completeTestPayment(req, res, next) {
         brandName: payment.brandName,
         modelName: payment.modelName,
         licensePlate: payment.licensePlate,
-        vehicleAddress: payment.vehicleAddress,
+        pickupAddress: snapshot?.pickupAddress || null,
+        pickupLatitude: snapshot?.pickupLatitude ?? null,
+        pickupLongitude: snapshot?.pickupLongitude ?? null,
+        pickupInstructions: snapshot?.pickupInstructions || null,
         startDate: payment.startDate,
         endDate: payment.endDate,
         amount: payment.amount,
@@ -225,7 +326,7 @@ async function completeTestPayment(req, res, next) {
 
     return res.status(STATUS_CODE.OK).json({
       message: "Test payment completed successfully",
-      payment: toPaymentResponse(updatedPayment),
+      payment: toPaymentResponse(updatedPayment, snapshot),
     });
   } catch (error) {
     next(error);

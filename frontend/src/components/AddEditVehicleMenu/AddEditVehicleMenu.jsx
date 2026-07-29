@@ -4,6 +4,7 @@ import { useVehicleContext } from "../../context/VehicleContext";
 import { useGovApisContext } from "../../context/GovApisContext";
 import { useActivityContext } from "../../context/ActivityContext";
 import { formattedMinDate } from "../../utils/minMaxDate";
+import ExactPickupLocationPicker from "../ExactPickupLocationPicker/ExactPickupLocationPicker";
 
 const initialFormState = {
   brandId: "0",
@@ -16,6 +17,11 @@ const initialFormState = {
   km: "",
   price: "",
   address: "",
+  exactPickupAddress: "",
+  pickupLatitude: "",
+  pickupLongitude: "",
+  pickupInstructions: "",
+  googlePlaceId: "",
   expirationDate: "",
   status: "available",
   details: "",
@@ -74,6 +80,15 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           km: vehicle.km || "",
           price: vehicle.price || "",
           address: vehicle.address || "",
+          exactPickupAddress: vehicle.exactPickupAddress || "",
+          pickupLatitude:
+            vehicle.pickupLatitude != null ? String(vehicle.pickupLatitude) : "",
+          pickupLongitude:
+            vehicle.pickupLongitude != null
+              ? String(vehicle.pickupLongitude)
+              : "",
+          pickupInstructions: vehicle.pickupInstructions || "",
+          googlePlaceId: vehicle.googlePlaceId || "",
           expirationDate: vehicle.expirationDate
             ? formatDateForInput(vehicle.expirationDate)
             : "",
@@ -154,6 +169,13 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     submitData.append("km", formData.km);
     submitData.append("price", formData.price);
     submitData.append("address", formData.address);
+    submitData.append("exactPickupAddress", formData.exactPickupAddress);
+    submitData.append("pickupLatitude", formData.pickupLatitude);
+    submitData.append("pickupLongitude", formData.pickupLongitude);
+    submitData.append("pickupInstructions", formData.pickupInstructions || "");
+    if (formData.googlePlaceId) {
+      submitData.append("googlePlaceId", formData.googlePlaceId);
+    }
     submitData.append("expirationDate", formData.expirationDate);
     submitData.append("details", formData.details);
     submitData.append("seats", formData.seats);
@@ -333,7 +355,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               required
               placeholder="2023"
               min="1900"
-              max="2025"
+              max={new Date().getFullYear() + 1}
             />
           </div>
 
@@ -413,7 +435,20 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             </select>
           </div>
 
-          {/* <div className={styles.inputGroup}>
+          <ExactPickupLocationPicker
+            value={{
+              exactPickupAddress: formData.exactPickupAddress,
+              pickupLatitude: formData.pickupLatitude,
+              pickupLongitude: formData.pickupLongitude,
+              pickupInstructions: formData.pickupInstructions,
+              googlePlaceId: formData.googlePlaceId,
+            }}
+            onChange={(partial) =>
+              setFormData((prev) => ({ ...prev, ...partial }))
+            }
+          />
+
+          <div className={styles.inputGroup}>
             <label>Listing Expiration Date</label>
             <input
               type="date"
@@ -423,7 +458,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               min={formattedMinDate}
               required
             />
-          </div> */}
+          </div>
 
           <div className={styles.inputGroup}>
             <label>Number of Seats</label>

@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const generateOTP = require("../utils/generateOTP");
+const { buildMapsDirectionsUrl } = require("../utils/mapsDirections");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -347,10 +348,38 @@ const buildReceiptNumber = (paymentId) => {
   return `NR-PAY-${String(id).padStart(6, "0")}`;
 };
 
-const buildMapsUrl = (vehicleAddress) => {
-  const address = String(vehicleAddress || "").trim();
-  if (!address) return null;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+const buildMapsUrl = (address) => {
+  const query = String(address || "").trim();
+  if (!query) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
+
+const normalizePickup = (pickup) => {
+  if (pickup == null) {
+    return {
+      address: "",
+      instructions: null,
+      latitude: null,
+      longitude: null,
+    };
+  }
+  if (typeof pickup === "string") {
+    return {
+      address: pickup.trim(),
+      instructions: null,
+      latitude: null,
+      longitude: null,
+    };
+  }
+  return {
+    address: String(pickup.address || "").trim(),
+    instructions:
+      pickup.instructions == null || pickup.instructions === ""
+        ? null
+        : String(pickup.instructions).trim(),
+    latitude: pickup.latitude ?? pickup.pickupLatitude ?? null,
+    longitude: pickup.longitude ?? pickup.pickupLongitude ?? null,
+  };
 };
 
 const buildPrimaryButton = (href, label) => {
@@ -416,20 +445,32 @@ const buildStatusBadge = (label) => `
   </span>
 `;
 
-const buildPickupHtml = (vehicleAddress) => {
-  const address = String(vehicleAddress || "").trim();
+const buildPickupHtml = (pickup) => {
+  const { address, instructions, latitude, longitude } = normalizePickup(pickup);
   if (!address) return "";
 
-  const mapsUrl = buildMapsUrl(address);
-  const safeAddress = escapeHtml(address);
-  const safeMapsUrl = escapeHtml(mapsUrl);
+  // Snapshot emails pass lat/lng — use directions only (no city/address search fallback).
+  // Approval emails pass city address only — keep Maps search by public city.
+  const hasCoordIntent = latitude != null && longitude != null;
+  const directionsUrl = buildMapsDirectionsUrl(latitude, longitude);
+  const mapsUrl = hasCoordIntent ? directionsUrl : buildMapsUrl(address);
 
-  return `
-    <p style="margin: 0 0 8px; color: #6b7280;">Pickup location</p>
-    <p style="margin: 0 0 12px; color: #111827; word-break: break-word;">${safeAddress}</p>
+  const buttonLabel = directionsUrl
+    ? "Get Directions"
+    : "View pickup location on Google Maps";
+  const safeAddress = escapeHtml(address);
+  const instructionsHtml = instructions
+    ? `
+    <p style="margin: 0 0 8px; color: #6b7280;">Pickup instructions</p>
+    <p style="margin: 0 0 12px; color: #111827; word-break: break-word;">${escapeHtml(instructions)}</p>
+  `
+    : "";
+
+  const mapsHtml = mapsUrl
+    ? `
     <p style="margin: 0 0 8px;">
       <a
-        href="${safeMapsUrl}"
+        href="${escapeHtml(mapsUrl)}"
         target="_blank"
         rel="noopener noreferrer"
         style="
@@ -443,20 +484,37 @@ const buildPickupHtml = (vehicleAddress) => {
           font-weight: 600;
         "
       >
-        View pickup location on Google Maps
+        ${escapeHtml(buttonLabel)}
       </a>
     </p>
     <p style="margin: 0 0 16px; font-size: 12px; color: #6b7280; word-break: break-all;">
-      ${safeMapsUrl}
+      ${escapeHtml(mapsUrl)}
     </p>
+  `
+    : `<p style="margin: 0 0 16px;"></p>`;
+
+  return `
+    <p style="margin: 0 0 8px; color: #6b7280;">Pickup location</p>
+    <p style="margin: 0 0 12px; color: #111827; word-break: break-word;">${safeAddress}</p>
+    ${instructionsHtml}
+    ${mapsHtml}
   `;
 };
 
-const buildPickupText = (vehicleAddress) => {
-  const address = String(vehicleAddress || "").trim();
+const buildPickupText = (pickup) => {
+  const { address, instructions, latitude, longitude } = normalizePickup(pickup);
   if (!address) return "";
-  const mapsUrl = buildMapsUrl(address);
-  return `Pickup location:\n${address}\nView on Google Maps: ${mapsUrl}\n`;
+  const hasCoordIntent = latitude != null && longitude != null;
+  const directionsUrl = buildMapsDirectionsUrl(latitude, longitude);
+  const mapsUrl = hasCoordIntent ? directionsUrl : buildMapsUrl(address);
+  const instructionsText = instructions
+    ? `Pickup instructions:\n${instructions}\n`
+    : "";
+  if (!mapsUrl) {
+    return `Pickup location:\n${address}\n${instructionsText}`;
+  }
+  const linkLabel = directionsUrl ? "Get Directions" : "View on Google Maps";
+  return `Pickup location:\n${address}\n${instructionsText}${linkLabel}: ${mapsUrl}\n`;
 };
 
 const buildEmailShell = (subtitle, bodyHtml, footerNote = null) => `
@@ -794,6 +852,8 @@ ${closingText()}
 };
 
 // --- Payment receipt → requester (professional receipt + Maps + disclosure) ---
+// Pickup section MUST use the immutable rental_pickup_locations snapshot only.
+// Never fall back to live vehicles.exactPickup* or public city for exact Maps.
 const sendTestPaymentReceiptEmail = async ({
   to,
   paymentId,
@@ -804,7 +864,10 @@ const sendTestPaymentReceiptEmail = async ({
   brandName,
   modelName,
   licensePlate,
-  vehicleAddress,
+  pickupAddress,
+  pickupLatitude,
+  pickupLongitude,
+  pickupInstructions,
   startDate,
   endDate,
   amount,
@@ -826,7 +889,23 @@ const sendTestPaymentReceiptEmail = async ({
   const receiptNumber = buildReceiptNumber(paymentId);
   const paymentDate = formatEmailDateTime(paidAt);
   const greeting = renterFirstName || renterName.split(" ")[0] || "there";
-  const pickupText = buildPickupText(vehicleAddress);
+  const snapshotPickup = {
+    address: pickupAddress,
+    instructions: pickupInstructions,
+    latitude: pickupLatitude,
+    longitude: pickupLongitude,
+  };
+
+  if (
+    pickupAddress &&
+    !buildMapsDirectionsUrl(pickupLatitude, pickupLongitude)
+  ) {
+    console.error(
+      `Receipt pickup Maps skipped: invalid snapshot coordinates for rentalId=${rentalId}`,
+    );
+  }
+
+  const pickupText = buildPickupText(snapshotPickup);
 
   const text = `
 Nova Rents
@@ -904,7 +983,7 @@ ${closingText(TEST_ENV_DISCLOSURE)}
       <p>Hello ${escapeHtml(greeting)},</p>
       ${buildDetailBlock("Payment confirmation", paymentRows)}
       ${buildDetailBlock("Rental details", rentalRows)}
-      ${buildPickupHtml(vehicleAddress)}
+      ${buildPickupHtml(snapshotPickup)}
       ${buildDetailBlock("Amount summary", amountRows)}
       <p>Thank you for using Nova Rents.</p>
       ${buildPrimaryButton(rentalUrl, "View Rental")}

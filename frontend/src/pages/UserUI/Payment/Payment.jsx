@@ -10,6 +10,7 @@ import {
   CheckCircle,
   ShieldAlert,
   ArrowLeft,
+  MapPin,
 } from "lucide-react";
 
 const formatDate = (dateStr) => {
@@ -28,6 +29,37 @@ const formatAmount = (amount, currency) => {
   return `${prefix}${numericAmount.toFixed(2)}`;
 };
 
+const paymentLoadErrorCopy = (status, backendMessage) => {
+  if (status === 401) {
+    return {
+      title: "Sign in required",
+      message: "Please sign in to access this payment.",
+    };
+  }
+  if (status === 403) {
+    return {
+      title: "Wrong account",
+      message: "This payment belongs to another account.",
+    };
+  }
+  if (status === 404 || status === 400) {
+    return {
+      title: "Payment not found",
+      message: "Payment link not found or invalid.",
+    };
+  }
+  if (status === 409) {
+    return {
+      title: "Payment unavailable",
+      message: backendMessage || "This payment cannot be processed right now.",
+    };
+  }
+  return {
+    title: "Payment error",
+    message: "Payment details could not be loaded.",
+  };
+};
+
 const Payment = () => {
   const { paymentToken } = useParams();
   const navigate = useNavigate();
@@ -37,6 +69,7 @@ const Payment = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [loadError, setLoadError] = useState(null);
   const [justPaid, setJustPaid] = useState(false);
 
   useEffect(() => {
@@ -44,9 +77,18 @@ const Payment = () => {
 
     const loadPayment = async () => {
       setIsLoading(true);
+      setLoadError(null);
       const result = await getPaymentByToken(paymentToken);
       if (cancelled) return;
-      setPayment(result);
+      if (result.ok && result.payment) {
+        setPayment(result.payment);
+        setLoadError(null);
+      } else {
+        setPayment(null);
+        setLoadError(
+          paymentLoadErrorCopy(result.status, result.message),
+        );
+      }
       setIsLoading(false);
     };
 
@@ -85,10 +127,10 @@ const Payment = () => {
       <div className={`${styles.Payment} page`}>
         <div className={styles.notFoundCard}>
           <ShieldAlert size={40} color="#f87171" />
-          <h2>Payment not found</h2>
+          <h2>{loadError?.title || "Payment not found"}</h2>
           <p>
-            This payment link is invalid, expired, or belongs to another
-            account.
+            {loadError?.message ||
+              "This payment link is invalid, expired, or belongs to another account."}
           </p>
           <button
             className={styles.backBtn}
@@ -107,6 +149,7 @@ const Payment = () => {
   const isPaid = payment.paymentStatus === "paid";
   const isPayable =
     payment.paymentStatus === "pending" && payment.rentalStatus === "approved";
+  const showExactPickup = isPaid && payment.exactPickupAvailable;
 
   return (
     <div className={`${styles.Payment} page`}>
@@ -136,6 +179,11 @@ const Payment = () => {
               {formatDate(payment.endDate)}
             </p>
             {ownerName && <p>Vehicle owner: {ownerName}</p>}
+            {payment.vehicleAddress && (
+              <p>
+                <MapPin size={14} /> City: {payment.vehicleAddress}
+              </p>
+            )}
           </div>
         </div>
 
@@ -148,6 +196,36 @@ const Payment = () => {
           <ShieldAlert size={16} />
           <span>This is a Test payment. No real money will be charged.</span>
         </div>
+
+        {showExactPickup ? (
+          <div className={styles.pickupBox}>
+            <h3>
+              <MapPin size={16} /> Exact pickup location
+            </h3>
+            <p className={styles.pickupAddress}>{payment.pickupAddress}</p>
+            {payment.pickupInstructions && (
+              <p className={styles.pickupInstructions}>
+                {payment.pickupInstructions}
+              </p>
+            )}
+            {payment.mapsDirectionsUrl && (
+              <a
+                className={styles.directionsBtn}
+                href={payment.mapsDirectionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Get Directions
+              </a>
+            )}
+          </div>
+        ) : (
+          !isPaid && (
+            <p className={styles.pickupHint}>
+              Exact pickup details will be available after payment.
+            </p>
+          )
+        )}
 
         {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
 

@@ -8,6 +8,7 @@ import {
   XCircle,
   ExternalLink,
   CreditCard,
+  MapPin,
 } from "lucide-react";
 
 const formatDate = (dateStr) => {
@@ -171,18 +172,52 @@ const RentalRequestsModal = ({
                 rental.rentalStatus === "approved" &&
                 rental.paymentStatus === "pending" &&
                 rental.paymentToken && (
-                  <button
-                    className={styles.payNowBtn}
-                    onClick={() => navigate(`/payments/${rental.paymentToken}`)}
-                  >
-                    <CreditCard size={16} /> Pay Now 
-                  </button>
+                  <>
+                    <p className={styles.pickupHint}>
+                      Exact pickup details will be available after payment.
+                    </p>
+                    <button
+                      className={styles.payNowBtn}
+                      onClick={() =>
+                        navigate(`/payments/${rental.paymentToken}`)
+                      }
+                    >
+                      <CreditCard size={16} /> Pay Now
+                    </button>
+                  </>
                 )}
 
               {!isPendingMode && rental.paymentStatus === "paid" && (
-                <p className={styles.paidLabel}>
-                  <CheckCircle size={14} /> Test payment completed
-                </p>
+                <>
+                  <p className={styles.paidLabel}>
+                    <CheckCircle size={14} /> Test payment completed
+                  </p>
+                  {rental.exactPickupAvailable ? (
+                    <div className={styles.pickupBox}>
+                      <p className={styles.pickupTitle}>
+                        <MapPin size={14} /> Exact pickup location
+                      </p>
+                      <p className={styles.pickupAddress}>
+                        {rental.pickupAddress}
+                      </p>
+                      {rental.pickupInstructions && (
+                        <p className={styles.pickupInstructions}>
+                          {rental.pickupInstructions}
+                        </p>
+                      )}
+                      {rental.mapsDirectionsUrl && (
+                        <a
+                          className={styles.directionsBtn}
+                          href={rental.mapsDirectionsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Get Directions
+                        </a>
+                      )}
+                    </div>
+                  ) : null}
+                </>
               )}
 
               {isPendingMode && (

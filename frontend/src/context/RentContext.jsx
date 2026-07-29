@@ -79,17 +79,26 @@ const RentContextProvider = ({ children }) => {
     }
   };
 
-  // Test payment (no real money). Returns the payment or null.
+  // Test payment (no real money). Preserves HTTP status for UI mapping.
   const getPaymentByToken = async (paymentToken) => {
     try {
       const res = await axios.get(`/payments/${paymentToken}`);
-      return res.data.payment || null;
+      return {
+        ok: true,
+        status: res.status,
+        payment: res.data.payment || null,
+        message: res.data.message || null,
+      };
     } catch (error) {
-      console.log(
-        "Failed to fetch payment",
-        error?.response?.data?.message,
-      );
-      return null;
+      const status = error?.response?.status || 500;
+      const message = error?.response?.data?.message || null;
+      console.log("Failed to fetch payment", message);
+      return {
+        ok: false,
+        status,
+        payment: null,
+        message,
+      };
     }
   };
 

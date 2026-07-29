@@ -46,8 +46,48 @@ const {
   sendRentalRequestEmail,
   sendRentalRejectedEmail,
 } = require("../services/emailService");
+const { buildMapsDirectionsUrl } = require("../utils/mapsDirections");
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL
+    : "http://localhost:5173";
+
+// Paid trips may expose immutable rental_pickup_locations fields only.
+// Never COALESCE with live vehicles.exactPickup* / lat / lng.
+const toMyTripResponse = (trip) => {
+  const {
+    snapshotPickupAddress,
+    snapshotPickupLatitude,
+    snapshotPickupLongitude,
+    snapshotPickupInstructions,
+    ...safeTrip
+  } = trip;
+
+  const paid = safeTrip.paymentStatus === "paid";
+  const mapsDirectionsUrl = buildMapsDirectionsUrl(
+    snapshotPickupLatitude,
+    snapshotPickupLongitude,
+  );
+  const hasSnapshot = Boolean(snapshotPickupAddress && mapsDirectionsUrl);
+
+  if (paid && hasSnapshot) {
+    return {
+      ...safeTrip,
+      exactPickupAvailable: true,
+      pickupAddress: snapshotPickupAddress,
+      pickupLatitude: snapshotPickupLatitude,
+      pickupLongitude: snapshotPickupLongitude,
+      pickupInstructions: snapshotPickupInstructions || null,
+      mapsDirectionsUrl,
+    };
+  }
+
+  return {
+    ...safeTrip,
+    exactPickupAvailable: false,
+  };
+};
 
 async function createRental(req, res, next) {
   try {
@@ -608,7 +648,9 @@ const getRentalHistory = async (req, res, next) => {
 
     const pendingRequests = await getPendingRentalRequestsForOwner(userId);
 
-    const myTrips = await getMyTripsHistoryByRenterId(userId);
+    const myTrips = (await getMyTripsHistoryByRenterId(userId)).map(
+      toMyTripResponse,
+    );
 
     return res.status(STATUS_CODE.OK).json({
       message: "Rental history fetched successfully",

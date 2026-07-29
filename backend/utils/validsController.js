@@ -252,6 +252,9 @@ function validateAndNormalizeVehicleCreate(req, res) {
     );
   }
 
+  const pickup = validateExactPickupFields(req.body, res);
+  if (!pickup) return null;
+
   return {
     userId,
     vehicle: {
@@ -267,7 +270,76 @@ function validateAndNormalizeVehicleCreate(req, res) {
       details,
       seats: seatsNum,
       image: imageJsonString,
+      ...pickup,
     },
+  };
+}
+
+function validateExactPickupFields(body, res) {
+  const exactPickupAddress = String(body.exactPickupAddress || "").trim();
+  const pickupInstructionsRaw = body.pickupInstructions;
+  const pickupInstructions =
+    pickupInstructionsRaw == null || String(pickupInstructionsRaw).trim() === ""
+      ? null
+      : String(pickupInstructionsRaw).trim();
+  const googlePlaceIdRaw = body.googlePlaceId;
+  const googlePlaceId =
+    googlePlaceIdRaw == null || String(googlePlaceIdRaw).trim() === ""
+      ? null
+      : String(googlePlaceIdRaw).trim();
+
+  const lat = Number(body.pickupLatitude);
+  const lng = Number(body.pickupLongitude);
+
+  if (!exactPickupAddress) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Exact pickup address is required.",
+    );
+  }
+  if (exactPickupAddress.length > 500) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Exact pickup address must be at most 500 characters.",
+    );
+  }
+  if (Number.isNaN(lat) || lat < -90 || lat > 90) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Pickup latitude must be a number between -90 and 90.",
+    );
+  }
+  if (Number.isNaN(lng) || lng < -180 || lng > 180) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Pickup longitude must be a number between -180 and 180.",
+    );
+  }
+  if (pickupInstructions && pickupInstructions.length > 500) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Pickup instructions must be at most 500 characters.",
+    );
+  }
+  if (googlePlaceId && googlePlaceId.length > 255) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Google Place ID must be at most 255 characters.",
+    );
+  }
+
+  return {
+    exactPickupAddress,
+    pickupLatitude: lat,
+    pickupLongitude: lng,
+    pickupInstructions,
+    googlePlaceId,
   };
 }
 
@@ -288,6 +360,20 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     imageToSave = JSON.stringify(imageFilenames);
   }
 
+  const pickup = validateExactPickupFields(
+    {
+      exactPickupAddress:
+        body.exactPickupAddress ?? existingVehicle.exactPickupAddress,
+      pickupLatitude: body.pickupLatitude ?? existingVehicle.pickupLatitude,
+      pickupLongitude: body.pickupLongitude ?? existingVehicle.pickupLongitude,
+      pickupInstructions:
+        body.pickupInstructions ?? existingVehicle.pickupInstructions,
+      googlePlaceId: body.googlePlaceId ?? existingVehicle.googlePlaceId,
+    },
+    res,
+  );
+  if (!pickup) return null;
+
   const merged = {
     modelId: body.modelId ?? existingVehicle.modelId,
     fuelType: body.fuelType ?? existingVehicle.fuelType,
@@ -301,6 +387,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
     status: body.status ?? existingVehicle.status,
     details: body.details ?? existingVehicle.details,
     seats: body.seats ?? existingVehicle.seats,
+    ...pickup,
   };
 
   if (
