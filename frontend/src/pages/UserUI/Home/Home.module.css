@@ -53,13 +53,11 @@
 
 .Home .midCardsContainer {
   display: flex;
-  flex-direction: column;
   gap: 30px;
   margin-top: 30px;
   padding-bottom: 30px;
 }
 
-/* Shared From/To/Apply toolbar for the two dashboard charts */
 .Home .chartFilters {
   border: var(--cards-border);
   background-color: var(--bg-gray);
@@ -160,12 +158,15 @@
     gap: 15px;
   }
 
+  .Home .midCardsContainer {
+    flex-direction: column;
+  }
+
   .bottomCardsContainer {
     flex-direction: column;
     gap: 20px;
   }
 
-  /* Stacked chart cards take the full row (they are 48% side by side) */
   .bottomCardsContainer > div {
     width: 100%;
   }

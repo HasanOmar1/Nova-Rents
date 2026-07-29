@@ -125,15 +125,18 @@ const Home = () => {
     {
       title: "Pending Requests",
       value: metrics.pendingRequests,
+      Link: true,
       icon: <ClipboardList size={28} color="#a7d2eb" />,
     },
     {
       title: "Upcoming Trips",
+      Link: true,
       value: metrics.upcomingTrips,
       icon: <CalendarDays size={28} color="#a7d2eb" />,
     },
     {
       title: "Trips Taken",
+      Link: true,
       value: metrics.tripsTaken,
       icon: <Key size={28} color="#a7d2eb" />,
     },
@@ -155,6 +158,8 @@ const Home = () => {
         {topData.map((item) => {
           return (
             <HomeTopCards
+              isLink={item.Link}
+              to={`/rentalDashboard`}
               key={crypto.randomUUID()}
               title={item.title}
               value={item.value}
@@ -221,9 +226,7 @@ const Home = () => {
           subtitle="Completed rental earnings during the selected period"
           type="line"
           data={hasEarnings ? userDashboardData.earningsChartData : []}
-          series={[
-            { dataKey: "earnings", name: "Earnings", color: "#2ed199" },
-          ]}
+          series={[{ dataKey: "earnings", name: "Earnings", color: "#2ed199" }]}
           xKey="period"
           xTickFormatter={formatPeriodTick}
           tooltipLabelFormatter={formatPeriodTooltip}

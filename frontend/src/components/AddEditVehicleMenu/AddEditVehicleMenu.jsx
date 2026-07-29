@@ -3,6 +3,7 @@ import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
 import { useGovApisContext } from "../../context/GovApisContext";
 import { useActivityContext } from "../../context/ActivityContext";
+import { formattedMinDate } from "../../utils/minMaxDate";
 
 const initialFormState = {
   brandId: "0",
@@ -113,8 +114,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
         newData.carTypeId = "";
         getModelsByBrand(value);
       } else if (name === "modelId") {
-        // --- NEW: AUTO-FILL CATEGORY BASED ON MODEL ---
-        // When they pick a model, we find that model in the array and grab its carTypeId
         const selectedModel = vehicleModel.find(
           (m) => String(m.modelId) === String(value),
         );
@@ -190,7 +189,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     ? `image-upload-${vehicle.licensePlate}`
     : "image-upload-new";
 
-  // --- NEW: Find the matching category name to display in the read-only input ---
   const selectedCategory = vehiclesType?.find(
     (t) => String(t.carTypeId) === formData.carTypeId,
   );
@@ -217,6 +215,41 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
       </div>
 
       <form onSubmit={handleSubmit}>
+        {isEditMode && vehicle?.status === "inactive" ? (
+          <div className={styles.restoreBanner}>
+            <p>⚠️ This vehicle is currently inactive.</p>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={formData.status === "available"}
+                onChange={(e) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    status: e.target.checked ? "available" : "inactive",
+                  }));
+                }}
+              />
+              <p>Restore vehicle to "Available"</p>
+            </label>
+          </div>
+        ) : (
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              name="status"
+              checked={formData.status === "maintenance"}
+              disabled={formData.status === "rented"}
+              onChange={(e) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  status: e.target.checked ? "maintenance" : "available",
+                }));
+              }}
+            />
+            <p>Mark as "Under Maintenance"</p>
+          </label>
+        )}
+
         <div className={styles.formGrid}>
           <div className={styles.inputGroup}>
             <label>Vehicle Brand</label>
@@ -380,16 +413,17 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             </select>
           </div>
 
-          <div className={styles.inputGroup}>
+          {/* <div className={styles.inputGroup}>
             <label>Listing Expiration Date</label>
             <input
               type="date"
               name="expirationDate"
               value={formData.expirationDate}
               onChange={handleChange}
+              min={formattedMinDate}
               required
             />
-          </div>
+          </div> */}
 
           <div className={styles.inputGroup}>
             <label>Number of Seats</label>
@@ -403,8 +437,10 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               max="15"
             />
           </div>
+        </div>
 
-          <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+        <div className={styles.textAreaAndUpload}>
+          <div className={`${styles.inputGroup} ${styles.inputGroupTextArea}`}>
             <label>Vehicle Details & Description</label>
             <textarea
               name="details"
@@ -423,7 +459,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             />
           </div>
 
-          <div className={styles.inputGroup}>
+          <div className={styles.textAreaAndUpload}>
             <label>
               {isEditMode
                 ? "Update Images (Optional)"
@@ -457,43 +493,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               </div>
             )}
           </div>
-
-          {isEditMode && vehicle?.status === "inactive" ? (
-            <div className={styles.restoreBanner}>
-              <p>⚠️ This vehicle is currently inactive.</p>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={formData.status === "available"}
-                  onChange={(e) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      status: e.target.checked ? "available" : "inactive",
-                    }));
-                  }}
-                />
-                <p>Restore vehicle to "Available"</p>
-              </label>
-            </div>
-          ) : (
-            <div className={styles.checkboxGroup}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="status"
-                  checked={formData.status === "maintenance"}
-                  disabled={formData.status === "rented"}
-                  onChange={(e) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      status: e.target.checked ? "maintenance" : "available",
-                    }));
-                  }}
-                />
-                <p>Mark as "Under Maintenance"</p>
-              </label>
-            </div>
-          )}
         </div>
 
         <div className={styles.actions}>

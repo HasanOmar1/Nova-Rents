@@ -2,6 +2,7 @@ import { useState } from "react";
 import styles from "./LoginRegister.module.css";
 import { ArrowRight } from "lucide-react";
 import { useUserContext } from "../../context/UserContext";
+import { formattedMaxDate, formattedMinDate } from "../../utils/minMaxDate";
 
 const RegisterForm = ({ setCurrentForm }) => {
   const [firstName, setFirstName] = useState("");
@@ -11,24 +12,6 @@ const RegisterForm = ({ setCurrentForm }) => {
   const [birthDate, setBirthDate] = useState("");
   const [password, setPassword] = useState("");
   const { register, errorMsg, setErrorMsg } = useUserContext();
-
-  const today = new Date();
-
-  // 2. Calculate exactly 18 years ago for the MAX date
-  const maxAgeDate = new Date(
-    today.getFullYear() - 18,
-    today.getMonth(),
-    today.getDate(),
-  );
-  const formattedMaxDate = maxAgeDate.toISOString().split("T")[0];
-
-  // 3. Calculate 100 years ago for the MIN date
-  const minAgeDate = new Date(
-    today.getFullYear() - 100,
-    today.getMonth(),
-    today.getDate(),
-  );
-  const formattedMinDate = minAgeDate.toISOString().split("T")[0];
 
   const handleCurrentForm = () => {
     setCurrentForm("login");

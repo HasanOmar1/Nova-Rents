@@ -1,9 +1,18 @@
+import { useNavigate } from "react-router-dom";
 import styles from "./HomeTopCards.module.css";
 import { Car } from "lucide-react";
 
-const HomeTopCards = ({ title, icon, value, className }) => {
+const HomeTopCards = ({ title, icon, value, className, isLink, to }) => {
+  const navigate = useNavigate();
+
+  const handleNavigate = () => {
+    navigate(to);
+  };
   return (
-    <div className={`${styles.HomeTopCards} ${className || ""}`}>
+    <div
+      className={`${styles.HomeTopCards} ${className || ""} ${isLink && styles.isLink}`}
+      onClick={isLink && handleNavigate}
+    >
       <div className={styles.top}>
         <p>{title}</p>
         {icon && <div className={styles.carBox}>{icon}</div>}
