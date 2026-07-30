@@ -22,6 +22,7 @@ const PAYMENT_SELECT = `
     r.status AS rentalStatus,
     v.ownerId,
     v.image,
+    /* Public city only — never select exactPickup* / pickupLatitude / pickupLongitude here */
     v.address AS vehicleAddress,
     cb.brandName,
     cm.modelName,

@@ -21,6 +21,9 @@ const {
 } = require("../database/queries/systemHistoryQueries");
 const { formatDateForInput } = require("../utils/formatDate");
 const {
+  omitPrivatePickupFields,
+} = require("../utils/omitPrivatePickupFields");
+const {
   rejectPendingRentalsByLicensePlate,
   cancelApprovedRentalsByLicensePlate,
   getAffectedRentersByLicensePlate,
@@ -46,9 +49,29 @@ const getUserVehicles = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
+    // Owner-only: includes private exact pickup fields for Add/Edit.
     let query = `
       SELECT 
-        v.*, 
+        v.licensePlate,
+        v.fuelType,
+        v.status,
+        v.expirationDate,
+        v.image,
+        v.year,
+        v.km,
+        v.address,
+        v.exactPickupAddress,
+        v.pickupLatitude,
+        v.pickupLongitude,
+        v.pickupInstructions,
+        v.googlePlaceId,
+        v.price,
+        v.color,
+        v.modelId,
+        v.ownerId,
+        v.createdAt,
+        v.details,
+        v.seats,
         cm.modelName, 
         cb.brandId, cb.brandName, 
         ct.carTypeId, ct.carTypeName
@@ -127,6 +150,11 @@ const addVehicle = async (req, res, next) => {
       color,
       details,
       seats,
+      exactPickupAddress,
+      pickupLatitude,
+      pickupLongitude,
+      pickupInstructions,
+      googlePlaceId,
     } = vehicle;
 
     // const isVehicleNumberInGovIL =
@@ -149,8 +177,10 @@ const addVehicle = async (req, res, next) => {
 
     const insertQuery = `
       INSERT INTO vehicles 
-      (licensePlate, fuelType, expirationDate, image, year, km, address, price, color, modelId, ownerId, details, seats)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (licensePlate, fuelType, expirationDate, image, year, km, address,
+       exactPickupAddress, pickupLatitude, pickupLongitude, pickupInstructions, googlePlaceId,
+       price, color, modelId, ownerId, details, seats)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -161,6 +191,11 @@ const addVehicle = async (req, res, next) => {
       year,
       km,
       address,
+      exactPickupAddress,
+      pickupLatitude,
+      pickupLongitude,
+      pickupInstructions,
+      googlePlaceId,
       price,
       color,
       modelId,
@@ -246,9 +281,11 @@ const getVehicleById = async (req, res, next) => {
       });
     }
 
+    // Public detail endpoint: never return private exact pickup fields,
+    // even when the session user owns the vehicle (owners use /myVehicles).
     res.status(STATUS_CODE.OK).json({
       message: "Vehicle fetched successfully",
-      vehicle: result[0],
+      vehicle: omitPrivatePickupFields(result[0]),
     });
   } catch (error) {
     next(error);
@@ -403,8 +440,13 @@ const updateVehicle = async (req, res, next) => {
       price,
       color,
       status,
-      details, // <-- ADDED
-      seats, // <-- ADDED
+      details,
+      seats,
+      exactPickupAddress,
+      pickupLatitude,
+      pickupLongitude,
+      pickupInstructions,
+      googlePlaceId,
     } = mergedData;
 
     const oldExpirationDate = formatDateForInput(
@@ -429,13 +471,24 @@ const updateVehicle = async (req, res, next) => {
       updatedFields.push("price");
     if (color !== existingVehicle.color) updatedFields.push("color");
     if (status !== existingVehicle.status) updatedFields.push("status");
-    if (details !== existingVehicle.details) updatedFields.push("details"); // <-- ADDED
+    if (details !== existingVehicle.details) updatedFields.push("details");
     if (Number(seats) !== Number(existingVehicle.seats))
-      updatedFields.push("seats"); // <-- ADDED
+      updatedFields.push("seats");
+    if (exactPickupAddress !== existingVehicle.exactPickupAddress)
+      updatedFields.push("exact pickup address");
+    if (Number(pickupLatitude) !== Number(existingVehicle.pickupLatitude))
+      updatedFields.push("pickup latitude");
+    if (Number(pickupLongitude) !== Number(existingVehicle.pickupLongitude))
+      updatedFields.push("pickup longitude");
+    if (pickupInstructions !== existingVehicle.pickupInstructions)
+      updatedFields.push("pickup instructions");
 
     const updateQuery = `
       UPDATE vehicles
-      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?, address = ?, price = ?, color = ?, status = ?, details = ?, seats = ?
+      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?,
+          address = ?, exactPickupAddress = ?, pickupLatitude = ?, pickupLongitude = ?,
+          pickupInstructions = ?, googlePlaceId = ?,
+          price = ?, color = ?, status = ?, details = ?, seats = ?
       WHERE licensePlate = ?
     `;
 
@@ -447,11 +500,16 @@ const updateVehicle = async (req, res, next) => {
       year,
       km,
       address,
+      exactPickupAddress,
+      pickupLatitude,
+      pickupLongitude,
+      pickupInstructions,
+      googlePlaceId,
       price,
       color,
       status,
-      details, // <-- ADDED
-      seats, // <-- ADDED
+      details,
+      seats,
       licensePlate,
     ];
 
@@ -569,6 +627,7 @@ const getAllVehicles = async (req, res, next) => {
 
     const queryValues = [...values, parsedLimit, offset];
     const vehicles = await doQuery(query, queryValues);
+    const publicVehicles = vehicles.map(omitPrivatePickupFields);
 
     // 3. PAGINATION TOTAL (Added JOIN users)
     const countQuery = `
@@ -633,7 +692,7 @@ const getAllVehicles = async (req, res, next) => {
 
     res.status(200).json({
       message: "Vehicles fetched successfully",
-      vehicles,
+      vehicles: publicVehicles,
       availableFilters,
       allVehStats: statsResult[0],
       pagination: {

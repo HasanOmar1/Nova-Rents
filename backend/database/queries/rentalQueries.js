@@ -342,7 +342,11 @@ async function getMyTripsHistoryByRenterId(renterId) {
       renter.firstName AS renterFirstName,
       renter.lastName AS renterLastName,
       p.paymentToken,
-      p.status AS paymentStatus
+      p.status AS paymentStatus,
+      rpl.pickupAddress AS snapshotPickupAddress,
+      rpl.pickupLatitude AS snapshotPickupLatitude,
+      rpl.pickupLongitude AS snapshotPickupLongitude,
+      rpl.pickupInstructions AS snapshotPickupInstructions
 
     FROM rentals r
     JOIN vehicles v ON r.licensePlate = v.licensePlate
@@ -352,8 +356,9 @@ async function getMyTripsHistoryByRenterId(renterId) {
     JOIN users owner ON v.ownerId = owner.userId
     JOIN users renter ON r.renterId = renter.userId
     LEFT JOIN rental_payments p ON r.rentalId = p.rentalId
+    LEFT JOIN rental_pickup_locations rpl ON rpl.rentalId = r.rentalId
     WHERE r.renterId = ?
-    ORDER BY r.startDate DESC
+    ORDER BY (r.status = 'approved') DESC, r.startDate DESC 
   `;
   return doQuery(query, [renterId]);
 }

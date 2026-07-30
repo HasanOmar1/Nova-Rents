@@ -276,6 +276,66 @@
   font-weight: 600;
 }
 
+.RentalRequestsModal .pickupHint {
+  margin: 4px 0 0;
+  color: var(--gray);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+.RentalRequestsModal .pickupBox {
+  margin-top: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  border: var(--cards-border);
+}
+
+.RentalRequestsModal .pickupTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.RentalRequestsModal .pickupAddress {
+  margin: 0;
+  color: var(--gray);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.RentalRequestsModal .pickupInstructions {
+  margin: 8px 0 0;
+  color: var(--gray);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.RentalRequestsModal .directionsBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #111827;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.RentalRequestsModal .directionsBtn:hover {
+  background-color: #1f2937;
+}
+
 @media (max-width: 480px) {
   .RentalRequestsModal .actionBtns {
     flex-direction: column;
