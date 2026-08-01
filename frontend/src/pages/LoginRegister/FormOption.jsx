@@ -1,8 +1,17 @@
 import styles from "./LoginRegister.module.css";
 import heroImg from "../../assets/loginRegisterCar.avif";
 import { Car } from "lucide-react";
+import { useUserContext } from "../../context/UserContext";
 
 const FormOption = ({ setCurrentForm, currentForm }) => {
+  const {setErrorMsg} = useUserContext()
+
+  const handleSwitchForm = (form) => {
+    setErrorMsg("")
+    setCurrentForm(form)
+  }
+
+
   return (
     <div className={styles.heroSection}>
       <img src={heroImg} alt="car img" className={styles.heroImage} />
@@ -13,13 +22,13 @@ const FormOption = ({ setCurrentForm, currentForm }) => {
         <div className={styles.switchWrapper}>
           <div className={styles.switchContainer}>
             <button
-              onClick={() => setCurrentForm("login")}
+              onClick={() => handleSwitchForm("login")}
               className={`${styles.switchBtn} ${currentForm === "login" && styles.switchBtnActive}`}
             >
               Sign in
             </button>
             <button
-              onClick={() => setCurrentForm("register")}
+              onClick={() => handleSwitchForm("register")}
               className={`${styles.switchBtn} ${currentForm === "register" && styles.switchBtnActive}`}
             >
               Register
