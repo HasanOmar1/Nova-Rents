@@ -1,10 +1,5 @@
 import styles from "./ComplaintsAdmin.module.css";
-import {
-  FileWarning,
-  Clock,
-  AlertTriangle,
-  BookCheck,
-} from "lucide-react";
+import { FileWarning, Clock, AlertTriangle, BookCheck } from "lucide-react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import ComplaintsAdminCards from "../../../components/ComplaintsCards/ComplaintsAdminCards";
@@ -28,7 +23,7 @@ const formatDateForInput = (date) => {
 const ComplaintsAdmin = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   const today = new Date();
@@ -58,15 +53,15 @@ const ComplaintsAdmin = () => {
 
   // Fetch data when page or filter changes
   useEffect(() => {
-    getAllComplaints(currentPage, filterStatus);
-  }, [currentPage, filterStatus]);
+    getAllComplaints(currentPage, statusFilter);
+  }, [currentPage, statusFilter]);
 
   // The chart shares the table's status filter but not its pagination,
   // so page changes never refetch or skew the chart totals. It always uses
   // the applied dates, never the in-progress input values.
   useEffect(() => {
-    getComplaintTrends(appliedFromDate, appliedToDate, filterStatus);
-  }, [filterStatus, appliedFromDate, appliedToDate]);
+    getComplaintTrends(appliedFromDate, appliedToDate, statusFilter);
+  }, [statusFilter, appliedFromDate, appliedToDate]);
 
   const handleApplyDates = () => {
     if (isRangeValid && !isComplaintTrendsLoading) {
@@ -75,9 +70,12 @@ const ComplaintsAdmin = () => {
     }
   };
 
-  // Reset to page 1 if filter changes
-  const handleFilterChange = (e) => {
-    setFilterStatus(e.target.value);
+  const handleStatusChange = (valueOrEvent) => {
+    const status = valueOrEvent?.target
+      ? valueOrEvent.target.value
+      : valueOrEvent;
+
+    setStatusFilter(status);
     setCurrentPage(1);
   };
 
@@ -99,7 +97,7 @@ const ComplaintsAdmin = () => {
     );
     if (result) {
       closeReviewModal();
-      getAllComplaints(currentPage, filterStatus);
+      getAllComplaints(currentPage, statusFilter);
     }
   };
 
@@ -108,21 +106,29 @@ const ComplaintsAdmin = () => {
       title: "Total Complaints",
       value: complaintStats?.total || 0,
       icon: <FileWarning size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("all"),
+      isAction: true,
     },
     {
       title: "Open",
       value: complaintStats?.open || 0,
       icon: <AlertTriangle size={28} color="#eab308" />,
+      onClick: () => handleStatusChange("open"),
+      isAction: true,
     },
     {
       title: "Under Review",
       value: complaintStats?.review || 0,
       icon: <Clock size={28} color="#3b82f6" />,
+      onClick: () => handleStatusChange("in_review"),
+      isAction: true,
     },
     {
       title: "Resolved",
       value: complaintStats?.resolved || 0,
       icon: <BookCheck size={28} color="#3b82f6" />,
+      onClick: () => handleStatusChange("resolved"),
+      isAction: true,
     },
   ];
 
@@ -144,6 +150,8 @@ const ComplaintsAdmin = () => {
             title={item.title}
             value={item.value}
             icon={item.icon}
+            onClick={item.onClick}
+            isAction={item.isAction}
           />
         ))}
       </div>
@@ -154,8 +162,8 @@ const ComplaintsAdmin = () => {
           <select
             id="status"
             name="status"
-            value={filterStatus}
-            onChange={handleFilterChange}
+            value={statusFilter}
+            onChange={handleStatusChange}
           >
             <option value="all">All</option>
             <option value="open">Open</option>

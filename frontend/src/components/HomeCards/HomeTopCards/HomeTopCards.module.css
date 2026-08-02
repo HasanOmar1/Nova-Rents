@@ -9,7 +9,7 @@
   flex: 1;
 }
 
-.HomeTopCards.isLink:hover {
+.HomeTopCards.isAction:hover {
   cursor: pointer;
   opacity: 0.9;
 }

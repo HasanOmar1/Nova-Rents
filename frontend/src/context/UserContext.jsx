@@ -104,10 +104,15 @@ const UserContextProvider = ({ children }) => {
       setCurrentStatus(status);
       setCurrentSearch(search);
 
-      const endpoint =
-        status === "all"
-          ? `/users?page=${page}&search=${search}`
-          : `/users/status/${status}?page=${page}&search=${search}`;
+      let endpoint = "";
+
+      if (status === "all") {
+        endpoint = `/users?page=${page}&search=${search}`;
+      } else if (status === "admins") {
+        endpoint = `/users?page=${page}&search=${search}&role=admin`;
+      } else {
+        endpoint = `/users/status/${status}?page=${page}&search=${search}`;
+      }
 
       const res = await axios.get(endpoint);
       setAllUsers(res.data.users);

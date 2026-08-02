@@ -32,8 +32,12 @@ const AllVehicles = () => {
     }
   }, [allVehPagination?.totalPages, currentPage]);
 
-  const handleStatusChange = (e) => {
-    setStatusFilter(e.target.value);
+  const handleStatusChange = (valueOrEvent) => {
+    const status = valueOrEvent?.target
+      ? valueOrEvent.target.value
+      : valueOrEvent;
+
+    setStatusFilter(status);
     setCurrentPage(1);
   };
 
@@ -54,21 +58,29 @@ const AllVehicles = () => {
       title: "Total in system",
       value: allVehStats?.total || 0,
       icon: <Car size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("all"),
+      isAction: true,
     },
     {
       title: "Available",
       value: allVehStats?.available || 0,
       icon: <CheckCircle2 size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("available"),
+      isAction: true,
     },
     {
       title: "Maintenance",
       value: allVehStats?.maintenance || 0,
       icon: <Wrench size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("maintenance"),
+      isAction: true,
     },
     {
       title: "Inactive",
       value: allVehStats?.inactive || 0,
       icon: <ShieldOff size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("inactive"),
+      isAction: true,
     },
   ];
 
@@ -108,6 +120,8 @@ const AllVehicles = () => {
             title={item.title}
             value={item.value}
             icon={item.icon}
+            onClick={item.onClick}
+            isAction={item.isAction}
           />
         ))}
       </div>
