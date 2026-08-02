@@ -31,7 +31,7 @@ const loadGoogleMaps = () => {
 };
 
 const geocodeWithNominatim = async (query) => {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`;
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=il&q=${encodeURIComponent(query)}`;
   const res = await fetch(url, {
     headers: { Accept: "application/json" },
   });
@@ -106,6 +106,8 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
             autocompleteInputRef.current,
             {
               fields: ["formatted_address", "geometry", "place_id", "name"],
+              // RESTRICTION 2: Restrict dropdown suggestions to Israel
+              componentRestrictions: { country: "il" },
             },
           );
           autocomplete.addListener("place_changed", () => {
@@ -150,18 +152,26 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
               const nextLat = pos.lat();
               const nextLng = pos.lng();
               const geocoder = new google.maps.Geocoder();
-              geocoder.geocode({ location: { lat: nextLat, lng: nextLng } }, (results, status) => {
-                const label =
-                  status === "OK" && results?.[0]?.formatted_address
-                    ? results[0].formatted_address
-                    : value.exactPickupAddress || `${nextLat.toFixed(6)}, ${nextLng.toFixed(6)}`;
-                applyPoint({
-                  exactPickupAddress: label,
-                  pickupLatitude: nextLat,
-                  pickupLongitude: nextLng,
-                  googlePlaceId: results?.[0]?.place_id || value.googlePlaceId || null,
-                });
-              });
+              geocoder.geocode(
+                {
+                  location: { lat: nextLat, lng: nextLng },
+                  componentRestrictions: { country: "il" },
+                },
+                (results, status) => {
+                  const label =
+                    status === "OK" && results?.[0]?.formatted_address
+                      ? results[0].formatted_address
+                      : value.exactPickupAddress ||
+                        `${nextLat.toFixed(6)}, ${nextLng.toFixed(6)}`;
+                  applyPoint({
+                    exactPickupAddress: label,
+                    pickupLatitude: nextLat,
+                    pickupLongitude: nextLng,
+                    googlePlaceId:
+                      results?.[0]?.place_id || value.googlePlaceId || null,
+                  });
+                },
+              );
             });
           } else {
             mapRef.current.setCenter(center);
@@ -169,7 +179,9 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
           }
         }
       } catch {
-        setSearchError("Google Maps could not be loaded. Use search or current location.");
+        setSearchError(
+          "Google Maps could not be loaded. Use search or current location.",
+        );
       }
     };
 
@@ -190,29 +202,36 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
     try {
       if (GOOGLE_KEY && window.google?.maps) {
         const service = new window.google.maps.places.AutocompleteService();
-        service.getPlacePredictions({ input: query }, (predictions, status) => {
-          setIsSearching(false);
-          if (
-            status !== window.google.maps.places.PlacesServiceStatus.OK ||
-            !predictions?.length
-          ) {
-            setSuggestions([]);
-            setSearchError("No matching addresses found.");
-            return;
-          }
-          setSuggestions(
-            predictions.map((p) => ({
-              label: p.description,
-              placeId: p.place_id,
-            })),
-          );
-        });
+        service.getPlacePredictions(
+          {
+            input: query,
+            componentRestrictions: { country: "il" },
+          },
+          (predictions, status) => {
+            setIsSearching(false);
+            if (
+              status !== window.google.maps.places.PlacesServiceStatus.OK ||
+              !predictions?.length
+            ) {
+              setSuggestions([]);
+              setSearchError("No matching addresses found in Israel.");
+              return;
+            }
+            setSuggestions(
+              predictions.map((p) => ({
+                label: p.description,
+                placeId: p.place_id,
+              })),
+            );
+          },
+        );
         return;
       }
 
       const rows = await geocodeWithNominatim(query);
       setSuggestions(rows);
-      if (rows.length === 0) setSearchError("No matching addresses found.");
+      if (rows.length === 0)
+        setSearchError("No matching addresses found in Israel.");
     } catch {
       setSearchError("Address search failed. Try again.");
     } finally {
@@ -236,7 +255,10 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
         document.createElement("div"),
       );
       service.getDetails(
-        { placeId: item.placeId, fields: ["formatted_address", "geometry", "place_id"] },
+        {
+          placeId: item.placeId,
+          fields: ["formatted_address", "geometry", "place_id"],
+        },
         (place, status) => {
           if (
             status !== window.google.maps.places.PlacesServiceStatus.OK ||
@@ -270,25 +292,32 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
         try {
           if (GOOGLE_KEY && window.google?.maps) {
             const geocoder = new window.google.maps.Geocoder();
-            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-              setIsLocating(false);
-              const label =
-                status === "OK" && results?.[0]?.formatted_address
-                  ? results[0].formatted_address
-                  : `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-              applyPoint({
-                exactPickupAddress: label,
-                pickupLatitude: lat,
-                pickupLongitude: lng,
-                googlePlaceId: results?.[0]?.place_id || null,
-              });
-            });
+            geocoder.geocode(
+              {
+                location: { lat, lng },
+                componentRestrictions: { country: "il" },
+              },
+              (results, status) => {
+                setIsLocating(false);
+                const label =
+                  status === "OK" && results?.[0]?.formatted_address
+                    ? results[0].formatted_address
+                    : `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                applyPoint({
+                  exactPickupAddress: label,
+                  pickupLatitude: lat,
+                  pickupLongitude: lng,
+                  googlePlaceId: results?.[0]?.place_id || null,
+                });
+              },
+            );
             return;
           }
           const rows = await geocodeWithNominatim(`${lat},${lng}`);
           setIsLocating(false);
           applyPoint({
-            exactPickupAddress: rows[0]?.label || `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+            exactPickupAddress:
+              rows[0]?.label || `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
             pickupLatitude: lat,
             pickupLongitude: lng,
             googlePlaceId: null,
@@ -353,7 +382,11 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
       </div>
 
       <div className={styles.actions}>
-        <button type="button" onClick={useCurrentLocation} disabled={isLocating}>
+        <button
+          type="button"
+          onClick={useCurrentLocation}
+          disabled={isLocating}
+        >
           {isLocating ? "Locating…" : "Use my current location"}
         </button>
       </div>
@@ -377,9 +410,7 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
             />
           )}
           <p className={styles.coordsHint}>
-            {GOOGLE_KEY
-              ? "Drag the marker to fine-tune the pickup point."
-              : "Set VITE_GOOGLE_MAPS_API_KEY for an interactive draggable map."}
+            {GOOGLE_KEY && "Drag the marker to fine-tune the pickup point."}
           </p>
         </div>
       )}
