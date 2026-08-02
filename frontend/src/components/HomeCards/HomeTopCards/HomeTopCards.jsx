@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./HomeTopCards.module.css";
 import { Car } from "lucide-react";
 
-const HomeTopCards = ({ title, icon, value, className, isLink, to }) => {
+const HomeTopCards = ({ title, icon, value, className, isAction, to , onClick }) => {
   const navigate = useNavigate();
 
   const handleNavigate = () => {
@@ -10,8 +10,8 @@ const HomeTopCards = ({ title, icon, value, className, isLink, to }) => {
   };
   return (
     <div
-      className={`${styles.HomeTopCards} ${className || ""} ${isLink && styles.isLink}`}
-      onClick={isLink && handleNavigate}
+      className={`${styles.HomeTopCards} ${className || ""} ${isAction && styles.isAction}`}
+      onClick={isAction && to ? handleNavigate : onClick ? onClick : ""}
     >
       <div className={styles.top}>
         <p>{title}</p>

@@ -125,18 +125,18 @@ const Home = () => {
     {
       title: "Pending Requests",
       value: metrics.pendingRequests,
-      Link: true,
+      isAction: true,
       icon: <ClipboardList size={28} color="#a7d2eb" />,
     },
     {
       title: "Upcoming Trips",
-      Link: true,
+      isAction: true,
       value: metrics.upcomingTrips,
       icon: <CalendarDays size={28} color="#a7d2eb" />,
     },
     {
       title: "Trips Taken",
-      Link: true,
+      isAction: true,
       value: metrics.tripsTaken,
       icon: <Key size={28} color="#a7d2eb" />,
     },
@@ -158,7 +158,7 @@ const Home = () => {
         {topData.map((item) => {
           return (
             <HomeTopCards
-              isLink={item.Link}
+              isAction={item.isAction}
               to={`/rentalDashboard`}
               key={crypto.randomUUID()}
               title={item.title}

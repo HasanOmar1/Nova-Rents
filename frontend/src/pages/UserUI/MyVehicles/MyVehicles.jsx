@@ -37,8 +37,12 @@ const MyVehicles = () => {
   const openAddVehMenu = () => setIsOpen(true);
   const closeAddVehMenu = () => setIsOpen(false);
 
-  const handleStatusChange = (e) => {
-    setStatusFilter(e.target.value);
+  const handleStatusChange = (valueOrEvent) => {
+    const status = valueOrEvent?.target
+      ? valueOrEvent.target.value
+      : valueOrEvent;
+
+    setStatusFilter(status);
     setCurrentPage(1);
   };
 
@@ -59,21 +63,29 @@ const MyVehicles = () => {
       title: "Vehicles Count",
       value: vehicleStats?.allVehicles || 0,
       icon: <Car size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("all"),
+      isAction: true,
     },
     {
       title: "Available Now",
       value: vehicleStats?.availableNow || 0,
       icon: <ShieldCheck size={28} color="#a7d2eb" />,
+      isAction: true,
+      onClick: () => handleStatusChange("available"),
     },
     {
       title: "Under Maintenance",
       value: vehicleStats?.maintenance || 0,
       icon: <ShieldAlert size={28} color="#a7d2eb" />,
+      isAction: true,
+      onClick: () => handleStatusChange("maintenance"),
     },
     {
       title: "Inactive",
       value: vehicleStats?.inactive || 0,
       icon: <ShieldOff size={28} color="#a7d2eb" />,
+      isAction: true,
+      onClick: () => handleStatusChange("inactive"),
     },
     {
       title: "Avg. daily rate",
@@ -119,6 +131,8 @@ const MyVehicles = () => {
             title={item.title}
             value={item.value}
             icon={item.icon}
+            onClick={item.onClick}
+            isAction={item.isAction}
           />
         ))}
       </div>
