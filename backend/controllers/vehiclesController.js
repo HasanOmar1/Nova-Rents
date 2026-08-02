@@ -20,9 +20,7 @@ const {
   createSystemHistory,
 } = require("../database/queries/systemHistoryQueries");
 const { formatDateForInput } = require("../utils/formatDate");
-const {
-  omitPrivatePickupFields,
-} = require("../utils/omitPrivatePickupFields");
+const { omitPrivatePickupFields } = require("../utils/omitPrivatePickupFields");
 const {
   rejectPendingRentalsByLicensePlate,
   cancelApprovedRentalsByLicensePlate,
@@ -32,6 +30,7 @@ const {
 const {
   createNotification,
 } = require("../database/queries/notificationQueries");
+
 const getUserVehicles = async (req, res, next) => {
   try {
     if (
@@ -54,6 +53,7 @@ const getUserVehicles = async (req, res, next) => {
       SELECT 
         v.licensePlate,
         v.fuelType,
+        v.transmission,
         v.status,
         v.expirationDate,
         v.image,
@@ -141,6 +141,7 @@ const addVehicle = async (req, res, next) => {
       licensePlate,
       modelId,
       fuelType,
+      transmission,
       expirationDate,
       image,
       year,
@@ -177,15 +178,16 @@ const addVehicle = async (req, res, next) => {
 
     const insertQuery = `
       INSERT INTO vehicles 
-      (licensePlate, fuelType, expirationDate, image, year, km, address,
+      (licensePlate, fuelType, transmission, expirationDate, image, year, km, address,
        exactPickupAddress, pickupLatitude, pickupLongitude, pickupInstructions, googlePlaceId,
        price, color, modelId, ownerId, details, seats)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       licensePlate,
       fuelType,
+      transmission,
       expirationDate,
       image,
       year,
@@ -203,7 +205,9 @@ const addVehicle = async (req, res, next) => {
       details,
       seats,
     ];
+
     await doQuery(insertQuery, values);
+
     await createActivity(
       userId,
       "Added new vehicle",
@@ -220,6 +224,7 @@ const addVehicle = async (req, res, next) => {
       licensePlate,
       `Added new vehicle with license plate of ${licensePlate}`,
     );
+
     const newVehicle = await getVehicleByLicensePlate(licensePlate);
     res.status(STATUS_CODE.CREATED).json({
       message: "Vehicle added successfully",
@@ -239,6 +244,7 @@ const getVehicleById = async (req, res, next) => {
       SELECT 
         v.licensePlate,
         v.fuelType,
+        v.transmission,
         v.expirationDate,
         v.image,
         v.year,
@@ -432,6 +438,7 @@ const updateVehicle = async (req, res, next) => {
     const {
       modelId,
       fuelType,
+      transmission,
       expirationDate,
       image,
       year,
@@ -459,6 +466,8 @@ const updateVehicle = async (req, res, next) => {
     if (Number(modelId) !== Number(existingVehicle.modelId))
       updatedFields.push("model");
     if (fuelType !== existingVehicle.fuelType) updatedFields.push("fuel type");
+    if (transmission !== existingVehicle.transmission)
+      updatedFields.push("transmission");
     if (newExpirationDate !== oldExpirationDate)
       updatedFields.push("expiration date");
     if (image !== existingVehicle.image) updatedFields.push("image");
@@ -485,7 +494,7 @@ const updateVehicle = async (req, res, next) => {
 
     const updateQuery = `
       UPDATE vehicles
-      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?,
+      SET modelId = ?, fuelType = ?, transmission = ?, expirationDate = ?, image = ?, year = ?, km = ?,
           address = ?, exactPickupAddress = ?, pickupLatitude = ?, pickupLongitude = ?,
           pickupInstructions = ?, googlePlaceId = ?,
           price = ?, color = ?, status = ?, details = ?, seats = ?
@@ -495,6 +504,7 @@ const updateVehicle = async (req, res, next) => {
     const values = [
       modelId,
       fuelType,
+      transmission,
       newExpirationDate,
       image,
       year,
@@ -609,7 +619,7 @@ const getAllVehicles = async (req, res, next) => {
     // 2. FETCH VEHICLES
     let query = `
       SELECT 
-        v.licensePlate, v.fuelType, DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
+        v.licensePlate, v.fuelType, v.transmission, DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
         v.image, v.year, v.km, v.address, v.price, v.color, v.status, v.ownerId, v.createdAt, v.details, v.seats,
         cm.modelId, cm.modelName, cb.brandId, cb.brandName, ct.carTypeId, ct.carTypeName,
         u.firstName AS ownerFirstName, u.lastName AS ownerLastName,
@@ -773,6 +783,7 @@ const getAllCarTypes = async (req, res, next) => {
     next(error);
   }
 };
+
 async function updateVehicleStatus(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
