@@ -5,6 +5,12 @@ import {
   MapPin,
   CalendarRange,
   ExternalLink,
+  Users,
+  Fuel,
+  Gauge,
+  Palette,
+  Settings,
+  Hash,
 } from "lucide-react";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
@@ -68,8 +74,6 @@ const VehicleDetails = () => {
     setRentVehResponse("");
   };
 
-  // Navigate to the existing complaint form with type + plate only.
-  // The complaint page re-resolves the vehicle from the backend.
   const handleReportVehicle = () => {
     const plate = state?.licensePlate || id;
     if (!plate) return;
@@ -213,10 +217,62 @@ const VehicleDetails = () => {
             </div>
           </div>
 
+          <div className={`${styles.specsContainer} ${styles.container}`}>
+            <h4>Specifications</h4>
+            <div className={styles.specsGrid}>
+              <div className={styles.specBox}>
+                <Users className={styles.specIcon} size={24} />
+                <div className={styles.specText}>
+                  <span>Seats</span>
+                  <p>{state?.seats || "N/A"}</p>
+                </div>
+              </div>
+
+              <div className={styles.specBox}>
+                <Fuel className={styles.specIcon} size={24} />
+                <div className={styles.specText}>
+                  <span>Fuel Type</span>
+                  <p>{state?.fuelType || "N/A"}</p>
+                </div>
+              </div>
+
+              <div className={styles.specBox}>
+                <Settings className={styles.specIcon} size={24} />
+                <div className={styles.specText}>
+                  <span>Transmission</span>
+                  <p>{state?.transmission || "N/A"}</p>
+                </div>
+              </div>
+
+              <div className={styles.specBox}>
+                <Gauge className={styles.specIcon} size={24} />
+                <div className={styles.specText}>
+                  <span>Mileage</span>
+                  <p>{state?.km ? `${state.km} km` : "N/A"}</p>
+                </div>
+              </div>
+
+              <div className={styles.specBox}>
+                <Palette className={styles.specIcon} size={24} />
+                <div className={styles.specText}>
+                  <span>Color</span>
+                  <p>{state?.color || "N/A"}</p>
+                </div>
+              </div>
+
+              <div className={styles.specBox}>
+                <Hash className={styles.specIcon} size={24} />
+                <div className={styles.specText}>
+                  <span>License Plate</span>
+                  <p>{state?.licensePlate || "N/A"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className={`${styles.detailsContainer} ${styles.container}`}>
             <h4>Details</h4>
             <p>{state?.details}</p>
-            <p>• Seats: {state?.seats}</p>
           </div>
 
           <div className={`${styles.mapContainer} ${styles.container}`}>

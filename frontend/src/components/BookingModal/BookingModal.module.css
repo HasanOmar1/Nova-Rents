@@ -8,7 +8,6 @@
   color: white;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
 
-  /* Bulletproof centering style across all desktop viewports */
   position: fixed;
   top: 50%;
   left: 50%;
@@ -26,7 +25,7 @@
 
 .BookingModal .header {
   margin-bottom: 20px;
-  padding-right: 25px; /* Leave space for close button */
+  padding-right: 25px;
 }
 
 .BookingModal .header h2 {
@@ -134,7 +133,6 @@
   border-color: var(--input-focus-border-color);
 }
 
-/* --- PRICE BREAKDOWN --- */
 .BookingModal .priceBreakdown {
   background-color: #16171a;
   border: 1px solid #2e3442;
@@ -169,7 +167,6 @@
   color: #60a5fa;
 }
 
-/* --- ACTIONS CONTROLS --- */
 .BookingModal .actions {
   display: flex;
   justify-content: flex-end;
@@ -223,13 +220,11 @@
     font-size: 1.25rem;
   }
 
-  /* Stack inputs vertically so the calendar inputs don't squeeze out of view */
   .BookingModal .allDatesContainer {
     flex-direction: column;
     gap: 12px;
   }
 
-  /* Make date pickers stretch across the entire modal block width */
   .BookingModal :global(.react-datepicker-wrapper) {
     width: 100%;
   }
