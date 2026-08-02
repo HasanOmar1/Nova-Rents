@@ -82,7 +82,9 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           address: vehicle.address || "",
           exactPickupAddress: vehicle.exactPickupAddress || "",
           pickupLatitude:
-            vehicle.pickupLatitude != null ? String(vehicle.pickupLatitude) : "",
+            vehicle.pickupLatitude != null
+              ? String(vehicle.pickupLatitude)
+              : "",
           pickupLongitude:
             vehicle.pickupLongitude != null
               ? String(vehicle.pickupLongitude)
@@ -435,19 +437,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             </select>
           </div>
 
-          <ExactPickupLocationPicker
-            value={{
-              exactPickupAddress: formData.exactPickupAddress,
-              pickupLatitude: formData.pickupLatitude,
-              pickupLongitude: formData.pickupLongitude,
-              pickupInstructions: formData.pickupInstructions,
-              googlePlaceId: formData.googlePlaceId,
-            }}
-            onChange={(partial) =>
-              setFormData((prev) => ({ ...prev, ...partial }))
-            }
-          />
-
           <div className={styles.inputGroup}>
             <label>Listing Expiration Date</label>
             <input
@@ -473,7 +462,18 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             />
           </div>
         </div>
-
+        <ExactPickupLocationPicker
+          value={{
+            exactPickupAddress: formData.exactPickupAddress,
+            pickupLatitude: formData.pickupLatitude,
+            pickupLongitude: formData.pickupLongitude,
+            pickupInstructions: formData.pickupInstructions,
+            googlePlaceId: formData.googlePlaceId,
+          }}
+          onChange={(partial) =>
+            setFormData((prev) => ({ ...prev, ...partial }))
+          }
+        />
         <div className={styles.textAreaAndUpload}>
           <div className={`${styles.inputGroup} ${styles.inputGroupTextArea}`}>
             <label>Vehicle Details & Description</label>
