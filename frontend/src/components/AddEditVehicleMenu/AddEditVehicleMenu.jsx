@@ -14,6 +14,7 @@ const initialFormState = {
   year: "",
   color: "",
   fuelType: "Petrol",
+  transmission: "Automatic",
   km: "",
   price: "",
   address: "",
@@ -77,6 +78,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           year: vehicle.year || "",
           color: vehicle.color || "",
           fuelType: vehicle.fuelType || "Petrol",
+          transmission: vehicle.transmission || "Automatic",
           km: vehicle.km || "",
           price: vehicle.price || "",
           address: vehicle.address || "",
@@ -168,6 +170,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     submitData.append("year", formData.year);
     submitData.append("color", formData.color);
     submitData.append("fuelType", formData.fuelType);
+    submitData.append("transmission", formData.transmission);
     submitData.append("km", formData.km);
     submitData.append("price", formData.price);
     submitData.append("address", formData.address);
@@ -408,6 +411,18 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               <option value="Diesel">Diesel</option>
               <option value="Electric">Electric</option>
               <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label>Transmission</label>
+            <select
+              name="transmission"
+              value={formData.transmission}
+              onChange={handleChange}
+            >
+              <option value="Automatic">Automatic</option>
+              <option value="Manual">Manual</option>
             </select>
           </div>
 
