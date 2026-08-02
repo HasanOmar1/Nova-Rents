@@ -173,6 +173,10 @@
 }
 
 @media (max-width: 768px) {
+  .Home .midCardsContainer {
+    flex-direction: column;
+  }
+
   .Home .chartFilters {
     flex-direction: column;
     align-items: stretch;
@@ -192,15 +196,8 @@
   .Home .chartFilters .toggleSeriesBtn {
     margin-left: 0;
   }
-}
-
-@media (max-width: 768px) {
   .Home h1 {
     font-size: 1.8rem;
-  }
-
-  .Home .midCardsContainer {
-    gap: 20px;
   }
 }
 

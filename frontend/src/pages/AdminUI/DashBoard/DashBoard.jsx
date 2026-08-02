@@ -113,7 +113,7 @@ const DashBoard = () => {
     <div className={`${styles.DashBoard} page`}>
       <h1>Dashboard</h1>
 
-      <div className={styles.activitesContainer}>
+      <div className={styles.midCardsContainer}>
         <HomeMidCards title={"Notification"} />
         <HomeMidCards title={"Recent Activity"} />
       </div>
@@ -136,6 +136,9 @@ const DashBoard = () => {
             min={fromDate}
             onChange={(e) => setToDate(e.target.value)}
           />
+        </div>
+
+        <div className={styles.categories}>
           <label htmlFor="categoryFilter">Category</label>
           <select
             id="categoryFilter"
@@ -152,18 +155,19 @@ const DashBoard = () => {
               </option>
             ))}
           </select>
+
+          {filteredSeries.length > TOP_SERIES_LIMIT && (
+            <button
+              type="button"
+              className={styles.toggleSeriesBtn}
+              onClick={() => setShowAllSeries(!showAllSeries)}
+            >
+              {showAllSeries
+                ? `Show top ${TOP_SERIES_LIMIT}`
+                : `Show all (${filteredSeries.length})`}
+            </button>
+          )}
         </div>
-        {filteredSeries.length > TOP_SERIES_LIMIT && (
-          <button
-            type="button"
-            className={styles.toggleSeriesBtn}
-            onClick={() => setShowAllSeries(!showAllSeries)}
-          >
-            {showAllSeries
-              ? `Show top ${TOP_SERIES_LIMIT}`
-              : `Show all (${filteredSeries.length})`}
-          </button>
-        )}
       </div>
 
       <div className={styles.bottomCardsContainer}>
