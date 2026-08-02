@@ -165,6 +165,7 @@ function validateAndNormalizeVehicleCreate(req, res) {
     licensePlate,
     modelId,
     fuelType,
+    transmission,
     expirationDate,
     year,
     km,
@@ -188,6 +189,7 @@ function validateAndNormalizeVehicleCreate(req, res) {
   if (
     licensePlate == null ||
     !fuelType ||
+    !transmission ||
     !expirationDate ||
     year == null ||
     km == null ||
@@ -260,6 +262,7 @@ function validateAndNormalizeVehicleCreate(req, res) {
     vehicle: {
       licensePlate: Number.parseInt(plateString, 10),
       fuelType,
+      transmission,
       expirationDate,
       year: yearNum,
       km: kmNum,
@@ -377,6 +380,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   const merged = {
     modelId: body.modelId ?? existingVehicle.modelId,
     fuelType: body.fuelType ?? existingVehicle.fuelType,
+    transmission: body.transmission ?? existingVehicle.transmission,
     expirationDate: body.expirationDate ?? existingVehicle.expirationDate,
     image: imageToSave,
     year: body.year ?? existingVehicle.year,
@@ -393,6 +397,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   if (
     merged.modelId == null ||
     !merged.fuelType ||
+    !merged.transmission ||
     !merged.expirationDate ||
     !merged.image ||
     merged.year == null ||
