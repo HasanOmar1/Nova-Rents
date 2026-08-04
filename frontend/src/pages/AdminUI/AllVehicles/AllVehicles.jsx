@@ -11,8 +11,10 @@ import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCard
 import { useVehicleContext } from "../../../context/VehicleContext";
 import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 import Pagination from "../../../components/Pagination/Pagination";
+import AddBrandVehicleMenu from "../../../components/AddBrandVehicleMenu/AddBrandVehicleMenu";
 
 const AllVehicles = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -40,6 +42,9 @@ const AllVehicles = () => {
     setStatusFilter(status);
     setCurrentPage(1);
   };
+
+  const openAddBrandMenu = () => setIsOpen(true);
+  const closeAddBrandMenu = () => setIsOpen(false);
 
   const handleNextPage = () => {
     if (allVehPagination?.currentPage < allVehPagination?.totalPages) {
@@ -110,6 +115,10 @@ const AllVehicles = () => {
               <option value="inactive">Inactive</option>
             </select>
           </div>
+
+          <button className={styles.addBrandBtn} onClick={openAddBrandMenu}>
+            Add Brand
+          </button>
         </div>
       </div>
 
@@ -159,6 +168,8 @@ const AllVehicles = () => {
           </p>
         )}
       </div>
+
+      <AddBrandVehicleMenu isOpen={isOpen} onClose={closeAddBrandMenu} />
     </div>
   );
 };

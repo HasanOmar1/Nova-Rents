@@ -33,5 +33,6 @@ router.put(
   vehicleQueries.updateVehicleStatus,
 );
 
+router.post("/addModel", vehicleQueries.addCarModel);
 
 module.exports = router;

@@ -873,6 +873,104 @@ async function updateVehicleStatus(req, res, next) {
   }
 }
 
+// --- ADD BRAND / MODEL / TYPE TO DATABASE ---
+const addCarModel = async (req, res, next) => {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+      return;
+    }
+
+    const { brandId, brandName, modelName, carTypeId, carTypeName } = req.body;
+
+    if (!brandName || !modelName || (!carTypeId && !carTypeName)) {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Brand, Model, and Car Type are required." });
+    }
+
+    let finalBrandId = brandId;
+    let finalCarTypeId = carTypeId;
+
+    // 1. Check if the Brand exists or needs to be inserted
+    if (!finalBrandId) {
+      const checkBrandQuery = `SELECT brandId FROM carbrands WHERE LOWER(brandName) = LOWER(?)`;
+      const existingBrand = await doQuery(checkBrandQuery, [brandName.trim()]);
+
+      if (existingBrand.length > 0) {
+        finalBrandId = existingBrand[0].brandId;
+      } else {
+        const insertBrandQuery = `INSERT INTO carbrands (brandName) VALUES (?)`;
+        const brandResult = await doQuery(insertBrandQuery, [brandName.trim()]);
+        finalBrandId = brandResult.insertId;
+      }
+    }
+
+    // 2. Check if the Car Type exists or needs to be inserted
+    if (!finalCarTypeId) {
+      const checkTypeQuery = `SELECT carTypeId FROM cartypes WHERE LOWER(carTypeName) = LOWER(?)`;
+      const existingType = await doQuery(checkTypeQuery, [carTypeName.trim()]);
+
+      if (existingType.length > 0) {
+        finalCarTypeId = existingType[0].carTypeId;
+      } else {
+        const insertTypeQuery = `INSERT INTO cartypes (carTypeName) VALUES (?)`;
+        const typeResult = await doQuery(insertTypeQuery, [carTypeName.trim()]);
+        finalCarTypeId = typeResult.insertId;
+      }
+    } else {
+      // Verify existing Car Type just to be safe
+      const checkTypeQuery = `SELECT carTypeId FROM cartypes WHERE carTypeId = ?`;
+      const existingType = await doQuery(checkTypeQuery, [finalCarTypeId]);
+
+      if (existingType.length === 0) {
+        return res
+          .status(STATUS_CODE.BAD_REQUEST)
+          .json({ message: "Invalid Car Type specified." });
+      }
+    }
+
+    // 3. Check if the Model already exists for this Brand
+    const checkModelQuery = `
+      SELECT modelId 
+      FROM carmodels 
+      WHERE LOWER(modelName) = LOWER(?) AND brandId = ?
+    `;
+    const existingModel = await doQuery(checkModelQuery, [
+      modelName.trim(),
+      finalBrandId,
+    ]);
+
+    if (existingModel.length > 0) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: `Model "${modelName}" already exists in the database for this brand.`,
+      });
+    }
+
+    // 4. Insert the new Model into carmodels
+    const insertModelQuery = `
+      INSERT INTO carmodels (modelName, brandId, carTypeId) 
+      VALUES (?, ?, ?)
+    `;
+    const modelResult = await doQuery(insertModelQuery, [
+      modelName.trim(),
+      finalBrandId,
+      finalCarTypeId,
+    ]);
+
+    return res.status(STATUS_CODE.CREATED).json({
+      message: "Model added successfully!",
+      model: {
+        modelId: modelResult.insertId,
+        modelName: modelName.trim(),
+        brandId: finalBrandId,
+        carTypeId: finalCarTypeId,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   addVehicle,
   getVehicleById,
@@ -884,4 +982,5 @@ module.exports = {
   getAllCarModels,
   getAllCarTypes,
   updateVehicleStatus,
+  addCarModel,
 };
