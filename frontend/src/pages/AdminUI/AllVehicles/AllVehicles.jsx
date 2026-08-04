@@ -11,8 +11,10 @@ import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCard
 import { useVehicleContext } from "../../../context/VehicleContext";
 import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 import Pagination from "../../../components/Pagination/Pagination";
+import AddBrandVehicleMenu from "../../../components/AddBrandVehicleMenu/AddBrandVehicleMenu";
 
 const AllVehicles = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -32,10 +34,17 @@ const AllVehicles = () => {
     }
   }, [allVehPagination?.totalPages, currentPage]);
 
-  const handleStatusChange = (e) => {
-    setStatusFilter(e.target.value);
+  const handleStatusChange = (valueOrEvent) => {
+    const status = valueOrEvent?.target
+      ? valueOrEvent.target.value
+      : valueOrEvent;
+
+    setStatusFilter(status);
     setCurrentPage(1);
   };
+
+  const openAddBrandMenu = () => setIsOpen(true);
+  const closeAddBrandMenu = () => setIsOpen(false);
 
   const handleNextPage = () => {
     if (allVehPagination?.currentPage < allVehPagination?.totalPages) {
@@ -54,21 +63,29 @@ const AllVehicles = () => {
       title: "Total in system",
       value: allVehStats?.total || 0,
       icon: <Car size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("all"),
+      isAction: true,
     },
     {
       title: "Available",
       value: allVehStats?.available || 0,
       icon: <CheckCircle2 size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("available"),
+      isAction: true,
     },
     {
       title: "Maintenance",
       value: allVehStats?.maintenance || 0,
       icon: <Wrench size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("maintenance"),
+      isAction: true,
     },
     {
       title: "Inactive",
       value: allVehStats?.inactive || 0,
       icon: <ShieldOff size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("inactive"),
+      isAction: true,
     },
   ];
 
@@ -98,6 +115,10 @@ const AllVehicles = () => {
               <option value="inactive">Inactive</option>
             </select>
           </div>
+
+          <button className={styles.addBrandBtn} onClick={openAddBrandMenu}>
+            Add Brand
+          </button>
         </div>
       </div>
 
@@ -108,6 +129,8 @@ const AllVehicles = () => {
             title={item.title}
             value={item.value}
             icon={item.icon}
+            onClick={item.onClick}
+            isAction={item.isAction}
           />
         ))}
       </div>
@@ -145,6 +168,8 @@ const AllVehicles = () => {
           </p>
         )}
       </div>
+
+      <AddBrandVehicleMenu isOpen={isOpen} onClose={closeAddBrandMenu} />
     </div>
   );
 };

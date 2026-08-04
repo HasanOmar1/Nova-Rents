@@ -216,6 +216,18 @@
   font-weight: 500;
 }
 
+/* .VehicleDetails .detailsContainer {
+  margin-top: 30px;
+}
+
+.VehicleDetails .detailsContainer p {
+  max-width: 55ch;
+  color: var(--gray);
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: pre-line;
+} */
+
 .VehicleDetails .detailsContainer {
   margin-top: 30px;
 }
@@ -226,6 +238,58 @@
   font-weight: 500;
   font-size: 0.9rem;
   white-space: pre-line;
+}
+
+.VehicleDetails .specsContainer {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.VehicleDetails .specsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+}
+
+.VehicleDetails .specBox {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: #11141a;
+  padding: 15px 20px;
+  border-radius: 12px;
+  border: var(--cards-border);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.VehicleDetails .specIcon {
+  color: #87bee9;
+  flex-shrink: 0;
+}
+
+.VehicleDetails .specText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.VehicleDetails .specText span {
+  color: #64748b;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.VehicleDetails .specText p {
+  color: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
 }
 
 .VehicleDetails .mapContainer {
@@ -506,5 +570,19 @@
 
   .VehicleDetails .typeStatusContainer {
     flex-direction: column;
+  }
+
+  .VehicleDetails .specsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .VehicleDetails .specBox {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .VehicleDetails .specText p {
+    font-size: 0.85rem;
   }
 }

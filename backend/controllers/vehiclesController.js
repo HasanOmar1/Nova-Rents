@@ -20,9 +20,7 @@ const {
   createSystemHistory,
 } = require("../database/queries/systemHistoryQueries");
 const { formatDateForInput } = require("../utils/formatDate");
-const {
-  omitPrivatePickupFields,
-} = require("../utils/omitPrivatePickupFields");
+const { omitPrivatePickupFields } = require("../utils/omitPrivatePickupFields");
 const {
   rejectPendingRentalsByLicensePlate,
   cancelApprovedRentalsByLicensePlate,
@@ -32,6 +30,7 @@ const {
 const {
   createNotification,
 } = require("../database/queries/notificationQueries");
+
 const getUserVehicles = async (req, res, next) => {
   try {
     if (
@@ -54,6 +53,7 @@ const getUserVehicles = async (req, res, next) => {
       SELECT 
         v.licensePlate,
         v.fuelType,
+        v.transmission,
         v.status,
         v.expirationDate,
         v.image,
@@ -141,6 +141,7 @@ const addVehicle = async (req, res, next) => {
       licensePlate,
       modelId,
       fuelType,
+      transmission,
       expirationDate,
       image,
       year,
@@ -177,15 +178,16 @@ const addVehicle = async (req, res, next) => {
 
     const insertQuery = `
       INSERT INTO vehicles 
-      (licensePlate, fuelType, expirationDate, image, year, km, address,
+      (licensePlate, fuelType, transmission, expirationDate, image, year, km, address,
        exactPickupAddress, pickupLatitude, pickupLongitude, pickupInstructions, googlePlaceId,
        price, color, modelId, ownerId, details, seats)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       licensePlate,
       fuelType,
+      transmission,
       expirationDate,
       image,
       year,
@@ -203,7 +205,9 @@ const addVehicle = async (req, res, next) => {
       details,
       seats,
     ];
+
     await doQuery(insertQuery, values);
+
     await createActivity(
       userId,
       "Added new vehicle",
@@ -220,6 +224,7 @@ const addVehicle = async (req, res, next) => {
       licensePlate,
       `Added new vehicle with license plate of ${licensePlate}`,
     );
+
     const newVehicle = await getVehicleByLicensePlate(licensePlate);
     res.status(STATUS_CODE.CREATED).json({
       message: "Vehicle added successfully",
@@ -239,6 +244,7 @@ const getVehicleById = async (req, res, next) => {
       SELECT 
         v.licensePlate,
         v.fuelType,
+        v.transmission,
         v.expirationDate,
         v.image,
         v.year,
@@ -432,6 +438,7 @@ const updateVehicle = async (req, res, next) => {
     const {
       modelId,
       fuelType,
+      transmission,
       expirationDate,
       image,
       year,
@@ -459,6 +466,8 @@ const updateVehicle = async (req, res, next) => {
     if (Number(modelId) !== Number(existingVehicle.modelId))
       updatedFields.push("model");
     if (fuelType !== existingVehicle.fuelType) updatedFields.push("fuel type");
+    if (transmission !== existingVehicle.transmission)
+      updatedFields.push("transmission");
     if (newExpirationDate !== oldExpirationDate)
       updatedFields.push("expiration date");
     if (image !== existingVehicle.image) updatedFields.push("image");
@@ -485,7 +494,7 @@ const updateVehicle = async (req, res, next) => {
 
     const updateQuery = `
       UPDATE vehicles
-      SET modelId = ?, fuelType = ?, expirationDate = ?, image = ?, year = ?, km = ?,
+      SET modelId = ?, fuelType = ?, transmission = ?, expirationDate = ?, image = ?, year = ?, km = ?,
           address = ?, exactPickupAddress = ?, pickupLatitude = ?, pickupLongitude = ?,
           pickupInstructions = ?, googlePlaceId = ?,
           price = ?, color = ?, status = ?, details = ?, seats = ?
@@ -495,6 +504,7 @@ const updateVehicle = async (req, res, next) => {
     const values = [
       modelId,
       fuelType,
+      transmission,
       newExpirationDate,
       image,
       year,
@@ -609,7 +619,7 @@ const getAllVehicles = async (req, res, next) => {
     // 2. FETCH VEHICLES
     let query = `
       SELECT 
-        v.licensePlate, v.fuelType, DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
+        v.licensePlate, v.fuelType, v.transmission, DATE_FORMAT(v.expirationDate, '%d/%m/%Y') AS expirationDate,
         v.image, v.year, v.km, v.address, v.price, v.color, v.status, v.ownerId, v.createdAt, v.details, v.seats,
         cm.modelId, cm.modelName, cb.brandId, cb.brandName, ct.carTypeId, ct.carTypeName,
         u.firstName AS ownerFirstName, u.lastName AS ownerLastName,
@@ -773,6 +783,7 @@ const getAllCarTypes = async (req, res, next) => {
     next(error);
   }
 };
+
 async function updateVehicleStatus(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -862,6 +873,104 @@ async function updateVehicleStatus(req, res, next) {
   }
 }
 
+// --- ADD BRAND / MODEL / TYPE TO DATABASE ---
+const addCarModel = async (req, res, next) => {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+      return;
+    }
+
+    const { brandId, brandName, modelName, carTypeId, carTypeName } = req.body;
+
+    if (!brandName || !modelName || (!carTypeId && !carTypeName)) {
+      return res
+        .status(STATUS_CODE.BAD_REQUEST)
+        .json({ message: "Brand, Model, and Car Type are required." });
+    }
+
+    let finalBrandId = brandId;
+    let finalCarTypeId = carTypeId;
+
+    // 1. Check if the Brand exists or needs to be inserted
+    if (!finalBrandId) {
+      const checkBrandQuery = `SELECT brandId FROM carbrands WHERE LOWER(brandName) = LOWER(?)`;
+      const existingBrand = await doQuery(checkBrandQuery, [brandName.trim()]);
+
+      if (existingBrand.length > 0) {
+        finalBrandId = existingBrand[0].brandId;
+      } else {
+        const insertBrandQuery = `INSERT INTO carbrands (brandName) VALUES (?)`;
+        const brandResult = await doQuery(insertBrandQuery, [brandName.trim()]);
+        finalBrandId = brandResult.insertId;
+      }
+    }
+
+    // 2. Check if the Car Type exists or needs to be inserted
+    if (!finalCarTypeId) {
+      const checkTypeQuery = `SELECT carTypeId FROM cartypes WHERE LOWER(carTypeName) = LOWER(?)`;
+      const existingType = await doQuery(checkTypeQuery, [carTypeName.trim()]);
+
+      if (existingType.length > 0) {
+        finalCarTypeId = existingType[0].carTypeId;
+      } else {
+        const insertTypeQuery = `INSERT INTO cartypes (carTypeName) VALUES (?)`;
+        const typeResult = await doQuery(insertTypeQuery, [carTypeName.trim()]);
+        finalCarTypeId = typeResult.insertId;
+      }
+    } else {
+      // Verify existing Car Type just to be safe
+      const checkTypeQuery = `SELECT carTypeId FROM cartypes WHERE carTypeId = ?`;
+      const existingType = await doQuery(checkTypeQuery, [finalCarTypeId]);
+
+      if (existingType.length === 0) {
+        return res
+          .status(STATUS_CODE.BAD_REQUEST)
+          .json({ message: "Invalid Car Type specified." });
+      }
+    }
+
+    // 3. Check if the Model already exists for this Brand
+    const checkModelQuery = `
+      SELECT modelId 
+      FROM carmodels 
+      WHERE LOWER(modelName) = LOWER(?) AND brandId = ?
+    `;
+    const existingModel = await doQuery(checkModelQuery, [
+      modelName.trim(),
+      finalBrandId,
+    ]);
+
+    if (existingModel.length > 0) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: `Model "${modelName}" already exists in the database for this brand.`,
+      });
+    }
+
+    // 4. Insert the new Model into carmodels
+    const insertModelQuery = `
+      INSERT INTO carmodels (modelName, brandId, carTypeId) 
+      VALUES (?, ?, ?)
+    `;
+    const modelResult = await doQuery(insertModelQuery, [
+      modelName.trim(),
+      finalBrandId,
+      finalCarTypeId,
+    ]);
+
+    return res.status(STATUS_CODE.CREATED).json({
+      message: "Model added successfully!",
+      model: {
+        modelId: modelResult.insertId,
+        modelName: modelName.trim(),
+        brandId: finalBrandId,
+        carTypeId: finalCarTypeId,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   addVehicle,
   getVehicleById,
@@ -873,4 +982,5 @@ module.exports = {
   getAllCarModels,
   getAllCarTypes,
   updateVehicleStatus,
+  addCarModel,
 };

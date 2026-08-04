@@ -14,6 +14,7 @@ const initialFormState = {
   year: "",
   color: "",
   fuelType: "Petrol",
+  transmission: "Automatic",
   km: "",
   price: "",
   address: "",
@@ -25,7 +26,7 @@ const initialFormState = {
   expirationDate: "",
   status: "available",
   details: "",
-  seats: "5",
+  seats: "4",
   images: [],
 };
 
@@ -77,12 +78,15 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           year: vehicle.year || "",
           color: vehicle.color || "",
           fuelType: vehicle.fuelType || "Petrol",
+          transmission: vehicle.transmission || "Automatic",
           km: vehicle.km || "",
           price: vehicle.price || "",
           address: vehicle.address || "",
           exactPickupAddress: vehicle.exactPickupAddress || "",
           pickupLatitude:
-            vehicle.pickupLatitude != null ? String(vehicle.pickupLatitude) : "",
+            vehicle.pickupLatitude != null
+              ? String(vehicle.pickupLatitude)
+              : "",
           pickupLongitude:
             vehicle.pickupLongitude != null
               ? String(vehicle.pickupLongitude)
@@ -94,7 +98,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             : "",
           status: vehicle.status || "available",
           details: vehicle.details || "",
-          seats: vehicle.seats || "5",
+          seats: vehicle.seats || "4",
           images: [],
         });
 
@@ -112,11 +116,21 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     if (!dialog) return;
 
     if (isOpen) {
-      dialog.showModal();
+      if (!dialog.open) dialog.showModal();
     } else {
-      dialog.close();
+      if (dialog.open) dialog.close();
     }
   }, [isOpen]);
+
+  // --- SCROLL TO TOP ON ERROR ---
+  useEffect(() => {
+    if (errorMsg && dialogRef.current) {
+      dialogRef.current.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  }, [errorMsg]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -166,6 +180,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     submitData.append("year", formData.year);
     submitData.append("color", formData.color);
     submitData.append("fuelType", formData.fuelType);
+    submitData.append("transmission", formData.transmission);
     submitData.append("km", formData.km);
     submitData.append("price", formData.price);
     submitData.append("address", formData.address);
@@ -222,7 +237,10 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     <dialog
       className={styles.AddEditVehicleMenu}
       ref={dialogRef}
-      onClose={handleCloseAndReset}
+      onCancel={(e) => {
+        e.preventDefault();
+        handleCloseAndReset();
+      }}
       onClick={(e) => e.stopPropagation()}
       style={{ cursor: "default" }}
     >
@@ -409,6 +427,18 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             </select>
           </div>
 
+          <div className={styles.inputGroup}>
+            <label>Transmission</label>
+            <select
+              name="transmission"
+              value={formData.transmission}
+              onChange={handleChange}
+            >
+              <option value="Automatic">Automatic</option>
+              <option value="Manual">Manual</option>
+            </select>
+          </div>
+
           <div className={`${styles.inputGroup}`}>
             <label>Location / City</label>
             <select
@@ -435,19 +465,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             </select>
           </div>
 
-          <ExactPickupLocationPicker
-            value={{
-              exactPickupAddress: formData.exactPickupAddress,
-              pickupLatitude: formData.pickupLatitude,
-              pickupLongitude: formData.pickupLongitude,
-              pickupInstructions: formData.pickupInstructions,
-              googlePlaceId: formData.googlePlaceId,
-            }}
-            onChange={(partial) =>
-              setFormData((prev) => ({ ...prev, ...partial }))
-            }
-          />
-
           <div className={styles.inputGroup}>
             <label>Listing Expiration Date</label>
             <input
@@ -467,13 +484,25 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               name="seats"
               value={formData.seats}
               onChange={handleChange}
+              placeholder="4"
               required
               min="1"
               max="15"
             />
           </div>
         </div>
-
+        <ExactPickupLocationPicker
+          value={{
+            exactPickupAddress: formData.exactPickupAddress,
+            pickupLatitude: formData.pickupLatitude,
+            pickupLongitude: formData.pickupLongitude,
+            pickupInstructions: formData.pickupInstructions,
+            googlePlaceId: formData.googlePlaceId,
+          }}
+          onChange={(partial) =>
+            setFormData((prev) => ({ ...prev, ...partial }))
+          }
+        />
         <div className={styles.textAreaAndUpload}>
           <div className={`${styles.inputGroup} ${styles.inputGroupTextArea}`}>
             <label>Vehicle Details & Description</label>

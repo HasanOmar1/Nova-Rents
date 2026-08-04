@@ -4,42 +4,11 @@
   margin-top: 30px;
 }
 
-.DashBoard .complaintsContainer {
+.DashBoard .midCardsContainer {
   display: flex;
   gap: 30px;
-  margin-top: 40px;
-  min-height: 55vh;
+  margin-top: 30px;
   padding-bottom: 30px;
-}
-
-.DashBoard .complaintsContainer .left,
-.DashBoard .complaintsContainer .right {
-  border-radius: 20px;
-  background-color: var(--bg-gray);
-  border: var(--cards-border);
-  width: 50%;
-}
-
-.DashBoard .complaintsContainer .titleContainer {
-  border-bottom: var(--cards-border);
-  padding: 15px 30px;
-}
-
-.DashBoard .complaintsContainer .titleContainer h4 {
-  color: rgba(153, 205, 50, 0.897);
-}
-
-.DashBoard .complaintsContainer .titleContainer p {
-  color: var(--gray);
-  font-size: 0.7rem;
-  font-weight: bold;
-}
-
-.DashBoard .activitesContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  margin: 30px 0;
 }
 
 /* Filter toolbar above the full-width chart */
@@ -61,6 +30,13 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.DashBoard .chartFilters .categories {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
 }
 
 .DashBoard .chartFilters label {
@@ -115,15 +91,17 @@
 }
 
 @media (max-width: 768px) {
-  .DashBoard .complaintsContainer {
+  .DashBoard .midCardsContainer {
     flex-direction: column;
-    gap: 20px;
-    min-height: auto;
   }
-
-  .DashBoard .complaintsContainer .left,
-  .DashBoard .complaintsContainer .right {
-    width: 100%;
+  .DashBoard .chartFilters {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+  }
+  .DashBoard .chartFilters .filterGroup {
+    flex-direction: column;
   }
 }
 
@@ -131,13 +109,5 @@
   .DashBoard .topCardsContainer {
     grid-template-columns: 1fr;
     margin-top: 20px;
-  }
-
-  .DashBoard .complaintsContainer {
-    margin-top: 25px;
-  }
-
-  .DashBoard .complaintsContainer .titleContainer {
-    padding: 15px 20px;
   }
 }

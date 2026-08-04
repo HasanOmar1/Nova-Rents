@@ -70,8 +70,12 @@ const Users = () => {
     }
   };
 
-  const handleStatusChange = (e) => {
-    setStatusFilter(e.target.value);
+  const handleStatusChange = (valueOrEvent) => {
+    const status = valueOrEvent?.target
+      ? valueOrEvent.target.value
+      : valueOrEvent;
+
+    setStatusFilter(status);
     setCurrentPage(1);
   };
 
@@ -84,21 +88,29 @@ const Users = () => {
       title: "All Users",
       value: usersStats.total,
       icon: <UsersIcon size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("all"),
+      isAction: true,
     },
     {
       title: "Active",
       value: usersStats.active,
       icon: <CheckCircle2 size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("active"),
+      isAction: true,
     },
     {
       title: "Blocked",
       value: usersStats.blocked,
       icon: <Shield size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("blocked"),
+      isAction: true,
     },
     {
       title: "Admins",
       value: usersStats.admins,
       icon: <UsersIcon size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("admins"),
+      isAction: true,
     },
   ];
 
@@ -114,6 +126,8 @@ const Users = () => {
               title={item.title}
               value={item.value}
               icon={item.icon}
+              onClick={item.onClick}
+              isAction={item.isAction}
             />
           );
         })}
@@ -144,6 +158,7 @@ const Users = () => {
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="blocked">Blocked</option>
+            <option value="admins">Admins</option>
           </select>
         </div>
       </div>

@@ -95,12 +95,19 @@ const getAllUsers = async (req, res, next) => {
     const searchTerm = `%${search}%`;
     const status = req.query.status || "all";
 
+    const roleFilter = req.query.role;
+
     let whereClause = `WHERE u.email LIKE ?`;
     const queryParams = [searchTerm];
 
     if (status !== "all") {
       whereClause += ` AND u.status = ?`;
       queryParams.push(status);
+    }
+
+    if (roleFilter) {
+      whereClause += ` AND u.role = ?`;
+      queryParams.push(roleFilter);
     }
 
     const query = ` 
@@ -177,7 +184,7 @@ const getAllUsers = async (req, res, next) => {
       if (monthObj) monthObj.users = Number(row.newUsers) || 0;
     });
 
-    res.status(STATUS_CODE.OK).json({
+    res.status(200).json({
       message: "Users fetched successfully",
       users: formattedUsers,
       stats: {
@@ -215,14 +222,31 @@ const getUsersByStatus = async (req, res, next) => {
     const search = req.query.search || "";
     const searchTerm = `%${search}%`;
 
+    const roleFilter = req.query.role;
+
+    let whereClause = "WHERE u.status = ? and u.email LIKE ?";
+    let countWhereClause = "Where status = ? and email LIKE ?";
+
+    let queryParams = [status, searchTerm];
+    let countParams = [status, searchTerm];
+
+    if (roleFilter) {
+      whereClause += " AND u.role = ?";
+      countWhereClause += " AND role = ?";
+      queryParams.push(roleFilter);
+      countParams.push(roleFilter);
+    }
+
     const query = ` 
       SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.birthDate, u.role, u.status
       FROM users u
-      WHERE status = ? AND u.email LIKE ?
+      ${whereClause}
       ORDER BY u.userId DESC
       LIMIT ? OFFSET ?
     `;
-    const users = await doQuery(query, [status, searchTerm, limit, offset]);
+
+    const finalQueryParams = [...queryParams, limit, offset];
+    const users = await doQuery(query, finalQueryParams);
 
     const formattedUsers = users.map((user) => ({
       ...user,
@@ -231,8 +255,8 @@ const getUsersByStatus = async (req, res, next) => {
         : "N/A",
     }));
 
-    const countQuery = `SELECT COUNT(*) as totalCount FROM users WHERE status = ? AND email LIKE ?`;
-    const countResult = await doQuery(countQuery, [status, searchTerm]);
+    const countQuery = `SELECT COUNT(*) as totalCount FROM users ${countWhereClause}`;
+    const countResult = await doQuery(countQuery, countParams);
     const totalPages = Math.ceil(countResult[0].totalCount / limit);
 
     const statsQuery = `

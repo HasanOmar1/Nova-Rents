@@ -63,8 +63,6 @@ function App() {
         ) : (
           <>
             <Route path="/" element={<LoginRegister />} />
-
-            {/* Fixes Logout Flash: If they are on these routes and log out, redirect them instantly */}
             <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
           </>

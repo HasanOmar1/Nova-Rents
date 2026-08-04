@@ -114,7 +114,6 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 8px;
-  /* height: 200px; */
 }
 
 .AddEditVehicleMenu .selectedImagesContainer p {
@@ -177,7 +176,7 @@
   font-weight: 500;
   color: #cbd5e1;
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .AddEditVehicleMenu .checkboxLabel p {
@@ -196,12 +195,12 @@
 .AddEditVehicleMenu .restoreBanner {
   background-color: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
-  padding: 15px;
+  padding: 10px 15px;
   border-radius: 10px;
-  margin-top: 15px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-bottom: 10px;
 }
 
 .AddEditVehicleMenu .restoreBanner p:first-child {
