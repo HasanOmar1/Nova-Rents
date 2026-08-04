@@ -25,8 +25,16 @@
 }
 
 .MyVehicles .addVehicleBtn {
-  border-radius: 0.75rem;
+  background-color: #3b82f6;
   color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 1s ease;
+  white-space: nowrap;
   background-image: linear-gradient(
     to right,
     #0ea5e9,
@@ -35,11 +43,12 @@
     #1d4ed8
   );
   background-size: 200% auto;
-  transition: background-position 1s ease;
 }
 
 .MyVehicles .addVehicleBtn:hover {
   background-position: center;
+  background-color: #2563eb;
+  transform: translateY(-1px);
 }
 
 /* Top Cards */
@@ -119,24 +128,6 @@
   display: flex;
   align-items: center;
   gap: 15px;
-}
-
-.MyVehicles .addVehicleBtn {
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.MyVehicles .addVehicleBtn:hover {
-  background-color: #2563eb;
-  transform: translateY(-1px);
 }
 
 .MyVehicles .filterContainer {
