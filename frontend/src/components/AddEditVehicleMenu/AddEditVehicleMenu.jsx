@@ -26,7 +26,7 @@ const initialFormState = {
   expirationDate: "",
   status: "available",
   details: "",
-  seats: "5",
+  seats: "4",
   images: [],
 };
 
@@ -98,7 +98,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             : "",
           status: vehicle.status || "available",
           details: vehicle.details || "",
-          seats: vehicle.seats || "5",
+          seats: vehicle.seats || "4",
           images: [],
         });
 
@@ -116,11 +116,21 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     if (!dialog) return;
 
     if (isOpen) {
-      dialog.showModal();
+      if (!dialog.open) dialog.showModal();
     } else {
-      dialog.close();
+      if (dialog.open) dialog.close();
     }
   }, [isOpen]);
+
+  // --- SCROLL TO TOP ON ERROR ---
+  useEffect(() => {
+    if (errorMsg && dialogRef.current) {
+      dialogRef.current.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  }, [errorMsg]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -227,7 +237,10 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     <dialog
       className={styles.AddEditVehicleMenu}
       ref={dialogRef}
-      onClose={handleCloseAndReset}
+      onCancel={(e) => {
+        e.preventDefault();
+        handleCloseAndReset();
+      }}
       onClick={(e) => e.stopPropagation()}
       style={{ cursor: "default" }}
     >
@@ -471,6 +484,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               name="seats"
               value={formData.seats}
               onChange={handleChange}
+              placeholder="4"
               required
               min="1"
               max="15"
