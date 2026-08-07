@@ -805,6 +805,15 @@ async function updateVehicleStatus(req, res, next) {
         .json({ message: "Vehicle not found" });
     }
 
+    const loggedInUserId = Number(req.session.user.userId);
+    const vehicleOwnerId = Number(existingVehicle.ownerId);
+
+    if (vehicleOwnerId !== loggedInUserId) {
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "You are not allowed to update this vehicle's status",
+      });
+    }
+
     if (status === "maintenance" && existingVehicle.status !== "maintenance") {
       const hasActiveRental = await hasActiveRentalNow(licensePlate);
 
