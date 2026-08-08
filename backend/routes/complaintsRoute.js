@@ -18,6 +18,18 @@ router.get(
 );
 
 router.get(
+  "/owner-vehicle-reports",
+  isAuthenticated,
+  complaintsController.getOwnerVehicleReports_controller,
+);
+
+router.get(
+  "/about-me",
+  isAuthenticated,
+  complaintsController.getComplaintsAboutMe_controller,
+);
+
+router.get(
   "/trends",
   isAuthenticated,
   complaintsController.getComplaintTrends_controller,

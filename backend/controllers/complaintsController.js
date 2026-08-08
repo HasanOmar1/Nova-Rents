@@ -6,7 +6,15 @@ const {
 } = require("../database/queries/vehicleQueries");
 
 const {
-  createComplaint,
+  findEligibleRentalForVehicleReport,
+  findEligibleRentalForVehicleReportOnConnection,
+  findEligibleRentalForOwnerReport,
+  findEligibleRentalForOwnerReportOnConnection,
+  lockRentalRowForUpdate,
+  findActiveComplaintForRentalTypeOnConnection,
+  createComplaintOnConnection,
+  getActiveVehicleComplaintsForOwner,
+  getComplaintsAboutOwner,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,
@@ -16,6 +24,7 @@ const {
   getComplaintReporterById,
   getComplaintTrendsByRange,
 } = require("../database/queries/complaintQueries");
+const { withTransaction } = require("../database/withTransaction");
 const {
   parseLocalDate,
   resolveGranularity,
@@ -33,13 +42,52 @@ const {
 } = require("../utils/validsController");
 
 const { getUserByEmail, getUserById } = require("../database/queries/userQueries");
-const { sendComplaintResponseEmail } = require("../services/emailService");
+const {
+  createNotification,
+} = require("../database/queries/notificationQueries");
+const {
+  sendComplaintResponseEmail,
+  sendOwnerVehicleReportEmail,
+  sendReportedOwnerReportEmail,
+  sendReportedOwnerReportStatusEmail,
+  sendOwnerVehicleReportStatusEmail,
+} = require("../services/emailService");
+
+async function getVehicleLabelForOwnerNotice(licensePlate) {
+  // Owner email/name from users join — never reporter identity.
+  const rows = await doQuery(
+    `
+      SELECT
+        v.ownerId,
+        v.licensePlate,
+        cb.brandName,
+        cm.modelName,
+        u.email AS ownerEmail,
+        u.firstName AS ownerFirstName
+      FROM vehicles v
+      JOIN carmodels cm ON v.modelId = cm.modelId
+      JOIN carbrands cb ON cm.brandId = cb.brandId
+      JOIN users u ON u.userId = v.ownerId
+      WHERE v.licensePlate = ?
+      LIMIT 1
+    `,
+    [licensePlate],
+  );
+  return rows[0] || null;
+}
+
+function formatComplaintStatusLabel(status) {
+  if (status === "in_review") return "In Review";
+  if (!status) return "Unknown";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
 async function createComplaint_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
       return;
     }
 
+    // Identity always from the session — never from client body.
     const userId = req.session.user.userId;
 
     const {
@@ -49,6 +97,7 @@ async function createComplaint_controller(req, res, next) {
       ownerId,
       title,
       description,
+      rentalId,
     } = req.body;
 
     const images =
@@ -60,7 +109,9 @@ async function createComplaint_controller(req, res, next) {
       return;
     }
 
-    // Validate vehicle complaint
+    const parsedRentalId = Number(rentalId);
+
+    // Validate vehicle complaint target exists / not own vehicle
     if (complaintType === "vehicle") {
       const vehicle = await getVehicleByLicensePlate(vehicleLicensePlate);
 
@@ -111,28 +162,130 @@ async function createComplaint_controller(req, res, next) {
       }
     }
 
-    // Create the complaint
-    const result = await createComplaint(
-      userId,
-      complaintType,
-      complaintType === "vehicle" ? vehicleLicensePlate : null,
-      complaintType === "owner" ? resolvedOwnerId : null,
-      title,
-      description,
-      images,
-    );
+    // Fast eligibility check (session renter + paid rental + target match).
+    // Authoritative re-check happens inside the transaction after FOR UPDATE.
+    let eligibleRental = null;
+    if (complaintType === "vehicle") {
+      eligibleRental = await findEligibleRentalForVehicleReport(
+        userId,
+        parsedRentalId,
+        vehicleLicensePlate,
+      );
+    } else {
+      eligibleRental = await findEligibleRentalForOwnerReport(
+        userId,
+        parsedRentalId,
+        resolvedOwnerId,
+      );
+    }
 
-    if (!result || result.affectedRows === 0) {
-      return res.status(STATUS_CODE.INTERNAL_SERVER_ERROR).json({
-        message: "Failed to create complaint",
+    if (!eligibleRental) {
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message:
+          "Reporting is only available after a paid rental with this target.",
       });
+    }
+
+    const plateForInsert =
+      complaintType === "vehicle" ? eligibleRental.licensePlate : null;
+    const ownerForInsert =
+      complaintType === "owner" ? resolvedOwnerId : null;
+
+    let insertResult;
+    try {
+      insertResult = await withTransaction(async (connection) => {
+        const lockedRental = await lockRentalRowForUpdate(
+          connection,
+          parsedRentalId,
+        );
+        if (!lockedRental) {
+          const err = new Error("Rental not found");
+          err.code = "RENTAL_NOT_FOUND";
+          throw err;
+        }
+
+        // Re-validate paid relationship on the same connection after the lock.
+        let stillEligible = null;
+        if (complaintType === "vehicle") {
+          stillEligible = await findEligibleRentalForVehicleReportOnConnection(
+            connection,
+            userId,
+            parsedRentalId,
+            plateForInsert,
+          );
+        } else {
+          stillEligible = await findEligibleRentalForOwnerReportOnConnection(
+            connection,
+            userId,
+            parsedRentalId,
+            ownerForInsert,
+          );
+        }
+
+        if (!stillEligible) {
+          const err = new Error("Rental is no longer eligible for reporting");
+          err.code = "RENTAL_NOT_ELIGIBLE";
+          throw err;
+        }
+
+        const activeComplaint =
+          await findActiveComplaintForRentalTypeOnConnection(
+            connection,
+            parsedRentalId,
+            complaintType,
+          );
+
+        if (activeComplaint) {
+          const err = new Error(
+            "You already have an active report for this rental.",
+          );
+          err.code = "ACTIVE_COMPLAINT_EXISTS";
+          throw err;
+        }
+
+        const result = await createComplaintOnConnection(
+          connection,
+          userId,
+          parsedRentalId,
+          complaintType,
+          plateForInsert,
+          ownerForInsert,
+          title,
+          description,
+          images,
+        );
+
+        if (!result || result.affectedRows !== 1) {
+          const err = new Error("Failed to create complaint");
+          err.code = "COMPLAINT_INSERT_FAILED";
+          throw err;
+        }
+
+        return result;
+      });
+    } catch (txError) {
+      if (txError.code === "ACTIVE_COMPLAINT_EXISTS") {
+        return res.status(STATUS_CODE.CONFLICT).json({
+          message: "You already have an active report for this rental.",
+        });
+      }
+      if (
+        txError.code === "RENTAL_NOT_FOUND" ||
+        txError.code === "RENTAL_NOT_ELIGIBLE"
+      ) {
+        return res.status(STATUS_CODE.FORBIDDEN).json({
+          message:
+            "Reporting is only available after a paid rental with this target.",
+        });
+      }
+      throw txError;
     }
 
     // Build readable user name
     const fullName = `${req.session.user.firstName || ""} ${
       req.session.user.lastName || ""
     }`.trim();
-    
+
     const actorName = fullName
       ? `${fullName} (${req.session.user.email})`
       : req.session.user.email || "A user";
@@ -146,28 +299,27 @@ async function createComplaint_controller(req, res, next) {
 
     const adminHistoryDescription = `${actorName} filed ${typeArticle} ${complaintType} complaint: ${title}`;
 
-    // Personal user activity
+    // Side effects only after successful COMMIT.
     await createActivity(
       userId,
       "complaint_created",
       userActivityDescription,
-      result.insertId,
+      insertResult.insertId,
     );
 
-    // System-wide history for admin analytics
     await createSystemHistory(
-      userId, // actorUserId
-      "complaint", // category
-      "create", // operation
-      "complaint_created", // eventName
-      "complaint", // entityType
-      String(result.insertId), // entityId = complaint ID
-      null, // rentalId
-      complaintType === "vehicle" ? vehicleLicensePlate : null,
+      userId,
+      "complaint",
+      "create",
+      "complaint_created",
+      "complaint",
+      String(insertResult.insertId),
+      parsedRentalId,
+      complaintType === "vehicle" ? plateForInsert : null,
       adminHistoryDescription,
     );
 
-    // Notify all admins
+    // Notify all admins (existing behavior)
     const admins = await doQuery(
       "SELECT userId FROM users WHERE role = 'admin'",
     );
@@ -188,9 +340,124 @@ async function createComplaint_controller(req, res, next) {
       );
     }
 
+    // Vehicle complaints: notify the authoritative vehicle owner (DB ownerId).
+    // In-app + email. Never include reporter identity.
+    // Failure must not undo the committed complaint.
+    if (complaintType === "vehicle" && plateForInsert != null) {
+      try {
+        const vehicleNotice = await getVehicleLabelForOwnerNotice(plateForInsert);
+        if (vehicleNotice && vehicleNotice.ownerId) {
+          const vehicleLabel = `${vehicleNotice.brandName} ${vehicleNotice.modelName}`;
+          const reasonText = String(title || "").trim();
+          const ownerMessage =
+            `A report was submitted regarding your ${vehicleLabel} ` +
+            `(plate ${vehicleNotice.licensePlate}). ` +
+            `Reason: ${reasonText}. Status: Open. ` +
+            `Nova Rents support will review the report.`;
+
+          await createNotification(
+            vehicleNotice.ownerId,
+            parsedRentalId,
+            "vehicle_report",
+            "Vehicle Report Received",
+            ownerMessage.slice(0, 255),
+          );
+
+          if (vehicleNotice.ownerEmail) {
+            try {
+              // DB-authoritative submitted time (set by MySQL on INSERT).
+              const createdRows = await doQuery(
+                `SELECT createdAt FROM complaints WHERE complaintId = ? LIMIT 1`,
+                [insertResult.insertId],
+              );
+              const submittedAt = createdRows[0]?.createdAt ?? null;
+
+              await sendOwnerVehicleReportEmail({
+                to: vehicleNotice.ownerEmail,
+                ownerFirstName: vehicleNotice.ownerFirstName,
+                brandName: vehicleNotice.brandName,
+                modelName: vehicleNotice.modelName,
+                licensePlate: vehicleNotice.licensePlate,
+                title: reasonText,
+                description: String(description || "").trim(),
+                submittedAt,
+                complaintId: insertResult.insertId,
+                rentalId: parsedRentalId,
+              });
+            } catch (emailError) {
+              console.error(
+                "Failed to email vehicle owner about complaint:",
+                emailError.message,
+              );
+            }
+          }
+        }
+      } catch (notifyError) {
+        console.error(
+          "Failed to notify vehicle owner about complaint:",
+          notifyError.message,
+        );
+      }
+    }
+
+    // Owner complaints: notify the reported owner from the eligible rental's
+    // vehicle.ownerId (authoritative). Never include reporter identity.
+    // Failure must not undo the committed complaint.
+    if (complaintType === "owner" && eligibleRental?.ownerId != null) {
+      try {
+        const reportedOwnerId = eligibleRental.ownerId;
+        const reportedOwner = await getUserById(reportedOwnerId);
+        if (reportedOwner?.userId) {
+          const reasonText = String(title || "").trim();
+          const ownerMessage =
+            `A report was submitted regarding your account. ` +
+            `Reason: ${reasonText}. Status: Open. ` +
+            `Nova Rents support will review the report.`;
+
+          await createNotification(
+            reportedOwner.userId,
+            parsedRentalId,
+            "owner_report",
+            "Account Report Received",
+            ownerMessage.slice(0, 255),
+          );
+
+          if (reportedOwner.email) {
+            try {
+              const createdRows = await doQuery(
+                `SELECT createdAt FROM complaints WHERE complaintId = ? LIMIT 1`,
+                [insertResult.insertId],
+              );
+              const submittedAt = createdRows[0]?.createdAt ?? null;
+
+              await sendReportedOwnerReportEmail({
+                to: reportedOwner.email,
+                ownerFirstName: reportedOwner.firstName,
+                title: reasonText,
+                description: String(description || "").trim(),
+                submittedAt,
+                complaintId: insertResult.insertId,
+                rentalId: parsedRentalId,
+              });
+            } catch (emailError) {
+              console.error(
+                "Failed to email reported owner about complaint:",
+                emailError.message,
+              );
+            }
+          }
+        }
+      } catch (notifyError) {
+        console.error(
+          "Failed to notify reported owner about complaint:",
+          notifyError.message,
+        );
+      }
+    }
+
     return res.status(STATUS_CODE.CREATED).json({
       message: "Complaint submitted successfully",
-      complaintId: result.insertId,
+      complaintId: insertResult.insertId,
     });
   } catch (error) {
     next(error);
@@ -206,7 +473,7 @@ async function updateComplaintStatus_controller(req, res, next) {
         .json({ message: "You are not authorized to update complaint status" });
     }
     const complaintId = Number(req.params.complaintId);
-    const { status, responseToUser } = req.body;
+    const { status, responseToUser, resolutionMessage, adminNotes } = req.body;
 
     const allowedStatuses = ["open", "in_review", "resolved", "closed"];
 
@@ -222,11 +489,26 @@ async function updateComplaintStatus_controller(req, res, next) {
       });
     }
 
-    if (typeof responseToUser !== "string" || !responseToUser.trim()) {
+    // Public resolution: prefer resolutionMessage; accept legacy responseToUser.
+    const rawResolution =
+      typeof resolutionMessage === "string"
+        ? resolutionMessage
+        : typeof responseToUser === "string"
+          ? responseToUser
+          : "";
+
+    // Terminal statuses need a public decision; in_review / open may omit it.
+    const requiresResolution = status === "resolved" || status === "closed";
+    if (requiresResolution && !rawResolution.trim()) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "A response to the user is required",
+        message:
+          "A response to the user / resolution is required when resolving or closing a complaint",
       });
     }
+
+    const trimmedResolution = rawResolution.trim();
+    const trimmedAdminNotes =
+      typeof adminNotes === "string" ? adminNotes.trim() : "";
 
     const complaint = await getComplaintReporterById(complaintId);
     if (!complaint) {
@@ -235,10 +517,14 @@ async function updateComplaintStatus_controller(req, res, next) {
       });
     }
 
+    const previousStatus = complaint.status;
+    const statusChanged = previousStatus !== status;
+
     const result = await updateComplaintStatus(
       complaintId,
       status,
-      responseToUser.trim(),
+      trimmedResolution || null,
+      trimmedAdminNotes || null,
     );
 
     if (result.affectedRows === 0) {
@@ -270,6 +556,118 @@ async function updateComplaintStatus_controller(req, res, next) {
       `Complaint #${complaintId} status updated to ${status}`,
     );
 
+    // Lifecycle side effects only on an actual status transition.
+    // Same-status resubmit may still update adminNotes/respondedAt above,
+    // but must not resend notifications or emails.
+    if (!statusChanged) {
+      return res.status(STATUS_CODE.OK).json({
+        message:
+          "Complaint updated. No status-change email sent (status unchanged).",
+        emailSent: false,
+        statusChanged: false,
+      });
+    }
+
+    // In-app notifications (statusChanged === true).
+    // Failure must not undo the DB update.
+    let vehicleNotice = null;
+    let reportedOwner = null;
+    try {
+      const statusLabel = formatComplaintStatusLabel(status);
+      const rentalIdForNotify = complaint.rentalId ?? null;
+      const safeTitle = String(complaint.title || "your complaint").trim();
+
+      let reporterNotifMessage = `Your complaint #${complaintId} ("${safeTitle}") is now ${statusLabel}.`;
+      if (trimmedResolution) {
+        reporterNotifMessage += ` Admin response: ${trimmedResolution}`;
+      }
+
+      await createNotification(
+        complaint.reporterId,
+        rentalIdForNotify,
+        "complaint_update",
+        "Complaint Status Updated",
+        reporterNotifMessage.slice(0, 255),
+      );
+
+      if (
+        complaint.complaintType === "vehicle" &&
+        complaint.vehicleLicensePlate != null
+      ) {
+        vehicleNotice = await getVehicleLabelForOwnerNotice(
+          complaint.vehicleLicensePlate,
+        );
+        if (
+          vehicleNotice?.ownerId &&
+          vehicleNotice.ownerId !== complaint.reporterId
+        ) {
+          const vehicleLabel = `${vehicleNotice.brandName} ${vehicleNotice.modelName}`;
+          let ownerNotifMessage = `Vehicle report updated — ${vehicleLabel}.`;
+          if (status === "in_review") {
+            ownerNotifMessage = `Vehicle report under review — ${vehicleLabel}.`;
+          } else if (status === "resolved") {
+            ownerNotifMessage =
+              `Vehicle report resolved — ${vehicleLabel}. ` +
+              `Nova Rents completed the review.`;
+          } else if (status === "closed") {
+            ownerNotifMessage =
+              `Vehicle report closed — ${vehicleLabel}. ` +
+              `Nova Rents closed the case.`;
+          }
+
+          await createNotification(
+            vehicleNotice.ownerId,
+            rentalIdForNotify,
+            "vehicle_report",
+            "Vehicle Report Updated",
+            ownerNotifMessage.slice(0, 255),
+          );
+        }
+      }
+
+      if (
+        complaint.complaintType === "owner" &&
+        complaint.ownerId != null &&
+        Number(complaint.ownerId) !== Number(complaint.reporterId)
+      ) {
+        reportedOwner = await getUserById(complaint.ownerId);
+        if (reportedOwner?.userId) {
+          let reportedNotifMessage = "Account report updated.";
+          if (status === "in_review") {
+            reportedNotifMessage =
+              "Account report under review. Nova Rents started the review.";
+          } else if (status === "resolved") {
+            reportedNotifMessage =
+              "Account report resolved. Nova Rents completed the review.";
+          } else if (status === "closed") {
+            reportedNotifMessage =
+              "Account report closed. Nova Rents closed the case.";
+          }
+
+          await createNotification(
+            reportedOwner.userId,
+            rentalIdForNotify,
+            "owner_report",
+            "Account Report Updated",
+            reportedNotifMessage.slice(0, 255),
+          );
+        }
+      }
+    } catch (notifyError) {
+      console.error(
+        "Failed to send complaint status notifications:",
+        notifyError.message,
+      );
+    }
+
+    // DB-authoritative respondedAt written by UPDATE … respondedAt = NOW().
+    const respondedRows = await doQuery(
+      `SELECT respondedAt FROM complaints WHERE complaintId = ? LIMIT 1`,
+      [complaintId],
+    );
+    const respondedAt = respondedRows[0]?.respondedAt ?? null;
+
+    let emailSent = false;
     try {
       await sendComplaintResponseEmail({
         to: complaint.reporterEmail,
@@ -278,24 +676,99 @@ async function updateComplaintStatus_controller(req, res, next) {
         complaintType: complaint.complaintType,
         complaintTitle: complaint.title,
         status,
-        responseToUser: responseToUser.trim(),
-        respondedAt: complaint?.respondedAt,
+        responseToUser: trimmedResolution,
+        respondedAt,
       });
+      emailSent = true;
     } catch (emailError) {
       console.error("Complaint response email could not be sent", {
         complaintId,
         errorCode: emailError.code || "EMAIL_SEND_FAILED",
       });
+    }
 
+    // Vehicle-owner lifecycle email (no reporter identity).
+    // Controller requires resolution for resolved/closed only.
+    if (
+      complaint.complaintType === "vehicle" &&
+      complaint.vehicleLicensePlate != null &&
+      ["in_review", "resolved", "closed"].includes(status)
+    ) {
+      try {
+        if (!vehicleNotice) {
+          vehicleNotice = await getVehicleLabelForOwnerNotice(
+            complaint.vehicleLicensePlate,
+          );
+        }
+        if (
+          vehicleNotice?.ownerEmail &&
+          vehicleNotice.ownerId !== complaint.reporterId
+        ) {
+          await sendOwnerVehicleReportStatusEmail({
+            to: vehicleNotice.ownerEmail,
+            ownerFirstName: vehicleNotice.ownerFirstName,
+            brandName: vehicleNotice.brandName,
+            modelName: vehicleNotice.modelName,
+            licensePlate: vehicleNotice.licensePlate,
+            title: complaint.title,
+            status,
+            resolutionMessage: trimmedResolution,
+            respondedAt,
+            complaintId: complaint.complaintId,
+            rentalId: complaint.rentalId ?? null,
+          });
+        }
+      } catch (ownerEmailError) {
+        console.error(
+          "Failed to email vehicle owner about complaint status:",
+          ownerEmailError.message,
+        );
+      }
+    }
+
+    // Reported-owner lifecycle email for owner complaints (no reporter identity).
+    if (
+      complaint.complaintType === "owner" &&
+      complaint.ownerId != null &&
+      Number(complaint.ownerId) !== Number(complaint.reporterId) &&
+      ["in_review", "resolved", "closed"].includes(status)
+    ) {
+      try {
+        if (!reportedOwner) {
+          reportedOwner = await getUserById(complaint.ownerId);
+        }
+        if (reportedOwner?.email) {
+          await sendReportedOwnerReportStatusEmail({
+            to: reportedOwner.email,
+            ownerFirstName: reportedOwner.firstName,
+            title: complaint.title,
+            status,
+            resolutionMessage: trimmedResolution,
+            respondedAt,
+            complaintId: complaint.complaintId,
+            rentalId: complaint.rentalId ?? null,
+          });
+        }
+      } catch (reportedOwnerEmailError) {
+        console.error(
+          "Failed to email reported owner about complaint status:",
+          reportedOwnerEmailError.message,
+        );
+      }
+    }
+
+    if (!emailSent) {
       return res.status(STATUS_CODE.OK).json({
         message: "Complaint updated, but the email could not be sent.",
         emailSent: false,
+        statusChanged: true,
       });
     }
 
     return res.status(STATUS_CODE.OK).json({
       message: "Complaint updated and email sent successfully",
       emailSent: true,
+      statusChanged: true,
     });
   } catch (error) {
     next(error);
@@ -469,10 +942,52 @@ async function getComplaintTrends_controller(req, res, next) {
   }
 }
 
+async function getOwnerVehicleReports_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+      return;
+    }
+
+    // Owner scope always from session — never from client ownerId.
+    const ownerId = req.session.user.userId;
+    const reports = await getActiveVehicleComplaintsForOwner(ownerId);
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Active vehicle reports fetched successfully",
+      count: reports.length,
+      reports,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getComplaintsAboutMe_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+      return;
+    }
+
+    // Reported-owner scope always from session — never from client ownerId.
+    const ownerId = req.session.user.userId;
+    const reports = await getComplaintsAboutOwner(ownerId);
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Reports about you fetched successfully",
+      count: reports.length,
+      reports,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createComplaint_controller,
   updateComplaintStatus_controller,
   getMyComplaints_controller,
   getAllComplaints_controller,
   getComplaintTrends_controller,
+  getOwnerVehicleReports_controller,
+  getComplaintsAboutMe_controller,
 };

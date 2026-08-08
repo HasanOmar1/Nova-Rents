@@ -93,49 +93,86 @@ const sendComplaintResponseEmail = async ({
     throw new Error("Complaint ID is required");
   }
 
-  if (!responseToUser?.trim()) {
-    throw new Error("Complaint response is required");
+  const decisionText = String(responseToUser || "").trim();
+  if (
+    (status === "resolved" || status === "closed") &&
+    !decisionText
+  ) {
+    throw new Error(
+      "Complaint response is required for resolved/closed statuses",
+    );
   }
 
   const formattedComplaintType = formatComplaintType(complaintType);
   const formattedStatus = formatComplaintStatus(status);
   const formattedResponseDate = formatResponseDate(respondedAt);
+  const issueText = String(complaintTitle || "").trim() || "No title available";
+  const greeting = firstName || "there";
 
-  const safeFirstName = escapeHtml(firstName || "there");
-  const safeComplaintId = escapeHtml(complaintId);
-  const safeComplaintType = escapeHtml(formattedComplaintType);
-  const safeComplaintTitle = escapeHtml(complaintTitle || "No title available");
-  const safeStatus = escapeHtml(formattedStatus);
-  const safeResponseDate = escapeHtml(formattedResponseDate);
-  const safeResponse = escapeHtml(responseToUser).replace(/\r?\n/g, "<br />");
+  const targetLabel =
+    complaintType === "vehicle"
+      ? "Vehicle report"
+      : complaintType === "owner"
+        ? "Owner report"
+        : formattedComplaintType;
 
-  return transporter.sendMail({
-    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
-    to,
-    subject: `Nova Rents - Update regarding complaint #${complaintId}`,
+  let subject;
+  let intro;
+  let decisionHeading;
+  let shellSubtitle;
 
-    text: `
-Hello ${firstName || "there"},
+  if (status === "in_review") {
+    subject = `Your Report Is Under Review — Complaint #${complaintId}`;
+    shellSubtitle = "Report Under Review";
+    intro = "Nova Rents has started reviewing the complaint you submitted.";
+    decisionHeading = "Response from Nova Rents";
+  } else if (status === "resolved") {
+    subject = `Your Report Has Been Resolved — Complaint #${complaintId}`;
+    shellSubtitle = "Report Resolved";
+    intro = "Nova Rents has completed its review of your complaint.";
+    decisionHeading = "Nova Rents decision";
+  } else if (status === "closed") {
+    subject = `Your Report Has Been Closed — Complaint #${complaintId}`;
+    shellSubtitle = "Report Closed";
+    intro = "Nova Rents has closed your complaint.";
+    decisionHeading = "Nova Rents closing decision";
+  } else {
+    subject = `Your Report Status Was Updated — Complaint #${complaintId}`;
+    shellSubtitle = "Complaint Update";
+    intro = "There is an update regarding the complaint you submitted.";
+    decisionHeading = "Response from Nova Rents";
+  }
 
-We have reviewed your complaint and there is an update.
+  const dateLabel =
+    status === "resolved"
+      ? "Resolved"
+      : status === "closed"
+        ? "Closed"
+        : "Updated";
+
+  const decisionBlockText = decisionText
+    ? `\n${decisionHeading}:\n${decisionText}\n`
+    : "";
+
+  const text = `
+Hello ${greeting},
+
+${intro}
 
 Complaint ID:
 #${complaintId}
 
-Complaint Type:
-${formattedComplaintType}
+Report type:
+${targetLabel}
 
-Complaint Title:
-${complaintTitle || "No title available"}
+Reported issue:
+${issueText}
 
-Current Status:
+Status:
 ${formattedStatus}
-
-Response Date:
+${decisionBlockText}
+${dateLabel}:
 ${formattedResponseDate}
-
-Administrator Response:
-${responseToUser}
 
 If you need further assistance or have additional information,
 please contact our support team.
@@ -144,9 +181,35 @@ Thank you for using Nova Rents.
 
 Best regards,
 Nova Rents Support Team
-    `.trim(),
+  `.trim();
 
-    html: `
+  const safeGreeting = escapeHtml(greeting);
+  const safeComplaintId = escapeHtml(complaintId);
+  const safeTarget = escapeHtml(targetLabel);
+  const safeIssue = escapeHtml(issueText);
+  const safeStatus = escapeHtml(formattedStatus);
+  const safeDecision = escapeHtml(decisionText).replace(/\r?\n/g, "<br />");
+  const safeDate = escapeHtml(formattedResponseDate);
+  const safeDecisionHeading = escapeHtml(decisionHeading);
+  const decisionHtml = decisionText
+    ? `
+            <div
+              style="
+                margin: 24px 0;
+                padding: 18px;
+                background-color: #eff6ff;
+                border-left: 4px solid #2563eb;
+                border-radius: 8px;
+              "
+            >
+              <p style="margin: 0 0 10px;">
+                <strong>${safeDecisionHeading}:</strong>
+              </p>
+              <p style="margin: 0;">${safeDecision}</p>
+            </div>`
+    : "";
+
+  const html = `
       <div
         style="
           max-width: 640px;
@@ -173,31 +236,15 @@ Nova Rents Support Team
               background-color: #111827;
             "
           >
-            <h1
-              style="
-                margin: 0;
-                font-size: 24px;
-              "
-            >
-              Nova Rents
-            </h1>
-
-            <p
-              style="
-                margin: 8px 0 0;
-                color: #d1d5db;
-              "
-            >
-              Complaint Update
+            <h1 style="margin: 0; font-size: 24px;">Nova Rents</h1>
+            <p style="margin: 8px 0 0; color: #d1d5db;">
+              ${escapeHtml(shellSubtitle)}
             </p>
           </div>
 
           <div style="padding: 24px;">
-            <p>Hello ${safeFirstName},</p>
-
-            <p>
-              We have reviewed your complaint and there is an update.
-            </p>
+            <p>Hello ${safeGreeting},</p>
+            <p>${escapeHtml(intro)}</p>
 
             <div
               style="
@@ -211,53 +258,30 @@ Nova Rents Support Team
                 <strong>Complaint ID:</strong><br />
                 #${safeComplaintId}
               </p>
-
               <p style="margin: 0 0 12px;">
-                <strong>Complaint Type:</strong><br />
-                ${safeComplaintType}
+                <strong>Report type:</strong><br />
+                ${safeTarget}
               </p>
-
               <p style="margin: 0 0 12px;">
-                <strong>Complaint Title:</strong><br />
-                ${safeComplaintTitle}
+                <strong>Reported issue:</strong><br />
+                ${safeIssue}
               </p>
-
               <p style="margin: 0 0 12px;">
-                <strong>Current Status:</strong><br />
+                <strong>Status:</strong><br />
                 ${safeStatus}
               </p>
-
               <p style="margin: 0;">
-                <strong>Response Date:</strong><br />
-                ${safeResponseDate}
+                <strong>${escapeHtml(dateLabel)}:</strong><br />
+                ${safeDate}
               </p>
             </div>
-
-            <div
-              style="
-                margin: 24px 0;
-                padding: 18px;
-                background-color: #eff6ff;
-                border-left: 4px solid #2563eb;
-                border-radius: 8px;
-              "
-            >
-              <p style="margin: 0 0 10px;">
-                <strong>Administrator Response:</strong>
-              </p>
-
-              <p style="margin: 0;">
-                ${safeResponse}
-              </p>
-            </div>
+            ${decisionHtml}
 
             <p>
               If you need further assistance or have additional
               information, please contact our support team.
             </p>
-
             <p>Thank you for using Nova Rents.</p>
-
             <p style="margin-bottom: 0;">
               Best regards,<br />
               <strong>Nova Rents Support Team</strong>
@@ -265,8 +289,18 @@ Nova Rents Support Team
           </div>
         </div>
       </div>
-    `,
+    `;
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html,
   });
+
+  logEmailResult(`complaint status ${status} #${complaintId} to reporter`, info);
+  return info;
 };
 
 // ---------------------------------------------------------------------------
@@ -563,6 +597,474 @@ const buildEmailShell = (subtitle, bodyHtml, footerNote = null) => `
 
 const closingText = (footerNote = null) =>
   `Best regards,\nNova Rents Team${footerNote ? `\n\n${footerNote}` : ""}`;
+
+// --- Vehicle report filed → vehicle owner (no reporter identity) ---
+const sendOwnerVehicleReportEmail = async ({
+  to,
+  ownerFirstName,
+  brandName,
+  modelName,
+  licensePlate,
+  title,
+  description,
+  submittedAt,
+  complaintId,
+  rentalId,
+}) => {
+  if (!to) {
+    throw new Error("Vehicle report email recipient is required");
+  }
+
+  const vehicleName = vehicleDisplayName(brandName, modelName);
+  const greeting = ownerFirstName || "there";
+  const issueText = String(title || "").trim() || "Not provided";
+  const detailsText = String(description || "").trim() || "Not provided";
+  const submittedLabel = formatEmailDateTime(submittedAt);
+  const safeGreeting = escapeHtml(greeting);
+  const safeVehicle = escapeHtml(vehicleName);
+  const safeIssue = escapeHtml(issueText);
+  const safeDetails = escapeHtml(detailsText).replace(/\r?\n/g, "<br />");
+  const safeComplaintId = escapeHtml(complaintId ?? "—");
+  const safeSubmitted = escapeHtml(submittedLabel);
+
+  const text = `
+Hello ${greeting},
+
+A report has been submitted regarding one of your vehicles on Nova Rents.
+
+Vehicle:
+${vehicleName}
+
+License plate:
+${licensePlate}
+
+Complaint ID:
+#${complaintId ?? "—"}
+
+Reported issue:
+${issueText}
+
+Details:
+${detailsText}
+
+Status:
+Open
+
+Submitted:
+${submittedLabel}
+
+Nova Rents support will review the report.
+You will be notified when the report status changes.
+
+${closingText()}
+  `.trim();
+
+  const rows =
+    buildDetailRow("Vehicle", escapeHtml(vehicleName)) +
+    buildDetailRow("License plate", escapeHtml(String(licensePlate ?? ""))) +
+    buildDetailRow("Complaint ID", `#${safeComplaintId}`) +
+    buildDetailRow("Reported issue", safeIssue) +
+    buildDetailRow("Details", safeDetails) +
+    buildDetailRow("Status", buildStatusBadge("Open")) +
+    buildDetailRow("Submitted", safeSubmitted);
+
+  const html = buildEmailShell(
+    "Vehicle Report Received",
+    `
+      <p>Hello ${safeGreeting},</p>
+      <p>
+        A report has been submitted regarding one of your vehicles on Nova Rents.
+      </p>
+      ${buildDetailBlock("Report details", rows)}
+      <p>Nova Rents support will review the report.</p>
+      <p>You will be notified when the report status changes.</p>
+    `,
+  );
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: `Vehicle Report Received — ${vehicleName}`,
+    text,
+    html,
+  });
+
+  logEmailResult(
+    `vehicle report #${complaintId} to owner (rental ${rentalId})`,
+    info,
+  );
+  return info;
+};
+
+// --- Owner report filed → reported owner (no reporter identity) ---
+const sendReportedOwnerReportEmail = async ({
+  to,
+  ownerFirstName,
+  title,
+  description,
+  submittedAt,
+  complaintId,
+  rentalId,
+}) => {
+  if (!to) {
+    throw new Error("Reported-owner email recipient is required");
+  }
+
+  const greeting = ownerFirstName || "there";
+  const issueText = String(title || "").trim() || "Not provided";
+  const detailsText = String(description || "").trim() || "Not provided";
+  const submittedLabel = formatEmailDateTime(submittedAt);
+  const safeGreeting = escapeHtml(greeting);
+  const safeIssue = escapeHtml(issueText);
+  const safeDetails = escapeHtml(detailsText).replace(/\r?\n/g, "<br />");
+  const safeComplaintId = escapeHtml(complaintId ?? "—");
+  const safeSubmitted = escapeHtml(submittedLabel);
+
+  const text = `
+Hello ${greeting},
+
+A report has been submitted regarding your account on Nova Rents.
+
+Complaint ID:
+#${complaintId ?? "—"}
+
+Reported issue:
+${issueText}
+
+Details:
+${detailsText}
+
+Status:
+Open
+
+Submitted:
+${submittedLabel}
+
+Nova Rents support will review the report and notify you when the status changes.
+
+${closingText()}
+  `.trim();
+
+  const rows =
+    buildDetailRow("Complaint ID", `#${safeComplaintId}`) +
+    buildDetailRow("Reported issue", safeIssue) +
+    buildDetailRow("Details", safeDetails) +
+    buildDetailRow("Status", buildStatusBadge("Open")) +
+    buildDetailRow("Submitted", safeSubmitted);
+
+  const html = buildEmailShell(
+    "Account Report Received",
+    `
+      <p>Hello ${safeGreeting},</p>
+      <p>
+        A report has been submitted regarding your account on Nova Rents.
+      </p>
+      ${buildDetailBlock("Report details", rows)}
+      <p>
+        Nova Rents support will review the report and notify you when the
+        status changes.
+      </p>
+    `,
+  );
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: "A Report Has Been Submitted Regarding Your Account",
+    text,
+    html,
+  });
+
+  logEmailResult(
+    `owner report #${complaintId} to reported owner (rental ${rentalId})`,
+    info,
+  );
+  return info;
+};
+
+// --- Owner report status change → reported owner (no reporter identity) ---
+const sendReportedOwnerReportStatusEmail = async ({
+  to,
+  ownerFirstName,
+  title,
+  status,
+  resolutionMessage,
+  respondedAt,
+  complaintId,
+  rentalId,
+}) => {
+  if (!to) {
+    throw new Error("Reported-owner status email recipient is required");
+  }
+
+  if (!["in_review", "resolved", "closed"].includes(status)) {
+    throw new Error(
+      "Reported-owner status email supports in_review, resolved, or closed only",
+    );
+  }
+
+  const greeting = ownerFirstName || "there";
+  const issueText = String(title || "").trim() || "Not provided";
+  const decisionText = String(resolutionMessage || "").trim();
+  const statusLabel = formatComplaintStatus(status);
+  const respondedLabel = formatEmailDateTime(respondedAt);
+  const safeGreeting = escapeHtml(greeting);
+  const safeIssue = escapeHtml(issueText);
+  const safeDecision = escapeHtml(decisionText).replace(/\r?\n/g, "<br />");
+  const safeComplaintId = escapeHtml(complaintId ?? "—");
+  const safeResponded = escapeHtml(respondedLabel);
+
+  let subject;
+  let intro;
+  let decisionHeading = null;
+
+  if (status === "in_review") {
+    subject = "Report Under Review";
+    intro =
+      "Nova Rents has started reviewing the report concerning your account.";
+  } else if (status === "resolved") {
+    subject = "Report Resolved";
+    intro = "Nova Rents has completed its review of the report concerning your account.";
+    decisionHeading = "Nova Rents decision";
+  } else {
+    subject = "Report Closed";
+    intro = "Nova Rents has closed the report concerning your account.";
+    decisionHeading = "Closing decision";
+  }
+
+  if ((status === "resolved" || status === "closed") && !decisionText) {
+    throw new Error(
+      "A user-facing resolution is required for resolved/closed reported-owner emails",
+    );
+  }
+
+  const decisionBlockText =
+    decisionHeading && decisionText
+      ? `\n${decisionHeading}:\n${decisionText}\n`
+      : "";
+
+  const dateLabel =
+    status === "resolved" ? "Resolved" : status === "closed" ? "Closed" : "Updated";
+
+  const text = `
+Hello ${greeting},
+
+${intro}
+
+Complaint ID:
+#${complaintId ?? "—"}
+
+Reported issue:
+${issueText}
+${decisionBlockText}
+Status:
+${statusLabel}
+
+${dateLabel}:
+${respondedLabel}
+
+${
+  status === "in_review"
+    ? "You will be notified when the review is completed."
+    : "If you have questions, please contact Nova Rents support."
+}
+
+${closingText()}
+  `.trim();
+
+  let rows =
+    buildDetailRow("Complaint ID", `#${safeComplaintId}`) +
+    buildDetailRow("Reported issue", safeIssue);
+
+  if (decisionHeading && decisionText) {
+    rows += buildDetailRow(decisionHeading, safeDecision);
+  }
+
+  rows +=
+    buildDetailRow("Status", buildStatusBadge(statusLabel)) +
+    buildDetailRow(dateLabel, safeResponded);
+
+  const followUpHtml =
+    status === "in_review"
+      ? "<p>You will be notified when the review is completed.</p>"
+      : "<p>If you have questions, please contact Nova Rents support.</p>";
+
+  const html = buildEmailShell(
+    subject,
+    `
+      <p>Hello ${safeGreeting},</p>
+      <p>${escapeHtml(intro)}</p>
+      ${buildDetailBlock("Report details", rows)}
+      ${followUpHtml}
+    `,
+  );
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  logEmailResult(
+    `owner report status ${status} #${complaintId} to reported owner (rental ${rentalId})`,
+    info,
+  );
+  return info;
+};
+
+// --- Vehicle report status change → vehicle owner (no reporter identity) ---
+const sendOwnerVehicleReportStatusEmail = async ({
+  to,
+  ownerFirstName,
+  brandName,
+  modelName,
+  licensePlate,
+  title,
+  status,
+  resolutionMessage,
+  respondedAt,
+  complaintId,
+  rentalId,
+}) => {
+  if (!to) {
+    throw new Error("Vehicle report status email recipient is required");
+  }
+
+  if (!["in_review", "resolved", "closed"].includes(status)) {
+    throw new Error(
+      "Vehicle owner status email supports in_review, resolved, or closed only",
+    );
+  }
+
+  const vehicleName = vehicleDisplayName(brandName, modelName);
+  const greeting = ownerFirstName || "there";
+  const issueText = String(title || "").trim() || "Not provided";
+  const decisionText = String(resolutionMessage || "").trim();
+  const statusLabel = formatComplaintStatus(status);
+  const respondedLabel = formatEmailDateTime(respondedAt);
+  const safeGreeting = escapeHtml(greeting);
+  const safeIssue = escapeHtml(issueText);
+  const safeDecision = escapeHtml(decisionText).replace(/\r?\n/g, "<br />");
+  const safeComplaintId = escapeHtml(complaintId ?? "—");
+  const safeResponded = escapeHtml(respondedLabel);
+
+  let subject;
+  let intro;
+  let decisionHeading = null;
+
+  if (status === "in_review") {
+    subject = `Vehicle Report Under Review — ${vehicleName}`;
+    intro =
+      "Nova Rents has started reviewing the report concerning your vehicle.";
+  } else if (status === "resolved") {
+    subject = `Vehicle Report Resolved — ${vehicleName}`;
+    intro =
+      "Nova Rents has completed its review of the report concerning your vehicle.";
+    decisionHeading = "Resolution";
+  } else {
+    subject = `Vehicle Report Closed — ${vehicleName}`;
+    intro = "Nova Rents has closed the report concerning your vehicle.";
+    decisionHeading = "Closing decision";
+  }
+
+  if (
+    (status === "resolved" || status === "closed") &&
+    !decisionText
+  ) {
+    throw new Error(
+      "A user-facing resolution is required for resolved/closed owner emails",
+    );
+  }
+
+  const decisionBlockText =
+    decisionHeading && decisionText
+      ? `\n${decisionHeading}:\n${decisionText}\n`
+      : "";
+
+  const text = `
+Hello ${greeting},
+
+${intro}
+
+Vehicle:
+${vehicleName}
+
+License plate:
+${licensePlate}
+
+Complaint ID:
+#${complaintId ?? "—"}
+
+Reported issue:
+${issueText}
+${decisionBlockText}
+Final status:
+${statusLabel}
+
+${status === "in_review" ? "Updated" : status === "resolved" ? "Resolved" : "Closed"}:
+${respondedLabel}
+
+${
+  status === "in_review"
+    ? "You will be notified when the review is completed."
+    : "You can view the final decision on your My Vehicles Active Reports page."
+}
+
+${closingText()}
+  `.trim();
+
+  let rows =
+    buildDetailRow("Vehicle", escapeHtml(vehicleName)) +
+    buildDetailRow("License plate", escapeHtml(String(licensePlate ?? ""))) +
+    buildDetailRow("Complaint ID", `#${safeComplaintId}`) +
+    buildDetailRow("Reported issue", safeIssue);
+
+  if (decisionHeading && decisionText) {
+    rows += buildDetailRow(decisionHeading, safeDecision);
+  }
+
+  rows +=
+    buildDetailRow("Final status", buildStatusBadge(statusLabel)) +
+    buildDetailRow(
+      status === "in_review"
+        ? "Updated"
+        : status === "resolved"
+          ? "Resolved"
+          : "Closed",
+      safeResponded,
+    );
+
+  const followUpHtml =
+    status === "in_review"
+      ? "<p>You will be notified when the review is completed.</p>"
+      : "<p>You can view the final decision on your My Vehicles Active Reports page.</p>";
+
+  const html = buildEmailShell(
+    subject.replace(` — ${vehicleName}`, ""),
+    `
+      <p>Hello ${safeGreeting},</p>
+      <p>${escapeHtml(intro)}</p>
+      ${buildDetailBlock("Report details", rows)}
+      ${followUpHtml}
+    `,
+  );
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  logEmailResult(
+    `vehicle report status ${status} #${complaintId} to owner (rental ${rentalId})`,
+    info,
+  );
+  return info;
+};
 
 // --- New rental request → vehicle owner (no pickup Maps link) ---
 const sendRentalRequestEmail = async ({
@@ -1103,6 +1605,10 @@ module.exports = {
   sendOTPEmail,
   handleEmailVerification,
   sendComplaintResponseEmail,
+  sendOwnerVehicleReportEmail,
+  sendReportedOwnerReportEmail,
+  sendReportedOwnerReportStatusEmail,
+  sendOwnerVehicleReportStatusEmail,
   sendTestPaymentRequestEmail,
   sendTestPaymentReceiptEmail,
   sendOwnerPaymentReceivedEmail,

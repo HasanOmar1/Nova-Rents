@@ -89,12 +89,8 @@ const ComplaintsAdmin = () => {
     setIsModalOpen(false);
   };
 
-  const handleUpdateStatus = async (complaintId, status, responseToUser) => {
-    const result = await putUpdateComplaintStatus(
-      complaintId,
-      status,
-      responseToUser,
-    );
+  const handleUpdateStatus = async (complaintId, status, payload) => {
+    const result = await putUpdateComplaintStatus(complaintId, status, payload);
     if (result) {
       closeReviewModal();
       getAllComplaints(currentPage, statusFilter);
@@ -169,7 +165,7 @@ const ComplaintsAdmin = () => {
             <option value="open">Open</option>
             <option value="in_review">Under Review</option>
             <option value="resolved">Resolved</option>
-            {/* <option value="closed">Closed</option> */}
+            <option value="closed">Closed</option>
           </select>
         </div>
         <div className={styles.filterGroup}>

@@ -1,7 +1,155 @@
 const doQuery = require("../query");
+const { queryOnConnection } = require("../withTransaction");
 
-async function createComplaint(
+const ELIGIBLE_VEHICLE_REPORT_SQL = `
+  SELECT
+    r.rentalId,
+    r.renterId,
+    r.licensePlate,
+    r.status AS rentalStatus,
+    r.startDate,
+    r.endDate,
+    v.ownerId,
+    p.paymentId,
+    p.status AS paymentStatus,
+    p.paidAt
+  FROM rentals r
+  JOIN vehicles v ON v.licensePlate = r.licensePlate
+  JOIN rental_payments p ON p.rentalId = r.rentalId
+  WHERE r.rentalId = ?
+    AND r.renterId = ?
+    AND r.licensePlate = ?
+    AND p.status = 'paid'
+  LIMIT 1
+`;
+
+const ELIGIBLE_OWNER_REPORT_SQL = `
+  SELECT
+    r.rentalId,
+    r.renterId,
+    r.licensePlate,
+    r.status AS rentalStatus,
+    r.startDate,
+    r.endDate,
+    v.ownerId,
+    p.paymentId,
+    p.status AS paymentStatus,
+    p.paidAt
+  FROM rentals r
+  JOIN vehicles v ON v.licensePlate = r.licensePlate
+  JOIN rental_payments p ON p.rentalId = r.rentalId
+  WHERE r.rentalId = ?
+    AND r.renterId = ?
+    AND v.ownerId = ?
+    AND p.status = 'paid'
+  LIMIT 1
+`;
+
+/**
+ * Paid-rental eligibility for a vehicle complaint.
+ * Caller must pass renterId from req.session.user.userId (never from the body).
+ * Returns one row if this session renter has a paid rental for this rentalId
+ * whose licensePlate matches the reported vehicle; otherwise undefined.
+ */
+async function findEligibleRentalForVehicleReport(
+  renterId,
+  rentalId,
+  licensePlate,
+) {
+  const rows = await doQuery(ELIGIBLE_VEHICLE_REPORT_SQL, [
+    rentalId,
+    renterId,
+    licensePlate,
+  ]);
+  return rows[0];
+}
+
+async function findEligibleRentalForVehicleReportOnConnection(
+  connection,
+  renterId,
+  rentalId,
+  licensePlate,
+) {
+  const rows = await queryOnConnection(connection, ELIGIBLE_VEHICLE_REPORT_SQL, [
+    rentalId,
+    renterId,
+    licensePlate,
+  ]);
+  return rows[0];
+}
+
+/**
+ * Paid-rental eligibility for an owner complaint.
+ * Caller must pass renterId from req.session.user.userId (never from the body).
+ * Returns one row if this session renter has a paid rental for this rentalId
+ * whose vehicle belongs to the reported ownerId; otherwise undefined.
+ */
+async function findEligibleRentalForOwnerReport(renterId, rentalId, ownerId) {
+  const rows = await doQuery(ELIGIBLE_OWNER_REPORT_SQL, [
+    rentalId,
+    renterId,
+    ownerId,
+  ]);
+  return rows[0];
+}
+
+async function findEligibleRentalForOwnerReportOnConnection(
+  connection,
+  renterId,
+  rentalId,
+  ownerId,
+) {
+  const rows = await queryOnConnection(connection, ELIGIBLE_OWNER_REPORT_SQL, [
+    rentalId,
+    renterId,
+    ownerId,
+  ]);
+  return rows[0];
+}
+
+/** Lock the rental row used as the race-condition sync point. */
+async function lockRentalRowForUpdate(connection, rentalId) {
+  const rows = await queryOnConnection(
+    connection,
+    `
+      SELECT rentalId, renterId, licensePlate, status
+      FROM rentals
+      WHERE rentalId = ?
+      FOR UPDATE
+    `,
+    [rentalId],
+  );
+  return rows[0];
+}
+
+/**
+ * Active duplicate check — must run after rental FOR UPDATE on the same connection.
+ * Active = open or in_review for the same rentalId + complaintType.
+ */
+async function findActiveComplaintForRentalTypeOnConnection(
+  connection,
+  rentalId,
+  complaintType,
+) {
+  const rows = await queryOnConnection(
+    connection,
+    `
+      SELECT complaintId, status
+      FROM complaints
+      WHERE rentalId = ?
+        AND complaintType = ?
+        AND status IN ('open', 'in_review')
+      LIMIT 1
+    `,
+    [rentalId, complaintType],
+  );
+  return rows[0];
+}
+
+async function createComplaintOnConnection(
+  connection,
   userId,
+  rentalId,
   complaintType,
   vehicleLicensePlate,
   ownerId,
@@ -9,21 +157,77 @@ async function createComplaint(
   description,
   images,
 ) {
-  const query = `
-    INSERT INTO complaints 
-    (userId, complaintType, vehicleLicensePlate, ownerId, title, description, images)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `;
+  return queryOnConnection(
+    connection,
+    `
+      INSERT INTO complaints
+      (userId, rentalId, complaintType, vehicleLicensePlate, ownerId, title, description, images)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    [
+      userId,
+      rentalId,
+      complaintType,
+      vehicleLicensePlate,
+      ownerId,
+      title,
+      description,
+      images,
+    ],
+  );
+}
 
-  return doQuery(query, [
-    userId,
-    complaintType,
-    vehicleLicensePlate,
-    ownerId,
-    title,
-    description,
-    images,
-  ]);
+/**
+ * Active vehicle reports for vehicles owned by session user.
+ * Never selects reporter identity columns (userId / email / name / phone).
+ */
+async function getActiveVehicleComplaintsForOwner(ownerId) {
+  const query = `
+    SELECT
+      c.complaintId,
+      c.vehicleLicensePlate,
+      c.title,
+      c.description,
+      c.status,
+      c.resolutionMessage,
+      c.respondedAt,
+      c.createdAt,
+      c.rentalId,
+      cb.brandName,
+      cm.modelName
+    FROM complaints c
+    JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
+    LEFT JOIN carmodels cm ON v.modelId = cm.modelId
+    LEFT JOIN carbrands cb ON cm.brandId = cb.brandId
+    WHERE v.ownerId = ?
+      AND c.complaintType = 'vehicle'
+      AND c.status IN ('open', 'in_review')
+    ORDER BY c.createdAt DESC
+  `;
+  return doQuery(query, [ownerId]);
+}
+
+/**
+ * Owner-type complaints targeting the session user as reported owner.
+ * Never selects reporter identity columns (userId / email / name / phone).
+ */
+async function getComplaintsAboutOwner(ownerId) {
+  const query = `
+    SELECT
+      c.complaintId,
+      c.title,
+      c.description,
+      c.status,
+      c.resolutionMessage,
+      c.respondedAt,
+      c.createdAt,
+      c.rentalId
+    FROM complaints c
+    WHERE c.ownerId = ?
+      AND c.complaintType = 'owner'
+    ORDER BY c.createdAt DESC
+  `;
+  return doQuery(query, [ownerId]);
 }
 
 // Personal complaint history for one reporter. Always scoped by userId.
@@ -65,7 +269,7 @@ async function getComplaintsByUserId(
       c.description,
       c.images,
       c.status,
-      c.adminNotes,
+      c.resolutionMessage,
       c.respondedAt,
       c.createdAt,
       v.modelId,
@@ -138,6 +342,7 @@ async function getAllComplaints(status, limit, offset) {
       c.images,
       c.status,
       c.adminNotes,
+      c.resolutionMessage,
       c.createdAt,
       v.modelId,
       cm.modelName,
@@ -197,14 +402,27 @@ async function getComplaintStats() {
   return result[0];
 }
 
-async function updateComplaintStatus(complaintId, status, responseToUser) {
+async function updateComplaintStatus(
+  complaintId,
+  status,
+  resolutionMessage,
+  adminNotes,
+) {
   const query = `
-    UPDATE complaints 
-    SET status = ?, adminNotes = ?, respondedAt = NOW()
+    UPDATE complaints
+    SET status = ?,
+        resolutionMessage = ?,
+        adminNotes = ?,
+        respondedAt = NOW()
     WHERE complaintId = ?
   `;
 
-  return doQuery(query, [status, responseToUser, complaintId]);
+  return doQuery(query, [
+    status,
+    resolutionMessage,
+    adminNotes,
+    complaintId,
+  ]);
 }
 
 async function getComplaintReporterById(complaintId) {
@@ -215,6 +433,9 @@ async function getComplaintReporterById(complaintId) {
       c.title,
       c.status,
       c.respondedAt,
+      c.rentalId,
+      c.vehicleLicensePlate,
+      c.ownerId,
       c.userId AS reporterId,
       u.email AS reporterEmail,
       u.firstName AS reporterFirstName
@@ -261,7 +482,15 @@ async function getComplaintTrendsByRange(
 }
 
 module.exports = {
-  createComplaint,
+  findEligibleRentalForVehicleReport,
+  findEligibleRentalForVehicleReportOnConnection,
+  findEligibleRentalForOwnerReport,
+  findEligibleRentalForOwnerReportOnConnection,
+  lockRentalRowForUpdate,
+  findActiveComplaintForRentalTypeOnConnection,
+  createComplaintOnConnection,
+  getActiveVehicleComplaintsForOwner,
+  getComplaintsAboutOwner,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,
