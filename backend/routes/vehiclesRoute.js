@@ -1,7 +1,7 @@
 // Express routes for vehicle actions: list, my vehicles, add, update, delete
 const express = require("express");
 const router = express.Router();
-const { isAuthenticated } = require("../middleWare/authMiddleware");
+const { isAuthenticated, isAdmin } = require("../middleWare/authMiddleware");
 const vehicleQueries = require("../controllers/vehiclesController");
 const upload = require("../middleWare/uploadMiddleware");
 
@@ -33,6 +33,6 @@ router.put(
   vehicleQueries.updateVehicleStatus,
 );
 
-router.post("/addModel", vehicleQueries.addCarModel);
+router.post("/addModel", isAdmin, vehicleQueries.addCarModel);
 
 module.exports = router;

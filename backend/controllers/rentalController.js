@@ -104,10 +104,23 @@ async function createRental(req, res, next) {
       return res
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "Vehicle not found" });
+
     if (renterId === vehicle.ownerId)
       return res
         .status(STATUS_CODE.FORBIDDEN)
         .json({ message: "You cannot rent your own vehicle" });
+
+    if (vehicle.status === "inactive") {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "This vehicle is inactive and cannot be rented",
+      });
+    }
+
+    if (vehicle.status === "maintenance") {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "This vehicle is currently under maintenance",
+      });
+    }
 
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
@@ -215,7 +228,6 @@ async function createRental(req, res, next) {
     next(error);
   }
 }
-
 
 async function getMyRentals(req, res, next) {
   try {
@@ -527,39 +539,39 @@ async function cancelRental(req, res, next) {
 }
 
 async function autoUpdateRentalStatuses() {
-    // 1. If approved and endDate has passed -> change to 'completed'
-    const rentalsToComplete = await getRentalsToComplete();
-    await completeExpiredRentals();
-    for (const rental of rentalsToComplete) {
-      await createSystemHistory(
-        null,
-        "system",
-        "complete",
-        "rental_completed",
-        "rental",
-        String(rental.rentalId),
-        rental.rentalId,
-        rental.licensePlate,
-        `Rental completed for vehicle with license plate of ${rental.licensePlate}`,
-      );
-    }
+  // 1. If approved and endDate has passed -> change to 'completed'
+  const rentalsToComplete = await getRentalsToComplete();
+  await completeExpiredRentals();
+  for (const rental of rentalsToComplete) {
+    await createSystemHistory(
+      null,
+      "system",
+      "complete",
+      "rental_completed",
+      "rental",
+      String(rental.rentalId),
+      rental.rentalId,
+      rental.licensePlate,
+      `Rental completed for vehicle with license plate of ${rental.licensePlate}`,
+    );
+  }
 
-    // 2. If still pending and startDate has passed -> change to 'cancelled'
-    const rentalsToExpire = await getRentalsToExpire();
-    await cancelExpiredRentals();
-    for (const rental of rentalsToExpire) {
-      await createSystemHistory(
-        null,
-        "system",
-        "cancel",
-        "rental_expired",
-        "rental",
-        String(rental.rentalId),
-        rental.rentalId,
-        rental.licensePlate,
-        `Rental request expired for vehicle with license plate of ${rental.licensePlate}`,
-      );
-    }
+  // 2. If still pending and startDate has passed -> change to 'cancelled'
+  const rentalsToExpire = await getRentalsToExpire();
+  await cancelExpiredRentals();
+  for (const rental of rentalsToExpire) {
+    await createSystemHistory(
+      null,
+      "system",
+      "cancel",
+      "rental_expired",
+      "rental",
+      String(rental.rentalId),
+      rental.rentalId,
+      rental.licensePlate,
+      `Rental request expired for vehicle with license plate of ${rental.licensePlate}`,
+    );
+  }
 }
 
 async function getDashboardMetrics(req, res, next) {
@@ -636,7 +648,7 @@ async function getDashboardMetrics(req, res, next) {
   } catch (error) {
     next(error);
   }
-};
+}
 
 const getRentalHistory = async (req, res, next) => {
   try {
@@ -659,7 +671,7 @@ const getRentalHistory = async (req, res, next) => {
       myTrips,
     });
   } catch (error) {
-    next(error);  
+    next(error);
   }
 };
 
