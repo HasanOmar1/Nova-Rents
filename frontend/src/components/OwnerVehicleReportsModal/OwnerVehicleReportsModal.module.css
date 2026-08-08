@@ -1,0 +1,143 @@
+.OwnerVehicleReportsModal {
+  border: var(--cards-border);
+  border-radius: 12px;
+  background-color: var(--input-bg);
+  color: white;
+  padding: 0;
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  margin: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  overflow-y: auto;
+}
+
+/* Only flex when the native dialog is open — never override closed dialog display:none */
+.OwnerVehicleReportsModal[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.OwnerVehicleReportsModal::backdrop {
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px;
+  background-color: var(--bg-gray);
+  border-bottom: var(--cards-border);
+}
+
+.header h2 {
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+
+.header p {
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.closeIconBtn {
+  background: none;
+  border: none;
+  color: var(--gray);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.closeIconBtn:hover {
+  color: white;
+}
+
+.content {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty {
+  color: var(--gray);
+  margin: 8px 0;
+}
+
+.reportCard {
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reportTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.reportTop h3 {
+  font-size: 1rem;
+  margin: 0;
+  color: white;
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  background-color: rgba(249, 187, 129, 0.15);
+  color: #f9bb81;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.meta {
+  color: var(--gray);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.descriptionBox {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #e5e7eb;
+  line-height: 1.5;
+}
+
+.descriptionBox p {
+  margin: 0;
+}
+
+.adminNotes {
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adminNotesLabel {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #a7d2eb;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.adminNotes p {
+  margin: 0;
+  color: #e5e7eb;
+  line-height: 1.45;
+}

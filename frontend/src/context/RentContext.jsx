@@ -116,6 +116,32 @@ const RentContextProvider = ({ children }) => {
     }
   };
 
+  // UX-only helpers from cached My Trips. Backend still authorizes on create.
+  const findPaidTripForVehicle = (licensePlate) => {
+    if (licensePlate == null || licensePlate === "") return null;
+    const trips = rentalHistory.myTrips || [];
+    return (
+      trips.find(
+        (trip) =>
+          trip.paymentStatus === "paid" &&
+          String(trip.licensePlate) === String(licensePlate),
+      ) || null
+    );
+  };
+
+  const findPaidTripForOwner = (ownerId) => {
+    const parsedOwnerId = Number(ownerId);
+    if (!Number.isInteger(parsedOwnerId) || parsedOwnerId <= 0) return null;
+    const trips = rentalHistory.myTrips || [];
+    return (
+      trips.find(
+        (trip) =>
+          trip.paymentStatus === "paid" &&
+          Number(trip.ownerId) === parsedOwnerId,
+      ) || null
+    );
+  };
+
   return (
     <RentContext.Provider
       value={{
@@ -134,6 +160,8 @@ const RentContextProvider = ({ children }) => {
         respondToRequest,
         getPaymentByToken,
         payByToken,
+        findPaidTripForVehicle,
+        findPaidTripForOwner,
       }}
     >
       {children}

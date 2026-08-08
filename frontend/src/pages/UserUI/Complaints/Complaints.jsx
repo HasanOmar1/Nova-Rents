@@ -6,6 +6,7 @@ import Pagination from "../../../components/Pagination/Pagination";
 import { useComplaintContext } from "../../../context/ComplaintContext";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import { useUserContext } from "../../../context/UserContext";
+import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
 
 const formatDateForInput = (date) => {
@@ -26,6 +27,17 @@ const formatSubmittedDate = (value) => {
   });
 };
 
+const formatTripDate = (value) => {
+  if (!value) return "Unknown date";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown date";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 const displayName = (firstName, lastName, email) => {
   const fullName = `${firstName || ""} ${lastName || ""}`.trim();
   return fullName || email || "Unknown user";
@@ -41,9 +53,14 @@ const Complaints = () => {
     myComplaintsPagination,
     isMyComplaintsLoading,
     myComplaintsError,
+    getReportsAboutMe,
+    reportsAboutMe,
+    isReportsAboutMeLoading,
+    reportsAboutMeError,
   } = useComplaintContext();
   const { getVehicleByLicensePlate } = useVehicleContext();
-  const { getUserById } = useUserContext();
+  const { getUserById, currentUser } = useUserContext();
+  const { fetchRentalHistory, rentalHistory } = useRentContext();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -59,6 +76,8 @@ const Complaints = () => {
   const [reportedOwner, setReportedOwner] = useState(null);
   const [lockedOwnerId, setLockedOwnerId] = useState(null);
   const [isOwnerLoading, setIsOwnerLoading] = useState(false);
+  const [lockedRentalId, setLockedRentalId] = useState(null);
+  const [rentalSummary, setRentalSummary] = useState(null);
   const [formData, setFormData] = useState({
     relatedTarget: "",
     title: "",
@@ -81,14 +100,24 @@ const Complaints = () => {
   const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
   const isTargetLoading = isVehicleLoading || isOwnerLoading;
 
+  // Load My Trips once so rental summary can be shown without a new API.
+  useEffect(() => {
+    if (currentUser) {
+      fetchRentalHistory();
+    }
+  }, [currentUser]);
+
   // Prefill from URL params (UX only). Invalid params fall back to the
   // normal unprefilled form without crashing.
   useEffect(() => {
     const complaintType = searchParams.get("complaintType");
     const plate = searchParams.get("vehicleLicensePlate")?.trim() || "";
     const ownerIdParam = searchParams.get("ownerId")?.trim() || "";
+    const rentalIdParam = Number(searchParams.get("rentalId"));
+    const hasValidRentalId =
+      Number.isInteger(rentalIdParam) && rentalIdParam > 0;
 
-    if (!complaintType && !plate && !ownerIdParam) {
+    if (!complaintType && !plate && !ownerIdParam && !hasValidRentalId) {
       return;
     }
 
@@ -102,7 +131,16 @@ const Complaints = () => {
       setReportedOwner(null);
       setLockedOwnerId(null);
       setIsOwnerLoading(false);
+      setLockedRentalId(null);
+      setRentalSummary(null);
     };
+
+    if (hasValidRentalId) {
+      setLockedRentalId(rentalIdParam);
+    } else {
+      setLockedRentalId(null);
+      setRentalSummary(null);
+    }
 
     if (complaintType === "vehicle") {
       if (!/^\d{7,8}$/.test(plate)) {
@@ -111,6 +149,12 @@ const Complaints = () => {
         );
         clearLocks();
         return;
+      }
+
+      if (!hasValidRentalId) {
+        setLocalErrorMsg(
+          "Reporting requires a paid rental. Open Report from Vehicle Details or My Trips after payment.",
+        );
       }
 
       const resolveReportedVehicle = async () => {
@@ -134,8 +178,10 @@ const Complaints = () => {
           setFormData((prev) => ({ ...prev, relatedTarget: "" }));
         } else {
           setReportedVehicle(vehicle);
-          setLocalErrorMsg("");
-          setErrorMsg("");
+          if (hasValidRentalId) {
+            setLocalErrorMsg("");
+            setErrorMsg("");
+          }
         }
         setIsVehicleLoading(false);
       };
@@ -154,6 +200,12 @@ const Complaints = () => {
         );
         clearLocks();
         return;
+      }
+
+      if (!hasValidRentalId) {
+        setLocalErrorMsg(
+          "Reporting requires a paid rental. Open Report from Owner Profile or My Trips after payment.",
+        );
       }
 
       const resolveReportedOwner = async () => {
@@ -181,8 +233,10 @@ const Complaints = () => {
             ...prev,
             relatedTarget: owner.email || "",
           }));
-          setLocalErrorMsg("");
-          setErrorMsg("");
+          if (hasValidRentalId) {
+            setLocalErrorMsg("");
+            setErrorMsg("");
+          }
         }
         setIsOwnerLoading(false);
       };
@@ -198,6 +252,27 @@ const Complaints = () => {
     );
     clearLocks();
   }, [searchParams]);
+
+  // Resolve rental summary from cached My Trips (same GET /rentals/history).
+  useEffect(() => {
+    if (!lockedRentalId) {
+      setRentalSummary(null);
+      return;
+    }
+
+    const trip = (rentalHistory.myTrips || []).find(
+      (item) =>
+        Number(item.rentalId) === Number(lockedRentalId) &&
+        item.paymentStatus === "paid",
+    );
+
+    setRentalSummary(
+      trip || {
+        rentalId: lockedRentalId,
+        paymentStatus: "paid",
+      },
+    );
+  }, [lockedRentalId, rentalHistory.myTrips]);
 
   useEffect(() => {
     const urls = formData.images.map((image) => URL.createObjectURL(image));
@@ -217,6 +292,10 @@ const Complaints = () => {
       page: currentPage,
     });
   }, [appliedFromDate, appliedToDate, appliedStatus, currentPage]);
+
+  useEffect(() => {
+    getReportsAboutMe();
+  }, []);
 
   const refreshMyComplaints = () => {
     getMyComplaints({
@@ -243,6 +322,8 @@ const Complaints = () => {
     setReportedOwner(null);
     setLockedOwnerId(null);
     setIsOwnerLoading(false);
+    setLockedRentalId(null);
+    setRentalSummary(null);
   };
 
   const handleSubmitForm = async (e) => {
@@ -250,6 +331,18 @@ const Complaints = () => {
     if (isSubmitting || isTargetLoading) return;
 
     const relatedTarget = formData.relatedTarget.trim();
+
+    if (
+      !lockedRentalId ||
+      !Number.isInteger(Number(lockedRentalId)) ||
+      Number(lockedRentalId) <= 0
+    ) {
+      setSuccessMsg("");
+      setLocalErrorMsg(
+        "Reporting requires a paid rental. Use Report from Vehicle Details, Owner Profile, or My Trips after payment.",
+      );
+      return;
+    }
 
     if (activeTab === "vehicle") {
       if (!/^\d{7,8}$/.test(relatedTarget)) {
@@ -279,6 +372,7 @@ const Complaints = () => {
     complaintData.append("complaintType", activeTab);
     complaintData.append("title", formData.title);
     complaintData.append("description", formData.description);
+    complaintData.append("rentalId", String(lockedRentalId));
 
     if (activeTab === "vehicle") {
       complaintData.append("vehicleLicensePlate", relatedTarget);
@@ -311,7 +405,8 @@ const Complaints = () => {
       if (
         searchParams.has("complaintType") ||
         searchParams.has("vehicleLicensePlate") ||
-        searchParams.has("ownerId")
+        searchParams.has("ownerId") ||
+        searchParams.has("rentalId")
       ) {
         navigate("/complaints", { replace: true });
       }
@@ -398,6 +493,17 @@ const Complaints = () => {
     ? parseImgs(reportedVehicle.image)
     : "";
 
+  const rentalVehicleName = rentalSummary
+    ? `${rentalSummary.brandName || ""} ${rentalSummary.modelName || ""}`.trim()
+    : "";
+
+  const rentalRangeText =
+    rentalSummary?.startDate && rentalSummary?.endDate
+      ? `${formatTripDate(rentalSummary.startDate)} – ${formatTripDate(
+          rentalSummary.endDate,
+        )}`
+      : null;
+
   return (
     <div className={`${styles.Complaints} page`}>
       <div className={styles.msgContainer}>
@@ -411,7 +517,8 @@ const Complaints = () => {
       <form className={styles.reportContainer} onSubmit={handleSubmitForm}>
         <h4>New Complaint</h4>
         <p className={styles.msg}>
-          Choose type, link the subject, then describe the issue.
+          Reports are linked to a paid rental. Use Report from a vehicle, owner
+          profile, or My Trips, then describe the issue.
         </p>
         {(localErrorMsg || errorMsg) && (
           <div className={styles.errorMsg}>
@@ -447,12 +554,25 @@ const Complaints = () => {
               )}
               <div className={styles.reportedVehicleMeta}>
                 <p className={styles.reportedVehicleName}>
-                  {reportedVehicleName || "Unknown vehicle"}
+                  {reportedVehicleName ||
+                    rentalVehicleName ||
+                    "Unknown vehicle"}
                 </p>
                 <p>
                   <span className={styles.metaLabel}>License plate:</span>{" "}
                   {reportedVehicle.licensePlate}
                 </p>
+                {rentalRangeText && (
+                  <p>
+                    <span className={styles.metaLabel}>Rental:</span>{" "}
+                    {rentalRangeText}
+                  </p>
+                )}
+                {lockedRentalId && (
+                  <p>
+                    <span className={styles.metaLabel}>Payment:</span> Paid
+                  </p>
+                )}
                 <p>
                   <span className={styles.metaLabel}>Listed owner:</span>{" "}
                   {reportedOwnerNameVehicle}
@@ -473,6 +593,23 @@ const Complaints = () => {
                 <p className={styles.reportedVehicleName}>
                   {reportedOwnerName || "Unknown owner"}
                 </p>
+                {rentalVehicleName && (
+                  <p>
+                    <span className={styles.metaLabel}>Rental vehicle:</span>{" "}
+                    {rentalVehicleName}
+                  </p>
+                )}
+                {rentalRangeText && (
+                  <p>
+                    <span className={styles.metaLabel}>Rental:</span>{" "}
+                    {rentalRangeText}
+                  </p>
+                )}
+                {lockedRentalId && (
+                  <p>
+                    <span className={styles.metaLabel}>Payment:</span> Paid
+                  </p>
+                )}
                 <p>
                   <span className={styles.metaLabel}>Account:</span>{" "}
                   {reportedOwner.role || "user"}
@@ -697,7 +834,7 @@ const Complaints = () => {
                 listedOwner={listedOwner}
                 submittedDate={formatSubmittedDate(comp.createdAt)}
                 description={comp.description}
-                adminResponse={comp.adminNotes?.trim() || null}
+                adminResponse={comp.resolutionMessage?.trim() || null}
               />
             );
           })
@@ -721,6 +858,39 @@ const Complaints = () => {
               />
             </div>
           )}
+      </div>
+
+      <div className={styles.complaintsHistoryContainer}>
+        <h4>Reports about me</h4>
+        <p className={styles.aboutMeHint}>
+          Owner reports filed against your account. Reporter identity is never
+          shown.
+        </p>
+
+        {reportsAboutMeError && (
+          <p className={styles.historyError}>{reportsAboutMeError}</p>
+        )}
+
+        {isReportsAboutMeLoading ? (
+          <p className={styles.historyEmpty}>Loading reports about you...</p>
+        ) : reportsAboutMe.length === 0 && !reportsAboutMeError ? (
+          <p className={styles.historyEmpty}>
+            No reports have been filed against your account.
+          </p>
+        ) : (
+          reportsAboutMe.map((comp) => (
+            <ComplaintsHistoryCards
+              key={comp.complaintId}
+              title={comp.title}
+              status={comp.status}
+              targetLabel="Reference"
+              targetValue={`#${comp.complaintId}`}
+              submittedDate={formatSubmittedDate(comp.createdAt)}
+              description={comp.description}
+              adminResponse={comp.resolutionMessage?.trim() || null}
+            />
+          ))
+        )}
       </div>
     </div>
   );

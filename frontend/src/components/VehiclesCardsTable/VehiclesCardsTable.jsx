@@ -1,14 +1,14 @@
 import { useState } from "react";
 import DeleteMenu from "../DeleteMenu/DeleteMenu";
 import styles from "./VehiclesCardsTable.module.css";
-import { Pencil, Trash2 } from "lucide-react";
+import { Flag, Pencil, Trash2 } from "lucide-react";
 import { useVehicleContext } from "../../context/VehicleContext";
 import AddEditVehicleMenu from "../AddEditVehicleMenu/AddEditVehicleMenu";
 import { Link } from "react-router-dom";
 import { parseImgs } from "../../utils/parseImgs";
 import { useUserContext } from "../../context/UserContext";
 
-const VehiclesCardsTable = ({ veh, admin }) => {
+const VehiclesCardsTable = ({ veh, admin, activeReportCount = 0, onViewReports }) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const { currentUser } = useUserContext();
@@ -43,17 +43,39 @@ const VehiclesCardsTable = ({ veh, admin }) => {
 
   return (
     <div className={styles.VehiclesCardsTable}>
-      <Link
-        className={styles.nameContainer}
-        to={`/vehicles/${veh.licensePlate}`}
-        state={vehWithUser}
-      >
-        <img src={imageUrl} alt={fullName} />
-        <div className={styles.nameAndYear}>
-          <p className={styles.name}>{fullName}</p>
-          <p className={styles.year}>{veh.year}</p>
-        </div>
-      </Link>
+      <div className={styles.vehicleIdentity}>
+        <Link
+          className={styles.nameContainer}
+          to={`/vehicles/${veh.licensePlate}`}
+          state={vehWithUser}
+        >
+          <img src={imageUrl} alt={fullName} />
+          <div className={styles.nameAndYear}>
+            <p className={styles.name}>{fullName}</p>
+            <p className={styles.year}>{veh.year}</p>
+          </div>
+        </Link>
+
+        {!admin && (
+          <button
+            type="button"
+            className={
+              activeReportCount > 0
+                ? styles.reportBadge
+                : styles.reportBadgeMuted
+            }
+            onClick={() => onViewReports?.(veh)}
+            title="View active reports"
+          >
+            <Flag size={12} />
+            {activeReportCount === 0
+              ? "View active reports"
+              : activeReportCount === 1
+                ? "1 active report"
+                : `${activeReportCount} active reports`}
+          </button>
+        )}
+      </div>
 
       <p className={styles.type}>{veh.carTypeName}</p>
       <p className={styles.address}>{veh.address}</p>

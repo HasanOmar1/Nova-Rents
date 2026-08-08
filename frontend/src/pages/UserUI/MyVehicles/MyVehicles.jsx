@@ -1,32 +1,56 @@
-import { useState, useEffect } from "react";
-import DeleteMenu from "../../../components/DeleteMenu/DeleteMenu";
+import { useState, useEffect, useMemo } from "react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 import styles from "./MyVehicles.module.css";
 import {
   Car,
-  ChevronLeft,
-  ChevronRight,
   CircleDollarSign,
   ShieldAlert,
   ShieldCheck,
   ShieldOff,
 } from "lucide-react";
 import { useVehicleContext } from "../../../context/VehicleContext";
+import { useComplaintContext } from "../../../context/ComplaintContext";
 import AddEditVehicleMenu from "../../../components/AddEditVehicleMenu/AddEditVehicleMenu";
+import OwnerVehicleReportsModal from "../../../components/OwnerVehicleReportsModal/OwnerVehicleReportsModal";
 import Pagination from "../../../components/Pagination/Pagination";
 
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedVehicleForReports, setSelectedVehicleForReports] =
+    useState(null);
 
   const { getUserVehicles, userVehicles, vehicleStats, pagination } =
     useVehicleContext();
+  const { ownerVehicleReports, getOwnerVehicleReports } = useComplaintContext();
 
   useEffect(() => {
     getUserVehicles(currentPage, statusFilter);
   }, [currentPage, statusFilter]);
+
+  useEffect(() => {
+    getOwnerVehicleReports();
+  }, []);
+
+  const reportsByPlate = useMemo(() => {
+    const map = new Map();
+    for (const report of ownerVehicleReports) {
+      const key = String(report.vehicleLicensePlate);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(report);
+    }
+    return map;
+  }, [ownerVehicleReports]);
+
+  const selectedReports = selectedVehicleForReports
+    ? reportsByPlate.get(String(selectedVehicleForReports.licensePlate)) || []
+    : [];
+
+  const selectedVehicleLabel = selectedVehicleForReports
+    ? `${selectedVehicleForReports.brandName} ${selectedVehicleForReports.modelName}`
+    : "";
 
   useEffect(() => {
     if (pagination?.totalPages && currentPage > pagination.totalPages) {
@@ -152,7 +176,13 @@ const MyVehicles = () => {
           <>
             {userVehicles.map((veh, i) => (
               <div key={veh.licensePlate}>
-                <VehiclesCardsTable veh={veh} />
+                <VehiclesCardsTable
+                  veh={veh}
+                  activeReportCount={
+                    reportsByPlate.get(String(veh.licensePlate))?.length || 0
+                  }
+                  onViewReports={setSelectedVehicleForReports}
+                />
                 {i < userVehicles.length - 1 && <hr />}
               </div>
             ))}
@@ -173,6 +203,13 @@ const MyVehicles = () => {
       </div>
 
       <AddEditVehicleMenu isOpen={isOpen} onClose={closeAddVehMenu} />
+
+      <OwnerVehicleReportsModal
+        isOpen={Boolean(selectedVehicleForReports)}
+        onClose={() => setSelectedVehicleForReports(null)}
+        vehicleLabel={selectedVehicleLabel}
+        reports={selectedReports}
+      />
     </div>
   );
 };

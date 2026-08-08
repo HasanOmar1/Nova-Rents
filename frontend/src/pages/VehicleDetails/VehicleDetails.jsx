@@ -2,6 +2,7 @@ import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import styles from "./VehicleDetails.module.css";
 import {
   AlertTriangle,
+  Lock,
   MapPin,
   CalendarRange,
   ExternalLink,
@@ -29,10 +30,18 @@ const VehicleDetails = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const { fetchBookedDates, setRentVehResponse } = useRentContext();
+  const {
+    fetchBookedDates,
+    setRentVehResponse,
+    fetchRentalHistory,
+    findPaidTripForVehicle,
+  } = useRentContext();
   const intervalRef = useRef(null);
   const imageUrls = state.image ? parseImgs(state.image, true) : [];
   const isOwnVehicle = currentUser?.email === state?.ownerEmail;
+  const plate = state?.licensePlate || id;
+  const paidTripForVehicle = currentUser ? findPaidTripForVehicle(plate) : null;
+  const canReportVehicle = Boolean(paidTripForVehicle);
 
   useEffect(() => {
     if (isOwnVehicle) {
@@ -52,6 +61,13 @@ const VehicleDetails = () => {
   useEffect(() => {
     fetchBookedDates(state.licensePlate);
   }, [state.licensePlate]);
+
+  // Reuse existing /rentals/history cache for report-button UX (no new endpoint).
+  useEffect(() => {
+    if (currentUser) {
+      fetchRentalHistory();
+    }
+  }, [currentUser]);
 
   const startSlideshow = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -75,10 +91,11 @@ const VehicleDetails = () => {
   };
 
   const handleReportVehicle = () => {
-    const plate = state?.licensePlate || id;
-    if (!plate) return;
+    if (!plate || !paidTripForVehicle?.rentalId) return;
     navigate(
-      `/complaints?complaintType=vehicle&vehicleLicensePlate=${encodeURIComponent(plate)}`,
+      `/complaints?complaintType=vehicle` +
+        `&vehicleLicensePlate=${encodeURIComponent(plate)}` +
+        `&rentalId=${encodeURIComponent(paidTripForVehicle.rentalId)}`,
     );
   };
 
@@ -141,14 +158,33 @@ const VehicleDetails = () => {
             Back to vehicles
           </Link>
           {!isOwnVehicle && (
-            <button
-              type="button"
-              className={styles.reportBtn}
-              onClick={handleReportVehicle}
-            >
-              <AlertTriangle size={20} className="icon" color="#f9e081" />
-              Report Vehicle
-            </button>
+            <div className={styles.reportAction}>
+              <button
+                type="button"
+                className={`${styles.reportBtn} ${
+                  canReportVehicle ? "" : styles.reportBtnDisabled
+                }`}
+                onClick={handleReportVehicle}
+                disabled={!canReportVehicle}
+                title={
+                  canReportVehicle
+                    ? "Report an issue with this vehicle"
+                    : "Reporting is available after a paid rental for this vehicle."
+                }
+              >
+                {canReportVehicle ? (
+                  <AlertTriangle size={20} className="icon" color="#f9e081" />
+                ) : (
+                  <Lock size={18} className="icon" color="#9ca3af" />
+                )}
+                Report Vehicle
+              </button>
+              {!canReportVehicle && (
+                <p className={styles.reportHint}>
+                  Reporting is available after a paid rental for this vehicle.
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>

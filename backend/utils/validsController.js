@@ -479,7 +479,7 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
 }
 
 function validateComplaintFields(body, res) {
-  const { complaintType, title, description } = body;
+  const { complaintType, title, description, rentalId } = body;
 
   if (!complaintType || !title?.trim() || !description?.trim()) {
     return sendValidationError(
@@ -494,6 +494,15 @@ function validateComplaintFields(body, res) {
       res,
       STATUS_CODE.BAD_REQUEST,
       "complaintType must be 'vehicle' or 'owner'",
+    );
+  }
+
+  const parsedRentalId = Number(rentalId);
+  if (!Number.isInteger(parsedRentalId) || parsedRentalId <= 0) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "rentalId is required and must be a positive integer",
     );
   }
 

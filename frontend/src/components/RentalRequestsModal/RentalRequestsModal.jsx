@@ -9,6 +9,7 @@ import {
   ExternalLink,
   CreditCard,
   MapPin,
+  AlertTriangle,
 } from "lucide-react";
 
 const formatDate = (dateStr) => {
@@ -28,11 +29,13 @@ const RentalRequestsModal = ({
 }) => {
   const dialogRef = useRef(null);
   const [tripFilter, setTripFilter] = useState("all");
+  const [reportMenuRentalId, setReportMenuRentalId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
       setTripFilter("all");
+      setReportMenuRentalId(null);
     }
   }, [isOpen]);
 
@@ -217,6 +220,72 @@ const RentalRequestsModal = ({
                       )}
                     </div>
                   ) : null}
+
+                  {/* Paid trips: report entry → existing /complaints form */}
+                  <div className={styles.reportIssueBlock}>
+                    {reportMenuRentalId === rental.rentalId ? (
+                      <>
+                        <p className={styles.reportChoiceLabel}>
+                          What would you like to report?
+                        </p>
+                        <div className={styles.reportChoiceBtns}>
+                          <button
+                            type="button"
+                            className={styles.reportChoiceBtn}
+                            onClick={() => {
+                              onClose();
+                              navigate(
+                                `/complaints?complaintType=vehicle` +
+                                  `&vehicleLicensePlate=${encodeURIComponent(
+                                    rental.licensePlate,
+                                  )}` +
+                                  `&rentalId=${encodeURIComponent(
+                                    rental.rentalId,
+                                  )}`,
+                              );
+                            }}
+                          >
+                            Vehicle
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.reportChoiceBtn}
+                            disabled={!rental.ownerId}
+                            onClick={() => {
+                              if (!rental.ownerId) return;
+                              onClose();
+                              navigate(
+                                `/complaints?complaintType=owner` +
+                                  `&ownerId=${encodeURIComponent(
+                                    rental.ownerId,
+                                  )}` +
+                                  `&rentalId=${encodeURIComponent(
+                                    rental.rentalId,
+                                  )}`,
+                              );
+                            }}
+                          >
+                            Owner
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.reportCancelBtn}
+                            onClick={() => setReportMenuRentalId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.reportIssueBtn}
+                        onClick={() => setReportMenuRentalId(rental.rentalId)}
+                      >
+                        <AlertTriangle size={16} /> Report an Issue
+                      </button>
+                    )}
+                  </div>
                 </>
               )}
 

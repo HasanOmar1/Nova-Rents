@@ -336,8 +336,83 @@
   background-color: #1f2937;
 }
 
+.RentalRequestsModal .reportIssueBlock {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.RentalRequestsModal .reportIssueBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #593d17;
+  background-color: #211e1f;
+  color: #f9e081;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.RentalRequestsModal .reportIssueBtn:hover {
+  background-color: #2a2526;
+}
+
+.RentalRequestsModal .reportChoiceLabel {
+  margin: 0;
+  color: var(--gray);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.RentalRequestsModal .reportChoiceBtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.RentalRequestsModal .reportChoiceBtn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  background-color: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.RentalRequestsModal .reportChoiceBtn:hover:not(:disabled) {
+  background-color: #273549;
+}
+
+.RentalRequestsModal .reportChoiceBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.RentalRequestsModal .reportCancelBtn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #4b5563;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 @media (max-width: 480px) {
   .RentalRequestsModal .actionBtns {
+    flex-direction: column;
+  }
+
+  .RentalRequestsModal .reportChoiceBtns {
     flex-direction: column;
   }
 }

@@ -12,10 +12,12 @@ import {
   Ban,
   ArrowLeft,
   AlertTriangle,
+  Lock,
 } from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
 import Pagination from "../../components/Pagination/Pagination";
 import { useUserContext } from "../../context/UserContext";
+import { useRentContext } from "../../context/RentContext";
 
 const UserStats = () => {
   const { email } = useParams();
@@ -27,11 +29,19 @@ const UserStats = () => {
     errorMsg,
     currentUser,
   } = useUserContext();
+  const { fetchRentalHistory, findPaidTripForOwner } = useRentContext();
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchUserStats(email, currentPage);
   }, [email, currentPage]);
+
+  // Reuse existing /rentals/history for report-button UX (no new endpoint).
+  useEffect(() => {
+    if (currentUser) {
+      fetchRentalHistory();
+    }
+  }, [currentUser]);
 
   const handleNextPage = () => {
     if (
@@ -62,13 +72,6 @@ const UserStats = () => {
     navigate(`/vehicles/${veh.licensePlate}`, { state: formattedVehicle });
   };
 
-  const handleReportOwner = () => {
-    if (!user?.userId) return;
-    navigate(
-      `/complaints?complaintType=owner&ownerId=${encodeURIComponent(user.userId)}`,
-    );
-  };
-
   if (isStatsLoading) {
     return (
       <div className={`${styles.UserStats} page`}>
@@ -86,6 +89,19 @@ const UserStats = () => {
   const { user, stats, vehicles, pagination } = userStatsPerEmail;
   const isOwnProfile =
     Number(user.userId) === Number(currentUser?.userId);
+  const paidTripForOwner = currentUser
+    ? findPaidTripForOwner(user.userId)
+    : null;
+  const canReportOwner = Boolean(paidTripForOwner);
+
+  const handleReportOwner = () => {
+    if (!user?.userId || !paidTripForOwner?.rentalId) return;
+    navigate(
+      `/complaints?complaintType=owner` +
+        `&ownerId=${encodeURIComponent(user.userId)}` +
+        `&rentalId=${encodeURIComponent(paidTripForOwner.rentalId)}`,
+    );
+  };
 
   const joinDate = new Date(user.createdAt).toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -100,14 +116,33 @@ const UserStats = () => {
           <ArrowLeft size={18} /> Back
         </button>
         {!isOwnProfile && (
-          <button
-            type="button"
-            className={styles.reportBtn}
-            onClick={handleReportOwner}
-          >
-            <AlertTriangle size={18} color="#f9e081" />
-            Report Owner
-          </button>
+          <div className={styles.reportAction}>
+            <button
+              type="button"
+              className={`${styles.reportBtn} ${
+                canReportOwner ? "" : styles.reportBtnDisabled
+              }`}
+              onClick={handleReportOwner}
+              disabled={!canReportOwner}
+              title={
+                canReportOwner
+                  ? "Report an issue with this owner"
+                  : "Reporting is available after a paid rental with this owner."
+              }
+            >
+              {canReportOwner ? (
+                <AlertTriangle size={18} color="#f9e081" />
+              ) : (
+                <Lock size={16} color="#9ca3af" />
+              )}
+              Report Owner
+            </button>
+            {!canReportOwner && (
+              <p className={styles.reportHint}>
+                Reporting is available after a paid rental with this owner.
+              </p>
+            )}
+          </div>
         )}
       </div>
 

@@ -22,6 +22,17 @@ const ComplaintContextProvider = ({ children }) => {
   const [isMyComplaintsLoading, setIsMyComplaintsLoading] = useState(false);
   const [myComplaintsError, setMyComplaintsError] = useState("");
 
+  // Active vehicle reports against the logged-in owner's listings (My Vehicles).
+  const [ownerVehicleReports, setOwnerVehicleReports] = useState([]);
+  const [isOwnerVehicleReportsLoading, setIsOwnerVehicleReportsLoading] =
+    useState(false);
+  const [ownerVehicleReportsError, setOwnerVehicleReportsError] = useState("");
+
+  // Owner-type complaints where the session user is the reported target.
+  const [reportsAboutMe, setReportsAboutMe] = useState([]);
+  const [isReportsAboutMeLoading, setIsReportsAboutMeLoading] = useState(false);
+  const [reportsAboutMeError, setReportsAboutMeError] = useState("");
+
   const createComplaint = async (complaintData) => {
     try {
       await axios.post("/complaints", complaintData);
@@ -58,15 +69,21 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
-  const putUpdateComplaintStatus = async (
-    complaintId,
-    status,
-    responseToUser,
-  ) => {
+  const putUpdateComplaintStatus = async (complaintId, status, payload = {}) => {
     try {
+      const resolutionMessage =
+        typeof payload === "string"
+          ? payload
+          : (payload.resolutionMessage ?? payload.responseToUser ?? "");
+      const adminNotes =
+        typeof payload === "string" ? "" : (payload.adminNotes ?? "");
+
       const response = await axios.put(`/complaints/${complaintId}/status`, {
         status,
-        responseToUser,
+        resolutionMessage,
+        adminNotes,
+        // Temporary alias until all callers use resolutionMessage.
+        responseToUser: resolutionMessage,
       });
       setErrorMsg("");
       return response.data;
@@ -110,6 +127,42 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  const getOwnerVehicleReports = async () => {
+    try {
+      setIsOwnerVehicleReportsLoading(true);
+      const response = await axios.get("/complaints/owner-vehicle-reports");
+      setOwnerVehicleReports(response.data.reports || []);
+      setOwnerVehicleReportsError("");
+      return response.data.reports || [];
+    } catch (error) {
+      setOwnerVehicleReports([]);
+      setOwnerVehicleReportsError(
+        error?.response?.data?.message || "Failed to load vehicle reports",
+      );
+      return [];
+    } finally {
+      setIsOwnerVehicleReportsLoading(false);
+    }
+  };
+
+  const getReportsAboutMe = async () => {
+    try {
+      setIsReportsAboutMeLoading(true);
+      const response = await axios.get("/complaints/about-me");
+      setReportsAboutMe(response.data.reports || []);
+      setReportsAboutMeError("");
+      return response.data.reports || [];
+    } catch (error) {
+      setReportsAboutMe([]);
+      setReportsAboutMeError(
+        error?.response?.data?.message || "Failed to load reports about you",
+      );
+      return [];
+    } finally {
+      setIsReportsAboutMeLoading(false);
+    }
+  };
+
   return (
     <ComplaintContext.Provider
       value={{
@@ -131,6 +184,14 @@ const ComplaintContextProvider = ({ children }) => {
         isComplaintTrendsLoading,
         complaintTrendsErrorMsg,
         getComplaintTrends,
+        ownerVehicleReports,
+        isOwnerVehicleReportsLoading,
+        ownerVehicleReportsError,
+        getOwnerVehicleReports,
+        reportsAboutMe,
+        isReportsAboutMeLoading,
+        reportsAboutMeError,
+        getReportsAboutMe,
       }}
     >
       {children}

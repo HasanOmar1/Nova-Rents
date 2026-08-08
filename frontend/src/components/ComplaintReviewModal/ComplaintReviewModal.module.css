@@ -139,6 +139,13 @@
   border-color: #3b82f6;
 }
 
+.ComplaintReviewModal .helperText {
+  color: var(--gray);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
 .ComplaintReviewModal .warningText {
   display: flex;
   align-items: center;

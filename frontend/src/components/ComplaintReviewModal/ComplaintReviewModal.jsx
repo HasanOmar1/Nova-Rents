@@ -6,7 +6,8 @@ import { parseImgs } from "../../utils/parseImgs";
 const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const dialogRef = useRef(null);
   const [status, setStatus] = useState("open");
-  const [responseToUser, setResponseToUser] = useState("");
+  const [resolutionMessage, setResolutionMessage] = useState("");
+  const [adminNotes, setAdminNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -15,7 +16,11 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
 
     if (isOpen && complaint) {
       setStatus(complaint.status || "open");
-      setResponseToUser(complaint.adminNotes || "");
+      // Prefer resolutionMessage; fall back for any pre-migration rows.
+      setResolutionMessage(
+        complaint.resolutionMessage || complaint.adminNotes || "",
+      );
+      setAdminNotes(complaint.adminNotes || "");
       dialog.showModal();
       document.body.style.overflow = "hidden";
     } else {
@@ -32,11 +37,18 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
 
   const images = complaint.images ? parseImgs(complaint.images, true) : [];
   const isClosed = status === "resolved" || status === "closed";
+  const resolutionRequired = status === "resolved" || status === "closed";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (resolutionRequired && !resolutionMessage.trim()) {
+      return;
+    }
     setIsSubmitting(true);
-    await onUpdate(complaint.complaintId, status, responseToUser);
+    await onUpdate(complaint.complaintId, status, {
+      resolutionMessage,
+      adminNotes,
+    });
     setIsSubmitting(false);
   };
 
@@ -92,26 +104,52 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
               <option value="open">Open</option>
               <option value="in_review">Under Review</option>
               <option value="resolved">Resolved</option>
-              {/* <option value="closed">Closed</option> */}
+              <option value="closed">Closed</option>
             </select>
           </div>
 
           <div className={styles.inputGroup}>
-            <label htmlFor="responseToUser">Response to User</label>
+            <label htmlFor="resolutionMessage">
+              Response to User / Resolution
+            </label>
             <textarea
-              id="responseToUser"
-              value={responseToUser}
-              onChange={(e) => setResponseToUser(e.target.value)}
-              placeholder="Write your response to the user here..."
+              id="resolutionMessage"
+              value={resolutionMessage}
+              onChange={(e) => setResolutionMessage(e.target.value)}
+              placeholder={
+                resolutionRequired
+                  ? "Public decision shown to the reporter and affected parties, and included in email."
+                  : "Optional note for the reporter (can be left blank while under review)."
+              }
               rows={4}
               disabled={isClosed && complaint.status === "resolved"}
+              required={resolutionRequired}
             />
+            <p className={styles.helperText}>
+              {resolutionRequired
+                ? "Required when resolving or closing. Visible to the reporter and affected owner when appropriate. Sent in status emails."
+                : "Optional for Open / Under Review. Visible to the reporter and affected owner when provided."}
+            </p>
             {isClosed && (
               <p className={styles.warningText}>
-                <AlertCircle size={14} /> Resolving this complaint will disable
-                further replies from the user.
+                <AlertCircle size={14} /> Resolving or closing this complaint
+                ends the active case for the reporter and owners.
               </p>
             )}
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="adminNotes">Internal Admin Notes</label>
+            <textarea
+              id="adminNotes"
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              placeholder="Private notes for Nova Rents administrators only..."
+              rows={3}
+            />
+            <p className={styles.helperText}>
+              Only Nova Rents administrators can see this. Never emailed.
+            </p>
           </div>
 
           <div className={styles.footerActions}>
