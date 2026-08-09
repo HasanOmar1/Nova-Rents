@@ -75,6 +75,7 @@ const HomeMidCards = ({ title }) => {
         ) : (
           currentItems.map((item) => {
             if (isActivity) {
+              console.log(item.action);
               const isComplaintActivity = item.action === "Created a Complaint";
 
               return (
