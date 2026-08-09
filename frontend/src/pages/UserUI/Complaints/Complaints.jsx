@@ -8,7 +8,7 @@ import { useVehicleContext } from "../../../context/VehicleContext";
 import { useUserContext } from "../../../context/UserContext";
 import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
-import { History, ShieldAlert } from "lucide-react";
+import { Car, History, ShieldAlert } from "lucide-react";
 
 const TITLE_CHARACTER_LIMIT = 100;
 const DESCRIPTION_CHARACTER_LIMIT = 1000;
@@ -62,6 +62,11 @@ const Complaints = () => {
     reportsAboutMePagination,
     isReportsAboutMeLoading,
     reportsAboutMeError,
+    getReportsAboutMyVehicles,
+    reportsAboutMyVehicles,
+    reportsAboutMyVehiclesPagination,
+    isReportsAboutMyVehiclesLoading,
+    reportsAboutMyVehiclesError,
   } = useComplaintContext();
   const { getVehicleByLicensePlate } = useVehicleContext();
   const { getUserById, currentUser } = useUserContext();
@@ -103,6 +108,7 @@ const Complaints = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeHistoryView, setActiveHistoryView] = useState("history");
   const [reportsPage, setReportsPage] = useState(1);
+  const [vehicleReportsPage, setVehicleReportsPage] = useState(1);
 
   const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
   const isTargetLoading = isVehicleLoading || isOwnerLoading;
@@ -303,6 +309,10 @@ const Complaints = () => {
   useEffect(() => {
     getReportsAboutMe({ page: reportsPage });
   }, [reportsPage]);
+
+  useEffect(() => {
+    getReportsAboutMyVehicles({ page: vehicleReportsPage });
+  }, [getReportsAboutMyVehicles, vehicleReportsPage]);
 
   const refreshMyComplaints = () => {
     getMyComplaints({
@@ -819,6 +829,24 @@ const Complaints = () => {
                 : reportsAboutMePagination?.totalReports || 0}
             </span>
           </button>
+          <button
+            type="button"
+            className={`${styles.historyViewButton} ${
+              activeHistoryView === "vehicleReports"
+                ? styles.activeHistoryViewButton
+                : ""
+            }`}
+            onClick={() => setActiveHistoryView("vehicleReports")}
+            aria-pressed={activeHistoryView === "vehicleReports"}
+          >
+            <Car size={18} aria-hidden="true" />
+            <span>Reports on Your Vehicles</span>
+            <span className={styles.historyViewCount}>
+              {isReportsAboutMyVehiclesLoading
+                ? "..."
+                : reportsAboutMyVehiclesPagination?.totalReports || 0}
+            </span>
+          </button>
         </div>
 
         {activeHistoryView === "history" ? (
@@ -956,7 +984,7 @@ const Complaints = () => {
                 </div>
               )}
           </div>
-        ) : (
+        ) : activeHistoryView === "reports" ? (
           <div id="reports-about-me-panel" className={styles.historyPanel}>
             <div className={styles.historyPanelHeader}>
               <div>
@@ -1020,6 +1048,98 @@ const Complaints = () => {
                       )
                     }
                     leftText={`Total: ${reportsAboutMePagination.totalReports || 0}`}
+                  />
+                </div>
+              )}
+          </div>
+        ) : (
+          <div
+            id="reports-about-my-vehicles-panel"
+            className={styles.historyPanel}
+          >
+            <div className={styles.historyPanelHeader}>
+              <div>
+                <p className={styles.historyEyebrow}>
+                  Received by your listings
+                </p>
+                <h4>Reports on Your Vehicles</h4>
+              </div>
+              <p className={styles.historyHint}>
+                Reports filed against vehicles you own. Reporter identity
+                remains private.
+              </p>
+            </div>
+
+            {reportsAboutMyVehiclesError && (
+              <p className={styles.historyError}>
+                {reportsAboutMyVehiclesError}
+              </p>
+            )}
+
+            {isReportsAboutMyVehiclesLoading ? (
+              <p className={styles.historyEmpty}>
+                Loading reports on your vehicles...
+              </p>
+            ) : reportsAboutMyVehicles.length === 0 &&
+              !reportsAboutMyVehiclesError ? (
+              <p className={styles.historyEmpty}>
+                No reports have been filed against your vehicles.
+              </p>
+            ) : (
+              <div className={styles.historyList}>
+                {reportsAboutMyVehicles.map((comp) => {
+                  const vehicleLabel = [
+                    comp.brandName,
+                    comp.modelName,
+                    comp.vehicleLicensePlate
+                      ? `(${comp.vehicleLicensePlate})`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+
+                  return (
+                    <ComplaintsHistoryCards
+                      key={comp.complaintId}
+                      title={comp.title}
+                      status={comp.status}
+                      targetLabel="Reported vehicle"
+                      targetValue={vehicleLabel || "Unknown vehicle"}
+                      referenceValue={`#${comp.complaintId}`}
+                      submittedDate={formatSubmittedDate(comp.createdAt)}
+                      description={comp.description}
+                      adminResponse={comp.resolutionMessage?.trim() || null}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {!isReportsAboutMyVehiclesLoading &&
+              reportsAboutMyVehiclesPagination?.totalPages > 1 && (
+                <div className={styles.paginationWrapper}>
+                  <Pagination
+                    currentPage={
+                      reportsAboutMyVehiclesPagination.currentPage
+                    }
+                    totalPages={reportsAboutMyVehiclesPagination.totalPages}
+                    handlePrevPage={() =>
+                      setVehicleReportsPage(
+                        Math.max(
+                          reportsAboutMyVehiclesPagination.currentPage - 1,
+                          1,
+                        ),
+                      )
+                    }
+                    handleNextPage={() =>
+                      setVehicleReportsPage(
+                        Math.min(
+                          reportsAboutMyVehiclesPagination.currentPage + 1,
+                          reportsAboutMyVehiclesPagination.totalPages,
+                        ),
+                      )
+                    }
+                    leftText={`Total: ${reportsAboutMyVehiclesPagination.totalReports || 0}`}
                   />
                 </div>
               )}

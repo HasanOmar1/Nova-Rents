@@ -30,6 +30,12 @@ router.get(
 );
 
 router.get(
+  "/about-my-vehicles",
+  isAuthenticated,
+  complaintsController.getComplaintsAboutMyVehicles_controller,
+);
+
+router.get(
   "/trends",
   isAuthenticated,
   complaintsController.getComplaintTrends_controller,
