@@ -30,6 +30,46 @@ const initialFormState = {
   images: [],
 };
 
+const VEHICLE_COLORS = [
+  "Beige",
+  "Black",
+  "Blue",
+  "Bronze",
+  "Brown",
+  "Burgundy",
+  "Champagne",
+  "Copper",
+  "Cream",
+  "Dark Blue",
+  "Dark Brown",
+  "Dark Gray",
+  "Dark Green",
+  "Dark Red",
+  "Gold",
+  "Gray",
+  "Green",
+  "Ivory",
+  "Light Blue",
+  "Light Gray",
+  "Light Green",
+  "Maroon",
+  "Navy Blue",
+  "Olive",
+  "Orange",
+  "Pearl White",
+  "Pink",
+  "Purple",
+  "Red",
+  "Silver",
+  "Tan",
+  "Teal",
+  "Turquoise",
+  "Violet",
+  "White",
+  "Yellow",
+  "Other",
+];
+
 const formatDateForInput = (dateString) => {
   if (!dateString) return "";
   const d = new Date(dateString);
@@ -379,14 +419,23 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
 
           <div className={styles.inputGroup}>
             <label>Color</label>
-            <input
-              type="text"
+
+            <select
               name="color"
               value={formData.color}
               onChange={handleChange}
               required
-              placeholder="Obsidian Black"
-            />
+            >
+              <option value="" disabled hidden>
+                Select Color
+              </option>
+
+              {VEHICLE_COLORS.map((color) => (
+                <option key={color} value={color}>
+                  {color}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className={styles.inputGroup}>
@@ -398,6 +447,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               onChange={handleChange}
               required
               placeholder="15000"
+              max={999999}
             />
           </div>
 
