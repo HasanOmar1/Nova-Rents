@@ -87,8 +87,7 @@ const UserStats = () => {
   if (!userStatsPerEmail?.user) return null;
 
   const { user, stats, vehicles, pagination } = userStatsPerEmail;
-  const isOwnProfile =
-    Number(user.userId) === Number(currentUser?.userId);
+  const isOwnProfile = Number(user.userId) === Number(currentUser?.userId);
   const paidTripForOwner = currentUser
     ? findPaidTripForOwner(user.userId)
     : null;
@@ -137,11 +136,6 @@ const UserStats = () => {
               )}
               Report Owner
             </button>
-            {!canReportOwner && (
-              <p className={styles.reportHint}>
-                Reporting is available after a paid rental with this owner.
-              </p>
-            )}
           </div>
         )}
       </div>

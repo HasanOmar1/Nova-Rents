@@ -20,15 +20,19 @@ const Pagination = ({
       <p>{leftText}</p>
 
       <div className={styles.pagBtnsContainer}>
-        <button onClick={handlePrevPage} disabled={current === 1}>
+        <button type="button" onClick={handlePrevPage} disabled={current === 1}>
           <ChevronLeft size={20} /> Prev
         </button>
 
-        <p>
+        <p aria-live="polite">
           Page {current} / {total}
         </p>
 
-        <button onClick={handleNextPage} disabled={current === total}>
+        <button
+          type="button"
+          onClick={handleNextPage}
+          disabled={current === total}
+        >
           Next <ChevronRight size={20} />
         </button>
       </div>

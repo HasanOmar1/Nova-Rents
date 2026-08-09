@@ -211,7 +211,10 @@ async function getActiveVehicleComplaintsForOwner(ownerId) {
  * Owner-type complaints targeting the session user as reported owner.
  * Never selects reporter identity columns (userId / email / name / phone).
  */
-async function getComplaintsAboutOwner(ownerId) {
+async function getComplaintsAboutOwner(
+  ownerId,
+  { limit = 5, offset = 0 } = {},
+) {
   const query = `
     SELECT
       c.complaintId,
@@ -226,8 +229,23 @@ async function getComplaintsAboutOwner(ownerId) {
     WHERE c.ownerId = ?
       AND c.complaintType = 'owner'
     ORDER BY c.createdAt DESC
+    LIMIT ? OFFSET ?
   `;
-  return doQuery(query, [ownerId]);
+  return doQuery(query, [ownerId, limit, offset]);
+}
+
+async function countComplaintsAboutOwner(ownerId) {
+  const result = await doQuery(
+    `
+      SELECT COUNT(*) AS totalReports
+      FROM complaints
+      WHERE ownerId = ?
+        AND complaintType = 'owner'
+    `,
+    [ownerId],
+  );
+
+  return Number(result[0]?.totalReports) || 0;
 }
 
 // Personal complaint history for one reporter. Always scoped by userId.
@@ -491,6 +509,7 @@ module.exports = {
   createComplaintOnConnection,
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
+  countComplaintsAboutOwner,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,

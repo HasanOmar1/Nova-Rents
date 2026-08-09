@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import axios from "axios";
 import { useActivityContext } from "./ActivityContext";
 
@@ -158,7 +164,7 @@ const VehicleContextProvider = ({ children }) => {
 
   // Fetch a single vehicle by plate via the existing GET /vehicles/:licensePlate.
   // Returns the vehicle object, or null when not found / request failed.
-  const getVehicleByLicensePlate = async (licensePlate) => {
+  const getVehicleByLicensePlate = useCallback(async (licensePlate) => {
     try {
       const response = await axios.get(`/vehicles/${licensePlate}`);
       setErrorMsg("");
@@ -167,7 +173,7 @@ const VehicleContextProvider = ({ children }) => {
       setErrorMsg(error?.response?.data?.message);
       return null;
     }
-  };
+  }, []);
 
   return (
     <VehicleContext.Provider

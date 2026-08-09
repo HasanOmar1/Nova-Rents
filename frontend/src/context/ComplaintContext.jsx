@@ -30,6 +30,7 @@ const ComplaintContextProvider = ({ children }) => {
 
   // Owner-type complaints where the session user is the reported target.
   const [reportsAboutMe, setReportsAboutMe] = useState([]);
+  const [reportsAboutMePagination, setReportsAboutMePagination] = useState({});
   const [isReportsAboutMeLoading, setIsReportsAboutMeLoading] = useState(false);
   const [reportsAboutMeError, setReportsAboutMeError] = useState("");
 
@@ -145,15 +146,19 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
-  const getReportsAboutMe = async () => {
+  const getReportsAboutMe = async ({ page = 1, limit = 5 } = {}) => {
     try {
       setIsReportsAboutMeLoading(true);
-      const response = await axios.get("/complaints/about-me");
+      const response = await axios.get("/complaints/about-me", {
+        params: { page, limit },
+      });
       setReportsAboutMe(response.data.reports || []);
+      setReportsAboutMePagination(response.data.pagination || {});
       setReportsAboutMeError("");
       return response.data.reports || [];
     } catch (error) {
       setReportsAboutMe([]);
+      setReportsAboutMePagination({});
       setReportsAboutMeError(
         error?.response?.data?.message || "Failed to load reports about you",
       );
@@ -189,6 +194,7 @@ const ComplaintContextProvider = ({ children }) => {
         ownerVehicleReportsError,
         getOwnerVehicleReports,
         reportsAboutMe,
+        reportsAboutMePagination,
         isReportsAboutMeLoading,
         reportsAboutMeError,
         getReportsAboutMe,

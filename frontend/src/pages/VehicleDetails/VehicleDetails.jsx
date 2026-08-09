@@ -20,15 +20,52 @@ import { useUserContext } from "../../context/UserContext";
 import { useEffect, useState, useRef } from "react";
 import { useRentContext } from "../../context/RentContext";
 import BookingModal from "../../components/BookingModal/BookingModal";
+import { useVehicleContext } from "../../context/VehicleContext";
+
+const displayedSpecificationFields = [
+  "seats",
+  "fuelType",
+  "transmission",
+  "km",
+  "color",
+];
+
+const hasAllDisplayedSpecifications = (vehicle) =>
+  Boolean(vehicle) &&
+  displayedSpecificationFields.every(
+    (field) =>
+      vehicle[field] !== undefined &&
+      vehicle[field] !== null &&
+      vehicle[field] !== "",
+  );
+
+const formatVehicleForDetails = (vehicle) => {
+  if (!vehicle) return null;
+
+  return {
+    ...vehicle,
+    vehName:
+      vehicle.vehName ||
+      [vehicle.brandName, vehicle.modelName].filter(Boolean).join(" "),
+  };
+};
 
 const VehicleDetails = () => {
   const [hideBooking, setHideBooking] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { currentUser } = useUserContext();
   const { id } = useParams();
-  const { state } = useLocation();
+  const { state: routeVehicle } = useLocation();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [vehicle, setVehicle] = useState(() =>
+    formatVehicleForDetails(routeVehicle),
+  );
+  const [isVehicleLoading, setIsVehicleLoading] = useState(
+    !hasAllDisplayedSpecifications(routeVehicle),
+  );
+  const [vehicleLoadError, setVehicleLoadError] = useState("");
+  const { getVehicleByLicensePlate } = useVehicleContext();
 
   const {
     fetchBookedDates,
@@ -37,11 +74,52 @@ const VehicleDetails = () => {
     findPaidTripForVehicle,
   } = useRentContext();
   const intervalRef = useRef(null);
-  const imageUrls = state.image ? parseImgs(state.image, true) : [];
-  const isOwnVehicle = currentUser?.email === state?.ownerEmail;
-  const plate = state?.licensePlate || id;
+  const imageUrls = vehicle?.image ? parseImgs(vehicle.image, true) : [];
+  const isOwnVehicle = currentUser?.email === vehicle?.ownerEmail;
+  const plate = vehicle?.licensePlate || id;
   const paidTripForVehicle = currentUser ? findPaidTripForVehicle(plate) : null;
   const canReportVehicle = Boolean(paidTripForVehicle);
+
+  useEffect(() => {
+    let isCurrentRequest = true;
+    const navigationVehicle = formatVehicleForDetails(routeVehicle);
+
+    setVehicle(navigationVehicle);
+    setVehicleLoadError("");
+
+    if (hasAllDisplayedSpecifications(navigationVehicle)) {
+      setIsVehicleLoading(false);
+      return () => {
+        isCurrentRequest = false;
+      };
+    }
+
+    setIsVehicleLoading(true);
+
+    const loadCompleteVehicle = async () => {
+      const completeVehicle = await getVehicleByLicensePlate(id);
+      if (!isCurrentRequest) return;
+
+      if (completeVehicle) {
+        setVehicle(
+          formatVehicleForDetails({
+            ...(navigationVehicle || {}),
+            ...completeVehicle,
+          }),
+        );
+      } else if (!navigationVehicle) {
+        setVehicleLoadError("Vehicle details could not be loaded.");
+      }
+
+      setIsVehicleLoading(false);
+    };
+
+    loadCompleteVehicle();
+
+    return () => {
+      isCurrentRequest = false;
+    };
+  }, [getVehicleByLicensePlate, id, routeVehicle]);
 
   useEffect(() => {
     if (isOwnVehicle) {
@@ -59,8 +137,8 @@ const VehicleDetails = () => {
   }, [imageUrls.length]);
 
   useEffect(() => {
-    fetchBookedDates(state.licensePlate);
-  }, [state.licensePlate]);
+    if (plate) fetchBookedDates(plate);
+  }, [plate]);
 
   // Reuse existing /rentals/history cache for report-button UX (no new endpoint).
   useEffect(() => {
@@ -99,7 +177,28 @@ const VehicleDetails = () => {
     );
   };
 
-  const ownerFullName = state.ownerFirstName + " " + state.ownerLastName;
+  if (isVehicleLoading) {
+    return (
+      <div className={`${styles.VehicleDetails} page`}>
+        <p>Loading vehicle details...</p>
+      </div>
+    );
+  }
+
+  if (!vehicle) {
+    return (
+      <div className={`${styles.VehicleDetails} page`}>
+        <p>{vehicleLoadError || "Vehicle not found."}</p>
+        <Link to="/vehicles" className={styles.backBtn}>
+          Back to vehicles
+        </Link>
+      </div>
+    );
+  }
+
+  const ownerFullName = [vehicle.ownerFirstName, vehicle.ownerLastName]
+    .filter(Boolean)
+    .join(" ");
 
   const cardsData = [
     {
@@ -107,21 +206,21 @@ const VehicleDetails = () => {
       value:
         "$" +
         (
-          (typeof state.price === "string"
-            ? Number(state.price.split("/")[0])
-            : Number(state.price)) * 1.18
+          (typeof vehicle.price === "string"
+            ? Number(vehicle.price.split("/")[0])
+            : Number(vehicle.price)) * 1.18
         ).toFixed(2),
     },
 
     {
       title: "Year",
-      value: state.year,
+      value: vehicle.year,
     },
     {
       title: "Location",
       value: (
         <>
-          <MapPin size={17} /> {state.address}
+          <MapPin size={17} /> {vehicle.address}
         </>
       ),
     },
@@ -130,9 +229,9 @@ const VehicleDetails = () => {
       value: (
         <span className={styles.ownerLinkContainer}>
           <span>{ownerFullName}</span>
-          {state.ownerEmail && (
+          {vehicle.ownerEmail && (
             <Link
-              to={`/userStats/${state.ownerEmail}`}
+              to={`/userStats/${vehicle.ownerEmail}`}
               className={styles.viewProfileLink}
             >
               <ExternalLink size={12} /> View Profile
@@ -152,7 +251,7 @@ const VehicleDetails = () => {
   return (
     <div className={`${styles.VehicleDetails} page`}>
       <div className={styles.top}>
-        <h1>{state.vehName}</h1>
+        <h1>{vehicle.vehName}</h1>
         <div className={styles.btnsContainer}>
           <Link to={"/vehicles"} className={styles.backBtn}>
             Back to vehicles
@@ -179,11 +278,6 @@ const VehicleDetails = () => {
                 )}
                 Report Vehicle
               </button>
-              {!canReportVehicle && (
-                <p className={styles.reportHint}>
-                  Reporting is available after a paid rental for this vehicle.
-                </p>
-              )}
             </div>
           )}
         </div>
@@ -196,7 +290,7 @@ const VehicleDetails = () => {
               <div className={styles.mainImageWrapper}>
                 <img
                   src={mainImageUrl}
-                  alt={state.vehName}
+                  alt={vehicle.vehName}
                   className={styles.mainImage}
                 />
 
@@ -218,19 +312,19 @@ const VehicleDetails = () => {
             <div className={styles.about}>
               <div className={styles.typeStatusContainer}>
                 <div className={styles.typeAndStatusContainer}>
-                  <p className={styles.vehType}>{state.carTypeName}</p>
+                  <p className={styles.vehType}>{vehicle.carTypeName}</p>
                   <p
-                    className={`${styles.status} ${state?.status === "available" ? styles.available : state?.status === "rented" ? styles.rented : styles.maintenance} ${state.ownerStatus === "blocked" && styles.maintenance}`}
+                    className={`${styles.status} ${vehicle.status === "available" ? styles.available : vehicle.status === "rented" ? styles.rented : styles.maintenance} ${vehicle.ownerStatus === "blocked" && styles.maintenance}`}
                   >
-                    {state.ownerStatus !== "blocked"
-                      ? state.status
+                    {vehicle.ownerStatus !== "blocked"
+                      ? vehicle.status
                       : "Unavailable"}
                   </p>
                 </div>
 
                 {!hideBooking &&
-                  state?.status === "available" &&
-                  state?.ownerStatus !== "blocked" && (
+                  vehicle.status === "available" &&
+                  vehicle.ownerStatus !== "blocked" && (
                     <button
                       className={styles.launchBookingBtn}
                       onClick={() => setIsBookingModalOpen(true)}
@@ -260,7 +354,7 @@ const VehicleDetails = () => {
                 <Users className={styles.specIcon} size={24} />
                 <div className={styles.specText}>
                   <span>Seats</span>
-                  <p>{state?.seats || "N/A"}</p>
+                  <p>{vehicle.seats || "N/A"}</p>
                 </div>
               </div>
 
@@ -268,7 +362,7 @@ const VehicleDetails = () => {
                 <Fuel className={styles.specIcon} size={24} />
                 <div className={styles.specText}>
                   <span>Fuel Type</span>
-                  <p>{state?.fuelType || "N/A"}</p>
+                  <p>{vehicle.fuelType || "N/A"}</p>
                 </div>
               </div>
 
@@ -276,7 +370,7 @@ const VehicleDetails = () => {
                 <Settings className={styles.specIcon} size={24} />
                 <div className={styles.specText}>
                   <span>Transmission</span>
-                  <p>{state?.transmission || "N/A"}</p>
+                  <p>{vehicle.transmission || "N/A"}</p>
                 </div>
               </div>
 
@@ -284,7 +378,7 @@ const VehicleDetails = () => {
                 <Gauge className={styles.specIcon} size={24} />
                 <div className={styles.specText}>
                   <span>Mileage</span>
-                  <p>{state?.km ? `${state.km} km` : "N/A"}</p>
+                  <p>{vehicle.km ? `${vehicle.km} km` : "N/A"}</p>
                 </div>
               </div>
 
@@ -292,7 +386,7 @@ const VehicleDetails = () => {
                 <Palette className={styles.specIcon} size={24} />
                 <div className={styles.specText}>
                   <span>Color</span>
-                  <p>{state?.color || "N/A"}</p>
+                  <p>{vehicle.color || "N/A"}</p>
                 </div>
               </div>
 
@@ -300,7 +394,7 @@ const VehicleDetails = () => {
                 <Hash className={styles.specIcon} size={24} />
                 <div className={styles.specText}>
                   <span>License Plate</span>
-                  <p>{state?.licensePlate || "N/A"}</p>
+                  <p>{vehicle.licensePlate || "N/A"}</p>
                 </div>
               </div>
             </div>
@@ -308,15 +402,15 @@ const VehicleDetails = () => {
 
           <div className={`${styles.detailsContainer} ${styles.container}`}>
             <h4>Details</h4>
-            <p>{state?.details}</p>
+            <p>{vehicle.details}</p>
           </div>
 
           <div className={`${styles.mapContainer} ${styles.container}`}>
             <h4>Location</h4>
             <div>
               <GoogleMapEmbed
-                query={locationToMapQuery(state.address)}
-                title={state.address}
+                query={locationToMapQuery(vehicle.address)}
+                title={vehicle.address}
               />
             </div>
           </div>
@@ -326,7 +420,7 @@ const VehicleDetails = () => {
       <BookingModal
         isOpen={isBookingModalOpen}
         onClose={handleCloseModal}
-        vehicle={state}
+        vehicle={vehicle}
       />
     </div>
   );

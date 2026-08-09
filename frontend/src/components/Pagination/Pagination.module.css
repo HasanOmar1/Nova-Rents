@@ -37,6 +37,12 @@
   color: white;
 }
 
+.pagination .pagBtnsContainer button:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: 2px;
+  color: #ffffff;
+}
+
 .pagination .pagBtnsContainer button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -46,5 +52,17 @@
   .pagination {
     flex-direction: column;
     gap: 15px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .pagination .pagBtnsContainer {
+    width: 100%;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .pagination .pagBtnsContainer button {
+    padding: 8px 10px;
   }
 }

@@ -18,6 +18,8 @@
 }
 
 .VehiclesCardsTable .nameContainer {
+  position: relative;
+  overflow: hidden;
   padding: 0;
   justify-content: flex-start;
   color: inherit;
@@ -27,14 +29,32 @@
   width: 100%;
   align-items: center;
   border-radius: 20px;
+  border: 1px solid transparent;
+  background: transparent;
   font-size: 0.65rem;
-  transition: all 0.3s ease;
+  transition:
+    transform 0.22s ease,
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
-.VehiclesCardsTable .nameContainer:hover {
-  scale: 1.01;
-  background-color: var(--icons-bg-color);
+.VehiclesCardsTable .nameContainer:hover,
+.VehiclesCardsTable .nameContainer:focus-visible {
+  transform: translateY(-2px);
+  background: linear-gradient(
+    110deg,
+    var(--icons-bg-color),
+    rgba(24, 39, 66, 0.32)
+  );
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.35);
   cursor: pointer;
+}
+
+.VehiclesCardsTable .nameContainer:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: 2px;
 }
 
 .VehiclesCardsTable img {
@@ -42,20 +62,45 @@
   height: 100px;
   border-radius: 20px;
   object-fit: cover;
+  flex-shrink: 0;
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+}
+
+.VehiclesCardsTable .nameContainer:hover img,
+.VehiclesCardsTable .nameContainer:focus-visible img {
+  transform: scale(1.035);
+  filter: saturate(1.08) brightness(1.04);
 }
 
 .VehiclesCardsTable .nameAndYear {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 }
 
 .VehiclesCardsTable .name {
   color: white;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  transition: color 0.2s ease;
 }
 
 .VehiclesCardsTable .year {
   color: var(--gray);
+  transition: color 0.2s ease;
+}
+
+.VehiclesCardsTable .nameContainer:hover .name,
+.VehiclesCardsTable .nameContainer:focus-visible .name {
+  color: var(--icons-color);
+}
+
+.VehiclesCardsTable .nameContainer:hover .year,
+.VehiclesCardsTable .nameContainer:focus-visible .year {
+  color: #cbd5e1;
 }
 
 .VehiclesCardsTable .reportBadge,
@@ -63,7 +108,6 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: 150px;
   padding: 4px 8px;
   border-radius: 8px;
   font-size: 0.7rem;
@@ -91,6 +135,12 @@
 
 .VehiclesCardsTable .reportBadgeMuted:hover {
   background-color: rgba(167, 210, 235, 0.16);
+}
+
+.VehiclesCardsTable .reportBadge:focus-visible,
+.VehiclesCardsTable .reportBadgeMuted:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: 2px;
 }
 
 .VehiclesCardsTable .type,
@@ -229,5 +279,21 @@
     flex: 1;
     display: flex;
     justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .VehiclesCardsTable .nameContainer,
+  .VehiclesCardsTable .nameContainer img,
+  .VehiclesCardsTable .name,
+  .VehiclesCardsTable .year {
+    transition: none;
+  }
+
+  .VehiclesCardsTable .nameContainer:hover,
+  .VehiclesCardsTable .nameContainer:focus-visible,
+  .VehiclesCardsTable .nameContainer:hover img,
+  .VehiclesCardsTable .nameContainer:focus-visible img {
+    transform: none;
   }
 }

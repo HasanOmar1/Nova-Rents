@@ -60,7 +60,7 @@ const SignInForm = ({ setCurrentForm }) => {
           </button>
         </form>
         <div className={styles.linkGroup}>
-          <p className={styles.link}>Forgot password?</p>
+          {/* <p className={styles.link}>Forgot password?</p> */}
           <p>
             Dont have an account yet?{" "}
             <span className={styles.link} onClick={handleCurrentForm}>

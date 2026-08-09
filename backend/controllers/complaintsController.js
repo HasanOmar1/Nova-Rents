@@ -15,6 +15,7 @@ const {
   createComplaintOnConnection,
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
+  countComplaintsAboutOwner,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,
@@ -970,12 +971,27 @@ async function getComplaintsAboutMe_controller(req, res, next) {
 
     // Reported-owner scope always from session — never from client ownerId.
     const ownerId = req.session.user.userId;
-    const reports = await getComplaintsAboutOwner(ownerId);
+    const parsedPage = Number.parseInt(req.query.page, 10);
+    const parsedLimit = Number.parseInt(req.query.limit, 10);
+    const requestedPage = parsedPage > 0 ? parsedPage : 1;
+    const limit = parsedLimit > 0 ? Math.min(parsedLimit, 50) : 5;
+
+    const totalReports = await countComplaintsAboutOwner(ownerId);
+    const totalPages = Math.max(Math.ceil(totalReports / limit), 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+    const offset = (currentPage - 1) * limit;
+    const reports = await getComplaintsAboutOwner(ownerId, { limit, offset });
 
     return res.status(STATUS_CODE.OK).json({
       message: "Reports about you fetched successfully",
-      count: reports.length,
+      count: totalReports,
       reports,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalReports,
+        limit,
+      },
     });
   } catch (error) {
     next(error);
