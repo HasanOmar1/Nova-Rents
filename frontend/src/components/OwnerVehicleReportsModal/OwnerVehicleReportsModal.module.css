@@ -9,7 +9,13 @@
   max-height: 85vh;
   margin: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  overflow-x: hidden;
   overflow-y: auto;
+}
+
+.OwnerVehicleReportsModal,
+.OwnerVehicleReportsModal * {
+  box-sizing: border-box;
 }
 
 /* Only flex when the native dialog is open — never override closed dialog display:none */
@@ -32,6 +38,10 @@
   border-bottom: var(--cards-border);
 }
 
+.header > div {
+  min-width: 0;
+}
+
 .header h2 {
   font-size: 1.25rem;
   margin-bottom: 4px;
@@ -40,9 +50,11 @@
 .header p {
   color: var(--gray);
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .closeIconBtn {
+  flex-shrink: 0;
   background: none;
   border: none;
   color: var(--gray);
@@ -55,10 +67,13 @@
 }
 
 .content {
+  width: 100%;
+  min-width: 0;
   padding: 20px 24px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-x: hidden;
 }
 
 .empty {
@@ -67,6 +82,8 @@
 }
 
 .reportCard {
+  width: 100%;
+  min-width: 0;
   padding: 16px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -77,16 +94,25 @@
 }
 
 .reportTop {
+  width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
 }
 
-.reportTop h3 {
+.reportTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
   font-size: 1rem;
   margin: 0;
   color: white;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .badge {
@@ -106,7 +132,26 @@
   margin: 0;
 }
 
+.detailBlock {
+  min-width: 0;
+}
+
+.detailLabel {
+  margin: 0;
+  color: #8fb9f4;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.detailBlock .detailLabel {
+  margin-bottom: 7px;
+}
+
 .descriptionBox {
+  width: 100%;
+  min-width: 0;
   background-color: rgba(0, 0, 0, 0.2);
   padding: 12px 14px;
   border-radius: 8px;
@@ -115,8 +160,12 @@
   line-height: 1.5;
 }
 
-.descriptionBox p {
+.descriptionText {
+  max-width: 100%;
   margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .adminNotes {
@@ -140,4 +189,28 @@
   margin: 0;
   color: #e5e7eb;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  .OwnerVehicleReportsModal {
+    width: calc(100% - 24px);
+    max-height: 92vh;
+  }
+
+  .header,
+  .content {
+    padding: 16px;
+  }
+
+  .reportCard {
+    padding: 14px;
+  }
+
+  .reportTop {
+    flex-direction: column;
+    gap: 8px;
+  }
 }

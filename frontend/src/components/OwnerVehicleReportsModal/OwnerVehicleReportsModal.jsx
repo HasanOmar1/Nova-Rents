@@ -69,16 +69,28 @@ const OwnerVehicleReportsModal = ({
         ) : (
           reports.map((report) => (
             <article key={report.complaintId} className={styles.reportCard}>
-              <div className={styles.reportTop}>
-                <h3>{report.title}</h3>
-                <span className={styles.badge}>{statusLabel(report.status)}</span>
-              </div>
+              <section className={styles.detailBlock}>
+                <p className={styles.detailLabel}>Title</p>
+                <div className={styles.reportTop}>
+                  <h3 className={styles.reportTitle}>{report.title}</h3>
+                  <span className={styles.badge}>
+                    {statusLabel(report.status)}
+                  </span>
+                </div>
+              </section>
 
-              <p className={styles.meta}>Filed {formatDate(report.createdAt)}</p>
+              <p className={styles.meta}>
+                Filed {formatDate(report.createdAt)}
+              </p>
 
-              <div className={styles.descriptionBox}>
-                <p>{report.description}</p>
-              </div>
+              <section className={styles.detailBlock}>
+                <p className={styles.detailLabel}>Description</p>
+                <div className={styles.descriptionBox}>
+                  <p className={styles.descriptionText}>
+                    {report.description}
+                  </p>
+                </div>
+              </section>
 
               {report.resolutionMessage ? (
                 <div className={styles.adminNotes}>
