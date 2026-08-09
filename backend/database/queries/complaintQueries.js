@@ -248,6 +248,55 @@ async function countComplaintsAboutOwner(ownerId) {
   return Number(result[0]?.totalReports) || 0;
 }
 
+/**
+ * All vehicle-type complaints targeting vehicles currently owned by the
+ * session user. Reporter identity and private admin notes are intentionally
+ * excluded from the result.
+ */
+async function getComplaintsAboutOwnerVehicles(
+  ownerId,
+  { limit = 5, offset = 0 } = {},
+) {
+  const query = `
+    SELECT
+      c.complaintId,
+      c.vehicleLicensePlate,
+      c.title,
+      c.description,
+      c.status,
+      c.resolutionMessage,
+      c.respondedAt,
+      c.createdAt,
+      cb.brandName,
+      cm.modelName
+    FROM complaints c
+    INNER JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
+    LEFT JOIN carmodels cm ON v.modelId = cm.modelId
+    LEFT JOIN carbrands cb ON cm.brandId = cb.brandId
+    WHERE v.ownerId = ?
+      AND c.complaintType = 'vehicle'
+    ORDER BY c.createdAt DESC, c.complaintId DESC
+    LIMIT ? OFFSET ?
+  `;
+
+  return doQuery(query, [ownerId, limit, offset]);
+}
+
+async function countComplaintsAboutOwnerVehicles(ownerId) {
+  const result = await doQuery(
+    `
+      SELECT COUNT(*) AS totalReports
+      FROM complaints c
+      INNER JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
+      WHERE v.ownerId = ?
+        AND c.complaintType = 'vehicle'
+    `,
+    [ownerId],
+  );
+
+  return Number(result[0]?.totalReports) || 0;
+}
+
 // Personal complaint history for one reporter. Always scoped by userId.
 // Optional date/status filters use the same half-open createdAt pattern as
 // other reports. LEFT JOINs keep both vehicle and owner complaints visible
@@ -510,6 +559,8 @@ module.exports = {
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
   countComplaintsAboutOwner,
+  getComplaintsAboutOwnerVehicles,
+  countComplaintsAboutOwnerVehicles,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,

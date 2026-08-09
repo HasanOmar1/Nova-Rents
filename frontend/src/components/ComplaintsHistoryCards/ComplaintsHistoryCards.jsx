@@ -23,6 +23,7 @@ const ComplaintsHistoryCards = ({
   status,
   targetLabel,
   targetValue,
+  referenceValue,
   listedOwner,
   submittedDate,
   description,
@@ -40,6 +41,12 @@ const ComplaintsHistoryCards = ({
       <p>
         <span className={styles.metaLabel}>{targetLabel}:</span> {targetValue}
       </p>
+
+      {referenceValue && (
+        <p>
+          <span className={styles.metaLabel}>Reference:</span> {referenceValue}
+        </p>
+      )}
 
       {listedOwner && (
         <p>

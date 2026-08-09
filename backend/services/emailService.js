@@ -654,6 +654,7 @@ Submitted:
 ${submittedLabel}
 
 Nova Rents support will review the report.
+You can track it in the Reports on Your Vehicles section of the Complaints page.
 You will be notified when the report status changes.
 
 ${closingText()}
@@ -677,6 +678,10 @@ ${closingText()}
       </p>
       ${buildDetailBlock("Report details", rows)}
       <p>Nova Rents support will review the report.</p>
+      <p>
+        You can track it in the <strong>Reports on Your Vehicles</strong>
+        section of the Complaints page.
+      </p>
       <p>You will be notified when the report status changes.</p>
     `,
   );
@@ -1009,7 +1014,7 @@ ${respondedLabel}
 ${
   status === "in_review"
     ? "You will be notified when the review is completed."
-    : "You can view the final decision on your My Vehicles Active Reports page."
+    : "You can view the final decision in the Reports on Your Vehicles section of the Complaints page."
 }
 
 ${closingText()}
@@ -1039,7 +1044,7 @@ ${closingText()}
   const followUpHtml =
     status === "in_review"
       ? "<p>You will be notified when the review is completed.</p>"
-      : "<p>You can view the final decision on your My Vehicles Active Reports page.</p>";
+      : "<p>You can view the final decision in the <strong>Reports on Your Vehicles</strong> section of the Complaints page.</p>";
 
   const html = buildEmailShell(
     subject.replace(` — ${vehicleName}`, ""),

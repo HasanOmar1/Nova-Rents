@@ -16,6 +16,8 @@ const {
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
   countComplaintsAboutOwner,
+  getComplaintsAboutOwnerVehicles,
+  countComplaintsAboutOwnerVehicles,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,
@@ -1001,6 +1003,45 @@ async function getComplaintsAboutMe_controller(req, res, next) {
   }
 }
 
+async function getComplaintsAboutMyVehicles_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+      return;
+    }
+
+    // Vehicle-owner scope always comes from the session. Never accept an
+    // ownerId or license plate from the client for this history endpoint.
+    const ownerId = req.session.user.userId;
+    const parsedPage = Number.parseInt(req.query.page, 10);
+    const parsedLimit = Number.parseInt(req.query.limit, 10);
+    const requestedPage = parsedPage > 0 ? parsedPage : 1;
+    const limit = parsedLimit > 0 ? Math.min(parsedLimit, 50) : 5;
+
+    const totalReports = await countComplaintsAboutOwnerVehicles(ownerId);
+    const totalPages = Math.max(Math.ceil(totalReports / limit), 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+    const offset = (currentPage - 1) * limit;
+    const reports = await getComplaintsAboutOwnerVehicles(ownerId, {
+      limit,
+      offset,
+    });
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Reports about your vehicles fetched successfully",
+      count: totalReports,
+      reports,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalReports,
+        limit,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createComplaint_controller,
   updateComplaintStatus_controller,
@@ -1009,4 +1050,5 @@ module.exports = {
   getComplaintTrends_controller,
   getOwnerVehicleReports_controller,
   getComplaintsAboutMe_controller,
+  getComplaintsAboutMyVehicles_controller,
 };

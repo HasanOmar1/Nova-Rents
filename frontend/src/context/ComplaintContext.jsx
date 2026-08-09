@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 import axios from "axios";
 
 const ComplaintContext = createContext();
@@ -33,6 +33,17 @@ const ComplaintContextProvider = ({ children }) => {
   const [reportsAboutMePagination, setReportsAboutMePagination] = useState({});
   const [isReportsAboutMeLoading, setIsReportsAboutMeLoading] = useState(false);
   const [reportsAboutMeError, setReportsAboutMeError] = useState("");
+
+  // Vehicle-type complaints against listings owned by the session user.
+  // This is an all-status, paginated history and intentionally remains
+  // separate from ownerVehicleReports, which only powers active-report badges.
+  const [reportsAboutMyVehicles, setReportsAboutMyVehicles] = useState([]);
+  const [reportsAboutMyVehiclesPagination, setReportsAboutMyVehiclesPagination] =
+    useState({});
+  const [isReportsAboutMyVehiclesLoading, setIsReportsAboutMyVehiclesLoading] =
+    useState(false);
+  const [reportsAboutMyVehiclesError, setReportsAboutMyVehiclesError] =
+    useState("");
 
   const createComplaint = async (complaintData) => {
     try {
@@ -168,6 +179,32 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  const getReportsAboutMyVehicles = useCallback(
+    async ({ page = 1, limit = 5 } = {}) => {
+      try {
+        setIsReportsAboutMyVehiclesLoading(true);
+        const response = await axios.get("/complaints/about-my-vehicles", {
+          params: { page, limit },
+        });
+        setReportsAboutMyVehicles(response.data.reports || []);
+        setReportsAboutMyVehiclesPagination(response.data.pagination || {});
+        setReportsAboutMyVehiclesError("");
+        return response.data.reports || [];
+      } catch (error) {
+        setReportsAboutMyVehicles([]);
+        setReportsAboutMyVehiclesPagination({});
+        setReportsAboutMyVehiclesError(
+          error?.response?.data?.message ||
+            "Failed to load reports about your vehicles",
+        );
+        return [];
+      } finally {
+        setIsReportsAboutMyVehiclesLoading(false);
+      }
+    },
+    [],
+  );
+
   return (
     <ComplaintContext.Provider
       value={{
@@ -198,6 +235,11 @@ const ComplaintContextProvider = ({ children }) => {
         isReportsAboutMeLoading,
         reportsAboutMeError,
         getReportsAboutMe,
+        reportsAboutMyVehicles,
+        reportsAboutMyVehiclesPagination,
+        isReportsAboutMyVehiclesLoading,
+        reportsAboutMyVehiclesError,
+        getReportsAboutMyVehicles,
       }}
     >
       {children}
