@@ -536,7 +536,7 @@ const updateVehicle = async (req, res, next) => {
         req.session.user.userId,
         "vehicle",
         "update",
-        "vehicle_updated",
+        "Updated Vehicle",
         "vehicle",
         String(licensePlate),
         null,

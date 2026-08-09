@@ -75,8 +75,16 @@ const HomeMidCards = ({ title }) => {
         ) : (
           currentItems.map((item) => {
             if (isActivity) {
+              const isComplaintActivity = item.action === "Created a Complaint";
+
               return (
-                <div key={item.logId} className={styles.activityItemWrapper}>
+                <div
+                  key={item.logId}
+                  className={`${styles.activityItemWrapper} ${
+                    isComplaintActivity ? styles.complaintActivity : ""
+                  }`}
+                  title={isComplaintActivity ? item.description : undefined}
+                >
                   <HomeMidCardsData
                     title={item.action}
                     data={item.description}

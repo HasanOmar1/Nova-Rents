@@ -157,6 +157,55 @@
   gap: 5px;
 }
 
+.Complaints .fieldHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+}
+
+.Complaints .fieldHeading label {
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.Complaints .characterCounter {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border: 1px solid rgba(84, 148, 255, 0.2);
+  border-radius: 999px;
+  background-color: rgba(59, 130, 246, 0.08);
+  color: var(--gray);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.Complaints .labelAndInputContainer:focus-within .characterCounter {
+  color: #cfe3ff;
+  border-color: rgba(84, 148, 255, 0.45);
+  background-color: rgba(59, 130, 246, 0.14);
+}
+
+.Complaints .srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .Complaints .complaintTypeContainer input,
 .Complaints .complaintTypeContainer textarea {
   border: var(--cards-border);

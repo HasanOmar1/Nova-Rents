@@ -13,7 +13,9 @@ const ComplaintsAdminCards = ({
   return (
     <div className={styles.ComplaintsAdminCards}>
       <p className={styles.type}>{type}</p>
-      <p className={styles.title}>{title}</p>
+      <p className={styles.title} title={title}>
+        {title}
+      </p>
       <p className={styles.target}>{target}</p>
       <p className={styles.owner}>{owner}</p>
       <p className={styles.status}>
@@ -22,7 +24,12 @@ const ComplaintsAdminCards = ({
           : status.toUpperCase()}
       </p>
       <p className={styles.reporter}>{reporter}</p>
-      <button type="button" className={styles.action} onClick={onReview}>
+      <button
+        type="button"
+        className={styles.action}
+        onClick={onReview}
+        aria-label={`Review complaint: ${title}`}
+      >
         {action}
       </button>
     </div>

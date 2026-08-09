@@ -57,6 +57,10 @@
   gap: 20px;
 }
 
+.ComplaintReviewModal .detailsSection h3 {
+  overflow-wrap: anywhere;
+}
+
 .ComplaintReviewModal .badge {
   display: inline-block;
   padding: 4px 10px;

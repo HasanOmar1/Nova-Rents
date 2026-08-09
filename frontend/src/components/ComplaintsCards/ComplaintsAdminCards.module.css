@@ -16,6 +16,10 @@
 
 .ComplaintsAdminCards .title {
   color: white;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ComplaintsAdminCards .action {
@@ -46,6 +50,17 @@
 
   .ComplaintsAdminCards .type {
     width: 15%;
+  }
+
+  .ComplaintsAdminCards .title {
+    display: -webkit-box;
+    width: 100%;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
   .ComplaintsAdminCards .action {
@@ -83,5 +98,10 @@
   .ComplaintsAdminCards .action {
     width: 100%;
     margin-top: 5px;
+  }
+
+  .ComplaintsAdminCards .title {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
 }
