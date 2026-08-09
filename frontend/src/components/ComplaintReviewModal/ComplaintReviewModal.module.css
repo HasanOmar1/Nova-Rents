@@ -9,9 +9,15 @@
   max-height: 85vh;
   margin: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  overflow-x: hidden;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+
+.ComplaintReviewModal,
+.ComplaintReviewModal * {
+  box-sizing: border-box;
 }
 
 .ComplaintReviewModal::backdrop {
@@ -28,6 +34,10 @@
   border-bottom: var(--cards-border);
 }
 
+.ComplaintReviewModal .header > div {
+  min-width: 0;
+}
+
 .ComplaintReviewModal .header h2 {
   font-size: 1.3rem;
   margin-bottom: 5px;
@@ -36,6 +46,7 @@
 .ComplaintReviewModal .header p {
   color: var(--gray);
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .ComplaintReviewModal .closeIconBtn {
@@ -55,9 +66,51 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.ComplaintReviewModal .detailsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ComplaintReviewModal .detailBlock {
+  min-width: 0;
+}
+
+.ComplaintReviewModal .detailLabel {
+  margin: 0 0 7px;
+  color: #8fb9f4;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.ComplaintReviewModal .complaintTitle {
+  margin: 0;
+  padding: 13px 15px;
+  border: 1px solid rgba(84, 148, 255, 0.2);
+  border-left: 3px solid #5494ff;
+  border-radius: 10px;
+  background: linear-gradient(
+    110deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(255, 255, 255, 0.015)
+  );
+  color: #f8fafc;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .ComplaintReviewModal .badge {
+  align-self: flex-start;
   display: inline-block;
   padding: 4px 10px;
   background-color: rgba(167, 210, 235, 0.15);
@@ -66,17 +119,29 @@
   font-size: 0.8rem;
   font-weight: bold;
   text-transform: uppercase;
-  margin-top: 10px;
+  margin-top: -2px;
 }
 
 .ComplaintReviewModal .descriptionBox {
+  width: 100%;
+  min-width: 0;
+  min-height: 92px;
+  padding: 15px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
   background-color: rgba(0, 0, 0, 0.2);
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  margin-top: 15px;
   color: #e5e7eb;
-  line-height: 1.5;
+}
+
+.ComplaintReviewModal .descriptionText {
+  max-width: 100%;
+  margin: 0;
+  color: #d7dee9;
+  font-size: 0.94rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Update these inside ComplaintReviewModal.module.css */
@@ -113,6 +178,7 @@
   flex-direction: column;
   gap: 8px;
   margin-bottom: 20px;
+  min-width: 0;
 }
 
 .ComplaintReviewModal label {
@@ -201,6 +267,21 @@
 }
 
 @media (max-width: 480px) {
+  .ComplaintReviewModal {
+    width: calc(100% - 24px);
+    max-height: 92vh;
+  }
+
+  .ComplaintReviewModal .header,
+  .ComplaintReviewModal .content {
+    padding: 16px;
+  }
+
+  .ComplaintReviewModal .complaintTitle,
+  .ComplaintReviewModal .descriptionBox {
+    padding: 12px;
+  }
+
   .ComplaintReviewModal .imageGallery {
     grid-template-columns: 1fr;
   }

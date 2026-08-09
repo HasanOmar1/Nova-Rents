@@ -10,6 +10,9 @@ import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
 import { History, ShieldAlert } from "lucide-react";
 
+const TITLE_CHARACTER_LIMIT = 100;
+const DESCRIPTION_CHARACTER_LIMIT = 1000;
+
 const formatDateForInput = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -466,11 +469,7 @@ const Complaints = () => {
       : "You have not submitted any complaints yet.";
 
   const reportedOwnerName = reportedOwner
-    ? displayName(
-        reportedOwner.firstName,
-        reportedOwner.lastName,
-        null,
-      )
+    ? displayName(reportedOwner.firstName, reportedOwner.lastName, null)
     : "";
 
   const reportedOwnerJoined = reportedOwner?.createdAt
@@ -674,8 +673,23 @@ const Complaints = () => {
           )}
 
           <div className={styles.labelAndInputContainer}>
-            <p>Title</p>
+            <div className={styles.fieldHeading}>
+              <label htmlFor="complaint-title">Title</label>
+              <small
+                id="complaint-title-count"
+                className={styles.characterCounter}
+              >
+                <span aria-hidden="true">
+                  {formData.title.length} / {TITLE_CHARACTER_LIMIT} chars
+                </span>
+                <span className={styles.srOnly}>
+                  {TITLE_CHARACTER_LIMIT - formData.title.length} characters
+                  remaining
+                </span>
+              </small>
+            </div>
             <input
+              id="complaint-title"
               type="text"
               name="title"
               value={formData.title}
@@ -683,18 +697,38 @@ const Complaints = () => {
                 setFormData({ ...formData, title: e.target.value })
               }
               disabled={isSubmitting}
+              maxLength={TITLE_CHARACTER_LIMIT}
+              aria-describedby="complaint-title-count"
             />
           </div>
 
           <div className={styles.labelAndInputContainer}>
-            <p>Description</p>
+            <div className={styles.fieldHeading}>
+              <label htmlFor="complaint-description">Description</label>
+              <small
+                id="complaint-description-count"
+                className={styles.characterCounter}
+              >
+                <span aria-hidden="true">
+                  {formData.description.length} /{" "}
+                  {DESCRIPTION_CHARACTER_LIMIT} chars
+                </span>
+                <span className={styles.srOnly}>
+                  {DESCRIPTION_CHARACTER_LIMIT - formData.description.length}{" "}
+                  characters remaining
+                </span>
+              </small>
+            </div>
             <textarea
+              id="complaint-description"
               name="description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
               disabled={isSubmitting}
+              maxLength={DESCRIPTION_CHARACTER_LIMIT}
+              aria-describedby="complaint-description-count"
             ></textarea>
           </div>
           <label className={styles.customFileUpload}>
@@ -788,10 +822,7 @@ const Complaints = () => {
         </div>
 
         {activeHistoryView === "history" ? (
-          <div
-            id="complaint-history-panel"
-            className={styles.historyPanel}
-          >
+          <div id="complaint-history-panel" className={styles.historyPanel}>
             <div className={styles.historyPanelHeader}>
               <div>
                 <p className={styles.historyEyebrow}>Submitted by you</p>
@@ -852,9 +883,7 @@ const Complaints = () => {
             )}
 
             {isMyComplaintsLoading ? (
-              <p className={styles.historyEmpty}>
-                Loading your complaints...
-              </p>
+              <p className={styles.historyEmpty}>Loading your complaints...</p>
             ) : myComplaints.length === 0 && !myComplaintsError ? (
               <p className={styles.historyEmpty}>{emptyMessage}</p>
             ) : (
@@ -919,10 +948,7 @@ const Complaints = () => {
                     }
                     handleNextPage={() =>
                       setCurrentPage((page) =>
-                        Math.min(
-                          page + 1,
-                          myComplaintsPagination.totalPages,
-                        ),
+                        Math.min(page + 1, myComplaintsPagination.totalPages),
                       )
                     }
                     leftText={`Total: ${myComplaintsPagination.totalComplaints || 0}`}
@@ -934,7 +960,9 @@ const Complaints = () => {
           <div id="reports-about-me-panel" className={styles.historyPanel}>
             <div className={styles.historyPanelHeader}>
               <div>
-                <p className={styles.historyEyebrow}>Received by your account</p>
+                <p className={styles.historyEyebrow}>
+                  Received by your account
+                </p>
                 <h4>Reports About You</h4>
               </div>
               <p className={styles.historyHint}>

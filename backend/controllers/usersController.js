@@ -792,7 +792,7 @@ const updateUserProfile = async (req, res, next) => {
       currentUserId,
       "user",
       "update",
-      "user_profile_updated",
+      "user_Updated Profile",
       "user",
       String(currentUserId),
       null,

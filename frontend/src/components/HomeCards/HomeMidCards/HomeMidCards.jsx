@@ -76,7 +76,10 @@ const HomeMidCards = ({ title }) => {
           currentItems.map((item) => {
             if (isActivity) {
               return (
-                <div key={item.logId} className={styles.activityItemWrapper}>
+                <div
+                  key={item.logId}
+                  className={`${styles.activityItemWrapper} `}
+                >
                   <HomeMidCardsData
                     title={item.action}
                     data={item.description}

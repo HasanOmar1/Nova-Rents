@@ -42,7 +42,10 @@ const {
   validateComplaintFields,
 } = require("../utils/validsController");
 
-const { getUserByEmail, getUserById } = require("../database/queries/userQueries");
+const {
+  getUserByEmail,
+  getUserById,
+} = require("../database/queries/userQueries");
 const {
   createNotification,
 } = require("../database/queries/notificationQueries");
@@ -189,8 +192,7 @@ async function createComplaint_controller(req, res, next) {
 
     const plateForInsert =
       complaintType === "vehicle" ? eligibleRental.licensePlate : null;
-    const ownerForInsert =
-      complaintType === "owner" ? resolvedOwnerId : null;
+    const ownerForInsert = complaintType === "owner" ? resolvedOwnerId : null;
 
     let insertResult;
     try {
@@ -303,7 +305,7 @@ async function createComplaint_controller(req, res, next) {
     // Side effects only after successful COMMIT.
     await createActivity(
       userId,
-      "complaint_created",
+      "Created a Complaint",
       userActivityDescription,
       insertResult.insertId,
     );
@@ -312,7 +314,7 @@ async function createComplaint_controller(req, res, next) {
       userId,
       "complaint",
       "create",
-      "complaint_created",
+      "Created a Complaint",
       "complaint",
       String(insertResult.insertId),
       parsedRentalId,
@@ -346,7 +348,8 @@ async function createComplaint_controller(req, res, next) {
     // Failure must not undo the committed complaint.
     if (complaintType === "vehicle" && plateForInsert != null) {
       try {
-        const vehicleNotice = await getVehicleLabelForOwnerNotice(plateForInsert);
+        const vehicleNotice =
+          await getVehicleLabelForOwnerNotice(plateForInsert);
         if (vehicleNotice && vehicleNotice.ownerId) {
           const vehicleLabel = `${vehicleNotice.brandName} ${vehicleNotice.modelName}`;
           const reasonText = String(title || "").trim();

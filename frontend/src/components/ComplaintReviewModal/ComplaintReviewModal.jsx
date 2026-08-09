@@ -74,12 +74,32 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
 
       <div className={styles.content}>
         <div className={styles.detailsSection}>
-          <h3>{complaint.title}</h3>
+          <section
+            className={styles.detailBlock}
+            aria-labelledby="complaint-title-label"
+          >
+            <p id="complaint-title-label" className={styles.detailLabel}>
+              Title
+            </p>
+            <h3 className={styles.complaintTitle}>{complaint.title}</h3>
+          </section>
+
           <span className={styles.badge}>{complaint.complaintType}</span>
 
-          <div className={styles.descriptionBox}>
-            <p>{complaint.description}</p>
-          </div>
+          <section
+            className={styles.detailBlock}
+            aria-labelledby="complaint-description-label"
+          >
+            <p
+              id="complaint-description-label"
+              className={styles.detailLabel}
+            >
+              Description
+            </p>
+            <div className={styles.descriptionBox}>
+              <p className={styles.descriptionText}>{complaint.description}</p>
+            </div>
+          </section>
 
           {images.length > 0 && (
             <div className={styles.imageGallery}>
