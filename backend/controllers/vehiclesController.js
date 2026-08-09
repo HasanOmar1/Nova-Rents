@@ -269,7 +269,8 @@ const getVehicleById = async (req, res, next) => {
         u.firstName AS ownerFirstName,
         u.lastName AS ownerLastName,
         u.email AS ownerEmail,
-        u.phone AS ownerPhone
+        u.phone AS ownerPhone,
+        u.status AS ownerStatus
 
       FROM vehicles v
       JOIN carmodels cm ON v.modelId = cm.modelId

@@ -131,7 +131,7 @@
   padding: 12px;
   font-family: inherit;
   outline: none;
-  resize: vertical;
+  resize: none;
 }
 
 .ComplaintReviewModal select:focus,
