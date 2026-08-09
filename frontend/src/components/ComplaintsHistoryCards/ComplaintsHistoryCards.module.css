@@ -1,14 +1,24 @@
 .ComplaintsHistoryCards {
-  margin-top: 12px;
-  background-color: var(--input-bg);
+  margin: 0;
+  background: linear-gradient(145deg, var(--input-bg), rgba(19, 27, 43, 0.9));
   border: var(--cards-border);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 20px;
+  padding: 18px;
   border-radius: 16px;
   color: #eeeaeaef;
   height: auto;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ComplaintsHistoryCards:hover {
+  border-color: rgba(84, 148, 255, 0.38);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
 }
 
 .ComplaintsHistoryCards p {
@@ -20,16 +30,19 @@
 
 .ComplaintsHistoryCards .titleAndStatusContainer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
 }
 
 .ComplaintsHistoryCards .titleAndStatusContainer h5 {
+  flex: 1 1 200px;
   margin: 0;
   color: #fff;
   font-size: 1rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .ComplaintsHistoryCards .status {
@@ -81,8 +94,8 @@
 }
 
 .ComplaintsHistoryCards .responseBlock {
-  margin-top: 16px;
-  padding: 16px 18px;
+  margin-top: 8px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -116,9 +129,8 @@
   }
 
   .ComplaintsHistoryCards .titleAndStatusContainer {
-    flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
   }
 
   .ComplaintsHistoryCards .status {
