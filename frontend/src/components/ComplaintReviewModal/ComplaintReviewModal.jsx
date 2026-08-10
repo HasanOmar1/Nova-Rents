@@ -1,7 +1,46 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./ComplaintReviewModal.module.css";
-import { X, Send, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Car,
+  Image as ImageIcon,
+  ImageOff,
+  Mail,
+  Send,
+  User,
+  X,
+} from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
+
+const EvidenceImage = ({ src, alt, isThumbnail = false }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return (
+      <span
+        className={
+          isThumbnail ? styles.thumbnailUnavailable : styles.evidenceUnavailable
+        }
+        role={isThumbnail ? undefined : "img"}
+        aria-label={isThumbnail ? undefined : alt}
+        aria-hidden={isThumbnail ? "true" : undefined}
+      >
+        <ImageOff size={isThumbnail ? 18 : 28} aria-hidden="true" />
+        {!isThumbnail && <span>Evidence image unavailable</span>}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      onError={() => setHasError(true)}
+    />
+  );
+};
 
 const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const dialogRef = useRef(null);
@@ -9,6 +48,7 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const [resolutionMessage, setResolutionMessage] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -16,11 +56,11 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
 
     if (isOpen && complaint) {
       setStatus(complaint.status || "open");
-      // Prefer resolutionMessage; fall back for any pre-migration rows.
       setResolutionMessage(
         complaint.resolutionMessage || complaint.adminNotes || "",
       );
       setAdminNotes(complaint.adminNotes || "");
+      setActiveImageIndex(0);
       dialog.showModal();
       document.body.style.overflow = "hidden";
     } else {
@@ -36,6 +76,23 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   if (!complaint) return null;
 
   const images = complaint.images ? parseImgs(complaint.images, true) : [];
+  const activeImage = images[activeImageIndex] || images[0];
+  const isVehicleComplaint = complaint.complaintType === "vehicle";
+  const reportedUserEmail = isVehicleComplaint
+    ? complaint.vehicleOwnerEmail
+    : complaint.ownerEmail;
+  const reportedUserName = isVehicleComplaint
+    ? `${complaint.vehicleOwnerFirstName || ""} ${complaint.vehicleOwnerLastName || ""}`.trim()
+    : `${complaint.ownerFirstName || ""} ${complaint.ownerLastName || ""}`.trim();
+  const reportedVehicleName =
+    `${complaint.brandName || ""} ${complaint.modelName || ""}`.trim();
+  const reportedTargetName = isVehicleComplaint
+    ? reportedVehicleName || "Reported vehicle"
+    : reportedUserName ||
+      reportedUserEmail ||
+      (complaint.ownerId
+        ? `User ID: ${complaint.ownerId}`
+        : "Reported user unavailable");
   const isClosed = status === "resolved" || status === "closed";
   const resolutionRequired = status === "resolved" || status === "closed";
 
@@ -58,17 +115,25 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
       ref={dialogRef}
       onClose={onClose}
       onClick={(e) => e.stopPropagation()}
+      aria-labelledby="complaint-review-title"
     >
       <div className={styles.header}>
         <div>
-          <h2>Review Complaint #{complaint.complaintId}</h2>
+          <h2 id="complaint-review-title">
+            Review Complaint #{complaint.complaintId}
+          </h2>
           <p>
             Reported by:{" "}
             {complaint.complainerEmail || `User ID: ${complaint.userId}`}
           </p>
         </div>
-        <button className={styles.closeIconBtn} onClick={onClose} type="button">
-          <X size={24} />
+        <button
+          className={styles.closeIconBtn}
+          onClick={onClose}
+          type="button"
+          aria-label="Close complaint review"
+        >
+          <X size={24} aria-hidden="true" />
         </button>
       </div>
 
@@ -87,13 +152,51 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
           <span className={styles.badge}>{complaint.complaintType}</span>
 
           <section
+            className={styles.reportTargetSection}
+            aria-labelledby="reported-against-label"
+          >
+            <p id="reported-against-label" className={styles.detailLabel}>
+              Reported against
+            </p>
+            <div className={styles.reportTargetCard}>
+              <div className={styles.targetIcon} aria-hidden="true">
+                {isVehicleComplaint ? <Car size={22} /> : <User size={22} />}
+              </div>
+
+              <div className={styles.targetDetails}>
+                <p className={styles.targetName}>{reportedTargetName}</p>
+                <p className={styles.targetMeta}>
+                  {isVehicleComplaint
+                    ? `Vehicle plate: ${complaint.vehicleLicensePlate || "Unavailable"}`
+                    : "User account"}
+                </p>
+
+                {isVehicleComplaint && (
+                  <p className={styles.targetOwner}>
+                    <span>Vehicle owner</span>
+                    {reportedUserName || "Name unavailable"}
+                  </p>
+                )}
+
+                {reportedUserEmail ? (
+                  <p className={styles.targetEmail}>
+                    <Mail size={15} aria-hidden="true" />
+                    <span>{reportedUserEmail}</span>
+                  </p>
+                ) : (
+                  <p className={styles.targetEmailUnavailable}>
+                    <Mail size={15} aria-hidden="true" /> Email unavailable
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section
             className={styles.detailBlock}
             aria-labelledby="complaint-description-label"
           >
-            <p
-              id="complaint-description-label"
-              className={styles.detailLabel}
-            >
+            <p id="complaint-description-label" className={styles.detailLabel}>
               Description
             </p>
             <div className={styles.descriptionBox}>
@@ -101,12 +204,55 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
             </div>
           </section>
 
-          {images.length > 0 && (
-            <div className={styles.imageGallery}>
-              {images.map((img, idx) => (
-                <img key={idx} src={img} alt={`Evidence ${idx + 1}`} />
-              ))}
-            </div>
+          {activeImage && (
+            <section
+              className={styles.evidenceSection}
+              aria-labelledby="complaint-evidence-label"
+            >
+              <div className={styles.evidenceHeading}>
+                <p id="complaint-evidence-label" className={styles.detailLabel}>
+                  Evidence
+                </p>
+                <span className={styles.evidenceCount}>
+                  <ImageIcon size={14} aria-hidden="true" />
+                  {images.length} {images.length === 1 ? "image" : "images"}
+                </span>
+              </div>
+
+              <div className={styles.evidencePreview}>
+                <EvidenceImage
+                  key={`${activeImage}-${activeImageIndex}`}
+                  src={activeImage}
+                  alt={`Complaint evidence ${activeImageIndex + 1} of ${images.length}`}
+                />
+                <span className={styles.imagePosition}>
+                  Image {activeImageIndex + 1} of {images.length}
+                </span>
+              </div>
+
+              {images.length > 1 && (
+                <div
+                  className={styles.evidenceThumbnails}
+                  role="group"
+                  aria-label="Choose complaint evidence image"
+                >
+                  {images.map((img, idx) => (
+                    <button
+                      key={`${img}-${idx}`}
+                      type="button"
+                      className={`${styles.thumbnailButton} ${
+                        idx === activeImageIndex ? styles.activeThumbnail : ""
+                      }`}
+                      onClick={() => setActiveImageIndex(idx)}
+                      aria-label={`Show complaint evidence ${idx + 1} of ${images.length}`}
+                      aria-pressed={idx === activeImageIndex}
+                    >
+                      <EvidenceImage src={img} alt="" isThumbnail />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
           )}
         </div>
 

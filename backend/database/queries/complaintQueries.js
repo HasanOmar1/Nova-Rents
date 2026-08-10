@@ -401,6 +401,7 @@ async function getAllComplaints(status, limit, offset) {
   const query = `
     SELECT 
       c.complaintId,
+      c.userId,
       c.complaintType,
       c.vehicleLicensePlate,
       c.ownerId,
@@ -416,6 +417,7 @@ async function getAllComplaints(status, limit, offset) {
       cb.brandName,
       u.firstName AS ownerFirstName,
       u.lastName AS ownerLastName,
+      u.email AS ownerEmail,
       complainer.firstName AS complainerFirstName,
       complainer.lastName AS complainerLastName,
       complainer.email AS complainerEmail,
