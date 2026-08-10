@@ -11,6 +11,7 @@ import {
   MapPin,
   AlertTriangle,
 } from "lucide-react";
+import AsyncButton from "../AsyncButton/AsyncButton";
 
 const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString("en-GB", {
@@ -30,7 +31,15 @@ const RentalRequestsModal = ({
   const dialogRef = useRef(null);
   const [tripFilter, setTripFilter] = useState("all");
   const [reportMenuRentalId, setReportMenuRentalId] = useState(null);
+  const [pendingAction, setPendingAction] = useState("");
   const navigate = useNavigate();
+
+  const handleRentalAction = async (rentalId, action) => {
+    const actionKey = `${action}-${rentalId}`;
+    setPendingAction(actionKey);
+    try { await respondToRequest(rentalId, action); }
+    finally { setPendingAction(""); }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -291,18 +300,24 @@ const RentalRequestsModal = ({
 
               {isPendingMode && (
                 <div className={styles.actionBtns}>
-                  <button
+                  <AsyncButton
                     className={styles.approveBtn}
-                    onClick={() => respondToRequest(rental.rentalId, "approve")}
+                    loading={pendingAction===`approve-${rental.rentalId}`}
+                    loadingText="Approving..."
+                    disabled={Boolean(pendingAction)}
+                    onClick={() => handleRentalAction(rental.rentalId, "approve")}
                   >
                     <CheckCircle size={16} /> Approve
-                  </button>
-                  <button
+                  </AsyncButton>
+                  <AsyncButton
                     className={styles.declineBtn}
-                    onClick={() => respondToRequest(rental.rentalId, "reject")}
+                    loading={pendingAction===`reject-${rental.rentalId}`}
+                    loadingText="Declining..."
+                    disabled={Boolean(pendingAction)}
+                    onClick={() => handleRentalAction(rental.rentalId, "reject")}
                   >
                     <XCircle size={16} /> Decline
-                  </button>
+                  </AsyncButton>
                 </div>
               )}
             </div>

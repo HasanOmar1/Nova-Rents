@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
 import { useGovApisContext } from "../../context/GovApisContext";
-import { useActivityContext } from "../../context/ActivityContext";
 import { formattedMinDate } from "../../utils/minMaxDate";
 import ExactPickupLocationPicker from "../ExactPickupLocationPicker/ExactPickupLocationPicker";
+import AsyncButton from "../AsyncButton/AsyncButton";
 
 const initialFormState = {
   brandId: "0",
@@ -82,6 +82,7 @@ const formatDateForInput = (dateString) => {
 const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   const dialogRef = useRef(null);
   const [formData, setFormData] = useState(initialFormState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     getBrands,
@@ -212,6 +213,8 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     const submitData = new FormData();
 
@@ -258,6 +261,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     }
 
     if (isSuccess) handleCloseAndReset();
+    setIsSubmitting(false);
   };
 
   const isEditMode = Boolean(vehicle);
@@ -617,9 +621,9 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           >
             Cancel
           </button>
-          <button type="submit" className={styles.submitBtn}>
+          <AsyncButton type="submit" className={styles.submitBtn} loading={isSubmitting} loadingText={isEditMode ? "Saving changes..." : "Saving vehicle..."}>
             {isEditMode ? "Save Changes" : "Save Vehicle"}
-          </button>
+          </AsyncButton>
         </div>
       </form>
     </dialog>

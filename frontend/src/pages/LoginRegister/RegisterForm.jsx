@@ -3,6 +3,7 @@ import styles from "./LoginRegister.module.css";
 import { ArrowRight } from "lucide-react";
 import { useUserContext } from "../../context/UserContext";
 import { formattedMaxDate, formattedMinDate } from "../../utils/minMaxDate";
+import AsyncButton from "../../components/AsyncButton/AsyncButton";
 
 const RegisterForm = ({ setCurrentForm }) => {
   const [firstName, setFirstName] = useState("");
@@ -11,6 +12,7 @@ const RegisterForm = ({ setCurrentForm }) => {
   const [phone, setPhone] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, errorMsg, setErrorMsg } = useUserContext();
 
   const handleCurrentForm = () => {
@@ -18,7 +20,7 @@ const RegisterForm = ({ setCurrentForm }) => {
     setErrorMsg("");
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     const formData = {
       firstName,
@@ -29,7 +31,8 @@ const RegisterForm = ({ setCurrentForm }) => {
       birthDate,
     };
 
-    register(formData);
+    setIsSubmitting(true);
+    try { await register(formData); } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -99,10 +102,10 @@ const RegisterForm = ({ setCurrentForm }) => {
             />
           </label>
 
-          <button className={styles.primaryButtonBlue}>
+          <AsyncButton className={styles.primaryButtonBlue} loading={isSubmitting} loadingText="Creating account...">
             Join Nova Rents
             <ArrowRight className={styles.iconSm} />
-          </button>
+          </AsyncButton>
         </form>
         <div className={styles.linkGroup}>
           <p>

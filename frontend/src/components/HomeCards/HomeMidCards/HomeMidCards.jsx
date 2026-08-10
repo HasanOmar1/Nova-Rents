@@ -1,13 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import styles from "./HomeMidCards.module.css";
 import HomeMidCardsData from "./HomeMidCardsData";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import { useActivityContext } from "../../../context/ActivityContext";
 import Pagination from "../../Pagination/Pagination";
+import { useNavigate } from "react-router-dom";
+
+const getNotificationDestination = (notification) => {
+  if (notification.type === "owner_report") return "/complaints?view=reports#complaint-history";
+  if (notification.type === "vehicle_report") return "/complaints?view=vehicleReports#complaint-history";
+  if (notification.type === "complaint_update") return "/complaints?view=history#complaint-history";
+  if (notification.type === "complaint_admin") return "/complaintsAdmin";
+  if (notification.type === "system" && /complaint/i.test(notification.title || "")) return "/complaintsAdmin";
+  if (["rental_request", "rental_approved", "rental_rejected", "rental_cancelled",
+    "rental_reminder", "rental_ending_soon", "payment_request", "payment_received",
+    "vehicle_maintenance"].includes(notification.type)) return "/rentalDashboard";
+  return "/home";
+};
 
 const HomeMidCards = ({ title }) => {
   const { notifications, markAsRead, loading } = useNotificationContext();
   const { activities, activityLoading } = useActivityContext();
+  const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState("all");
@@ -28,10 +42,6 @@ const HomeMidCards = ({ title }) => {
     }
   }
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filter]);
-
   const totalPages = Math.ceil(dataList.length / itemsPerPage);
   const currentItems = dataList.slice(
     (currentPage - 1) * itemsPerPage,
@@ -46,6 +56,13 @@ const HomeMidCards = ({ title }) => {
     if (currentPage > 1) setCurrentPage((prev) => prev - 1);
   };
 
+  const handleNotificationClick = async (notification) => {
+    if (Number(notification.isRead) !== 1) {
+      await markAsRead(notification.notificationId);
+    }
+    navigate(getNotificationDestination(notification));
+  };
+
   return (
     <div className={styles.HomeMidCards}>
       <div className={styles.headerRow}>
@@ -55,7 +72,10 @@ const HomeMidCards = ({ title }) => {
           <select
             className={styles.filterSelect}
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setCurrentPage(1);
+            }}
           >
             <option value="all">All</option>
             <option value="unread">Unread</option>
@@ -88,15 +108,30 @@ const HomeMidCards = ({ title }) => {
                 </div>
               );
             } else {
+              const isComplaintNotification =
+                [
+                  "owner_report",
+                  "vehicle_report",
+                  "complaint_update",
+                  "complaint_admin",
+                ].includes(item.type) ||
+                (item.type === "system" &&
+                  /complaint|report/i.test(`${item.title || ""} ${item.message || ""}`));
               return (
                 <div
                   key={item.notificationId}
-                  onClick={() =>
-                    !item.isRead && markAsRead(item.notificationId)
-                  }
+                  onClick={() => handleNotificationClick(item)}
+                  role="link"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleNotificationClick(item);
+                    }
+                  }}
                   className={`${styles.notificationWrapper} ${
                     item.isRead ? styles.read : styles.unread
-                  }`}
+                  } ${isComplaintNotification ? styles.complaintNotification : ""}`}
                 >
                   <HomeMidCardsData
                     title={item.title}

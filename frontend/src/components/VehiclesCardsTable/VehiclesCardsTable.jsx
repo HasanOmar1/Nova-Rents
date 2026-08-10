@@ -11,6 +11,7 @@ import { useUserContext } from "../../context/UserContext";
 const VehiclesCardsTable = ({ veh, admin, activeReportCount = 0, onViewReports }) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { currentUser } = useUserContext();
 
   const { deleteUserVehicle, errorMsg, setErrorMsg } = useVehicleContext();
@@ -25,8 +26,11 @@ const VehiclesCardsTable = ({ veh, admin, activeReportCount = 0, onViewReports }
   const closeEditMenu = () => setIsEditOpen(false);
 
   const handleDeleteVehicle = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
     const isSuccess = await deleteUserVehicle(veh.licensePlate);
     if (isSuccess) closeDeleteMenu();
+    setIsDeleting(false);
   };
 
   const imageUrl = parseImgs(veh.image);
@@ -121,6 +125,7 @@ const VehiclesCardsTable = ({ veh, admin, activeReportCount = 0, onViewReports }
         isOpen={isDeleteOpen}
         handleDeleteVehicle={handleDeleteVehicle}
         errorMsg={errorMsg}
+        isDeleting={isDeleting}
       />
 
       <AddEditVehicleMenu

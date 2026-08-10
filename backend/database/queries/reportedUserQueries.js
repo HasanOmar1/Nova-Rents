@@ -22,7 +22,7 @@ function buildComplaintFilter(status, startDate, endDate, alias = "c") {
   };
 }
 
-async function getReportedUsers({ page, limit, search, accountStatus, complaintStatus, startDate, endDate }) {
+async function getReportedUsers({ page, limit, search, accountStatus, complaintStatus, startDate, endDate, sortBy }) {
   const offset = (page - 1) * limit;
   const direct = buildComplaintFilter(complaintStatus, startDate, endDate, "c");
   const vehicle = buildComplaintFilter(complaintStatus, startDate, endDate, "c");
@@ -53,10 +53,20 @@ async function getReportedUsers({ page, limit, search, accountStatus, complaintS
       GROUP BY v.ownerId
     ) vr ON vr.targetUserId = u.userId
     LEFT JOIN (
-      SELECT userId, COUNT(*) AS warningCount FROM user_warnings GROUP BY userId
+      SELECT userId, COUNT(*) AS warningCount
+      FROM user_warnings
+      WHERE removedAt IS NULL
+      GROUP BY userId
     ) w ON w.userId = u.userId`;
   const aggregateValues = [...direct.values, ...vehicle.values];
   const where = `WHERE ${userWhere.join(" AND ")}`;
+  const orderBy = {
+    total_reports: "totalReports DESC, lastReportDate DESC, u.userId DESC",
+    recent_report: "lastReportDate DESC, totalReports DESC, u.userId DESC",
+    warning_count: "warningCount DESC, totalReports DESC, u.userId DESC",
+    open_reports: "openReports DESC, totalReports DESC, u.userId DESC",
+    email_asc: "u.email ASC, u.userId DESC",
+  }[sortBy] || "totalReports DESC, lastReportDate DESC, u.userId DESC";
   const rows = await doQuery(`
     SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.status,
       COALESCE(d.directReports, 0) AS directReports,
@@ -69,7 +79,7 @@ async function getReportedUsers({ page, limit, search, accountStatus, complaintS
       GREATEST(COALESCE(d.directLast, '1000-01-01'), COALESCE(vr.vehicleLast, '1000-01-01')) AS lastReportDate
     FROM users u ${aggregates} ${where}
     HAVING totalReports > 0
-    ORDER BY totalReports DESC, lastReportDate DESC, u.userId DESC
+    ORDER BY ${orderBy}
     LIMIT ? OFFSET ?`, [...aggregateValues, ...userValues, limit, offset]);
 
   const count = await doQuery(`
@@ -97,7 +107,8 @@ async function getWarningHistory(userId) {
     SELECT w.warningId, w.reason, w.createdAt,
       a.firstName AS adminFirstName, a.lastName AS adminLastName
     FROM user_warnings w INNER JOIN users a ON a.userId = w.adminId
-    WHERE w.userId = ? ORDER BY w.createdAt ASC, w.warningId ASC`, [userId]);
+    WHERE w.userId = ? AND w.removedAt IS NULL
+    ORDER BY w.createdAt ASC, w.warningId ASC`, [userId]);
 }
 
 async function lockTargetUser(connection, userId) {
@@ -107,7 +118,8 @@ async function lockTargetUser(connection, userId) {
 }
 
 async function countWarningsOnConnection(connection, userId) {
-  const rows = await queryOnConnection(connection, "SELECT COUNT(*) AS count FROM user_warnings WHERE userId = ?", [userId]);
+  const rows = await queryOnConnection(connection,
+    "SELECT COUNT(*) AS count FROM user_warnings WHERE userId = ? AND removedAt IS NULL", [userId]);
   return Number(rows[0]?.count) || 0;
 }
 
@@ -120,20 +132,23 @@ async function blockUserOnConnection(connection, userId) {
   return queryOnConnection(connection, "UPDATE users SET status = 'blocked' WHERE userId = ?", [userId]);
 }
 
-async function deleteLatestWarningOnConnection(connection, userId) {
+async function removeLatestWarningOnConnection(connection, userId, adminId) {
   const warnings = await queryOnConnection(connection, `
     SELECT warningId, reason
     FROM user_warnings
-    WHERE userId = ?
+    WHERE userId = ? AND removedAt IS NULL
     ORDER BY createdAt DESC, warningId DESC
     LIMIT 1
     FOR UPDATE`, [userId]);
   const warning = warnings[0];
   if (!warning) return null;
-  await queryOnConnection(connection, "DELETE FROM user_warnings WHERE warningId = ?", [warning.warningId]);
+  await queryOnConnection(connection, `
+    UPDATE user_warnings
+    SET removedAt = NOW(), removedByAdminId = ?
+    WHERE warningId = ? AND removedAt IS NULL`, [adminId, warning.warningId]);
   return warning;
 }
 
 module.exports = { getReportedUsers, getReportsForUser, getWarningHistory, lockTargetUser,
   countWarningsOnConnection, insertWarningOnConnection, blockUserOnConnection,
-  deleteLatestWarningOnConnection };
+  removeLatestWarningOnConnection };

@@ -4,10 +4,12 @@ import DocumentsCards from "../../../components/DocumentsCards/DocumentsCards";
 import { useUserContext } from "../../../context/UserContext";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { formattedMaxDate, formattedMinDate } from "../../../utils/minMaxDate";
+import AsyncButton from "../../../components/AsyncButton/AsyncButton";
 
 const Profile = () => {
   const [editProfileClicked, setEditProfileClicked] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const { currentUser, updateProfile, errorMsg, setErrorMsg } =
     useUserContext();
@@ -85,7 +87,9 @@ const Profile = () => {
       newData.password = inputsValues.password;
     }
 
+    setIsSaving(true);
     const isSuccess = await updateProfile(newData);
+    setIsSaving(false);
     if (isSuccess) {
       setSuccessMsg("Profile updated successfully!");
       setEditProfileClicked(false);
@@ -214,9 +218,9 @@ const Profile = () => {
               >
                 Cancel
               </button>
-              <button className={styles.saveChangesBtn} type="submit">
+              <AsyncButton className={styles.saveChangesBtn} type="submit" loading={isSaving} loadingText="Saving...">
                 Save Changes
-              </button>
+              </AsyncButton>
             </div>
           )}
         </form>

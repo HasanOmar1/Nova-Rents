@@ -325,23 +325,25 @@ async function createComplaint_controller(req, res, next) {
     );
 
     // Notify all admins (existing behavior)
-    const admins = await doQuery(
-      "SELECT userId FROM users WHERE role = 'admin'",
-    );
+    try {
+      const admins = await doQuery(
+        "SELECT userId FROM users WHERE role = 'admin'",
+      );
 
-    for (const admin of admins) {
-      await doQuery(
-        `
-          INSERT INTO notifications
-          (userId, type, title, message)
-          VALUES (?, ?, ?, ?)
-        `,
-        [
+      for (const admin of admins) {
+        await createNotification(
           admin.userId,
-          "system",
+          parsedRentalId,
+          "complaint_admin",
           "New Complaint Received",
-          adminHistoryDescription,
-        ],
+          adminHistoryDescription.slice(0, 255),
+        );
+      }
+    } catch (adminNotifyError) {
+      // Admin delivery must never prevent notifying the reported user below.
+      console.error(
+        "Failed to notify admins about complaint:",
+        adminNotifyError.message,
       );
     }
 

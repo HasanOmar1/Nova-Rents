@@ -16,8 +16,17 @@ const NotificationContextProvider = ({ children }) => {
       loadNotifications();
       const intervalId = setInterval(() => {
         loadNotifications();
-      }, 30000);
-      return () => clearInterval(intervalId);
+      }, 10000);
+      const refreshWhenVisible = () => {
+        if (document.visibilityState === "visible") loadNotifications();
+      };
+      window.addEventListener("focus", refreshWhenVisible);
+      document.addEventListener("visibilitychange", refreshWhenVisible);
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener("focus", refreshWhenVisible);
+        document.removeEventListener("visibilitychange", refreshWhenVisible);
+      };
     } else {
       setNotifications([]);
       setUnreadCount(0);
@@ -47,30 +56,42 @@ const NotificationContextProvider = ({ children }) => {
   };
 
   const markAsRead = async (notificationId) => {
+    const target = notifications.find(
+      (notification) => notification.notificationId === notificationId,
+    );
+    if (!target || Number(target.isRead) === 1) return true;
+
+    // Update immediately so clicking a notification visibly clears its unread
+    // state and badge before navigation changes the page.
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.notificationId === notificationId
+          ? { ...notification, isRead: 1 }
+          : notification,
+      ),
+    );
+    setUnreadCount((prev) => Math.max(prev - 1, 0));
+
     try {
       setErrorMsg("");
 
-      await axios.put(
-        `/notifications/mark-notification-as-read/${notificationId}`,
-        {
-          withCredentials: true,
-        },
-      );
-
+      await axios.put(`/notifications/mark-notification-as-read/${notificationId}`);
+      return true;
+    } catch (error) {
+      // Restore the unread state when persistence fails.
       setNotifications((prev) =>
         prev.map((notification) =>
           notification.notificationId === notificationId
-            ? { ...notification, isRead: 1 }
+            ? { ...notification, isRead: 0 }
             : notification,
         ),
       );
-
-      setUnreadCount((prev) => Math.max(prev - 1, 0));
-    } catch (error) {
+      setUnreadCount((prev) => prev + 1);
       console.log(error?.response?.data?.message);
       setErrorMsg(
         error?.response?.data?.message || "Failed to update notification",
       );
+      return false;
     }
   };
 

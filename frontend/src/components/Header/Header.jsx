@@ -2,20 +2,23 @@ import styles from "./Header.module.css";
 import { Car, Bell, LogOut, TableOfContents, History } from "lucide-react";
 import { navByRole, labels, icons } from "./nav";
 import { useUserContext } from "../../context/UserContext";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useNotificationContext } from "../../context/NotificationContext";
+import AsyncButton from "../AsyncButton/AsyncButton";
 
-const Header = ({ page }) => {
+const Header = () => {
   const { currentUser, logout } = useUserContext();
   const { unreadCount } = useNotificationContext();
   const [areMoreTabsOpen, setAreMoreTabsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
 
   const visible = navByRole[currentUser?.role] || [];
 
-  const handleLogOut = () => {
-    logout();
+  const handleLogOut = async () => {
+    setIsLoggingOut(true);
+    try { await logout(); } finally { setIsLoggingOut(false); }
   };
 
   const handleTabs = () => {
@@ -87,25 +90,29 @@ const Header = ({ page }) => {
                           <History className={` ${styles.iconSmall} icon `} />
                           Rental Dashboard
                         </Link>
-                        <button
+                        <AsyncButton
                           className={styles.logoutButton}
                           onClick={handleLogOut}
+                          loading={isLoggingOut}
+                          loadingText="Logging out..."
                         >
                           <LogOut className={` ${styles.iconSmall} icon `} />
                           Log out
-                        </button>
+                        </AsyncButton>
                       </div>
                     )}
                   </div>
                 </>
               ) : (
-                <button
+                <AsyncButton
                   className={styles.logoutButtonAdmin}
                   onClick={handleLogOut}
+                  loading={isLoggingOut}
+                  loadingText="Logging out..."
                 >
                   <LogOut className={` ${styles.iconSmall} icon `} />
                   Log out
-                </button>
+                </AsyncButton>
               )}
             </>
           </div>

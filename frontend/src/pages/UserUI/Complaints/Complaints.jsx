@@ -106,12 +106,23 @@ const Complaints = () => {
   const [appliedToDate, setAppliedToDate] = useState(toDate);
   const [appliedStatus, setAppliedStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeHistoryView, setActiveHistoryView] = useState("history");
+  const requestedView = searchParams.get("view");
+  const initialHistoryView = ["history", "reports", "vehicleReports"].includes(requestedView)
+    ? requestedView
+    : "history";
+  const [activeHistoryView, setActiveHistoryView] = useState(initialHistoryView);
   const [reportsPage, setReportsPage] = useState(1);
   const [vehicleReportsPage, setVehicleReportsPage] = useState(1);
 
   const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
   const isTargetLoading = isVehicleLoading || isOwnerLoading;
+
+  useEffect(() => {
+    const view = searchParams.get("view");
+    if (["history", "reports", "vehicleReports"].includes(view)) {
+      setActiveHistoryView(view);
+    }
+  }, [searchParams]);
 
   // Load My Trips once so rental summary can be shown without a new API.
   useEffect(() => {
@@ -787,7 +798,7 @@ const Complaints = () => {
         </button>
       </form>
 
-      <section className={styles.complaintsHistoryContainer}>
+      <section id="complaint-history" className={styles.complaintsHistoryContainer}>
         <div
           className={styles.historyViewSwitcher}
           role="group"

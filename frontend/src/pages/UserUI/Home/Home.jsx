@@ -26,8 +26,12 @@ const CHART_COLORS = [
   "#9aa7ff",
 ];
 
+const EVENT_LABELS = {
+  vehicle_created: "Vehicles Listed",
+};
+
 const formatEventLabel = (eventName) =>
-  eventName
+  EVENT_LABELS[eventName] || eventName
     .split("_")
     .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
     .join(" ");
