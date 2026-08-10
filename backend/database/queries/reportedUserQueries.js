@@ -22,7 +22,7 @@ function buildComplaintFilter(status, startDate, endDate, alias = "c") {
   };
 }
 
-async function getReportedUsers({ page, limit, search, accountStatus, complaintStatus, startDate, endDate }) {
+async function getReportedUsers({ page, limit, search, accountStatus, complaintStatus, startDate, endDate, sortBy }) {
   const offset = (page - 1) * limit;
   const direct = buildComplaintFilter(complaintStatus, startDate, endDate, "c");
   const vehicle = buildComplaintFilter(complaintStatus, startDate, endDate, "c");
@@ -60,6 +60,13 @@ async function getReportedUsers({ page, limit, search, accountStatus, complaintS
     ) w ON w.userId = u.userId`;
   const aggregateValues = [...direct.values, ...vehicle.values];
   const where = `WHERE ${userWhere.join(" AND ")}`;
+  const orderBy = {
+    total_reports: "totalReports DESC, lastReportDate DESC, u.userId DESC",
+    recent_report: "lastReportDate DESC, totalReports DESC, u.userId DESC",
+    warning_count: "warningCount DESC, totalReports DESC, u.userId DESC",
+    open_reports: "openReports DESC, totalReports DESC, u.userId DESC",
+    email_asc: "u.email ASC, u.userId DESC",
+  }[sortBy] || "totalReports DESC, lastReportDate DESC, u.userId DESC";
   const rows = await doQuery(`
     SELECT u.userId, u.firstName, u.lastName, u.email, u.phone, u.status,
       COALESCE(d.directReports, 0) AS directReports,
@@ -72,7 +79,7 @@ async function getReportedUsers({ page, limit, search, accountStatus, complaintS
       GREATEST(COALESCE(d.directLast, '1000-01-01'), COALESCE(vr.vehicleLast, '1000-01-01')) AS lastReportDate
     FROM users u ${aggregates} ${where}
     HAVING totalReports > 0
-    ORDER BY totalReports DESC, lastReportDate DESC, u.userId DESC
+    ORDER BY ${orderBy}
     LIMIT ? OFFSET ?`, [...aggregateValues, ...userValues, limit, offset]);
 
   const count = await doQuery(`

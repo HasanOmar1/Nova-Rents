@@ -12,6 +12,7 @@ const { sendAccountWarningEmail } = require("../services/emailService");
 
 const VALID_ACCOUNT_STATUSES = new Set(["all", "active", "blocked"]);
 const VALID_COMPLAINT_STATUSES = new Set(["all", "open", "in_review", "resolved", "closed"]);
+const VALID_SORTS = new Set(["total_reports", "recent_report", "warning_count", "open_reports", "email_asc"]);
 const validId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
 const validDate = (value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value);
 
@@ -24,11 +25,13 @@ async function listReportedUsers(req, res, next) {
     const search = String(req.query.search || "").trim().slice(0, 100);
     const startDate = req.query.startDate || null;
     const endDate = req.query.endDate || null;
+    const sortBy = req.query.sortBy || "total_reports";
     if (!VALID_ACCOUNT_STATUSES.has(accountStatus) || !VALID_COMPLAINT_STATUSES.has(complaintStatus) ||
-        !validDate(startDate) || !validDate(endDate) || (startDate && endDate && startDate > endDate)) {
+        !VALID_SORTS.has(sortBy) || !validDate(startDate) || !validDate(endDate) ||
+        (startDate && endDate && startDate > endDate)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({ message: "Invalid filters" });
     }
-    const { rows, total } = await getReportedUsers({ page, limit, search, accountStatus, complaintStatus, startDate, endDate });
+    const { rows, total } = await getReportedUsers({ page, limit, search, accountStatus, complaintStatus, startDate, endDate, sortBy });
     return res.status(STATUS_CODE.OK).json({ users: rows, pagination: {
       currentPage: page, totalPages: Math.max(Math.ceil(total / limit), 1), totalUsers: total, limit,
     }});

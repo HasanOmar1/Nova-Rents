@@ -10,7 +10,7 @@ const dateText = (value) => !value || String(value).startsWith("1000-") ? "—" 
 export default function ReportedUsers() {
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalUsers: 0 });
-  const [filters, setFilters] = useState({ search: "", accountStatus: "all", complaintStatus: "all" });
+  const [filters, setFilters] = useState({ search: "", accountStatus: "all", complaintStatus: "all", sortBy: "total_reports" });
   const [query, setQuery] = useState("");
   const [modal, setModal] = useState(null);
   const [details, setDetails] = useState([]);
@@ -22,10 +22,10 @@ export default function ReportedUsers() {
   const load = useCallback(async (page = 1) => {
     try {
       const { data } = await axios.get("/reported-users", { params: { page, limit: 10, search: query,
-        accountStatus: filters.accountStatus, complaintStatus: filters.complaintStatus } });
+        accountStatus: filters.accountStatus, complaintStatus: filters.complaintStatus, sortBy: filters.sortBy } });
       setUsers(data.users); setPagination(data.pagination); setMessage("");
     } catch (error) { setMessage(error.response?.data?.message || "Failed to load reported users"); }
-  }, [query, filters.accountStatus, filters.complaintStatus]);
+  }, [query, filters.accountStatus, filters.complaintStatus, filters.sortBy]);
   useEffect(() => {
     const refresh = async () => { await load(1); };
     refresh();
@@ -78,6 +78,7 @@ export default function ReportedUsers() {
       <label><span>Search</span><div className={styles.search}><Search size={18}/><input value={filters.search} placeholder="Name or email" onChange={(e)=>setFilters({...filters,search:e.target.value})}/></div></label>
       <label><span>Account status</span><select value={filters.accountStatus} onChange={(e)=>setFilters({...filters,accountStatus:e.target.value})}><option value="all">All</option><option value="active">Active</option><option value="blocked">Blocked</option></select></label>
       <label><span>Complaint status</span><select value={filters.complaintStatus} onChange={(e)=>setFilters({...filters,complaintStatus:e.target.value})}><option value="all">All</option><option value="open">Open</option><option value="in_review">In review</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select></label>
+      <label><span>Sort by</span><select value={filters.sortBy} onChange={(e)=>setFilters({...filters,sortBy:e.target.value})}><option value="total_reports">Most reported</option><option value="recent_report">Most recent report</option><option value="warning_count">Most warnings</option><option value="open_reports">Most open reports</option><option value="email_asc">Email A–Z</option></select></label>
     </section>
     <section className={styles.tableWrap}><div className={styles.scroll}><table><thead><tr><th>Email</th><th>Direct</th><th>Vehicle</th><th>Total</th><th>Open</th><th>Warnings</th><th>Status</th><th>Last report</th><th>Risk</th><th>Actions</th></tr></thead>
       <tbody>{users.map(user=><tr key={user.userId}><td className={styles.emailCell}>{user.email}</td><td>{user.directReports}</td><td>{user.vehicleReports}</td><td>{user.totalReports}</td><td>{user.openReports}</td>
