@@ -53,7 +53,10 @@ async function getReportedUsers({ page, limit, search, accountStatus, complaintS
       GROUP BY v.ownerId
     ) vr ON vr.targetUserId = u.userId
     LEFT JOIN (
-      SELECT userId, COUNT(*) AS warningCount FROM user_warnings GROUP BY userId
+      SELECT userId, COUNT(*) AS warningCount
+      FROM user_warnings
+      WHERE removedAt IS NULL
+      GROUP BY userId
     ) w ON w.userId = u.userId`;
   const aggregateValues = [...direct.values, ...vehicle.values];
   const where = `WHERE ${userWhere.join(" AND ")}`;
@@ -97,7 +100,8 @@ async function getWarningHistory(userId) {
     SELECT w.warningId, w.reason, w.createdAt,
       a.firstName AS adminFirstName, a.lastName AS adminLastName
     FROM user_warnings w INNER JOIN users a ON a.userId = w.adminId
-    WHERE w.userId = ? ORDER BY w.createdAt ASC, w.warningId ASC`, [userId]);
+    WHERE w.userId = ? AND w.removedAt IS NULL
+    ORDER BY w.createdAt ASC, w.warningId ASC`, [userId]);
 }
 
 async function lockTargetUser(connection, userId) {
@@ -107,7 +111,8 @@ async function lockTargetUser(connection, userId) {
 }
 
 async function countWarningsOnConnection(connection, userId) {
-  const rows = await queryOnConnection(connection, "SELECT COUNT(*) AS count FROM user_warnings WHERE userId = ?", [userId]);
+  const rows = await queryOnConnection(connection,
+    "SELECT COUNT(*) AS count FROM user_warnings WHERE userId = ? AND removedAt IS NULL", [userId]);
   return Number(rows[0]?.count) || 0;
 }
 
@@ -120,20 +125,23 @@ async function blockUserOnConnection(connection, userId) {
   return queryOnConnection(connection, "UPDATE users SET status = 'blocked' WHERE userId = ?", [userId]);
 }
 
-async function deleteLatestWarningOnConnection(connection, userId) {
+async function removeLatestWarningOnConnection(connection, userId, adminId) {
   const warnings = await queryOnConnection(connection, `
     SELECT warningId, reason
     FROM user_warnings
-    WHERE userId = ?
+    WHERE userId = ? AND removedAt IS NULL
     ORDER BY createdAt DESC, warningId DESC
     LIMIT 1
     FOR UPDATE`, [userId]);
   const warning = warnings[0];
   if (!warning) return null;
-  await queryOnConnection(connection, "DELETE FROM user_warnings WHERE warningId = ?", [warning.warningId]);
+  await queryOnConnection(connection, `
+    UPDATE user_warnings
+    SET removedAt = NOW(), removedByAdminId = ?
+    WHERE warningId = ? AND removedAt IS NULL`, [adminId, warning.warningId]);
   return warning;
 }
 
 module.exports = { getReportedUsers, getReportsForUser, getWarningHistory, lockTargetUser,
   countWarningsOnConnection, insertWarningOnConnection, blockUserOnConnection,
-  deleteLatestWarningOnConnection };
+  removeLatestWarningOnConnection };

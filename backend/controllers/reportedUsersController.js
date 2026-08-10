@@ -3,7 +3,7 @@ const { withTransaction } = require("../database/withTransaction");
 const {
   getReportedUsers, getReportsForUser, getWarningHistory, lockTargetUser,
   countWarningsOnConnection, insertWarningOnConnection, blockUserOnConnection,
-  deleteLatestWarningOnConnection,
+  removeLatestWarningOnConnection,
 } = require("../database/queries/reportedUserQueries");
 const { createNotification } = require("../database/queries/notificationQueries");
 const { createActivity } = require("../database/queries/activityQueries");
@@ -111,7 +111,7 @@ async function removeLatestWarning(req, res, next) {
       const user = await lockTargetUser(connection, userId);
       if (!user) { const error = new Error("User not found"); error.status = STATUS_CODE.NOT_FOUND; throw error; }
       if (user.role === "admin") { const error = new Error("Administrator warnings cannot be changed"); error.status = STATUS_CODE.FORBIDDEN; throw error; }
-      const warning = await deleteLatestWarningOnConnection(connection, userId);
+      const warning = await removeLatestWarningOnConnection(connection, userId, adminId);
       if (!warning) { const error = new Error("This user has no warnings to remove"); error.status = STATUS_CODE.CONFLICT; throw error; }
       const warningCount = await countWarningsOnConnection(connection, userId);
       return { warning, warningCount };
