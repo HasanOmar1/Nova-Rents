@@ -1,13 +1,18 @@
 import { useActivityContext } from "../../context/ActivityContext";
 import styles from "./UsersCards.module.css";
+import { useState } from "react";
 
 const UsersCards = ({ user, blockUser, unBlockUser }) => {
   const { loadActivities } = useActivityContext();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleUserAction = async () => {
+    if (isUpdating) return;
+    setIsUpdating(true);
     if (user.status === "active") await blockUser(user.email);
     if (user.status === "blocked") await unBlockUser(user.email);
-    loadActivities();
+    await loadActivities();
+    setIsUpdating(false);
   };
 
   const fullName = user.firstName + " " + user.lastName;
@@ -24,13 +29,13 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
         {user.role === "admin" ? (
           <p className={`${styles.action} ${styles.protected}`}>Protected</p>
         ) : (
-          <p className={styles.action} onClick={handleUserAction}>
-            {user.role === "user" && user.status === "active"
+          <button className={styles.action} onClick={handleUserAction} disabled={isUpdating}>
+            {isUpdating ? "Updating..." : user.role === "user" && user.status === "active"
               ? "Block"
               : user.role === "user" && user.status === "blocked"
                 ? "Unblock"
                 : "Protected"}
-          </p>
+          </button>
         )}
       </div>
     </div>

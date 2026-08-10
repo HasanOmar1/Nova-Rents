@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import styles from "./DeleteMenu.module.css";
 import { TriangleAlert } from "lucide-react";
+import AsyncButton from "../AsyncButton/AsyncButton";
 
 const DeleteMenu = ({
   img,
@@ -10,6 +11,7 @@ const DeleteMenu = ({
   isOpen,
   handleDeleteVehicle,
   errorMsg,
+  isDeleting,
 }) => {
   const dialogRef = useRef(null);
 
@@ -54,12 +56,12 @@ const DeleteMenu = ({
         </p>
 
         <div className={styles.btnsContainer}>
-          <button className={styles.cancelBtn} onClick={closeMenu}>
+          <button className={styles.cancelBtn} onClick={closeMenu} disabled={isDeleting}>
             Cancel
           </button>
-          <button className={styles.deleteBtn} onClick={handleDeleteVehicle}>
+          <AsyncButton className={styles.deleteBtn} onClick={handleDeleteVehicle} loading={isDeleting} loadingText="Deactivating...">
             Deactivate Vehicle
-          </button>
+          </AsyncButton>
         </div>
       </div>
     </dialog>

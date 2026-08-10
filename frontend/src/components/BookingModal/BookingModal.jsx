@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./BookingModal.module.css";
 import { useRentContext } from "../../context/RentContext";
+import AsyncButton from "../AsyncButton/AsyncButton";
 
 const BookingModal = ({ isOpen, onClose, vehicle }) => {
   const dialogRef = useRef(null);
@@ -17,6 +18,7 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
 
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- 1. BLOCK BACKGROUND SCROLLING ---
   useEffect(() => {
@@ -133,6 +135,7 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
       endDate: formatDateToString(endDate),
     };
 
+    setIsSubmitting(true);
     const isSuccess = await rentVehicle(bookingPayload);
 
     // --- 3. INSTANT RE-FETCH ON SUCCESS ---
@@ -144,6 +147,7 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
         onClose();
       }, 500);
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -232,9 +236,9 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
           <button type="button" className={styles.cancelBtn} onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" className={styles.submitBtn}>
+          <AsyncButton type="submit" className={styles.submitBtn} loading={isSubmitting} loadingText="Booking...">
             Confirm Booking
-          </button>
+          </AsyncButton>
         </div>
       </form>
     </dialog>

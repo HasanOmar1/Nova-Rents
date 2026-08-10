@@ -2,10 +2,12 @@ import { ArrowRight } from "lucide-react";
 import styles from "./LoginRegister.module.css";
 import { useState } from "react";
 import { useUserContext } from "../../context/UserContext";
+import AsyncButton from "../../components/AsyncButton/AsyncButton";
 
 const SignInForm = ({ setCurrentForm }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, errorMsg, setErrorMsg } = useUserContext();
 
   const handleCurrentForm = () => {
@@ -13,14 +15,15 @@ const SignInForm = ({ setCurrentForm }) => {
     setErrorMsg("");
   };
 
-  const loginHandler = (e) => {
+  const loginHandler = async (e) => {
     e.preventDefault();
     const formData = {
       email,
       password,
     };
 
-    login(formData);
+    setIsSubmitting(true);
+    try { await login(formData); } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -54,10 +57,10 @@ const SignInForm = ({ setCurrentForm }) => {
             />
           </label>
 
-          <button className={styles.primaryButtonBlue}>
+          <AsyncButton className={styles.primaryButtonBlue} loading={isSubmitting} loadingText="Signing in...">
             Enter Nova Rents
             <ArrowRight className={styles.iconSm} />
-          </button>
+          </AsyncButton>
         </form>
         <div className={styles.linkGroup}>
           {/* <p className={styles.link}>Forgot password?</p> */}
