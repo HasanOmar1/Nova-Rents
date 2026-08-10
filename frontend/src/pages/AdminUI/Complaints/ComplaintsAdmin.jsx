@@ -126,7 +126,16 @@ const ComplaintsAdmin = () => {
       onClick: () => handleStatusChange("resolved"),
       isAction: true,
     },
+    {
+      title: "Closed",
+      value: complaintStats?.closed || 0,
+      icon: <BookCheck size={28} color="#3b82f6" />,
+      onClick: () => handleStatusChange("closed"),
+      isAction: true,
+    },
   ];
+
+  console.log(complaintStats);
 
   return (
     <div className={`${styles.ComplaintsAdmin} page`}>
