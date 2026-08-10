@@ -127,10 +127,11 @@ export default function ReportedUsers() {
   const changeStatus = async (user, block) => {
     setLoadingAction(`status-${user.userId}`);
     try {
-      await axios.post(
+      const { data } = await axios.post(
         `/users/${block ? "block" : "unblock"}/${encodeURIComponent(user.email)}`,
       );
       await load(pagination.currentPage);
+      setMessage(data.message);
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to update account");
     } finally {

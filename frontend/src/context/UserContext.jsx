@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useActivityContext } from "./ActivityContext";
 
 const UserContext = createContext();
 
@@ -93,8 +92,8 @@ const UserContextProvider = ({ children }) => {
       setErrorMsg("");
       return true;
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      console.log(error?.response?.data?.message);
+      setErrorMsg(error?.response?.data?.message);
       return false;
     }
   };
@@ -134,26 +133,48 @@ const UserContextProvider = ({ children }) => {
 
   const blockUser = async (email) => {
     try {
-      await axios.post(`/users/block/${email}`);
+      const response = await axios.post(
+        `/users/block/${encodeURIComponent(email)}`,
+      );
       setErrorMsg("");
-      getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
-      return true;
+      await getUsers(
+        pagination.currentPage || 1,
+        currentStatus,
+        currentSearch,
+      );
+      if (response.data.emailSent === false) {
+        setErrorMsg(response.data.message);
+      }
+      return response.data;
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message || "Failed to block this user.";
+      console.log(message);
+      setErrorMsg(message);
       return false;
     }
   };
 
   const unBlockUser = async (email) => {
     try {
-      await axios.post(`/users/unblock/${email}`);
+      const response = await axios.post(
+        `/users/unblock/${encodeURIComponent(email)}`,
+      );
       setErrorMsg("");
-      getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
-      return true;
+      await getUsers(
+        pagination.currentPage || 1,
+        currentStatus,
+        currentSearch,
+      );
+      if (response.data.emailSent === false) {
+        setErrorMsg(response.data.message);
+      }
+      return response.data;
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message || "Failed to unblock this user.";
+      console.log(message);
+      setErrorMsg(message);
       return false;
     }
   };
