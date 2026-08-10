@@ -13,7 +13,7 @@ import {
 export const navByRole = {
   guest: [],
   user: ["home", "vehicles", "map", "myVehicles", "profile", "complaints"],
-  admin: ["dashboard", "users", "allVehicles", "complaintsAdmin", "statistics"],
+  admin: ["dashboard", "users", "reportedUsers", "allVehicles", "complaintsAdmin", "statistics"],
 };
 
 export const icons = {
@@ -28,6 +28,7 @@ export const icons = {
   complaintsAdmin: FileWarning,
   statistics: BarChart3,
   allVehicles: Car,
+  reportedUsers: AlertTriangle,
 };
 
 export const labels = {
@@ -42,4 +43,5 @@ export const labels = {
   complaintsAdmin: "Complaints",
   statistics: "Statistics",
   allVehicles: "All Vehicles",
+  reportedUsers: "Reported Users",
 };

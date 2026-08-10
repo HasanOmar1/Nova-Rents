@@ -1606,6 +1606,36 @@ ${closingText(TEST_ENV_CONFIRMATION_DISCLOSURE)}
   return info;
 };
 
+const sendAccountWarningEmail = async ({ to, firstName, reason, warningCount, blocked }) => {
+  if (!to) throw new Error("Warning email recipient is required");
+  const greeting = escapeHtml(firstName || "there");
+  const subject = blocked ? "Nova Rents Account Blocked" : "Nova Rents Account Warning";
+  const statusText = blocked
+    ? "Your account has received its third warning and has now been blocked. You can no longer sign in or use restricted Nova Rents functionality."
+    : `You currently have ${warningCount} of 3 warnings. If your account reaches 3 warnings, it will be blocked.`;
+  const text = `Hello ${firstName || "there"},\n\nYour Nova Rents account has received an official warning.\n\nReason: ${reason}\nCurrent warning count: ${warningCount}/3\n\n${statusText}\n\nAccounts that receive 3 warnings will be blocked from Nova Rents.\n\nNova Rents Support Team`;
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`, to, subject, text,
+    html: buildEmailShell(blocked ? "Account Blocked" : "Account Warning", `
+      <p>Hello ${greeting},</p><p>Your Nova Rents account has received an official warning.</p>
+      ${buildDetailBlock("Warning details", buildDetailRow("Reason", escapeHtml(reason)) + buildDetailRow("Warning count", `${warningCount}/3`))}
+      <p>${escapeHtml(statusText)}</p><p><strong>Accounts that receive 3 warnings will be blocked from Nova Rents.</strong></p>`),
+  });
+
+  const normalizedRecipient = String(to).trim().toLowerCase();
+  const accepted = (info.accepted || []).map((email) => String(email).toLowerCase());
+  if (!accepted.includes(normalizedRecipient)) {
+    const rejected = (info.rejected || []).join(", ") || normalizedRecipient;
+    throw new Error(`Warning email recipient was rejected: ${rejected}`);
+  }
+
+  logEmailResult(
+    `${blocked ? "account blocked" : `account warning ${warningCount}/3`} to ${normalizedRecipient}`,
+    info,
+  );
+  return info;
+};
+
 module.exports = {
   sendOTPEmail,
   handleEmailVerification,
@@ -1619,4 +1649,5 @@ module.exports = {
   sendOwnerPaymentReceivedEmail,
   sendRentalRequestEmail,
   sendRentalRejectedEmail,
+  sendAccountWarningEmail,
 };
