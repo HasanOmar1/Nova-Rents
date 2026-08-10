@@ -1,21 +1,35 @@
 import { useActivityContext } from "../../context/ActivityContext";
 import styles from "./UsersCards.module.css";
 import { useState } from "react";
+import { Ban, LockKeyhole, ShieldCheck } from "lucide-react";
+import AsyncButton from "../AsyncButton/AsyncButton";
 
 const UsersCards = ({ user, blockUser, unBlockUser }) => {
   const { loadActivities } = useActivityContext();
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const isBlocked = user.status === "blocked";
+  const isProtected = user.role !== "user";
+  const fullName =
+    `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
+
   const handleUserAction = async () => {
     if (isUpdating) return;
     setIsUpdating(true);
-    if (user.status === "active") await blockUser(user.email);
-    if (user.status === "blocked") await unBlockUser(user.email);
-    await loadActivities();
-    setIsUpdating(false);
+
+    try {
+      const updated = isBlocked
+        ? await unBlockUser(user.email)
+        : await blockUser(user.email);
+
+      if (updated) {
+        await loadActivities();
+      }
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const fullName = user.firstName + " " + user.lastName;
   return (
     <div className={styles.UsersCards}>
       <p className={styles.name}>{fullName}</p>
@@ -26,16 +40,32 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
         {user.status}
       </p>
       <div className={styles.actionContainer}>
-        {user.role === "admin" ? (
-          <p className={`${styles.action} ${styles.protected}`}>Protected</p>
+        {isProtected ? (
+          <span
+            className={`${styles.action} ${styles.protected}`}
+            aria-label={`${fullName} is a protected account`}
+          >
+            <LockKeyhole size={16} aria-hidden="true" />
+            Protected
+          </span>
         ) : (
-          <button className={styles.action} onClick={handleUserAction} disabled={isUpdating}>
-            {isUpdating ? "Updating..." : user.role === "user" && user.status === "active"
-              ? "Block"
-              : user.role === "user" && user.status === "blocked"
-                ? "Unblock"
-                : "Protected"}
-          </button>
+          <AsyncButton
+            type="button"
+            className={`${styles.action} ${
+              isBlocked ? styles.unblockAction : styles.blockAction
+            }`}
+            onClick={handleUserAction}
+            loading={isUpdating}
+            loadingText={isBlocked ? "Unblocking..." : "Blocking..."}
+            aria-label={`${isBlocked ? "Unblock" : "Block"} ${fullName}`}
+          >
+            {isBlocked ? (
+              <ShieldCheck size={16} aria-hidden="true" />
+            ) : (
+              <Ban size={16} aria-hidden="true" />
+            )}
+            {isBlocked ? "Unblock" : "Block"}
+          </AsyncButton>
         )}
       </div>
     </div>

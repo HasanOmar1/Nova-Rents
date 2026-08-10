@@ -110,4 +110,27 @@
     grid-template-columns: 1fr;
     margin-top: 20px;
   }
+
+  .DashBoard .chartFilters {
+    align-items: stretch;
+    gap: 18px;
+  }
+
+  .DashBoard .chartFilters .filterGroup,
+  .DashBoard .chartFilters .categories {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .DashBoard .chartFilters .categories {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .DashBoard .chartFilters input,
+  .DashBoard .chartFilters select,
+  .DashBoard .chartFilters .toggleSeriesBtn {
+    width: 100%;
+    min-width: 0;
+  }
 }

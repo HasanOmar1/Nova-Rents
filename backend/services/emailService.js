@@ -1636,6 +1636,118 @@ const sendAccountWarningEmail = async ({ to, firstName, reason, warningCount, bl
   return info;
 };
 
+const sendAccountBlockedEmail = async ({
+  to,
+  firstName,
+  blockedAt = new Date(),
+}) => {
+  const recipient = String(to || "").trim();
+  if (!recipient) throw new Error("Blocked account email recipient is required");
+
+  const greeting = String(firstName || "there").trim() || "there";
+  const formattedBlockedAt = formatEmailDateTime(blockedAt);
+  const subject = "Nova Rents Account Blocked";
+  const text = `Hello ${greeting},\n\nYour Nova Rents account has been blocked by an administrator.\n\nAccount status: Blocked\nBlocked on: ${formattedBlockedAt}\n\nFuture sign-ins are disabled while your account remains blocked. If you believe this was a mistake, please contact Nova Rents support.\n\nNova Rents Support Team`;
+
+  const blockedBadge = `
+    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background-color:#fff1f2;color:#be123c;font-size:13px;font-weight:700;">
+      Blocked
+    </span>
+  `;
+  const rows =
+    buildDetailRow("Account status", blockedBadge) +
+    buildDetailRow("Blocked on", escapeHtml(formattedBlockedAt));
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to: recipient,
+    subject,
+    text,
+    html: buildEmailShell(
+      "Account Blocked",
+      `
+        <p>Hello ${escapeHtml(greeting)},</p>
+        <p>Your Nova Rents account has been blocked by an administrator.</p>
+        ${buildDetailBlock("Account update", rows)}
+        <p>Future sign-ins are disabled while your account remains blocked.</p>
+        <div style="margin-top:20px;padding:14px 16px;border-left:4px solid #e11d48;border-radius:8px;background-color:#fff1f2;color:#881337;">
+          If you believe this was a mistake, please contact Nova Rents support.
+        </div>
+      `,
+    ),
+  });
+
+  const normalizedRecipient = recipient.toLowerCase();
+  const accepted = (info.accepted || []).map((email) =>
+    String(email).toLowerCase(),
+  );
+  if (!accepted.includes(normalizedRecipient)) {
+    const rejected = (info.rejected || []).join(", ") || normalizedRecipient;
+    throw new Error(`Blocked account email recipient was rejected: ${rejected}`);
+  }
+
+  logEmailResult(`account blocked to ${normalizedRecipient}`, info);
+  return info;
+};
+
+const sendAccountUnblockedEmail = async ({
+  to,
+  firstName,
+  unblockedAt = new Date(),
+}) => {
+  const recipient = String(to || "").trim();
+  if (!recipient) {
+    throw new Error("Unblocked account email recipient is required");
+  }
+
+  const greeting = String(firstName || "there").trim() || "there";
+  const formattedUnblockedAt = formatEmailDateTime(unblockedAt);
+  const subject = "Nova Rents Account Unblocked";
+  const text = `Hello ${greeting},\n\nYour Nova Rents account has been unblocked by an administrator.\n\nAccount status: Active\nUnblocked on: ${formattedUnblockedAt}\n\nYou can sign in to Nova Rents again. If you did not expect this change or need assistance, please contact Nova Rents support.\n\nNova Rents Support Team`;
+
+  const activeBadge = `
+    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background-color:#f0fdf4;color:#15803d;font-size:13px;font-weight:700;">
+      Active
+    </span>
+  `;
+  const rows =
+    buildDetailRow("Account status", activeBadge) +
+    buildDetailRow("Unblocked on", escapeHtml(formattedUnblockedAt));
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to: recipient,
+    subject,
+    text,
+    html: buildEmailShell(
+      "Account Unblocked",
+      `
+        <p>Hello ${escapeHtml(greeting)},</p>
+        <p>Your Nova Rents account has been unblocked by an administrator.</p>
+        ${buildDetailBlock("Account update", rows)}
+        <p>You can sign in to Nova Rents again.</p>
+        <div style="margin-top:20px;padding:14px 16px;border-left:4px solid #22c55e;border-radius:8px;background-color:#f0fdf4;color:#166534;">
+          If you did not expect this change or need assistance, please contact Nova Rents support.
+        </div>
+      `,
+    ),
+  });
+
+  const normalizedRecipient = recipient.toLowerCase();
+  const accepted = (info.accepted || []).map((email) =>
+    String(email).toLowerCase(),
+  );
+  if (!accepted.includes(normalizedRecipient)) {
+    const rejected = (info.rejected || []).join(", ") || normalizedRecipient;
+    throw new Error(
+      `Unblocked account email recipient was rejected: ${rejected}`,
+    );
+  }
+
+  logEmailResult(`account unblocked to ${normalizedRecipient}`, info);
+  return info;
+};
+
 module.exports = {
   sendOTPEmail,
   handleEmailVerification,
@@ -1650,4 +1762,6 @@ module.exports = {
   sendRentalRequestEmail,
   sendRentalRejectedEmail,
   sendAccountWarningEmail,
+  sendAccountBlockedEmail,
+  sendAccountUnblockedEmail,
 };

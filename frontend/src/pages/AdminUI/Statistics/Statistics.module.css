@@ -74,8 +74,16 @@
 @media (max-width: 768px) {
   .Statistics .filtersToolbar {
     flex-direction: column;
+    align-items: stretch;
     gap: 20px;
   }
+
+  .Statistics .filtersToolbar input,
+  .Statistics .filtersToolbar .applyBtn {
+    width: 100%;
+    min-width: 0;
+  }
+
   .Statistics .topCardsContainer {
     gap: 15px;
   }

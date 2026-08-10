@@ -6,7 +6,6 @@ import styles from "./Home.module.css";
 import { CalendarDays, Wallet, ClipboardList, Key } from "lucide-react";
 import { useRentContext } from "../../../context/RentContext";
 import { useEffect, useState } from "react";
-import { useActivityContext } from "../../../context/ActivityContext";
 import { useReportContext } from "../../../context/ReportContext";
 import {
   formatPeriodTick,
@@ -52,7 +51,6 @@ const formatDateForInput = (date) => {
 
 const Home = () => {
   const { metrics, fetchDashboardMetrics } = useRentContext();
-  const { loadActivities } = useActivityContext();
   const {
     userDashboardData,
     isUserDashboardLoading,
@@ -75,7 +73,6 @@ const Home = () => {
 
   useEffect(() => {
     fetchDashboardMetrics();
-    loadActivities();
   }, []);
 
   useEffect(() => {

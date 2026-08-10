@@ -70,11 +70,11 @@ async function findEligibleRentalForVehicleReportOnConnection(
   rentalId,
   licensePlate,
 ) {
-  const rows = await queryOnConnection(connection, ELIGIBLE_VEHICLE_REPORT_SQL, [
-    rentalId,
-    renterId,
-    licensePlate,
-  ]);
+  const rows = await queryOnConnection(
+    connection,
+    ELIGIBLE_VEHICLE_REPORT_SQL,
+    [rentalId, renterId, licensePlate],
+  );
   return rows[0];
 }
 
@@ -401,6 +401,7 @@ async function getAllComplaints(status, limit, offset) {
   const query = `
     SELECT 
       c.complaintId,
+      c.userId,
       c.complaintType,
       c.vehicleLicensePlate,
       c.ownerId,
@@ -416,6 +417,7 @@ async function getAllComplaints(status, limit, offset) {
       cb.brandName,
       u.firstName AS ownerFirstName,
       u.lastName AS ownerLastName,
+      u.email AS ownerEmail,
       complainer.firstName AS complainerFirstName,
       complainer.lastName AS complainerLastName,
       complainer.email AS complainerEmail,
@@ -462,7 +464,9 @@ async function getComplaintStats() {
       COUNT(*) as total,
       SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open,
       SUM(CASE WHEN status = 'in_review' THEN 1 ELSE 0 END) as review,
-      SUM(CASE WHEN status = 'resolved'  THEN 1 ELSE 0 END) as resolved
+      SUM(CASE WHEN status = 'resolved'  THEN 1 ELSE 0 END) as resolved,
+      SUM(CASE WHEN status = 'closed'  THEN 1 ELSE 0 END) as closed
+
     FROM complaints
   `;
   const result = await doQuery(query);
@@ -484,12 +488,7 @@ async function updateComplaintStatus(
     WHERE complaintId = ?
   `;
 
-  return doQuery(query, [
-    status,
-    resolutionMessage,
-    adminNotes,
-    complaintId,
-  ]);
+  return doQuery(query, [status, resolutionMessage, adminNotes, complaintId]);
 }
 
 async function getComplaintReporterById(complaintId) {

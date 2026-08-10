@@ -1,6 +1,13 @@
 import styles from "./AsyncButton.module.css";
 
-const AsyncButton = ({ loading = false, loadingText = "Please wait...", disabled, children, className = "", ...props }) => (
+const AsyncButton = ({
+  loading = false,
+  loadingText = "Please wait...",
+  disabled,
+  children,
+  className = "",
+  ...props
+}) => (
   <button
     {...props}
     className={`${className} ${loading ? styles.loading : ""}`}
@@ -8,8 +15,13 @@ const AsyncButton = ({ loading = false, loadingText = "Please wait...", disabled
     aria-busy={loading}
   >
     {loading ? (
-      <><span className={styles.spinner} aria-hidden="true" /><span>{loadingText}</span></>
-    ) : children}
+      <>
+        <span className={styles.spinner} aria-hidden="true" />
+        <span>{loadingText}</span>
+      </>
+    ) : (
+      children
+    )}
   </button>
 );
 

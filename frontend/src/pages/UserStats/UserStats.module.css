@@ -110,6 +110,11 @@
   font-size: 1.8rem;
   margin-bottom: 8px;
   color: white;
+  overflow-wrap: anywhere;
+}
+
+.UserStats .userInfo {
+  min-width: 0;
 }
 
 .UserStats .badges {
@@ -160,6 +165,13 @@
   color: var(--gray);
   font-size: 0.95rem;
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.UserStats .detailsCard p svg {
+  flex-shrink: 0;
 }
 
 /* =========================================
@@ -249,12 +261,14 @@
   flex-direction: column;
   justify-content: center;
   flex-grow: 1;
+  min-width: 0;
 }
 
 .UserStats .vehInfo h4 {
   font-size: 1.1rem;
   margin-bottom: 5px;
   color: white;
+  overflow-wrap: anywhere;
 }
 
 .UserStats .vehPlate {
@@ -266,6 +280,7 @@
 .UserStats .vehDetails {
   color: var(--gray);
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .UserStats .vehStatus {

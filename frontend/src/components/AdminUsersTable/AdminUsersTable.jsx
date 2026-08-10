@@ -1,4 +1,3 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserContext } from "../../context/UserContext";
 import UsersCards from "../UsersCards/UsersCards";
 import styles from "./AdminUsersTable.module.css";

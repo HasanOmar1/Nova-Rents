@@ -61,6 +61,13 @@
   color: white;
 }
 
+.ComplaintReviewModal .closeIconBtn:focus-visible {
+  outline: 2px solid #5494ff;
+  outline-offset: 3px;
+  border-radius: 6px;
+  color: white;
+}
+
 .ComplaintReviewModal .content {
   padding: 24px;
   display: flex;
@@ -144,27 +151,241 @@
   word-break: break-word;
 }
 
-/* Update these inside ComplaintReviewModal.module.css */
+.ComplaintReviewModal .reportTargetSection,
+.ComplaintReviewModal .evidenceSection {
+  min-width: 0;
+}
 
-.ComplaintReviewModal .imageGallery {
+.ComplaintReviewModal .reportTargetCard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
-  width: 100%;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 13px;
+  align-items: flex-start;
+  padding: 15px;
+  border: 1px solid rgba(84, 148, 255, 0.24);
+  border-radius: 12px;
+  background: linear-gradient(
+    120deg,
+    rgba(59, 130, 246, 0.11),
+    rgba(10, 15, 27, 0.5)
+  );
 }
 
-.ComplaintReviewModal .imageGallery img {
+.ComplaintReviewModal .targetIcon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(143, 185, 244, 0.24);
+  border-radius: 11px;
+  background-color: rgba(84, 148, 255, 0.14);
+  color: #9bc3fa;
+}
+
+.ComplaintReviewModal .targetDetails {
+  min-width: 0;
+}
+
+.ComplaintReviewModal .targetName {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.ComplaintReviewModal .targetMeta {
+  margin: 3px 0 0;
+  color: var(--gray);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ComplaintReviewModal .targetOwner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  margin: 11px 0 0;
+  color: #d7dee9;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ComplaintReviewModal .targetOwner span {
+  color: var(--gray);
+}
+
+.ComplaintReviewModal .targetEmail,
+.ComplaintReviewModal .targetEmailUnavailable {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 7px;
+  max-width: 100%;
+  margin: 9px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.ComplaintReviewModal .targetEmail {
+  color: #9bc3fa;
+  text-decoration: none;
+}
+
+.ComplaintReviewModal .targetEmail span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ComplaintReviewModal .targetEmail svg,
+.ComplaintReviewModal .targetEmailUnavailable svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.ComplaintReviewModal .targetEmailUnavailable {
+  color: var(--gray);
+}
+
+.ComplaintReviewModal .evidenceHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ComplaintReviewModal .evidenceHeading .detailLabel {
+  margin-bottom: 0;
+}
+
+.ComplaintReviewModal .evidenceCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--gray);
+  font-size: 0.72rem;
+}
+
+.ComplaintReviewModal .evidencePreview {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: 100%;
-  height: 220px;
-  object-fit: fill;
+  max-height: 340px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid rgba(143, 185, 244, 0.2);
+  border-radius: 12px;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.018) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.018) 25%, transparent 25%),
+    #080c14;
+  background-position:
+    0 0,
+    8px 8px;
+  background-size: 16px 16px;
+}
+
+.ComplaintReviewModal .evidencePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ComplaintReviewModal .evidenceUnavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  color: var(--gray);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.ComplaintReviewModal .imagePosition {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.2s ease;
+  background-color: rgba(4, 8, 16, 0.84);
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
 }
 
-.ComplaintReviewModal .imageGallery img:hover {
-  transform: scale(1.02);
+.ComplaintReviewModal .evidenceThumbnails {
+  display: flex;
+  gap: 9px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 2px 2px 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(143, 185, 244, 0.45) transparent;
+}
+
+.ComplaintReviewModal .thumbnailButton {
+  flex: 0 0 76px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 9px;
+  background-color: #080c14;
+  cursor: pointer;
+  opacity: 0.68;
+  transition:
+    opacity 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.ComplaintReviewModal .thumbnailButton img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ComplaintReviewModal .thumbnailUnavailable {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--gray);
+}
+
+.ComplaintReviewModal .thumbnailButton:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.ComplaintReviewModal .thumbnailButton:focus-visible {
+  outline: 2px solid #5494ff;
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.ComplaintReviewModal .activeThumbnail {
+  border-color: #5494ff;
+  opacity: 1;
 }
 
 .ComplaintReviewModal .divider {
@@ -282,7 +503,33 @@
     padding: 12px;
   }
 
-  .ComplaintReviewModal .imageGallery {
-    grid-template-columns: 1fr;
+  .ComplaintReviewModal .reportTargetCard {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 11px;
+    padding: 13px;
+  }
+
+  .ComplaintReviewModal .targetIcon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .ComplaintReviewModal .evidencePreview {
+    aspect-ratio: 4 / 3;
+  }
+
+  .ComplaintReviewModal .imagePosition {
+    right: 8px;
+    bottom: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ComplaintReviewModal .thumbnailButton {
+    transition: none;
+  }
+
+  .ComplaintReviewModal .thumbnailButton:hover {
+    transform: none;
   }
 }

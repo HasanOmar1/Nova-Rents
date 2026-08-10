@@ -1,9 +1,11 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 import axios from "axios";
+import { useActivityContext } from "./ActivityContext";
 
 const ComplaintContext = createContext();
 
 const ComplaintContextProvider = ({ children }) => {
+  const { loadActivities } = useActivityContext();
   const [complaints, setComplaints] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [pagination, setPagination] = useState({});
@@ -48,6 +50,7 @@ const ComplaintContextProvider = ({ children }) => {
   const createComplaint = async (complaintData) => {
     try {
       await axios.post("/complaints", complaintData);
+      await loadActivities();
       setErrorMsg("");
       return true;
     } catch (error) {

@@ -29,6 +29,14 @@ const HomeMidCards = ({ title }) => {
 
   const isActivity = title === "Recent Activity";
   const isLoading = isActivity ? activityLoading : loading;
+  const latestActivityId = activities[0]?.logId;
+  const [displayedActivityId, setDisplayedActivityId] =
+    useState(latestActivityId);
+
+  if (isActivity && latestActivityId !== displayedActivityId) {
+    setDisplayedActivityId(latestActivityId);
+    setCurrentPage(1);
+  }
 
   // --- NEW: Filter notifications before pagination ---
   let rawDataList = isActivity ? activities : notifications;

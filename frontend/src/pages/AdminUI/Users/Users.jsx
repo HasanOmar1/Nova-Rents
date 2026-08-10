@@ -3,15 +3,11 @@ import {
   Shield,
   CheckCircle2,
   Search,
-  ChevronLeft,
-  ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 import styles from "./Users.module.css";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
-import UsersCards from "../../../components/UsersCards/UsersCards";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   CartesianGrid,
@@ -29,7 +25,8 @@ const axisTick = { fill: "rgba(255,255,255,0.45)", fontSize: 11 };
 const gridStroke = "rgba(255,255,255,0.06)";
 
 const Users = () => {
-  const { getUsers, usersStats, pagination, userChartData } = useUserContext();
+  const { getUsers, usersStats, pagination, userChartData, errorMsg } =
+    useUserContext();
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -162,6 +159,13 @@ const Users = () => {
           </select>
         </div>
       </div>
+
+      {errorMsg && (
+        <div className={styles.actionFeedback} role="alert">
+          <AlertTriangle size={19} aria-hidden="true" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
       <AdminUsersTable
         handleNextPage={handleNextPage}

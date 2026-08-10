@@ -5,12 +5,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.heading > div {
+  min-width: 0;
+}
+.heading > svg {
+  flex: 0 0 auto;
 }
 .heading p,
 .message,
 .empty {
   color: var(--gray);
   margin-top: 6px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .message {
   color: #fbbf24;
@@ -24,7 +34,7 @@
 }
 .filters {
   display: grid;
-  grid-template-columns: 1.4fr repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
   gap: 18px;
   align-items: end;
 }
@@ -35,6 +45,7 @@
   color: var(--gray);
   font-size: 0.78rem;
   font-weight: 700;
+  min-width: 0;
 }
 .filters input,
 .filters select,
@@ -49,6 +60,7 @@
 }
 .search {
   position: relative;
+  min-width: 0;
 }
 .search svg {
   position: absolute;
@@ -59,30 +71,47 @@
   padding-left: 36px;
 }
 
-table {
+.filters input:focus-visible,
+.filters select:focus-visible,
+.modal textarea:focus-visible {
+  border-color: var(--input-focus-border-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+}
+
+.scroll {
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+.tableWrap table {
+  width: 100%;
+  min-width: 1000px;
   border-collapse: collapse;
   table-layout: fixed;
 }
-th,
-td {
+.tableWrap th,
+.tableWrap td {
   padding: 14px 6px;
   text-align: left;
   border-bottom: 1px solid #2e3442;
   font-size: 0.82rem;
 }
-th {
+.tableWrap th {
   color: var(--gray);
   text-transform: uppercase;
   font-size: 0.7rem;
 }
-th:nth-child(1) { width: 17%; }
-th:nth-child(2),th:nth-child(3),th:nth-child(4),th:nth-child(5) { width: 5.5%; }
-th:nth-child(6) { width: 8%; }
-th:nth-child(7) { width: 7.5%; }
-th:nth-child(8) { width: 9%; }
-th:nth-child(9) { width: 10%; }
-th:nth-child(10) { width: 15%; }
+.tableWrap th:nth-child(1) { width: 17%; }
+.tableWrap th:nth-child(2),
+.tableWrap th:nth-child(3),
+.tableWrap th:nth-child(4),
+.tableWrap th:nth-child(5) { width: 5.5%; }
+.tableWrap th:nth-child(6) { width: 8%; }
+.tableWrap th:nth-child(7) { width: 7.5%; }
+.tableWrap th:nth-child(8) { width: 9%; }
+.tableWrap th:nth-child(9) { width: 10%; }
+.tableWrap th:nth-child(10) { width: 15%; }
 .emailCell {
   color: #dbeafe;
   font-weight: 600;
@@ -162,30 +191,48 @@ th:nth-child(10) { width: 15%; }
   display: grid;
   place-items: center;
   background: rgba(2, 6, 23, 0.82);
-  padding: 20px;
+  padding: clamp(12px, 3vw, 20px);
 }
 .modal {
-  width: min(650px, 95vw);
-  max-height: 85vh;
+  width: min(650px, 100%);
+  max-height: min(85vh, calc(100dvh - 40px));
   overflow-x: hidden;
   overflow-y: auto;
   position: relative;
   background: var(--bg-gray);
   border: var(--cards-border);
   border-radius: 18px;
-  padding: 25px;
+  padding: clamp(18px, 4vw, 25px);
+}
+.modal h2 {
+  padding-right: 42px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .modal > p {
   color: var(--gray);
   margin: 6px 0 20px;
+  padding-right: 42px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .close {
   position: absolute;
-  right: 12px;
-  top: 12px;
-  padding: 5px;
+  right: 10px;
+  top: 10px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   background: transparent;
   color: white;
+  border-radius: 10px;
+}
+.close:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.close:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: 2px;
 }
 .modal textarea {
   min-height: 130px;
@@ -236,9 +283,165 @@ th:nth-child(10) { width: 15%; }
 .cardHeading span { flex:none; color:var(--gray); font-size:.75rem; }
 .reportFields { display:grid; gap:14px; min-width:0; }
 .reportFields > div { min-width:0; }
-@media (max-width: 1100px) { .filters { grid-template-columns:repeat(2,1fr); } th,td { padding-left:4px; padding-right:4px; font-size:.76rem; }.badge { padding:3px 5px; font-size:.66rem; }.actions { gap:3px; }.actions button { width:30px; height:30px; flex-basis:30px; } }
-@media (max-width: 768px) {
+
+@media (max-width: 1100px) {
+  .tableWrap th,
+  .tableWrap td {
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 0.76rem;
+  }
+  .badge {
+    padding: 3px 5px;
+    font-size: 0.66rem;
+  }
+  .actions {
+    gap: 3px;
+  }
+  .actions button {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+}
+
+@media (max-width: 900px) {
+  .tableWrap {
+    padding: 16px;
+  }
+  .scroll {
+    overflow: visible;
+  }
+  .tableWrap table,
+  .tableWrap tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .tableWrap thead {
+    display: none;
+  }
+  .tableWrap tbody {
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(100%, 300px), 1fr)
+    );
+    gap: 12px;
+  }
+  .tableWrap tr {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid #2e3442;
+    border-radius: 14px;
+    background: var(--input-bg);
+  }
+  .tableWrap td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(46, 52, 66, 0.72);
+    text-align: right;
+    font-size: 0.8rem;
+  }
+  .tableWrap td:last-child {
+    border-bottom: 0;
+  }
+  .tableWrap td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--gray);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  .emailCell {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+  .warningCell,
+  .warningCell .link {
+    white-space: normal;
+  }
+  .actionsCell {
+    align-items: flex-start;
+  }
+  .actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .actions button {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+}
+
+@media (max-width: 520px) {
+  .page {
+    gap: 18px;
+  }
+  .heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .heading > svg {
+    width: 26px;
+    height: 26px;
+  }
+  .filters,
+  .tableWrap {
+    padding: 12px;
+    border-radius: 14px;
+  }
   .filters {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .tableWrap tr {
+    padding: 10px 12px;
+  }
+  .overlay {
+    padding: 12px;
+  }
+  .modal {
+    max-height: calc(100dvh - 24px);
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .modal h2,
+  .modal > p {
+    padding-right: 38px;
+  }
+  .modal textarea {
+    min-height: 110px;
+  }
+  .formFooter,
+  .modalActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .formFooter small {
+    align-self: flex-end;
+  }
+  .formFooter .primary,
+  .modalActions button {
+    width: 100%;
+  }
+  .cardHeading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 }
