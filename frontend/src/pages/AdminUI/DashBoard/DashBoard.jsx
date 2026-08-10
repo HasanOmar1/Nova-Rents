@@ -1,7 +1,6 @@
 import styles from "./DashBoard.module.css";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
-import { useActivityContext } from "../../../context/ActivityContext";
 import { useReportContext } from "../../../context/ReportContext";
 import {
   formatPeriodTick,
@@ -50,7 +49,6 @@ const formatDateForInput = (date) => {
 };
 
 const DashBoard = () => {
-  const { loadActivities } = useActivityContext();
   const {
     systemActivityData,
     systemActivitySeries,
@@ -65,10 +63,6 @@ const DashBoard = () => {
   const [toDate, setToDate] = useState(formatDateForInput(today));
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showAllSeries, setShowAllSeries] = useState(false);
-
-  useEffect(() => {
-    loadActivities();
-  }, []);
 
   useEffect(() => {
     if (fromDate && toDate && fromDate <= toDate) {

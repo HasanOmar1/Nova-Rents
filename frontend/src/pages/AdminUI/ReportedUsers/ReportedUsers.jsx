@@ -13,15 +13,17 @@ import {
 import Pagination from "../../../components/Pagination/Pagination";
 import styles from "./ReportedUsers.module.css";
 import AsyncButton from "../../../components/AsyncButton/AsyncButton";
+import { useActivityContext } from "../../../context/ActivityContext";
 
 const risk = (count) =>
   count >= 6 ? "High Attention" : count >= 3 ? "Review" : "Normal";
 const dateText = (value) =>
   !value || String(value).startsWith("1000-")
-    ? "—"
+    ? "\u2014"
     : new Date(value).toLocaleDateString("en-GB");
 
 export default function ReportedUsers() {
+  const { loadActivities } = useActivityContext();
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -109,13 +111,13 @@ export default function ReportedUsers() {
         `/reported-users/${modal.user.userId}/warnings`,
         { reason: clean },
       );
-      setMessage(
-        `${data.message}${data.emailSent ? "" : " (email delivery failed)"}`,
-      );
       setModal(null);
       setReason("");
       setWarningError("");
-      await load(pagination.currentPage);
+      await Promise.all([load(1), loadActivities()]);
+      setMessage(
+        `${data.message}${data.emailSent ? "" : " (email delivery failed)"}`,
+      );
     } catch (error) {
       setWarningError(
         error.response?.data?.message || "Failed to issue warning",
@@ -130,7 +132,7 @@ export default function ReportedUsers() {
       const { data } = await axios.post(
         `/users/${block ? "block" : "unblock"}/${encodeURIComponent(user.email)}`,
       );
-      await load(pagination.currentPage);
+      await Promise.all([load(1), loadActivities()]);
       setMessage(data.message);
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to update account");
@@ -145,8 +147,8 @@ export default function ReportedUsers() {
       const { data } = await axios.delete(
         `/reported-users/${user.userId}/warnings/latest`,
       );
+      await Promise.all([load(1), loadActivities()]);
       setMessage(data.message);
-      await load(pagination.currentPage);
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to remove warning");
     } finally {
@@ -217,7 +219,7 @@ export default function ReportedUsers() {
             <option value="recent_report">Most recent report</option>
             <option value="warning_count">Most warnings</option>
             <option value="open_reports">Most open reports</option>
-            <option value="email_asc">Email A–Z</option>
+            <option value="email_asc">Email A-Z</option>
           </select>
         </label>
       </section>
@@ -241,12 +243,14 @@ export default function ReportedUsers() {
             <tbody>
               {users.map((user) => (
                 <tr key={user.userId}>
-                  <td className={styles.emailCell}>{user.email}</td>
-                  <td>{user.directReports}</td>
-                  <td>{user.vehicleReports}</td>
-                  <td>{user.totalReports}</td>
-                  <td>{user.openReports}</td>
-                  <td className={styles.warningCell}>
+                  <td data-label="Email" className={styles.emailCell}>
+                    {user.email}
+                  </td>
+                  <td data-label="Direct reports">{user.directReports}</td>
+                  <td data-label="Vehicle reports">{user.vehicleReports}</td>
+                  <td data-label="Total reports">{user.totalReports}</td>
+                  <td data-label="Open reports">{user.openReports}</td>
+                  <td data-label="Warnings" className={styles.warningCell}>
                     <button
                       className={styles.link}
                       title={
@@ -259,20 +263,22 @@ export default function ReportedUsers() {
                       {user.warningCount} / 3
                     </button>
                   </td>
-                  <td>
+                  <td data-label="Status">
                     <span className={`${styles.badge} ${styles[user.status]}`}>
                       {user.status}
                     </span>
                   </td>
-                  <td>{dateText(user.lastReportDate)}</td>
-                  <td>
+                  <td data-label="Last report">
+                    {dateText(user.lastReportDate)}
+                  </td>
+                  <td data-label="Risk">
                     <span
                       className={`${styles.badge} ${styles[risk(user.totalReports).replace(" ", "")]}`}
                     >
                       {risk(user.totalReports)}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Actions" className={styles.actionsCell}>
                     <div className={styles.actions}>
                       <AsyncButton
                         className={styles.viewAction}
@@ -385,7 +391,9 @@ export default function ReportedUsers() {
                         : "Warn User"}
             </h2>
             <p>
-              {modal.user.firstName} {modal.user.lastName} · {modal.user.email}
+              {modal.user.firstName} {modal.user.lastName}
+              {" \u00b7 "}
+              {modal.user.email}
             </p>
             {modal.type === "warn" && (
               <div className={styles.warningForm}>

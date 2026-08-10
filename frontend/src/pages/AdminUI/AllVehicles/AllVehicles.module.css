@@ -192,4 +192,9 @@
     width: 100%;
     justify-content: center;
   }
+
+  .AllVehicles .headerRight {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

@@ -135,8 +135,6 @@ const ComplaintsAdmin = () => {
     },
   ];
 
-  console.log(complaintStats);
-
   return (
     <div className={`${styles.ComplaintsAdmin} page`}>
       <h1>Complaints</h1>

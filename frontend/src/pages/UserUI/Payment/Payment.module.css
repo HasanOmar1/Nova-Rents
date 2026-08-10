@@ -234,3 +234,54 @@
 .Payment .backBtn:hover {
   color: #fff;
 }
+
+@media (max-width: 600px) {
+  .Payment .card,
+  .Payment .notFoundCard {
+    padding: 20px;
+  }
+
+  .Payment .vehicleSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .Payment .vehicleImage {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+    aspect-ratio: 16 / 9;
+  }
+
+  .Payment .vehicleMeta {
+    min-width: 0;
+  }
+
+  .Payment .vehicleMeta h2,
+  .Payment .vehicleMeta p {
+    overflow-wrap: anywhere;
+  }
+
+  .Payment .disclaimer,
+  .Payment .paidBox {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .Payment .header h1 {
+    font-size: 1.6rem;
+  }
+
+  .Payment .card,
+  .Payment .notFoundCard {
+    padding: 16px;
+    gap: 16px;
+    border-radius: 16px;
+  }
+
+  .Payment .directionsBtn,
+  .Payment .backBtn {
+    width: 100%;
+  }
+}

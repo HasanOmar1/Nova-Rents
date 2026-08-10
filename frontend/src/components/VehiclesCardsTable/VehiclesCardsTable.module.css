@@ -152,6 +152,11 @@
   width: 15%;
 }
 
+.VehiclesCardsTable .owner {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .VehiclesCardsTable .status {
   padding: 10px;
   text-align: center;
@@ -221,7 +226,8 @@
   .VehiclesCardsTable .type,
   .VehiclesCardsTable .address,
   .VehiclesCardsTable .price,
-  .VehiclesCardsTable .status {
+  .VehiclesCardsTable .status,
+  .VehiclesCardsTable .owner {
     width: auto;
     flex: 1;
   }
@@ -237,7 +243,8 @@
   .VehiclesCardsTable .type,
   .VehiclesCardsTable .address,
   .VehiclesCardsTable .price,
-  .VehiclesCardsTable .status {
+  .VehiclesCardsTable .status,
+  .VehiclesCardsTable .owner {
     flex: 1 1 40%;
     margin-bottom: 5px;
   }
@@ -264,9 +271,15 @@
   .VehiclesCardsTable .type,
   .VehiclesCardsTable .address,
   .VehiclesCardsTable .price,
-  .VehiclesCardsTable .status {
+  .VehiclesCardsTable .status,
+  .VehiclesCardsTable .owner {
     width: 100%;
     flex: none;
+  }
+
+  .VehiclesCardsTable .reportBadge,
+  .VehiclesCardsTable .reportBadgeMuted {
+    margin-left: 0;
   }
 
   .VehiclesCardsTable .actionsContainer {
