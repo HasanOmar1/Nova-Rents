@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { AlertTriangle, Ban, Eye, Search, ShieldCheck, TriangleAlert, X } from "lucide-react";
+import { AlertTriangle, Ban, Eye, Search, ShieldCheck, TriangleAlert, Undo2, X } from "lucide-react";
 import Pagination from "../../../components/Pagination/Pagination";
 import styles from "./ReportedUsers.module.css";
 
@@ -59,6 +59,17 @@ export default function ReportedUsers() {
     catch (error) { setMessage(error.response?.data?.message || "Failed to update account"); }
     finally { setModal(null); }
   };
+  const removeLatestWarning = async (user) => {
+    try {
+      const { data } = await axios.delete(`/reported-users/${user.userId}/warnings/latest`);
+      setMessage(data.message);
+      await load(pagination.currentPage);
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Failed to remove warning");
+    } finally {
+      setModal(null);
+    }
+  };
 
   return <div className={`${styles.page} page`}>
     <div className={styles.heading}><div><h1>Reported Users</h1><p>Review complaint evidence and issue manual account warnings.</p></div><AlertTriangle size={30} /></div>
@@ -74,17 +85,19 @@ export default function ReportedUsers() {
         <td><div className={styles.actions}>
           <button className={styles.viewAction} title="View reports" aria-label="View reports" onClick={()=>openDetails(user,"reports")}><Eye size={16}/></button>
           <button className={styles.warnAction} title="Warn user" aria-label="Warn user" disabled={Number(user.warningCount)>=3} onClick={()=>{setReason("");setWarningError("");setModal({type:"warn",user})}}><TriangleAlert size={16}/></button>
+          <button className={styles.removeWarningAction} title="Remove latest warning" aria-label="Remove latest warning" disabled={Number(user.warningCount)===0} onClick={()=>setModal({type:"confirmRemoveWarning",user})}><Undo2 size={16}/></button>
           <button className={user.status==="blocked"?styles.unblockAction:styles.blockAction} title={user.status==="blocked"?"Unblock user":"Block user"} aria-label={user.status==="blocked"?"Unblock user":"Block user"} onClick={()=>setModal({type:"confirmStatus",user,block:user.status!=="blocked"})}>{user.status==="blocked"?<ShieldCheck size={16}/>:<Ban size={16}/>}</button>
         </div></td></tr>)}</tbody></table></div>
       {!users.length && <p className={styles.empty}>No reported users match these filters.</p>}
       <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} handlePrevPage={()=>load(pagination.currentPage-1)} handleNextPage={()=>load(pagination.currentPage+1)} leftText={`Reported users: ${pagination.totalUsers}`}/>
     </section>
     {modal && <div className={styles.overlay} onMouseDown={()=>setModal(null)}><div className={styles.modal} onMouseDown={(e)=>e.stopPropagation()}><button className={styles.close} onClick={()=>setModal(null)} aria-label="Close"><X/></button>
-      <h2>{modal.type==="reports"?"Reports":modal.type==="warnings"?"Warning History":modal.type==="confirmStatus"?(modal.block?"Block Account":"Unblock Account"):modal.type==="confirmWarning"?"Confirm Warning":"Warn User"}</h2>
+      <h2>{modal.type==="reports"?"Reports":modal.type==="warnings"?"Warning History":modal.type==="confirmStatus"?(modal.block?"Block Account":"Unblock Account"):modal.type==="confirmRemoveWarning"?"Remove Warning":modal.type==="confirmWarning"?"Confirm Warning":"Warn User"}</h2>
       <p>{modal.user.firstName} {modal.user.lastName} · {modal.user.email}</p>
       {modal.type==="warn" && <div className={styles.warningForm}><label htmlFor="warningReason">Warning reason</label><textarea id="warningReason" maxLength={500} value={reason} onChange={(e)=>{setReason(e.target.value);setWarningError("")}} placeholder="Explain clearly why this warning is being issued..." aria-invalid={Boolean(warningError)} aria-describedby={warningError?"warningError":undefined}/>{warningError&&<p id="warningError" className={styles.modalError}><AlertTriangle size={16}/>{warningError}</p>}<div className={styles.formFooter}><small className={reason.trim().length>0&&reason.trim().length<5?styles.invalid:""}>{reason.trim().length}/500</small><button className={styles.primary} onClick={requestWarningConfirmation}><TriangleAlert size={17}/> Review warning</button></div></div>}
       {modal.type==="confirmWarning" && <div className={styles.confirmContent}><div className={styles.confirmIcon}><TriangleAlert size={28}/></div><p>{Number(modal.user.warningCount)===2?"This is the user's third warning. Issuing it will automatically block the account.":"Are you sure you want to issue this official warning?"}</p><div className={styles.reasonPreview}><span>Reason</span><p>{reason.trim()}</p></div>{warningError&&<p className={styles.modalError}><AlertTriangle size={16}/>{warningError}</p>}<div className={styles.modalActions}><button className={styles.cancelButton} onClick={()=>setModal({type:"warn",user:modal.user})}>Go back</button><button className={styles.warningConfirmButton} onClick={issueWarning}>Issue warning</button></div></div>}
       {modal.type==="confirmStatus" && <div className={styles.confirmContent}><div className={`${styles.confirmIcon} ${modal.block?styles.dangerIcon:styles.successIcon}`}>{modal.block?<Ban size={28}/>:<ShieldCheck size={28}/>}</div><p>{modal.block?"This user will be blocked and will no longer be able to access restricted Nova Rents features.":"This user will regain access to Nova Rents."}</p><div className={styles.modalActions}><button className={styles.cancelButton} onClick={()=>setModal(null)}>Cancel</button><button className={modal.block?styles.dangerButton:styles.successButton} onClick={()=>changeStatus(modal.user,modal.block)}>{modal.block?"Block account":"Unblock account"}</button></div></div>}
+      {modal.type==="confirmRemoveWarning" && <div className={styles.confirmContent}><div className={styles.removeIcon}><Undo2 size={28}/></div><p>This will permanently remove the user's most recent warning. The account will remain {modal.user.status}.</p><div className={styles.modalActions}><button className={styles.cancelButton} onClick={()=>setModal(null)}>Cancel</button><button className={styles.removeWarningButton} onClick={()=>removeLatestWarning(modal.user)}>Remove warning</button></div></div>}
       {(modal.type==="reports"||modal.type==="warnings") && <div className={styles.cards}>{details.length ? details.map((item,i)=><article key={item.complaintId||item.warningId}><div className={styles.cardHeading}><h3>{modal.type==="warnings"?`Warning ${i+1}`:`${item.complaintType} report #${item.complaintId}`}</h3><span>{dateText(item.createdAt)}</span></div>{modal.type==="reports"&&<div className={styles.reportFields}><div><span>Title</span><p>{item.title||"No title"}</p></div><div><span>Description</span><p>{item.description||"No description"}</p></div>{item.vehicleLicensePlate&&<div><span>Vehicle</span><p>{item.vehicleLicensePlate}</p></div>}<div><span>Status</span><p>{item.status}</p></div>{item.resolutionMessage&&<div><span>Resolution</span><p>{item.resolutionMessage}</p></div>}</div>}{modal.type==="warnings"&&<div className={styles.reportFields}><div><span>Reason</span><p>{item.reason}</p></div>{item.adminFirstName&&<div><span>Issued by</span><p>{item.adminFirstName} {item.adminLastName}</p></div>}</div>}</article>):<p>No history found.</p>}</div>}
     </div></div>}
   </div>;

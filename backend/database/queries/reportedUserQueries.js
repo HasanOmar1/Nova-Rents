@@ -120,5 +120,20 @@ async function blockUserOnConnection(connection, userId) {
   return queryOnConnection(connection, "UPDATE users SET status = 'blocked' WHERE userId = ?", [userId]);
 }
 
+async function deleteLatestWarningOnConnection(connection, userId) {
+  const warnings = await queryOnConnection(connection, `
+    SELECT warningId, reason
+    FROM user_warnings
+    WHERE userId = ?
+    ORDER BY createdAt DESC, warningId DESC
+    LIMIT 1
+    FOR UPDATE`, [userId]);
+  const warning = warnings[0];
+  if (!warning) return null;
+  await queryOnConnection(connection, "DELETE FROM user_warnings WHERE warningId = ?", [warning.warningId]);
+  return warning;
+}
+
 module.exports = { getReportedUsers, getReportsForUser, getWarningHistory, lockTargetUser,
-  countWarningsOnConnection, insertWarningOnConnection, blockUserOnConnection };
+  countWarningsOnConnection, insertWarningOnConnection, blockUserOnConnection,
+  deleteLatestWarningOnConnection };

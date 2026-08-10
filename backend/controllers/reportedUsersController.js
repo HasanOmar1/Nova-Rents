@@ -3,6 +3,7 @@ const { withTransaction } = require("../database/withTransaction");
 const {
   getReportedUsers, getReportsForUser, getWarningHistory, lockTargetUser,
   countWarningsOnConnection, insertWarningOnConnection, blockUserOnConnection,
+  deleteLatestWarningOnConnection,
 } = require("../database/queries/reportedUserQueries");
 const { createNotification } = require("../database/queries/notificationQueries");
 const { createActivity } = require("../database/queries/activityQueries");
@@ -98,4 +99,36 @@ async function warnUser(req, res, next) {
   }
 }
 
-module.exports = { listReportedUsers, listUserReports, listWarnings, warnUser };
+async function removeLatestWarning(req, res, next) {
+  try {
+    const userId = Number(req.params.userId);
+    const adminId = Number(req.session.user.userId);
+    if (!validId(userId) || !validId(adminId)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({ message: "Invalid user ID" });
+    }
+
+    const removed = await withTransaction(async (connection) => {
+      const user = await lockTargetUser(connection, userId);
+      if (!user) { const error = new Error("User not found"); error.status = STATUS_CODE.NOT_FOUND; throw error; }
+      if (user.role === "admin") { const error = new Error("Administrator warnings cannot be changed"); error.status = STATUS_CODE.FORBIDDEN; throw error; }
+      const warning = await deleteLatestWarningOnConnection(connection, userId);
+      if (!warning) { const error = new Error("This user has no warnings to remove"); error.status = STATUS_CODE.CONFLICT; throw error; }
+      const warningCount = await countWarningsOnConnection(connection, userId);
+      return { warning, warningCount };
+    });
+
+    await createActivity(adminId, "Removed User Warning", `Removed warning ${removed.warning.warningId} from user ${userId}`,
+      userId);
+    await createSystemHistory(adminId, "user", "update", "user_warning_removed", "user", String(userId), null, null,
+      `Removed warning ${removed.warning.warningId} from user ${userId}`);
+    return res.status(STATUS_CODE.OK).json({
+      message: "Latest warning removed successfully",
+      warningCount: removed.warningCount,
+    });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ message: error.message });
+    next(error);
+  }
+}
+
+module.exports = { listReportedUsers, listUserReports, listWarnings, warnUser, removeLatestWarning };
