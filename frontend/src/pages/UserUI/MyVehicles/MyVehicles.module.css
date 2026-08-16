@@ -58,6 +58,85 @@
   margin-top: 30px;
 }
 
+/* Vehicle comparison */
+.MyVehicles .comparisonSection {
+  margin-top: 30px;
+}
+
+.MyVehicles .chartFilters {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.MyVehicles .dateField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.MyVehicles .dateField label {
+  color: var(--gray);
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.MyVehicles .dateField input {
+  width: 200px;
+  height: 50px;
+  box-sizing: border-box;
+  background-color: var(--input-bg);
+  color: #fff;
+  border: var(--cards-border);
+  border-radius: 15px;
+  outline: none;
+  padding: 0 15px;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.MyVehicles .dateField input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.MyVehicles .dateField input:focus,
+.MyVehicles .applyDatesBtn:focus-visible,
+.MyVehicles .applyDatesBtn:hover:not(:disabled) {
+  border-color: var(--input-focus-border-color);
+}
+
+.MyVehicles .applyDatesBtn {
+  min-width: 100px;
+  height: 50px;
+  box-sizing: border-box;
+  background-color: var(--input-bg);
+  color: #fff;
+  border: var(--cards-border);
+  border-radius: 15px;
+  padding: 0 20px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.MyVehicles .applyDatesBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.MyVehicles .chartError {
+  color: #ff7b7b;
+  font-size: 0.8rem;
+  margin: 0 0 15px;
+}
+
 /* vehicles container */
 .MyVehicles .myVehiclesContainer {
   border: var(--cards-border);
@@ -209,6 +288,18 @@
     width: 100%;
     justify-content: space-between;
   }
+
+  .MyVehicles .chartFilters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .MyVehicles .dateField,
+  .MyVehicles .dateField input,
+  .MyVehicles .applyDatesBtn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -237,5 +328,10 @@
   .MyVehicles .filterContainer {
     width: 100%;
     justify-content: center;
+  }
+
+  .MyVehicles .chartFilters {
+    padding: 15px;
+    border-radius: 16px;
   }
 }

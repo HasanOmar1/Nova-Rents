@@ -239,6 +239,50 @@ async function getOwnerEarningsChartByRange(
   return doQuery(query, [dateFormat, ownerId, startDate, endDate]);
 }
 
+// Completed-rental value for every vehicle an owner currently has. Expired
+// approved rows are treated as lifecycle-complete too, so the report remains
+// accurate even before the rental status synchronizer next runs. The filters
+// live in the LEFT JOIN so zero-value vehicles are still returned.
+async function getOwnerVehicleEarningsComparisonByRange(
+  ownerId,
+  startDate,
+  endDate,
+  dateFormat,
+) {
+  const query = `
+    SELECT
+      CAST(v.licensePlate AS CHAR) AS licensePlate,
+      cb.brandName,
+      cm.modelName,
+      DATE_FORMAT(r.endDate, ?) AS periodKey,
+      COALESCE(SUM(r.totalPrice), 0) AS earnings
+    FROM vehicles v
+    JOIN carmodels cm ON v.modelId = cm.modelId
+    JOIN carbrands cb ON cm.brandId = cb.brandId
+    LEFT JOIN rentals r
+      ON r.licensePlate = v.licensePlate
+      AND (
+        r.status = 'completed'
+        OR (r.status = 'approved' AND r.endDate < CURRENT_DATE())
+      )
+      AND r.endDate >= ?
+      AND r.endDate < DATE_ADD(?, INTERVAL 1 DAY)
+    WHERE v.ownerId = ?
+    GROUP BY
+      v.licensePlate,
+      cb.brandName,
+      cm.modelName,
+      periodKey
+    ORDER BY
+      cb.brandName ASC,
+      cm.modelName ASC,
+      v.licensePlate ASC,
+      periodKey ASC
+  `;
+
+  return doQuery(query, [dateFormat, startDate, endDate, ownerId]);
+}
+
 async function getPendingRequestsCountByOwnerId(ownerId) {
   const query = `
     SELECT COUNT(*) AS count
@@ -470,6 +514,7 @@ module.exports = {
   getBookingValueByRange,
   getBookingsChartByRange,
   getOwnerEarningsChartByRange,
+  getOwnerVehicleEarningsComparisonByRange,
   getPendingRequestsCountByOwnerId,
   getUpcomingTripsCountByUserId,
   getPastTripsCountByRenterId,

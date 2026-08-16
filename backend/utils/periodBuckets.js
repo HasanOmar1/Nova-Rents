@@ -9,12 +9,24 @@ const WEEKLY_BUCKET_LIMIT_DAYS = 180;
 function parseLocalDate(value) {
   const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return null;
-  const parsed = new Date(
-    Number(match[1]),
-    Number(match[2]) - 1,
-    Number(match[3]),
-  );
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(year, month - 1, day);
+
+  // The Date constructor normalizes impossible values (for example,
+  // 2026-02-31 becomes a March date), so compare the parsed parts as well.
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsed;
 }
 
 // Granularity + matching MySQL DATE_FORMAT pattern for a parsed range.

@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./RentalDashboard.module.css";
-import { Car, Clock, Info, Layers } from "lucide-react";
+import {
+  Calendar,
+  Car,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Info,
+  Layers,
+} from "lucide-react";
 import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
 import Pagination from "../../../components/Pagination/Pagination";
@@ -25,6 +33,24 @@ const groupByVehicle = (rentalsArray) => {
   return Object.values(groupedObj);
 };
 
+const isAwaitingPayment = (rental) =>
+  rental.rentalStatus === "approved" &&
+  rental.paymentStatus === "pending" &&
+  Boolean(rental.paymentToken);
+
+const formatDate = (dateStr) =>
+  new Date(dateStr).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+const formatRentalTotal = (totalPrice) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Number(totalPrice) || 0);
+
 const RentalDashboard = () => {
   const navigate = useNavigate();
   const {
@@ -35,6 +61,7 @@ const RentalDashboard = () => {
   } = useRentContext();
 
   const [pendingPage, setPendingPage] = useState(1);
+  const [paymentPage, setPaymentPage] = useState(1);
   const [tripsPage, setTripsPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
@@ -96,13 +123,34 @@ const RentalDashboard = () => {
 
   const groupedPending = groupByVehicle(pendingRequests);
   const groupedTrips = groupByVehicle(myTrips);
+  const awaitingPayments = myTrips
+    .filter(isAwaitingPayment)
+    .slice()
+    .sort(
+      (firstTrip, secondTrip) =>
+        new Date(firstTrip.startDate).getTime() -
+          new Date(secondTrip.startDate).getTime() ||
+        Number(firstTrip.rentalId) - Number(secondTrip.rentalId),
+    );
 
   const totalPendingPages = Math.ceil(groupedPending.length / ITEMS_PER_PAGE);
+  const totalPaymentPages = Math.ceil(
+    awaitingPayments.length / ITEMS_PER_PAGE,
+  );
+  const currentPaymentPage = Math.min(
+    paymentPage,
+    Math.max(totalPaymentPages, 1),
+  );
   const totalTripsPages = Math.ceil(groupedTrips.length / ITEMS_PER_PAGE);
 
   const displayedPending = groupedPending.slice(
     (pendingPage - 1) * ITEMS_PER_PAGE,
     pendingPage * ITEMS_PER_PAGE,
+  );
+
+  const displayedPayments = awaitingPayments.slice(
+    (currentPaymentPage - 1) * ITEMS_PER_PAGE,
+    currentPaymentPage * ITEMS_PER_PAGE,
   );
 
   const displayedTrips = groupedTrips.slice(
@@ -135,8 +183,127 @@ const RentalDashboard = () => {
 
       <div className={styles.header}>
         <h1>Rental Dashboard</h1>
-        <p>Manage your incoming requests and view your past trips.</p>
+        <p>Manage incoming requests, required payments, and trip history.</p>
       </div>
+
+      {awaitingPayments.length > 0 && (
+        <div
+          className={`${styles.section} ${styles.paymentSection}`}
+          role="region"
+          aria-labelledby="awaiting-payment-heading"
+        >
+          <div className={styles.paymentSectionHeader}>
+            <div>
+              <h2 id="awaiting-payment-heading">
+                <CreditCard size={21} /> Payment Required: Approved Rentals
+              </h2>
+              <p className={styles.paymentIntro}>
+                The vehicle owner approved your rental. Complete the remaining
+                payment step to confirm your booking and unlock pickup details.
+              </p>
+            </div>
+            <span className={styles.paymentCountBadge}>
+              {awaitingPayments.length} awaiting payment
+            </span>
+          </div>
+
+          <div className={`${styles.grid} ${styles.paymentGrid}`}>
+            {displayedPayments.map((rental) => {
+              const vehicleName =
+                `${rental.brandName || ""} ${rental.modelName || ""}`.trim() ||
+                "Vehicle";
+              const ownerName =
+                `${rental.ownerFirstName || ""} ${rental.ownerLastName || ""}`.trim();
+
+              return (
+                <article
+                  key={rental.rentalId}
+                  className={`${styles.card} ${styles.paymentCard}`}
+                >
+                  <div className={styles.paymentImageWrapper}>
+                    <img
+                      src={parseImgs(rental.image)}
+                      alt={vehicleName}
+                      className={styles.carImg}
+                    />
+                  </div>
+
+                  <div className={styles.cardContent}>
+                    <div className={styles.paymentCardHeading}>
+                      <h3>{vehicleName}</h3>
+                      <span className={styles.approvedBadge}>
+                        <CheckCircle size={14} /> Approved - Payment required
+                      </span>
+                    </div>
+
+                    <div className={styles.paymentDetails}>
+                      <p>
+                        <Car size={14} /> Plate: {rental.licensePlate}
+                      </p>
+                      <p>
+                        <Calendar size={14} /> {formatDate(rental.startDate)} -{" "}
+                        {formatDate(rental.endDate)}
+                      </p>
+                      {ownerName && <p>Vehicle owner: {ownerName}</p>}
+                    </div>
+
+                    <div className={styles.paymentTotalRow}>
+                      <span>Rental total</span>
+                      <strong>{formatRentalTotal(rental.totalPrice)}</strong>
+                    </div>
+
+                    <p className={styles.paymentClarityCopy}>
+                      Your request is accepted. Only payment is left before the
+                      rental is confirmed.
+                    </p>
+
+                    <div className={styles.paymentActions}>
+                      <button
+                        type="button"
+                        className={styles.payNowBtn}
+                        onClick={() =>
+                          navigate(
+                            `/payments/${encodeURIComponent(rental.paymentToken)}`,
+                          )
+                        }
+                        aria-label={`Pay for ${vehicleName} rental`}
+                      >
+                        <CreditCard size={16} /> Pay Now
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.paymentDetailsBtn}
+                        onClick={() => handleViewDetails(rental)}
+                        aria-label={`View details for ${vehicleName}`}
+                      >
+                        <Info size={16} /> Vehicle Details
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          {totalPaymentPages > 1 && (
+            <div className={styles.paginationWrapper}>
+              <Pagination
+                currentPage={currentPaymentPage}
+                totalPages={totalPaymentPages}
+                handlePrevPage={() =>
+                  setPaymentPage(Math.max(currentPaymentPage - 1, 1))
+                }
+                handleNextPage={() =>
+                  setPaymentPage(
+                    Math.min(currentPaymentPage + 1, totalPaymentPages),
+                  )
+                }
+                leftText={`Approved rentals awaiting payment: ${awaitingPayments.length}`}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.section}>
         <h2>
@@ -224,6 +391,11 @@ const RentalDashboard = () => {
             <Car size={20} color="#3b82f6" /> My Trips
           </h2>
           <div className={styles.tripCounters}>
+            <span
+              className={`${styles.counterBadge} ${styles.awaitingPayment}`}
+            >
+              Awaiting Payment: {awaitingPayments.length}
+            </span>
             <span className={`${styles.counterBadge} ${styles.completed}`}>
               Completed: {completedCount}
             </span>

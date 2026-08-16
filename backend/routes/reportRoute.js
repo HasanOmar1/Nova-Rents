@@ -24,4 +24,10 @@ router.get(
   reportController.getUserDashboardReport_controller,
 );
 
+router.get(
+  "/vehicle-comparison",
+  isAuthenticated,
+  reportController.getVehicleComparison_controller,
+);
+
 module.exports = router;

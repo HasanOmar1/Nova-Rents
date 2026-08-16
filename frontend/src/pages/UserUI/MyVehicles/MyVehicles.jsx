@@ -14,6 +14,41 @@ import { useComplaintContext } from "../../../context/ComplaintContext";
 import AddEditVehicleMenu from "../../../components/AddEditVehicleMenu/AddEditVehicleMenu";
 import OwnerVehicleReportsModal from "../../../components/OwnerVehicleReportsModal/OwnerVehicleReportsModal";
 import Pagination from "../../../components/Pagination/Pagination";
+import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
+import { useReportContext } from "../../../context/ReportContext";
+import {
+  formatPeriodTick,
+  formatPeriodTooltip,
+} from "../../../utils/periodFormat";
+
+const getVehicleChartColor = (index) => {
+  const hue = Math.round((205 + index * 137.508) % 360);
+  return `hsl(${hue}, 72%, 66%)`;
+};
+
+const formatDateForInput = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const createDefaultComparisonRange = () => {
+  const today = new Date();
+  const firstMonthInRange = new Date(
+    today.getFullYear(),
+    today.getMonth() - 5,
+    1,
+  );
+
+  return {
+    from: formatDateForInput(firstMonthInRange),
+    to: formatDateForInput(today),
+  };
+};
+
+const formatCurrency = (value) =>
+  `$${(Number(value) || 0).toLocaleString()}`;
 
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,10 +56,32 @@ const MyVehicles = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedVehicleForReports, setSelectedVehicleForReports] =
     useState(null);
+  const [defaultComparisonRange] = useState(createDefaultComparisonRange);
+  const [fromDate, setFromDate] = useState(defaultComparisonRange.from);
+  const [toDate, setToDate] = useState(defaultComparisonRange.to);
+  const [appliedFromDate, setAppliedFromDate] = useState(
+    defaultComparisonRange.from,
+  );
+  const [appliedToDate, setAppliedToDate] = useState(defaultComparisonRange.to);
 
-  const { getUserVehicles, userVehicles, vehicleStats, pagination } =
-    useVehicleContext();
+  const {
+    getUserVehicles,
+    userVehicles,
+    vehicleStats,
+    pagination,
+    vehicleInventoryVersion,
+  } = useVehicleContext();
   const { ownerVehicleReports, getOwnerVehicleReports } = useComplaintContext();
+  const {
+    vehicleComparisonData,
+    isVehicleComparisonLoading,
+    vehicleComparisonErrorMsg,
+    getVehicleComparison,
+  } = useReportContext();
+
+  const isComparisonRangeValid = Boolean(
+    fromDate && toDate && fromDate <= toDate,
+  );
 
   useEffect(() => {
     getUserVehicles(currentPage, statusFilter);
@@ -33,6 +90,15 @@ const MyVehicles = () => {
   useEffect(() => {
     getOwnerVehicleReports();
   }, []);
+
+  useEffect(() => {
+    getVehicleComparison(appliedFromDate, appliedToDate);
+  }, [
+    appliedFromDate,
+    appliedToDate,
+    getVehicleComparison,
+    vehicleInventoryVersion,
+  ]);
 
   const reportsByPlate = useMemo(() => {
     const map = new Map();
@@ -52,6 +118,41 @@ const MyVehicles = () => {
     ? `${selectedVehicleForReports.brandName} ${selectedVehicleForReports.modelName}`
     : "";
 
+  const comparisonSeries = useMemo(
+    () =>
+      vehicleComparisonData.series.map((serie, index) => ({
+        dataKey: serie.dataKey,
+        name: serie.name || String(serie.licensePlate),
+        color: getVehicleChartColor(index),
+      })),
+    [vehicleComparisonData.series],
+  );
+
+  const comparisonChartData = useMemo(
+    () =>
+      vehicleComparisonData.chartData.map((point) => {
+        const normalizedPoint = { ...point };
+
+        for (const serie of comparisonSeries) {
+          normalizedPoint[serie.dataKey] =
+            Number(normalizedPoint[serie.dataKey]) || 0;
+        }
+
+        return normalizedPoint;
+      }),
+    [comparisonSeries, vehicleComparisonData.chartData],
+  );
+
+  const hasComparisonValue = comparisonChartData.some((point) =>
+    comparisonSeries.some((serie) => point[serie.dataKey] > 0),
+  );
+
+  const comparisonEmptyMessage = vehicleComparisonErrorMsg
+    ? "The vehicle comparison is unavailable right now."
+    : comparisonSeries.length
+      ? "No completed rental value was found for your vehicles in the selected period."
+      : "Add a vehicle to start comparing completed rental value.";
+
   useEffect(() => {
     if (pagination?.totalPages && currentPage > pagination.totalPages) {
       setCurrentPage(pagination.totalPages || 1);
@@ -68,6 +169,18 @@ const MyVehicles = () => {
 
     setStatusFilter(status);
     setCurrentPage(1);
+  };
+
+  const handleApplyComparisonDates = () => {
+    if (isComparisonRangeValid && !isVehicleComparisonLoading) {
+      if (fromDate === appliedFromDate && toDate === appliedToDate) {
+        getVehicleComparison(fromDate, toDate);
+        return;
+      }
+
+      setAppliedFromDate(fromDate);
+      setAppliedToDate(toDate);
+    }
   };
 
   const handleNextPage = () => {
@@ -151,7 +264,7 @@ const MyVehicles = () => {
       <div className={styles.topCardsContainer}>
         {topData.map((item) => (
           <HomeTopCards
-            key={crypto.randomUUID()}
+            key={item.title}
             title={item.title}
             value={item.value}
             icon={item.icon}
@@ -159,6 +272,70 @@ const MyVehicles = () => {
             isAction={item.isAction}
           />
         ))}
+      </div>
+
+      <div className={styles.comparisonSection}>
+        <div className={styles.chartFilters}>
+          <div className={styles.dateField}>
+            <label htmlFor="vehicleComparisonFromDate">From</label>
+            <input
+              id="vehicleComparisonFromDate"
+              type="date"
+              value={fromDate}
+              max={toDate || undefined}
+              onChange={(event) => setFromDate(event.target.value)}
+            />
+          </div>
+
+          <div className={styles.dateField}>
+            <label htmlFor="vehicleComparisonToDate">To</label>
+            <input
+              id="vehicleComparisonToDate"
+              type="date"
+              value={toDate}
+              min={fromDate || undefined}
+              onChange={(event) => setToDate(event.target.value)}
+            />
+          </div>
+
+          <button
+            type="button"
+            className={styles.applyDatesBtn}
+            onClick={handleApplyComparisonDates}
+            disabled={!isComparisonRangeValid || isVehicleComparisonLoading}
+          >
+            {isVehicleComparisonLoading ? "Loading..." : "Apply"}
+          </button>
+        </div>
+
+        {!isComparisonRangeValid && (
+          <p className={styles.chartError} role="alert">
+            Choose a From date that is on or before the To date.
+          </p>
+        )}
+
+        {vehicleComparisonErrorMsg && (
+          <p className={styles.chartError} role="alert">
+            {vehicleComparisonErrorMsg}
+          </p>
+        )}
+
+        <HomeBottomCards
+          title="Completed Rental Value by Vehicle"
+          subtitle="Completed rental value for all your vehicles, grouped by rental end date"
+          type="line"
+          data={hasComparisonValue ? comparisonChartData : []}
+          series={comparisonSeries}
+          xKey="period"
+          xTickFormatter={formatPeriodTick}
+          tooltipLabelFormatter={formatPeriodTooltip}
+          valueFormatter={formatCurrency}
+          yAxisWidth={58}
+          isLoading={isVehicleComparisonLoading}
+          emptyMessage={comparisonEmptyMessage}
+          fullWidth
+          chartHeight={340}
+        />
       </div>
 
       <div className={styles.myVehiclesContainer}>
