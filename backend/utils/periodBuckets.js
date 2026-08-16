@@ -60,6 +60,14 @@ function getIsoWeekKey(date) {
 // with no rows can be zero-filled instead of disappearing.
 function buildPeriodKeys(start, end, granularity) {
   const keys = [];
+
+  if (granularity === "year") {
+    for (let year = start.getFullYear(); year <= end.getFullYear(); year += 1) {
+      keys.push(String(year));
+    }
+    return keys;
+  }
+
   const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
 
   while (cursor <= end) {
