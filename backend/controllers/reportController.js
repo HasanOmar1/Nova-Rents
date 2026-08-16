@@ -11,6 +11,9 @@ const {
   getOwnerVehicleEarningsComparisonByRange,
 } = require("../database/queries/rentalQueries");
 const {
+  getVehicleComplaintCountsForOwner,
+} = require("../database/queries/complaintQueries");
+const {
   DAILY_BUCKET_LIMIT_DAYS,
   WEEKLY_BUCKET_LIMIT_DAYS,
   parseLocalDate,
@@ -361,11 +364,21 @@ async function getVehicleComparison_controller(req, res, next) {
       ({ granularity, dateFormat } = resolveGranularity(start, end));
     }
 
-    const rows = await getOwnerVehicleEarningsComparisonByRange(
-      userId,
-      effectiveStartDate,
-      effectiveEndDate,
-      dateFormat,
+    const [rows, vehicleReportRows] = await Promise.all([
+      getOwnerVehicleEarningsComparisonByRange(
+        userId,
+        effectiveStartDate,
+        effectiveEndDate,
+        dateFormat,
+      ),
+      getVehicleComplaintCountsForOwner(userId),
+    ]);
+
+    const reportCountByPlate = new Map(
+      vehicleReportRows.map((row) => [
+        String(row.licensePlate),
+        Number(row.reportCount) || 0,
+      ]),
     );
 
     const seriesMap = new Map();
@@ -380,6 +393,7 @@ async function getVehicleComparison_controller(req, res, next) {
           dataKey,
           licensePlate,
           name: `${row.brandName} ${row.modelName} (${licensePlate})`,
+          reportCount: reportCountByPlate.get(licensePlate) || 0,
         });
       }
 

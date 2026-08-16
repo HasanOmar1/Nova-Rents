@@ -26,6 +26,10 @@ const OwnerVehicleReportsModal = ({
   onClose,
   vehicleLabel,
   reports = [],
+  heading = "Active reports",
+  emptyMessage = "No active reports for this vehicle.",
+  isLoading = false,
+  errorMessage = "",
 }) => {
   const dialogRef = useRef(null);
 
@@ -55,17 +59,30 @@ const OwnerVehicleReportsModal = ({
     >
       <div className={styles.header}>
         <div>
-          <h2>Active reports</h2>
+          <h2>{heading}</h2>
           <p>{vehicleLabel || "Your vehicle"}</p>
         </div>
-        <button className={styles.closeIconBtn} onClick={onClose} type="button">
-          <X size={24} />
+        <button
+          className={styles.closeIconBtn}
+          onClick={onClose}
+          type="button"
+          aria-label="Close vehicle reports"
+        >
+          <X size={24} aria-hidden="true" />
         </button>
       </div>
 
       <div className={styles.content}>
-        {reports.length === 0 ? (
-          <p className={styles.empty}>No active reports for this vehicle.</p>
+        {isLoading ? (
+          <p className={styles.empty} aria-live="polite">
+            Loading reports...
+          </p>
+        ) : errorMessage ? (
+          <p className={styles.error} role="alert">
+            {errorMessage}
+          </p>
+        ) : reports.length === 0 ? (
+          <p className={styles.empty}>{emptyMessage}</p>
         ) : (
           reports.map((report) => (
             <article key={report.complaintId} className={styles.reportCard}>

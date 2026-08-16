@@ -160,6 +160,19 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  const getOwnerVehicleReportHistory = useCallback(async (licensePlate) => {
+    try {
+      const response = await axios.get(
+        `/complaints/owner-vehicle-reports/${encodeURIComponent(licensePlate)}`,
+      );
+      return response.data.reports || [];
+    } catch (error) {
+      throw new Error(
+        error?.response?.data?.message || "Failed to load vehicle reports",
+      );
+    }
+  }, []);
+
   const getReportsAboutMe = async ({ page = 1, limit = 5 } = {}) => {
     try {
       setIsReportsAboutMeLoading(true);
@@ -233,6 +246,7 @@ const ComplaintContextProvider = ({ children }) => {
         isOwnerVehicleReportsLoading,
         ownerVehicleReportsError,
         getOwnerVehicleReports,
+        getOwnerVehicleReportHistory,
         reportsAboutMe,
         reportsAboutMePagination,
         isReportsAboutMeLoading,
