@@ -8,7 +8,12 @@ import { Link } from "react-router-dom";
 import { parseImgs } from "../../utils/parseImgs";
 import { useUserContext } from "../../context/UserContext";
 
-const VehiclesCardsTable = ({ veh, admin, activeReportCount = 0, onViewReports }) => {
+const VehiclesCardsTable = ({
+  veh,
+  admin,
+  activeReportCount = 0,
+  onViewReports,
+}) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -60,7 +65,7 @@ const VehiclesCardsTable = ({ veh, admin, activeReportCount = 0, onViewReports }
           </div>
         </Link>
 
-        {!admin && (
+        {!admin && activeReportCount !== 0 && (
           <button
             type="button"
             className={
@@ -72,11 +77,9 @@ const VehiclesCardsTable = ({ veh, admin, activeReportCount = 0, onViewReports }
             title="View active reports"
           >
             <Flag size={12} />
-            {activeReportCount === 0
-              ? "View active reports"
-              : activeReportCount === 1
-                ? "1 active report"
-                : `${activeReportCount} active reports`}
+            {activeReportCount === 1
+              ? "1 active report"
+              : `${activeReportCount} active reports`}
           </button>
         )}
       </div>

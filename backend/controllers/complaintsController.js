@@ -18,6 +18,7 @@ const {
   countComplaintsAboutOwner,
   getComplaintsAboutOwnerVehicles,
   countComplaintsAboutOwnerVehicles,
+  getVehicleComplaintsForOwnerByPlate,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,
@@ -970,6 +971,36 @@ async function getOwnerVehicleReports_controller(req, res, next) {
   }
 }
 
+async function getOwnerVehicleReportHistory_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+      return;
+    }
+
+    const licensePlate = String(req.params.licensePlate || "").trim();
+    if (!/^\d{7,8}$/.test(licensePlate)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Enter a valid Israeli license plate (7 or 8 digits).",
+      });
+    }
+
+    // Ownership always comes from the session and is enforced in the query.
+    const ownerId = req.session.user.userId;
+    const reports = await getVehicleComplaintsForOwnerByPlate(
+      ownerId,
+      licensePlate,
+    );
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Vehicle report history fetched successfully",
+      count: reports.length,
+      reports,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function getComplaintsAboutMe_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -1051,6 +1082,7 @@ module.exports = {
   getAllComplaints_controller,
   getComplaintTrends_controller,
   getOwnerVehicleReports_controller,
+  getOwnerVehicleReportHistory_controller,
   getComplaintsAboutMe_controller,
   getComplaintsAboutMyVehicles_controller,
 };

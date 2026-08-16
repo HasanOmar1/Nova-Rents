@@ -297,6 +297,55 @@ async function countComplaintsAboutOwnerVehicles(ownerId) {
   return Number(result[0]?.totalReports) || 0;
 }
 
+// Lifetime vehicle-report totals for each vehicle currently owned by the
+// session user. This deliberately has no date or status filter: the vehicle
+// performance page uses it as a stable "times reported" counter while its
+// rental-value period changes.
+async function getVehicleComplaintCountsForOwner(ownerId) {
+  const query = `
+    SELECT
+      CAST(v.licensePlate AS CHAR) AS licensePlate,
+      COUNT(c.complaintId) AS reportCount
+    FROM vehicles v
+    LEFT JOIN complaints c
+      ON c.vehicleLicensePlate = v.licensePlate
+      AND c.complaintType = 'vehicle'
+    WHERE v.ownerId = ?
+    GROUP BY v.licensePlate
+  `;
+
+  return doQuery(query, [ownerId]);
+}
+
+// Complete report history for one vehicle currently owned by the session
+// user. Reporter identity and private admin notes are intentionally omitted.
+async function getVehicleComplaintsForOwnerByPlate(ownerId, licensePlate) {
+  const query = `
+    SELECT
+      c.complaintId,
+      c.vehicleLicensePlate,
+      c.title,
+      c.description,
+      c.status,
+      c.resolutionMessage,
+      c.respondedAt,
+      c.createdAt,
+      c.rentalId,
+      cb.brandName,
+      cm.modelName
+    FROM complaints c
+    INNER JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
+    LEFT JOIN carmodels cm ON v.modelId = cm.modelId
+    LEFT JOIN carbrands cb ON cm.brandId = cb.brandId
+    WHERE v.ownerId = ?
+      AND v.licensePlate = ?
+      AND c.complaintType = 'vehicle'
+    ORDER BY c.createdAt DESC, c.complaintId DESC
+  `;
+
+  return doQuery(query, [ownerId, licensePlate]);
+}
+
 // Personal complaint history for one reporter. Always scoped by userId.
 // Optional date/status filters use the same half-open createdAt pattern as
 // other reports. LEFT JOINs keep both vehicle and owner complaints visible
@@ -560,6 +609,8 @@ module.exports = {
   countComplaintsAboutOwner,
   getComplaintsAboutOwnerVehicles,
   countComplaintsAboutOwnerVehicles,
+  getVehicleComplaintCountsForOwner,
+  getVehicleComplaintsForOwnerByPlate,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,

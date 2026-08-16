@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, CalendarDays } from "lucide-react";
+import { ArrowLeft, CalendarDays, Flag } from "lucide-react";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
+import OwnerVehicleReportsModal from "../../../components/OwnerVehicleReportsModal/OwnerVehicleReportsModal";
+import { useComplaintContext } from "../../../context/ComplaintContext";
 import { useReportContext } from "../../../context/ReportContext";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import {
@@ -56,8 +58,15 @@ const VehicleAnalytics = () => {
   const [fromDate, setFromDate] = useState(defaultRange.from);
   const [toDate, setToDate] = useState(defaultRange.to);
   const [appliedFilter, setAppliedFilter] = useState({ range: "all" });
+  const [selectedReportVehicle, setSelectedReportVehicle] = useState(null);
+  const [selectedVehicleReports, setSelectedVehicleReports] = useState([]);
+  const [isSelectedReportsLoading, setIsSelectedReportsLoading] =
+    useState(false);
+  const [selectedReportsError, setSelectedReportsError] = useState("");
+  const reportRequestIdRef = useRef(0);
 
   const { vehicleInventoryVersion } = useVehicleContext();
+  const { getOwnerVehicleReportHistory } = useComplaintContext();
   const {
     vehicleComparisonData,
     isVehicleComparisonLoading,
@@ -73,12 +82,20 @@ const VehicleAnalytics = () => {
     getVehicleComparison(appliedFilter);
   }, [appliedFilter, getVehicleComparison, vehicleInventoryVersion]);
 
+  useEffect(
+    () => () => {
+      reportRequestIdRef.current += 1;
+    },
+    [],
+  );
+
   const comparisonSeries = useMemo(
     () =>
       vehicleComparisonData.series.map((serie, index) => ({
         dataKey: serie.dataKey,
         licensePlate: String(serie.licensePlate),
         name: serie.name || String(serie.licensePlate),
+        reportCount: Number(serie.reportCount) || 0,
         color: getVehicleChartColor(index),
       })),
     [vehicleComparisonData.series],
@@ -177,6 +194,38 @@ const VehicleAnalytics = () => {
     }
 
     setAppliedFilter(nextFilter);
+  };
+
+  const openVehicleReports = async ({ licensePlate, vehicleName }) => {
+    const requestId = reportRequestIdRef.current + 1;
+    reportRequestIdRef.current = requestId;
+    setSelectedReportVehicle({ licensePlate, vehicleName });
+    setSelectedVehicleReports([]);
+    setSelectedReportsError("");
+    setIsSelectedReportsLoading(true);
+
+    try {
+      const reports = await getOwnerVehicleReportHistory(licensePlate);
+      if (reportRequestIdRef.current !== requestId) return;
+      setSelectedVehicleReports(reports);
+    } catch (error) {
+      if (reportRequestIdRef.current !== requestId) return;
+      setSelectedReportsError(
+        error?.message || "Failed to load vehicle reports",
+      );
+    } finally {
+      if (reportRequestIdRef.current === requestId) {
+        setIsSelectedReportsLoading(false);
+      }
+    }
+  };
+
+  const closeVehicleReports = () => {
+    reportRequestIdRef.current += 1;
+    setSelectedReportVehicle(null);
+    setSelectedVehicleReports([]);
+    setSelectedReportsError("");
+    setIsSelectedReportsLoading(false);
   };
 
   const valueSummaryDescription =
@@ -303,7 +352,10 @@ const VehicleAnalytics = () => {
             <h2 id="vehicle-value-ranking-heading">
               Total Value by Vehicle
             </h2>
-            <p>{valueSummaryDescription}</p>
+            <p>
+              {valueSummaryDescription} Vehicle report counts are all time and
+              do not change with this period.
+            </p>
           </div>
 
           {!isVehicleComparisonLoading &&
@@ -338,6 +390,9 @@ const VehicleAnalytics = () => {
               const relativeValue = highestVehicleValue
                 ? (vehicle.totalValue / highestVehicleValue) * 100
                 : 0;
+              const reportCountLabel = `${vehicle.reportCount} ${
+                vehicle.reportCount === 1 ? "report" : "reports"
+              }`;
 
               return (
                 <li key={vehicle.dataKey} className={styles.vehicleValueRow}>
@@ -350,9 +405,43 @@ const VehicleAnalytics = () => {
                         style={{ backgroundColor: vehicle.color }}
                         aria-hidden="true"
                       />
-                      <div>
-                        <strong>{vehicleName}</strong>
-                        <span>Plate {vehicle.licensePlate}</span>
+                      <div className={styles.vehicleValueMeta}>
+                        <div className={styles.vehicleValueNameRow}>
+                          <strong>{vehicleName}</strong>
+                          {vehicle.reportCount > 0 ? (
+                            <button
+                              type="button"
+                              className={`${styles.reportCountBadge} ${styles.reportCountButton}`}
+                              onClick={() =>
+                                openVehicleReports({
+                                  licensePlate: vehicle.licensePlate,
+                                  vehicleName,
+                                })
+                              }
+                              title="View all-time report details"
+                              aria-label={`View ${reportCountLabel} for ${vehicleName}`}
+                              aria-haspopup="dialog"
+                              aria-expanded={
+                                selectedReportVehicle?.licensePlate ===
+                                vehicle.licensePlate
+                              }
+                            >
+                              <Flag size={12} aria-hidden="true" />
+                              {reportCountLabel}
+                            </button>
+                          ) : (
+                            <span
+                              className={`${styles.reportCountBadge} ${styles.reportCountBadgeEmpty}`}
+                              title={`No all-time reports for ${vehicleName}`}
+                            >
+                              <Flag size={12} aria-hidden="true" />
+                              {reportCountLabel}
+                            </span>
+                          )}
+                        </div>
+                        <span className={styles.vehiclePlate}>
+                          Plate {vehicle.licensePlate}
+                        </span>
                       </div>
                     </div>
 
@@ -401,6 +490,21 @@ const VehicleAnalytics = () => {
           chartHeight={360}
         />
       </div>
+
+      <OwnerVehicleReportsModal
+        isOpen={Boolean(selectedReportVehicle)}
+        onClose={closeVehicleReports}
+        heading="All-time vehicle reports"
+        vehicleLabel={
+          selectedReportVehicle
+            ? `${selectedReportVehicle.vehicleName} (Plate ${selectedReportVehicle.licensePlate})`
+            : "Your vehicle"
+        }
+        reports={selectedVehicleReports}
+        isLoading={isSelectedReportsLoading}
+        errorMessage={selectedReportsError}
+        emptyMessage="No reports have been filed for this vehicle."
+      />
     </main>
   );
 };

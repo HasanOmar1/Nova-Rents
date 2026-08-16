@@ -331,10 +331,74 @@
   white-space: nowrap;
 }
 
-.VehicleAnalytics .vehicleValueIdentity div span {
+.VehicleAnalytics .vehicleValueMeta {
+  width: 100%;
+}
+
+.VehicleAnalytics .vehicleValueNameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.VehicleAnalytics .vehicleValueNameRow > strong {
+  flex: 1;
+  min-width: 0;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .vehiclePlate {
   margin-top: 2px;
   color: var(--gray);
   font-size: 0.72rem;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border: 1px solid rgba(249, 187, 129, 0.35);
+  border-radius: 999px;
+  background-color: rgba(249, 187, 129, 0.1);
+  color: #f9bb81;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountButton {
+  min-height: 30px;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountButton:hover {
+  border-color: rgba(249, 187, 129, 0.55);
+  background-color: rgba(249, 187, 129, 0.2);
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountButton:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: 2px;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountButton:active {
+  transform: translateY(1px);
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountBadgeEmpty {
+  border-color: rgba(167, 210, 235, 0.2);
+  background-color: rgba(167, 210, 235, 0.07);
+  color: var(--gray);
 }
 
 .VehicleAnalytics .vehicleValueDot {
