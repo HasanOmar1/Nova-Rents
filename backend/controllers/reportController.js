@@ -7,6 +7,7 @@ const {
   getBookingValueByRange,
   getBookingsChartByRange,
   getOwnerEarningsChartByRange,
+  getOwnerVehicleEarningsComparisonByRange,
 } = require("../database/queries/rentalQueries");
 const {
   DAILY_BUCKET_LIMIT_DAYS,
@@ -15,6 +16,8 @@ const {
   resolveGranularity,
   buildPeriodKeys,
 } = require("../utils/periodBuckets");
+
+const MAX_VEHICLE_COMPARISON_RANGE_DAYS = 3660;
 
 async function getSystemActivityChart_controller(req, res, next) {
   try {
@@ -263,8 +266,100 @@ async function getUserDashboardReport_controller(req, res, next) {
   }
 }
 
+// Compares completed-rental value across every vehicle owned by the
+// authenticated user. Value uses rental endDate, matching the personal
+// dashboard's definition of when a rental is earned.
+async function getVehicleComparison_controller(req, res, next) {
+  try {
+    const userId = req.session.user.userId;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "startDate and endDate are required",
+      });
+    }
+
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
+
+    if (!start || !end) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid date format, use YYYY-MM-DD",
+      });
+    }
+
+    if (start > end) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "startDate must be before endDate",
+      });
+    }
+
+    const rangeInDays = (end - start) / (1000 * 60 * 60 * 24);
+    if (rangeInDays > MAX_VEHICLE_COMPARISON_RANGE_DAYS) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Vehicle comparison date range cannot exceed 10 years",
+      });
+    }
+
+    const { granularity, dateFormat } = resolveGranularity(start, end);
+    const rows = await getOwnerVehicleEarningsComparisonByRange(
+      userId,
+      startDate,
+      endDate,
+      dateFormat,
+    );
+
+    const seriesMap = new Map();
+    const earningsByPeriod = new Map();
+
+    for (const row of rows) {
+      const licensePlate = String(row.licensePlate);
+      const dataKey = `vehicle_${licensePlate}`;
+
+      if (!seriesMap.has(dataKey)) {
+        seriesMap.set(dataKey, {
+          dataKey,
+          licensePlate,
+          name: `${row.brandName} ${row.modelName} (${licensePlate})`,
+        });
+      }
+
+      if (row.periodKey) {
+        if (!earningsByPeriod.has(row.periodKey)) {
+          earningsByPeriod.set(row.periodKey, {});
+        }
+        earningsByPeriod.get(row.periodKey)[dataKey] =
+          Number(row.earnings) || 0;
+      }
+    }
+
+    const series = [...seriesMap.values()];
+    const chartData = buildPeriodKeys(start, end, granularity).map((period) => {
+      const point = { period };
+      const periodEarnings = earningsByPeriod.get(period) || {};
+
+      for (const vehicle of series) {
+        point[vehicle.dataKey] = periodEarnings[vehicle.dataKey] || 0;
+      }
+
+      return point;
+    });
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Vehicle comparison fetched successfully",
+      granularity,
+      series,
+      chartData,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getSystemActivityChart_controller,
   getStatistics_controller,
   getUserDashboardReport_controller,
+  getVehicleComparison_controller,
 };

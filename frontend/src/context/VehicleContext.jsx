@@ -2,7 +2,6 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useState,
 } from "react";
 import axios from "axios";
@@ -20,6 +19,7 @@ const VehicleContextProvider = ({ children }) => {
   const [vehicleStats, setVehicleStats] = useState({});
   const [pagination, setPagination] = useState({});
   const [currentStatus, setCurrentStatus] = useState("all");
+  const [vehicleInventoryVersion, setVehicleInventoryVersion] = useState(0);
   const [allVehPagination, setAllVehPagination] = useState({});
   const [availableFilters, setAvailableFilters] = useState({
     locations: [],
@@ -69,6 +69,7 @@ const VehicleContextProvider = ({ children }) => {
       getUserVehicles(pagination.currentPage || 1, currentStatus);
       setErrorMsg("");
       loadActivities();
+      setVehicleInventoryVersion((version) => version + 1);
       return true;
     } catch (error) {
       setErrorMsg(error?.response?.data?.message);
@@ -111,10 +112,11 @@ const VehicleContextProvider = ({ children }) => {
 
   const addVehicle = async (vehData) => {
     try {
-      const response = await axios.post("/vehicles/add", vehData);
+      await axios.post("/vehicles/add", vehData);
       await Promise.all([getAllVehicles(), getUserVehicles(1, currentStatus)]);
       setErrorMsg("");
       loadActivities();
+      setVehicleInventoryVersion((version) => version + 1);
       return true;
     } catch (error) {
       console.log(error?.response.data?.message);
@@ -125,13 +127,14 @@ const VehicleContextProvider = ({ children }) => {
 
   const updateVehicle = async (licensePlate, vehData) => {
     try {
-      const response = await axios.put(`/vehicles/${licensePlate}`, vehData);
+      await axios.put(`/vehicles/${licensePlate}`, vehData);
       await Promise.all([
         getAllVehicles(),
         getUserVehicles(pagination.currentPage || 1, currentStatus),
       ]);
 
       loadActivities();
+      setVehicleInventoryVersion((version) => version + 1);
 
       setErrorMsg("");
       return true;
@@ -153,6 +156,7 @@ const VehicleContextProvider = ({ children }) => {
       ]);
 
       loadActivities();
+      setVehicleInventoryVersion((version) => version + 1);
       setErrorMsg("");
       return true;
     } catch (error) {
@@ -200,6 +204,7 @@ const VehicleContextProvider = ({ children }) => {
         allVehStats,
         updateVehicleStatus,
         getVehicleByLicensePlate,
+        vehicleInventoryVersion,
       }}
     >
       {children}

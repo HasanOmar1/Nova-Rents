@@ -7,7 +7,6 @@ import {
   CheckCircle,
   XCircle,
   ExternalLink,
-  CreditCard,
   MapPin,
   AlertTriangle,
 } from "lucide-react";
@@ -26,6 +25,7 @@ const RentalRequestsModal = ({
   onClose,
   groupData,
   mode,
+  initialTripFilter = "all",
   respondToRequest,
 }) => {
   const dialogRef = useRef(null);
@@ -43,10 +43,10 @@ const RentalRequestsModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      setTripFilter("all");
+      setTripFilter(mode === "pending" ? "all" : initialTripFilter);
       setReportMenuRentalId(null);
     }
-  }, [isOpen]);
+  }, [initialTripFilter, isOpen, mode]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -114,7 +114,6 @@ const RentalRequestsModal = ({
               className={styles.filterSelect}
             >
               <option value="all">All Trips</option>
-              <option value="pending">Pending</option>
               <option value="completed">Completed</option>
               <option value="rejected">Rejected</option>
               <option value="cancelled">Cancelled</option>
@@ -178,26 +177,6 @@ const RentalRequestsModal = ({
                 </p>
                 <p className={styles.price}>Total: ${rental.totalPrice}</p>
               </div>
-
-              {/* Test payment entry for the renter's own approved trips */}
-              {!isPendingMode &&
-                rental.rentalStatus === "approved" &&
-                rental.paymentStatus === "pending" &&
-                rental.paymentToken && (
-                  <>
-                    <p className={styles.pickupHint}>
-                      Exact pickup details will be available after payment.
-                    </p>
-                    <button
-                      className={styles.payNowBtn}
-                      onClick={() =>
-                        navigate(`/payments/${rental.paymentToken}`)
-                      }
-                    >
-                      <CreditCard size={16} /> Pay Now
-                    </button>
-                  </>
-                )}
 
               {!isPendingMode && rental.paymentStatus === "paid" && (
                 <>
