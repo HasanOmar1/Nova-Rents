@@ -417,10 +417,75 @@
   margin-bottom: 0;
 }
 
+.RentalDashboard .tripHeaderControls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.RentalDashboard .tripFilterContainer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 12px;
+  border: var(--cards-border);
+  border-radius: 10px;
+  background-color: var(--bg-gray);
+}
+
+.RentalDashboard .tripFilterContainer label {
+  color: var(--gray);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.RentalDashboard .tripFilterContainer select {
+  border: none;
+  outline: none;
+  background-color: var(--bg-gray);
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.RentalDashboard .tripFilterContainer:focus-within {
+  border-color: var(--icons-color);
+}
+
 .RentalDashboard .tripCounters {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.RentalDashboard .tripFilterMatchBadge {
+  align-self: flex-start;
+  margin-bottom: 15px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+}
+
+.RentalDashboard .tripFilterMatchBadge.approved {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.RentalDashboard .tripFilterMatchBadge.completed {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.RentalDashboard .tripFilterMatchBadge.rejected,
+.RentalDashboard .tripFilterMatchBadge.cancelled {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
 }
 
 .RentalDashboard .counterBadge {
@@ -461,6 +526,11 @@
   .RentalDashboard .approvalSectionHeader {
     flex-direction: column;
   }
+
+  .RentalDashboard .tripHeaderControls {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
@@ -475,5 +545,10 @@
 
   .RentalDashboard .paymentActions {
     grid-template-columns: 1fr;
+  }
+
+  .RentalDashboard .tripFilterContainer,
+  .RentalDashboard .tripFilterContainer select {
+    width: 100%;
   }
 }

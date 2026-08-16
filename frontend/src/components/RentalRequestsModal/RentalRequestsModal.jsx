@@ -25,6 +25,7 @@ const RentalRequestsModal = ({
   onClose,
   groupData,
   mode,
+  initialTripFilter = "all",
   respondToRequest,
 }) => {
   const dialogRef = useRef(null);
@@ -42,10 +43,10 @@ const RentalRequestsModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      setTripFilter("all");
+      setTripFilter(mode === "pending" ? "all" : initialTripFilter);
       setReportMenuRentalId(null);
     }
-  }, [isOpen]);
+  }, [initialTripFilter, isOpen, mode]);
 
   useEffect(() => {
     const dialog = dialogRef.current;

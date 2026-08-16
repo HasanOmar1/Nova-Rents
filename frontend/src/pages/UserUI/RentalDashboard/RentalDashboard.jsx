@@ -40,6 +40,16 @@ const isAwaitingPayment = (rental) =>
 
 const isWaitingForApproval = (rental) => rental.rentalStatus === "pending";
 
+const matchesTripStatus = (rental, status) => {
+  if (status === "all") return true;
+  if (status === "rejected") {
+    return (
+      rental.rentalStatus === "rejected" || rental.rentalStatus === "declined"
+    );
+  }
+  return rental.rentalStatus === status;
+};
+
 const compareTripsByStartDate = (firstTrip, secondTrip) =>
   new Date(firstTrip.startDate).getTime() -
     new Date(secondTrip.startDate).getTime() ||
@@ -71,6 +81,7 @@ const RentalDashboard = () => {
   const [paymentPage, setPaymentPage] = useState(1);
   const [approvalPage, setApprovalPage] = useState(1);
   const [tripsPage, setTripsPage] = useState(1);
+  const [tripStatusFilter, setTripStatusFilter] = useState("all");
   const ITEMS_PER_PAGE = 6;
 
   const [modalConfig, setModalConfig] = useState({
@@ -133,7 +144,15 @@ const RentalDashboard = () => {
 
   const groupedPending = groupByVehicle(pendingRequests);
   const tripHistory = myTrips.filter((rental) => !isWaitingForApproval(rental));
-  const groupedTrips = groupByVehicle(tripHistory);
+  const groupedTripHistory = groupByVehicle(tripHistory);
+  const groupedTrips =
+    tripStatusFilter === "all"
+      ? groupedTripHistory
+      : groupedTripHistory.filter((group) =>
+          group.rentals.some((rental) =>
+            matchesTripStatus(rental, tripStatusFilter),
+          ),
+        );
   const awaitingPayments = myTrips
     .filter(isAwaitingPayment)
     .slice()
@@ -184,12 +203,22 @@ const RentalDashboard = () => {
   const approvedCount = myTrips.filter(
     (t) => t.rentalStatus === "approved",
   ).length;
-  const rejectedCount = myTrips.filter(
-    (t) => t.rentalStatus === "rejected",
+  const rejectedCount = myTrips.filter((trip) =>
+    matchesTripStatus(trip, "rejected"),
   ).length;
   const cancelledCount = myTrips.filter(
     (t) => t.rentalStatus === "cancelled",
   ).length;
+
+  const selectedTripStatusLabel =
+    tripStatusFilter === "all"
+      ? "All statuses"
+      : `${tripStatusFilter.charAt(0).toUpperCase()}${tripStatusFilter.slice(1)}`;
+
+  const handleTripStatusChange = (event) => {
+    setTripStatusFilter(event.target.value);
+    setTripsPage(1);
+  };
 
   return (
     <div className={`${styles.RentalDashboard} page`}>
@@ -198,6 +227,7 @@ const RentalDashboard = () => {
         onClose={closeModal}
         groupData={modalConfig.groupData}
         mode={modalConfig.mode}
+        initialTripFilter={tripStatusFilter}
         respondToRequest={respondToRequest}
       />
 
@@ -515,19 +545,37 @@ const RentalDashboard = () => {
           <h2>
             <Car size={20} color="#3b82f6" /> My Trips
           </h2>
-          <div className={styles.tripCounters}>
-            <span className={`${styles.counterBadge} ${styles.approved}`}>
-              Approved: {approvedCount}
-            </span>
-            <span className={`${styles.counterBadge} ${styles.completed}`}>
-              Completed: {completedCount}
-            </span>
-            <span className={`${styles.counterBadge} ${styles.rejected}`}>
-              Rejected: {rejectedCount}
-            </span>
-            <span className={`${styles.counterBadge} ${styles.cancelled}`}>
-              Cancelled: {cancelledCount}
-            </span>
+          <div className={styles.tripHeaderControls}>
+            <div className={styles.tripFilterContainer}>
+              <label htmlFor="trip-status-filter">Filter:</label>
+              <select
+                id="trip-status-filter"
+                value={tripStatusFilter}
+                onChange={handleTripStatusChange}
+                aria-label="Filter My Trips by status"
+              >
+                <option value="all">All statuses</option>
+                <option value="approved">Approved</option>
+                <option value="completed">Completed</option>
+                <option value="rejected">Rejected</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            <div className={styles.tripCounters}>
+              <span className={`${styles.counterBadge} ${styles.approved}`}>
+                Approved: {approvedCount}
+              </span>
+              <span className={`${styles.counterBadge} ${styles.completed}`}>
+                Completed: {completedCount}
+              </span>
+              <span className={`${styles.counterBadge} ${styles.rejected}`}>
+                Rejected: {rejectedCount}
+              </span>
+              <span className={`${styles.counterBadge} ${styles.cancelled}`}>
+                Cancelled: {cancelledCount}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -535,13 +583,22 @@ const RentalDashboard = () => {
           <p className={styles.emptyMsg}>
             {myTrips.length === 0
               ? "You haven't rented any cars yet."
-              : "No approved or past trips yet."}
+              : tripHistory.length === 0
+                ? "No approved or past trips yet."
+                : `No ${selectedTripStatusLabel.toLowerCase()} trips found.`}
           </p>
         ) : (
           <>
             <div className={styles.grid}>
               {displayedTrips.map((group) => {
                 const { vehicleInfo, rentals } = group;
+                const matchingTrips =
+                  tripStatusFilter === "all"
+                    ? rentals.length
+                    : rentals.filter(
+                        (rental) =>
+                          matchesTripStatus(rental, tripStatusFilter),
+                      ).length;
 
                 return (
                   <div key={vehicleInfo.licensePlate} className={styles.card}>
@@ -568,6 +625,15 @@ const RentalDashboard = () => {
                         <Car size={14} /> Plate: {vehicleInfo.licensePlate}
                       </p>
 
+                      {tripStatusFilter !== "all" && (
+                        <span
+                          className={`${styles.tripFilterMatchBadge} ${styles[tripStatusFilter]}`}
+                        >
+                          {matchingTrips} {selectedTripStatusLabel} trip
+                          {matchingTrips > 1 ? "s" : ""}
+                        </span>
+                      )}
+
                       <button
                         className={styles.detailsBtn}
                         onClick={() => handleViewDetails(vehicleInfo)}
@@ -579,8 +645,11 @@ const RentalDashboard = () => {
                         className={styles.openModalBtn}
                         onClick={() => openModal(group, "trips")}
                       >
-                        <Layers size={16} /> View {rentals.length} Trip
-                        {rentals.length > 1 ? "s" : ""}
+                        <Layers size={16} /> View {matchingTrips}{" "}
+                        {tripStatusFilter === "all"
+                          ? "Trip"
+                          : `${selectedTripStatusLabel} Trip`}
+                        {matchingTrips > 1 ? "s" : ""}
                       </button>
                     </div>
                   </div>
@@ -597,7 +666,11 @@ const RentalDashboard = () => {
                   handleNextPage={() =>
                     setTripsPage((p) => Math.min(p + 1, totalTripsPages))
                   }
-                  leftText={`Rented Vehicles: ${groupedTrips.length}`}
+                  leftText={
+                    tripStatusFilter === "all"
+                      ? `Rented Vehicles: ${groupedTrips.length}`
+                      : `Vehicles with ${selectedTripStatusLabel} Trips: ${groupedTrips.length}`
+                  }
                 />
               </div>
             )}
