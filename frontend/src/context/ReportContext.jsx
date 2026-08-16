@@ -35,6 +35,7 @@ const ReportContextProvider = ({ children }) => {
   const [userDashboardErrorMsg, setUserDashboardErrorMsg] = useState("");
   const [vehicleComparisonData, setVehicleComparisonData] = useState({
     granularity: "month",
+    range: { type: "custom", startDate: null, endDate: null },
     series: [],
     chartData: [],
   });
@@ -98,7 +99,8 @@ const ReportContextProvider = ({ children }) => {
   // Completed-rental value for every vehicle owned by the session user.
   // This is intentionally separate from the paginated My Vehicles request so
   // the comparison always includes the owner's complete vehicle inventory.
-  const getVehicleComparison = useCallback(async (startDate, endDate) => {
+  const getVehicleComparison = useCallback(async (options = {}) => {
+    const { range = "custom", startDate, endDate } = options;
     const requestId = vehicleComparisonRequestId.current + 1;
     vehicleComparisonRequestId.current = requestId;
 
@@ -106,13 +108,21 @@ const ReportContextProvider = ({ children }) => {
       setIsVehicleComparisonLoading(true);
       setVehicleComparisonErrorMsg("");
       const response = await axios.get("/reports/vehicle-comparison", {
-        params: { startDate, endDate },
+        params:
+          range === "all"
+            ? { range: "all" }
+            : { range: "custom", startDate, endDate },
       });
 
       if (requestId !== vehicleComparisonRequestId.current) return;
 
       setVehicleComparisonData({
         granularity: response.data.granularity || "month",
+        range: response.data.range || {
+          type: range,
+          startDate: startDate || null,
+          endDate: endDate || null,
+        },
         series: response.data.series || [],
         chartData: response.data.chartData || [],
       });
@@ -122,6 +132,11 @@ const ReportContextProvider = ({ children }) => {
 
       setVehicleComparisonData({
         granularity: "month",
+        range: {
+          type: range,
+          startDate: startDate || null,
+          endDate: endDate || null,
+        },
         series: [],
         chartData: [],
       });

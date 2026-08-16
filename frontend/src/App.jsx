@@ -8,6 +8,7 @@ import Profile from "./pages/UserUI/Profile/Profile";
 import Vehicles from "./pages/UserUI/Vehicles/Vehicles";
 import Map from "./pages/UserUI/Map/Map";
 import MyVehicles from "./pages/UserUI/MyVehicles/MyVehicles";
+import VehicleAnalytics from "./pages/UserUI/VehicleAnalytics/VehicleAnalytics";
 import Complaints from "./pages/UserUI/Complaints/Complaints";
 import DashBoard from "./pages/AdminUI/DashBoard/DashBoard";
 import Users from "./pages/AdminUI/Users/Users";
@@ -45,6 +46,10 @@ function App() {
             <Route path="/vehicles" element={<Vehicles />} />
             <Route path="/map" element={<Map />} />
             <Route path="/myVehicles" element={<MyVehicles />} />
+            <Route
+              path="/myVehicles/analytics"
+              element={<VehicleAnalytics />}
+            />
             <Route path="/profile" element={<Profile />} />
             <Route path="/complaints" element={<Complaints />} />
             <Route path="/rentalDashboard" element={<RentalDashboard />} />

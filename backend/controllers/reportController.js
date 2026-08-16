@@ -7,6 +7,7 @@ const {
   getBookingValueByRange,
   getBookingsChartByRange,
   getOwnerEarningsChartByRange,
+  getOwnerVehicleEarningsComparisonBounds,
   getOwnerVehicleEarningsComparisonByRange,
 } = require("../database/queries/rentalQueries");
 const {
@@ -272,41 +273,98 @@ async function getUserDashboardReport_controller(req, res, next) {
 async function getVehicleComparison_controller(req, res, next) {
   try {
     const userId = req.session.user.userId;
-    const { startDate, endDate } = req.query;
+    const {
+      startDate: requestedStartDate,
+      endDate: requestedEndDate,
+      range: requestedRange,
+    } = req.query;
 
-    if (!startDate || !endDate) {
+    if (requestedRange && !["all", "custom"].includes(requestedRange)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "startDate and endDate are required",
+        message: "range must be either all or custom",
       });
     }
 
-    const start = parseLocalDate(startDate);
-    const end = parseLocalDate(endDate);
-
-    if (!start || !end) {
+    const isAllTime = requestedRange === "all";
+    if (
+      isAllTime &&
+      (requestedStartDate !== undefined || requestedEndDate !== undefined)
+    ) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "Invalid date format, use YYYY-MM-DD",
+        message: "Do not send startDate or endDate when range is all",
       });
     }
 
-    if (start > end) {
-      return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "startDate must be before endDate",
-      });
+    let effectiveStartDate = requestedStartDate || null;
+    let effectiveEndDate = requestedEndDate || null;
+    let start = null;
+    let end = null;
+    let granularity;
+    let dateFormat;
+
+    if (isAllTime) {
+      const [bounds] =
+        await getOwnerVehicleEarningsComparisonBounds(userId);
+      effectiveStartDate = bounds?.startDate || null;
+      effectiveEndDate = bounds?.endDate || null;
+
+      if (effectiveStartDate && effectiveEndDate) {
+        start = parseLocalDate(effectiveStartDate);
+        end = parseLocalDate(effectiveEndDate);
+
+        if (!start || !end) {
+          throw new Error(
+            "Invalid vehicle comparison bounds returned by database",
+          );
+        }
+
+        const rangeInDays = (end - start) / (1000 * 60 * 60 * 24);
+        if (rangeInDays > MAX_VEHICLE_COMPARISON_RANGE_DAYS) {
+          granularity = "year";
+          dateFormat = "%Y";
+        } else {
+          ({ granularity, dateFormat } = resolveGranularity(start, end));
+        }
+      } else {
+        granularity = "month";
+        dateFormat = "%Y-%m";
+      }
+    } else {
+      if (!requestedStartDate || !requestedEndDate) {
+        return res.status(STATUS_CODE.BAD_REQUEST).json({
+          message: "startDate and endDate are required",
+        });
+      }
+
+      start = parseLocalDate(requestedStartDate);
+      end = parseLocalDate(requestedEndDate);
+
+      if (!start || !end) {
+        return res.status(STATUS_CODE.BAD_REQUEST).json({
+          message: "Invalid date format, use YYYY-MM-DD",
+        });
+      }
+
+      if (start > end) {
+        return res.status(STATUS_CODE.BAD_REQUEST).json({
+          message: "startDate must be before endDate",
+        });
+      }
+
+      const rangeInDays = (end - start) / (1000 * 60 * 60 * 24);
+      if (rangeInDays > MAX_VEHICLE_COMPARISON_RANGE_DAYS) {
+        return res.status(STATUS_CODE.BAD_REQUEST).json({
+          message: "Vehicle comparison date range cannot exceed 10 years",
+        });
+      }
+
+      ({ granularity, dateFormat } = resolveGranularity(start, end));
     }
 
-    const rangeInDays = (end - start) / (1000 * 60 * 60 * 24);
-    if (rangeInDays > MAX_VEHICLE_COMPARISON_RANGE_DAYS) {
-      return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "Vehicle comparison date range cannot exceed 10 years",
-      });
-    }
-
-    const { granularity, dateFormat } = resolveGranularity(start, end);
     const rows = await getOwnerVehicleEarningsComparisonByRange(
       userId,
-      startDate,
-      endDate,
+      effectiveStartDate,
+      effectiveEndDate,
       dateFormat,
     );
 
@@ -335,7 +393,9 @@ async function getVehicleComparison_controller(req, res, next) {
     }
 
     const series = [...seriesMap.values()];
-    const chartData = buildPeriodKeys(start, end, granularity).map((period) => {
+    const periods =
+      start && end ? buildPeriodKeys(start, end, granularity) : [];
+    const chartData = periods.map((period) => {
       const point = { period };
       const periodEarnings = earningsByPeriod.get(period) || {};
 
@@ -348,6 +408,11 @@ async function getVehicleComparison_controller(req, res, next) {
 
     return res.status(STATUS_CODE.OK).json({
       message: "Vehicle comparison fetched successfully",
+      range: {
+        type: isAllTime ? "all" : "custom",
+        startDate: effectiveStartDate,
+        endDate: effectiveEndDate,
+      },
       granularity,
       series,
       chartData,

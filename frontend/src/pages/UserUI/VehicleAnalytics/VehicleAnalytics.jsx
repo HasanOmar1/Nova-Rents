@@ -1,0 +1,408 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, CalendarDays } from "lucide-react";
+import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
+import { useReportContext } from "../../../context/ReportContext";
+import { useVehicleContext } from "../../../context/VehicleContext";
+import {
+  formatPeriodTick,
+  formatPeriodTooltip,
+} from "../../../utils/periodFormat";
+import styles from "./VehicleAnalytics.module.css";
+
+const getVehicleChartColor = (index) => {
+  const hue = Math.round((205 + index * 137.508) % 360);
+  return `hsl(${hue}, 72%, 66%)`;
+};
+
+const formatDateForInput = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const createDefaultRange = () => {
+  const today = new Date();
+  const firstMonthInRange = new Date(
+    today.getFullYear(),
+    today.getMonth() - 5,
+    1,
+  );
+
+  return {
+    from: formatDateForInput(firstMonthInRange),
+    to: formatDateForInput(today),
+  };
+};
+
+const formatCurrency = (value) =>
+  `$${(Number(value) || 0).toLocaleString()}`;
+
+const formatComparisonDate = (value) => {
+  const [year, month, day] = String(value).split("-").map(Number);
+  if (!year || !month || !day) return value;
+
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const VehicleAnalytics = () => {
+  const [defaultRange] = useState(createDefaultRange);
+  const [rangeMode, setRangeMode] = useState("all");
+  const [fromDate, setFromDate] = useState(defaultRange.from);
+  const [toDate, setToDate] = useState(defaultRange.to);
+  const [appliedFilter, setAppliedFilter] = useState({ range: "all" });
+
+  const { vehicleInventoryVersion } = useVehicleContext();
+  const {
+    vehicleComparisonData,
+    isVehicleComparisonLoading,
+    vehicleComparisonErrorMsg,
+    getVehicleComparison,
+  } = useReportContext();
+
+  const isCustomRangeValid = Boolean(
+    fromDate && toDate && fromDate <= toDate,
+  );
+
+  useEffect(() => {
+    getVehicleComparison(appliedFilter);
+  }, [appliedFilter, getVehicleComparison, vehicleInventoryVersion]);
+
+  const comparisonSeries = useMemo(
+    () =>
+      vehicleComparisonData.series.map((serie, index) => ({
+        dataKey: serie.dataKey,
+        licensePlate: String(serie.licensePlate),
+        name: serie.name || String(serie.licensePlate),
+        color: getVehicleChartColor(index),
+      })),
+    [vehicleComparisonData.series],
+  );
+
+  const comparisonChartData = useMemo(
+    () =>
+      vehicleComparisonData.chartData.map((point) => {
+        const normalizedPoint = { ...point };
+
+        for (const serie of comparisonSeries) {
+          normalizedPoint[serie.dataKey] =
+            Number(normalizedPoint[serie.dataKey]) || 0;
+        }
+
+        return normalizedPoint;
+      }),
+    [comparisonSeries, vehicleComparisonData.chartData],
+  );
+
+  const vehicleValueRanking = useMemo(
+    () =>
+      comparisonSeries
+        .map((serie) => ({
+          ...serie,
+          totalValue: comparisonChartData.reduce(
+            (total, point) => total + (Number(point[serie.dataKey]) || 0),
+            0,
+          ),
+        }))
+        .sort(
+          (firstVehicle, secondVehicle) =>
+            secondVehicle.totalValue - firstVehicle.totalValue ||
+            firstVehicle.name.localeCompare(secondVehicle.name) ||
+            firstVehicle.licensePlate.localeCompare(secondVehicle.licensePlate),
+        ),
+    [comparisonChartData, comparisonSeries],
+  );
+
+  const fleetTotalValue = vehicleValueRanking.reduce(
+    (total, vehicle) => total + vehicle.totalValue,
+    0,
+  );
+  const highestVehicleValue = vehicleValueRanking[0]?.totalValue || 0;
+  const appliedRangeLabel =
+    appliedFilter.range === "all"
+      ? "All time"
+      : `${formatComparisonDate(appliedFilter.startDate)} - ${formatComparisonDate(
+          appliedFilter.endDate,
+        )}`;
+
+  const hasComparisonValue = comparisonChartData.some((point) =>
+    comparisonSeries.some((serie) => point[serie.dataKey] > 0),
+  );
+
+  const comparisonEmptyMessage = vehicleComparisonErrorMsg
+    ? "The vehicle comparison is unavailable right now."
+    : comparisonSeries.length
+      ? "No completed rental value was found for your vehicles in this period."
+      : "Add a vehicle to start comparing completed rental value.";
+
+  const applyAllTime = () => {
+    setRangeMode("all");
+    setAppliedFilter((currentFilter) =>
+      currentFilter.range === "all" ? currentFilter : { range: "all" },
+    );
+  };
+
+  const applyCustomMode = () => {
+    setRangeMode("custom");
+    if (isCustomRangeValid) {
+      setAppliedFilter({
+        range: "custom",
+        startDate: fromDate,
+        endDate: toDate,
+      });
+    }
+  };
+
+  const applyCustomDates = () => {
+    if (!isCustomRangeValid || isVehicleComparisonLoading) return;
+
+    const nextFilter = {
+      range: "custom",
+      startDate: fromDate,
+      endDate: toDate,
+    };
+
+    if (
+      appliedFilter.range === "custom" &&
+      appliedFilter.startDate === fromDate &&
+      appliedFilter.endDate === toDate
+    ) {
+      getVehicleComparison(nextFilter);
+      return;
+    }
+
+    setAppliedFilter(nextFilter);
+  };
+
+  const valueSummaryDescription =
+    appliedFilter.range === "all"
+      ? "Gross value across all recorded completed rentals, ranked highest to lowest."
+      : `Gross value of completed rentals ending between ${appliedRangeLabel}, ranked highest to lowest.`;
+
+  return (
+    <main className={`${styles.VehicleAnalytics} page`}>
+      <div className={styles.topBar}>
+        <Link className={styles.backLink} to="/myVehicles">
+          <ArrowLeft size={18} aria-hidden="true" /> Back to My Vehicles
+        </Link>
+        <span className={styles.appliedRangeBadge}>{appliedRangeLabel}</span>
+      </div>
+
+      <header className={styles.pageHeader}>
+        <p className={styles.eyebrow}>Owner analytics</p>
+        <h1>Vehicle Performance</h1>
+        <p>
+          Compare gross completed rental value across your full vehicle
+          inventory and see which vehicles perform best.
+        </p>
+      </header>
+
+      <section
+        className={styles.rangePanel}
+        aria-labelledby="reporting-period-heading"
+      >
+        <div className={styles.rangePanelHeader}>
+          <div className={styles.rangeTitle}>
+            <span className={styles.rangeIcon} aria-hidden="true">
+              <CalendarDays size={20} />
+            </span>
+            <div>
+              <h2 id="reporting-period-heading">Reporting period</h2>
+              <p>
+                {rangeMode === "all"
+                  ? "Showing all recorded completed rentals."
+                  : "Choose the rental end dates you want to compare."}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={styles.rangeToggle}
+            role="group"
+            aria-label="Vehicle analytics reporting period"
+          >
+            <button
+              type="button"
+              className={rangeMode === "all" ? styles.activeRange : ""}
+              aria-pressed={rangeMode === "all"}
+              onClick={applyAllTime}
+            >
+              All time
+            </button>
+            <button
+              type="button"
+              className={rangeMode === "custom" ? styles.activeRange : ""}
+              aria-pressed={rangeMode === "custom"}
+              onClick={applyCustomMode}
+            >
+              Custom dates
+            </button>
+          </div>
+        </div>
+
+        {rangeMode === "custom" && (
+          <div className={styles.customDateControls}>
+            <div className={styles.dateField}>
+              <label htmlFor="vehicleAnalyticsFromDate">From</label>
+              <input
+                id="vehicleAnalyticsFromDate"
+                type="date"
+                value={fromDate}
+                max={toDate || undefined}
+                onChange={(event) => setFromDate(event.target.value)}
+              />
+            </div>
+
+            <div className={styles.dateField}>
+              <label htmlFor="vehicleAnalyticsToDate">To</label>
+              <input
+                id="vehicleAnalyticsToDate"
+                type="date"
+                value={toDate}
+                min={fromDate || undefined}
+                onChange={(event) => setToDate(event.target.value)}
+              />
+            </div>
+
+            <button
+              type="button"
+              className={styles.applyDatesBtn}
+              onClick={applyCustomDates}
+              disabled={!isCustomRangeValid || isVehicleComparisonLoading}
+            >
+              {isVehicleComparisonLoading ? "Loading..." : "Apply dates"}
+            </button>
+          </div>
+        )}
+      </section>
+
+      {rangeMode === "custom" && !isCustomRangeValid && (
+        <p className={styles.analyticsError} role="alert">
+          Choose a From date that is on or before the To date.
+        </p>
+      )}
+
+      {vehicleComparisonErrorMsg && (
+        <p className={styles.analyticsError} role="alert">
+          {vehicleComparisonErrorMsg}
+        </p>
+      )}
+
+      <section
+        className={styles.vehicleValueSummary}
+        aria-labelledby="vehicle-value-ranking-heading"
+        aria-busy={isVehicleComparisonLoading}
+      >
+        <div className={styles.vehicleValueHeader}>
+          <div>
+            <h2 id="vehicle-value-ranking-heading">
+              Total Value by Vehicle
+            </h2>
+            <p>{valueSummaryDescription}</p>
+          </div>
+
+          {!isVehicleComparisonLoading &&
+            !vehicleComparisonErrorMsg &&
+            vehicleValueRanking.length > 0 && (
+              <div className={styles.fleetTotalValue}>
+                <span>Fleet total</span>
+                <strong>{formatCurrency(fleetTotalValue)}</strong>
+              </div>
+            )}
+        </div>
+
+        {isVehicleComparisonLoading ? (
+          <p className={styles.vehicleValueState} aria-live="polite">
+            Loading vehicle totals...
+          </p>
+        ) : vehicleComparisonErrorMsg ? (
+          <p className={styles.vehicleValueState}>
+            Vehicle totals are unavailable right now.
+          </p>
+        ) : vehicleValueRanking.length === 0 ? (
+          <p className={styles.vehicleValueState}>
+            Add a vehicle to start comparing completed rental value.
+          </p>
+        ) : (
+          <ol className={styles.vehicleValueList}>
+            {vehicleValueRanking.map((vehicle, index) => {
+              const plateSuffix = ` (${vehicle.licensePlate})`;
+              const vehicleName = vehicle.name.endsWith(plateSuffix)
+                ? vehicle.name.slice(0, -plateSuffix.length)
+                : vehicle.name;
+              const relativeValue = highestVehicleValue
+                ? (vehicle.totalValue / highestVehicleValue) * 100
+                : 0;
+
+              return (
+                <li key={vehicle.dataKey} className={styles.vehicleValueRow}>
+                  <span className={styles.vehicleValueRank}>{index + 1}</span>
+
+                  <div className={styles.vehicleValueDetails}>
+                    <div className={styles.vehicleValueIdentity}>
+                      <span
+                        className={styles.vehicleValueDot}
+                        style={{ backgroundColor: vehicle.color }}
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <strong>{vehicleName}</strong>
+                        <span>Plate {vehicle.licensePlate}</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.vehicleValueBar} aria-hidden="true">
+                      <span
+                        style={{
+                          width: `${relativeValue}%`,
+                          backgroundColor: vehicle.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.vehicleValueAmount}>
+                    {index === 0 && vehicle.totalValue > 0 && (
+                      <span>Highest value</span>
+                    )}
+                    <strong>{formatCurrency(vehicle.totalValue)}</strong>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </section>
+
+      <div className={styles.chartSection}>
+        <HomeBottomCards
+          title="Completed Rental Value by Vehicle"
+          subtitle={
+            appliedFilter.range === "all"
+              ? "All recorded completed rental value, grouped over time"
+              : `Completed rental value for rentals ending between ${appliedRangeLabel}`
+          }
+          type="line"
+          data={hasComparisonValue ? comparisonChartData : []}
+          series={comparisonSeries}
+          xKey="period"
+          xTickFormatter={formatPeriodTick}
+          tooltipLabelFormatter={formatPeriodTooltip}
+          valueFormatter={formatCurrency}
+          yAxisWidth={58}
+          isLoading={isVehicleComparisonLoading}
+          emptyMessage={comparisonEmptyMessage}
+          fullWidth
+          chartHeight={360}
+        />
+      </div>
+    </main>
+  );
+};
+
+export default VehicleAnalytics;
