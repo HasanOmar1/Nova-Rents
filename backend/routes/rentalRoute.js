@@ -1,9 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const { isAuthenticated } = require("../middleWare/authMiddleware");
+const { isAuthenticated, isUser } = require("../middleWare/authMiddleware");
 const rentalController = require("../controllers/rentalController");
 
-router.post("/rent", isAuthenticated, rentalController.createRental);
+router.post(
+  "/rent",
+  isAuthenticated,
+  isUser,
+  rentalController.createRental,
+);
 router.get(
   "/booked-dates/:licensePlate",
   isAuthenticated,

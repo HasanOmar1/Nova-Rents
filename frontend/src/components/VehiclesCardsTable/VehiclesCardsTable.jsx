@@ -1,7 +1,7 @@
 import { useState } from "react";
 import DeleteMenu from "../DeleteMenu/DeleteMenu";
 import styles from "./VehiclesCardsTable.module.css";
-import { Flag, Pencil, Trash2 } from "lucide-react";
+import { Ban, Flag, Pencil, Trash2 } from "lucide-react";
 import { useVehicleContext } from "../../context/VehicleContext";
 import AddEditVehicleMenu from "../AddEditVehicleMenu/AddEditVehicleMenu";
 import { Link } from "react-router-dom";
@@ -60,19 +60,24 @@ const VehiclesCardsTable = ({
     .join(" ");
   const ownerLabel =
     vehicleForDetails.ownerEmail || ownerFullName || "Unknown owner";
+  const isOwnerBlocked =
+    admin &&
+    String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
+  const displayedStatus = isOwnerBlocked ? "unavailable" : veh.status;
 
   const vehicleDetailsPath = `/vehicles/${encodeURIComponent(veh.licensePlate)}`;
   const vehicleDetailsState = {
     vehicle: vehicleForDetails,
     returnTo: admin ? "/allVehicles" : "/myVehicles",
   };
-  const statusClass =
-    {
-      available: styles.available,
-      rented: styles.rented,
-      maintenance: styles.maintenance,
-      inactive: styles.inactive,
-    }[veh.status] || styles.unknownStatus;
+  const statusClass = isOwnerBlocked
+    ? styles.unavailable
+    : {
+        available: styles.available,
+        rented: styles.rented,
+        maintenance: styles.maintenance,
+        inactive: styles.inactive,
+      }[veh.status] || styles.unknownStatus;
 
   const vehicleNameContent = (
     <>
@@ -88,17 +93,7 @@ const VehiclesCardsTable = ({
   const rowContent = (
     <>
       <div className={styles.vehicleIdentity}>
-        {admin ? (
-          <div className={styles.nameContainer}>{vehicleNameContent}</div>
-        ) : (
-          <Link
-            className={styles.nameContainer}
-            to={vehicleDetailsPath}
-            state={vehicleDetailsState}
-          >
-            {vehicleNameContent}
-          </Link>
-        )}
+        <div className={styles.nameContainer}>{vehicleNameContent}</div>
 
         {!admin && activeReportCount !== 0 && (
           <button
@@ -132,39 +127,67 @@ const VehiclesCardsTable = ({
         <span className={styles.cellValue}>${veh.price}</span>
       </p>
       {admin && (
-        <p className={styles.owner} title={ownerLabel}>
+        <p
+          className={styles.owner}
+          title={
+            isOwnerBlocked
+              ? `${ownerLabel} - this owner account is blocked`
+              : ownerLabel
+          }
+        >
           <span className={styles.cellLabel}>Owner</span>
           <span className={styles.cellValue}>{ownerLabel}</span>
+          {isOwnerBlocked && (
+            <span className={styles.blockedOwnerIndicator}>
+              <Ban size={12} aria-hidden="true" />
+              Owner blocked
+            </span>
+          )}
         </p>
       )}
       <div className={styles.statusCell}>
         <span className={styles.cellLabel}>Status</span>
-        <span className={`${styles.status} ${statusClass}`}>{veh.status}</span>
+        <span className={`${styles.status} ${statusClass}`}>
+          {displayedStatus}
+        </span>
       </div>
 
       {!admin && (
         <div className={styles.actionsContainer}>
-          <p onClick={openEditMenu}>
-            <Pencil size={18} className="icon" />
-          </p>
+          <span className={styles.cellLabel}>Actions</span>
+          <div className={styles.actionButtons}>
+            <button
+              type="button"
+              onClick={openEditMenu}
+              aria-label={`Edit ${fullName}`}
+              title="Edit vehicle"
+            >
+              <Pencil size={18} className="icon" aria-hidden="true" />
+            </button>
 
-          {veh.status !== "inactive" && (
-            <>
-              {veh.status === "rented" ? (
-                <p
+            {veh.status !== "inactive" &&
+              (veh.status === "rented" ? (
+                <button
+                  type="button"
                   className={styles.disabledAction}
                   title="Cannot delete rented vehicle"
-                  style={{ cursor: "not-allowed", opacity: 0.3 }}
+                  aria-label={`Cannot delete rented vehicle ${fullName}`}
+                  disabled
                 >
-                  <Trash2 size={18} />
-                </p>
+                  <Trash2 size={18} aria-hidden="true" />
+                </button>
               ) : (
-                <p className={styles.delete} onClick={openDeleteMenu}>
-                  <Trash2 size={18} />
-                </p>
-              )}
-            </>
-          )}
+                <button
+                  type="button"
+                  className={styles.delete}
+                  onClick={openDeleteMenu}
+                  aria-label={`Delete ${fullName}`}
+                  title="Delete vehicle"
+                >
+                  <Trash2 size={18} aria-hidden="true" />
+                </button>
+              ))}
+          </div>
         </div>
       )}
     </>
@@ -176,7 +199,11 @@ const VehiclesCardsTable = ({
         className={`${styles.VehiclesCardsTable} ${styles.adminRow}`}
         to={vehicleDetailsPath}
         state={vehicleDetailsState}
-        aria-label={`View details for ${fullName}, license plate ${veh.licensePlate}`}
+        aria-label={`View details for ${fullName}, license plate ${veh.licensePlate}${
+          isOwnerBlocked
+            ? ", unavailable because the owner account is blocked"
+            : ""
+        }`}
       >
         {rowContent}
       </Link>
@@ -185,6 +212,12 @@ const VehiclesCardsTable = ({
 
   return (
     <div className={`${styles.VehiclesCardsTable} ${styles.ownerRow}`}>
+      <Link
+        className={styles.ownerDetailsLink}
+        to={vehicleDetailsPath}
+        state={vehicleDetailsState}
+        aria-label={`View details for ${fullName}, license plate ${veh.licensePlate}`}
+      />
       {rowContent}
 
       <DeleteMenu

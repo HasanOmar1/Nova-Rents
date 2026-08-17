@@ -84,6 +84,11 @@ const VehicleDetails = () => {
     ? Number(currentUser.userId) === Number(vehicle.ownerId)
     : Boolean(currentUser?.email && vehicle?.ownerEmail) &&
       currentUser.email.toLowerCase() === vehicle.ownerEmail.toLowerCase();
+  const canRentVehicle =
+    currentUser?.role === "user" &&
+    !isOwnVehicle &&
+    vehicle?.status === "available" &&
+    vehicle?.ownerStatus !== "blocked";
   const plate = vehicle?.licensePlate || id;
   const defaultVehicleListPath =
     currentUser?.role === "admin" ? "/allVehicles" : "/vehicles";
@@ -185,6 +190,11 @@ const VehicleDetails = () => {
   const handleCloseModal = () => {
     setIsBookingModalOpen(false);
     setRentVehResponse("");
+  };
+
+  const handleOpenBookingModal = () => {
+    if (!canRentVehicle) return;
+    setIsBookingModalOpen(true);
   };
 
   const handleReportVehicle = () => {
@@ -342,16 +352,15 @@ const VehicleDetails = () => {
                   </p>
                 </div>
 
-                {!isOwnVehicle &&
-                  vehicle.status === "available" &&
-                  vehicle.ownerStatus !== "blocked" && (
-                    <button
-                      className={styles.launchBookingBtn}
-                      onClick={() => setIsBookingModalOpen(true)}
-                    >
-                      <CalendarRange size={16} /> Rent Vehicle
-                    </button>
-                  )}
+                {canRentVehicle && (
+                  <button
+                    type="button"
+                    className={styles.launchBookingBtn}
+                    onClick={handleOpenBookingModal}
+                  >
+                    <CalendarRange size={16} /> Rent Vehicle
+                  </button>
+                )}
               </div>
 
               <div className={styles.cards}>
@@ -438,7 +447,7 @@ const VehicleDetails = () => {
       </div>
 
       <BookingModal
-        isOpen={isBookingModalOpen}
+        isOpen={canRentVehicle && isBookingModalOpen}
         onClose={handleCloseModal}
         vehicle={vehicle}
       />
