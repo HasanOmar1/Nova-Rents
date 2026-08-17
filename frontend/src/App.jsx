@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Header from "./components/Header/Header";
 import { useUserContext } from "./context/UserContext";
 import LoginRegister from "./pages/LoginRegister/LoginRegister";
@@ -20,9 +20,11 @@ import RentalDashboard from "./pages/UserUI/RentalDashboard/RentalDashboard";
 import Payment from "./pages/UserUI/Payment/Payment";
 import UserStats from "./pages/UserStats/UserStats";
 import ReportedUsers from "./pages/AdminUI/ReportedUsers/ReportedUsers";
+import ReportedUsersProvider from "./context/ReportedUsersContext";
 
 function App() {
   const { currentUser, isLoading } = useUserContext();
+  const { pathname } = useLocation();
 
   if (isLoading) {
     return (
@@ -65,7 +67,14 @@ function App() {
             <Route path="/allVehicles" element={<AllVehicles />} />
             <Route path="/complaintsAdmin" element={<ComplaintsAdmin />} />
             <Route path="/statistics" element={<Statistics />} />
-            <Route path="/reportedUsers" element={<ReportedUsers />} />
+            <Route
+              path="/reportedUsers"
+              element={
+                <ReportedUsersProvider>
+                  <ReportedUsers />
+                </ReportedUsersProvider>
+              }
+            />
           </>
         ) : (
           <>
@@ -79,7 +88,10 @@ function App() {
 
         {currentUser && (
           <>
-            <Route path="/vehicles/:id" element={<VehicleDetails />} />
+            <Route
+              path="/vehicles/:id"
+              element={<VehicleDetails key={pathname} />}
+            />
             <Route path="/userStats/:email" element={<UserStats />} />
           </>
         )}

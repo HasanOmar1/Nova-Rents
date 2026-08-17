@@ -1,8 +1,11 @@
 .UsersCards {
+  position: relative;
+  isolation: isolate;
   display: flex;
   justify-content: space-between;
   padding: 15px 20px;
   align-items: center;
+  border-radius: 12px;
   transition: background-color 0.2s ease;
 }
 
@@ -10,15 +13,60 @@
   background-color: rgba(255, 255, 255, 0.018);
 }
 
+.UsersCards .profileLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.UsersCards .profileLink:hover {
+  background-color: rgba(59, 130, 246, 0.035);
+  box-shadow: inset 3px 0 0 rgba(96, 165, 250, 0.8);
+}
+
+.UsersCards .profileLink:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.52);
+  outline-offset: -3px;
+  background-color: rgba(59, 130, 246, 0.055);
+  box-shadow: inset 3px 0 0 #60a5fa;
+}
+
 .UsersCards p {
   font-weight: 500;
 }
 
 .UsersCards .name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: white;
   width: 35%;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.UsersCards .name span {
+  min-width: 0;
+}
+
+.UsersCards .profileIcon {
+  flex: 0 0 auto;
+  color: #60a5fa;
+  opacity: 0.55;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.UsersCards:hover .profileIcon,
+.UsersCards:focus-within .profileIcon {
+  opacity: 1;
+  transform: translate(1px, -1px);
 }
 
 .UsersCards .email {
@@ -36,6 +84,8 @@
 }
 
 .UsersCards .actionContainer {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -207,11 +257,18 @@
 
 @media (prefers-reduced-motion: reduce) {
   .UsersCards,
-  .UsersCards .action {
+  .UsersCards .action,
+  .UsersCards .profileLink,
+  .UsersCards .profileIcon {
     transition: none;
   }
 
   .UsersCards .action:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .UsersCards:hover .profileIcon,
+  .UsersCards:focus-within .profileIcon {
     transform: none;
   }
 }

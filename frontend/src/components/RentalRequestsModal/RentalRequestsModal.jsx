@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./RentalRequestsModal.module.css";
 import {
@@ -11,14 +11,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import AsyncButton from "../AsyncButton/AsyncButton";
-
-const formatDate = (dateStr) => {
-  return new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
+import { formatShortDate } from "../../utils/dateFormat";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const RentalRequestsModal = ({
   isOpen,
@@ -28,7 +22,9 @@ const RentalRequestsModal = ({
   initialTripFilter = "all",
   respondToRequest,
 }) => {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog(isOpen && Boolean(groupData), {
+    lockBodyScroll: true,
+  });
   const [tripFilter, setTripFilter] = useState("all");
   const [reportMenuRentalId, setReportMenuRentalId] = useState(null);
   const [pendingAction, setPendingAction] = useState("");
@@ -47,23 +43,6 @@ const RentalRequestsModal = ({
       setReportMenuRentalId(null);
     }
   }, [initialTripFilter, isOpen, mode]);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen && groupData) {
-      dialog.showModal();
-      document.body.style.overflow = "hidden";
-    } else {
-      dialog.close();
-      document.body.style.overflow = "auto";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen, groupData]);
 
   useEffect(() => {
     if (isOpen && groupData && groupData.rentals.length === 0) {
@@ -172,8 +151,8 @@ const RentalRequestsModal = ({
 
               <div className={styles.detailsList}>
                 <p>
-                  <Calendar size={14} /> {formatDate(rental.startDate)} -{" "}
-                  {formatDate(rental.endDate)}
+                  <Calendar size={14} /> {formatShortDate(rental.startDate)} -{" "}
+                  {formatShortDate(rental.endDate)}
                 </p>
                 <p className={styles.price}>Total: ${rental.totalPrice}</p>
               </div>

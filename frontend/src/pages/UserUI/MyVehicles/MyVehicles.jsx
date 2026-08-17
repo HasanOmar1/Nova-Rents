@@ -16,18 +16,23 @@ import OwnerVehicleReportsModal from "../../../components/OwnerVehicleReportsMod
 import Pagination from "../../../components/Pagination/Pagination";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import { useComplaintContext } from "../../../context/ComplaintContext";
+import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
 import styles from "./MyVehicles.module.css";
 
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedVehicleForReports, setSelectedVehicleForReports] =
-    useState(null);
-
   const { getUserVehicles, userVehicles, vehicleStats, pagination } =
     useVehicleContext();
   const { ownerVehicleReports, getOwnerVehicleReports } = useComplaintContext();
+  const {
+    currentPage,
+    nextPage,
+    previousPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter({ totalPages: pagination?.totalPages });
+  const [selectedVehicleForReports, setSelectedVehicleForReports] =
+    useState(null);
 
   useEffect(() => {
     getUserVehicles(currentPage, statusFilter);
@@ -55,35 +60,8 @@ const MyVehicles = () => {
     ? `${selectedVehicleForReports.brandName} ${selectedVehicleForReports.modelName}`
     : "";
 
-  useEffect(() => {
-    if (pagination?.totalPages && currentPage > pagination.totalPages) {
-      setCurrentPage(pagination.totalPages || 1);
-    }
-  }, [pagination?.totalPages, currentPage]);
-
   const openAddVehMenu = () => setIsOpen(true);
   const closeAddVehMenu = () => setIsOpen(false);
-
-  const handleStatusChange = (valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
-
-    setStatusFilter(status);
-    setCurrentPage(1);
-  };
-
-  const handleNextPage = () => {
-    if (pagination?.currentPage < pagination?.totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (pagination?.currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   const topData = [
     {
@@ -200,8 +178,8 @@ const MyVehicles = () => {
             <Pagination
               currentPage={pagination?.currentPage}
               totalPages={pagination?.totalPages}
-              handlePrevPage={handlePrevPage}
-              handleNextPage={handleNextPage}
+              handlePrevPage={previousPage}
+              handleNextPage={nextPage}
               leftText={`Total Vehicles: ${pagination?.totalVehicles || 0}`}
             />
           </>

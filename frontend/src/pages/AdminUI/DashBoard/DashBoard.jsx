@@ -6,7 +6,9 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
+import { formatEventLabel } from "../../../utils/displayFormat";
 import { useEffect, useState } from "react";
+import { useDateRange } from "../../../hooks/useDateRange";
 
 const CHART_COLORS = [
   "#5494ff",
@@ -31,22 +33,8 @@ const CHART_COLORS = [
   "#f28f6b",
 ];
 
-const formatEventLabel = (eventName) =>
-  eventName
-    .split("_")
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(" ");
-
 // Max series shown by default before the "Show all" toggle kicks in
 const TOP_SERIES_LIMIT = 6;
-
-// Local-time date formatting (toISOString would shift the day near midnight)
-const formatDateForInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 const DashBoard = () => {
   const {
@@ -56,19 +44,21 @@ const DashBoard = () => {
     getSystemActivityChart,
   } = useReportContext();
 
-  const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-
-  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
-  const [toDate, setToDate] = useState(formatDateForInput(today));
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid,
+  } = useDateRange();
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showAllSeries, setShowAllSeries] = useState(false);
 
   useEffect(() => {
-    if (fromDate && toDate && fromDate <= toDate) {
+    if (isRangeValid) {
       getSystemActivityChart(fromDate, toDate);
     }
-  }, [fromDate, toDate]);
+  }, [fromDate, toDate, isRangeValid]);
 
   const categories = [
     ...new Set(systemActivitySeries.map((serie) => serie.category)),

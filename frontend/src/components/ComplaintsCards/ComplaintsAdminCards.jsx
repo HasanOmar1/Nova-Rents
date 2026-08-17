@@ -1,4 +1,12 @@
 import styles from "./ComplaintsAdminCards.module.css";
+import { formatComplaintStatus } from "../../utils/displayFormat";
+
+const STATUS_CLASSES = {
+  open: styles.open,
+  in_review: styles.inReview,
+  resolved: styles.resolved,
+  closed: styles.closed,
+};
 
 const ComplaintsAdminCards = ({
   type,
@@ -10,20 +18,37 @@ const ComplaintsAdminCards = ({
   action,
   onReview,
 }) => {
+  const statusLabel = formatComplaintStatus(status);
+  const typeClass = type === "Vehicle" ? styles.vehicle : "";
+
   return (
     <div className={styles.ComplaintsAdminCards}>
-      <p className={styles.type}>{type}</p>
-      <p className={styles.title} title={title}>
+      <p className={styles.typeCell} data-label="Type">
+        <span className={`${styles.typeBadge} ${typeClass}`}>{type}</span>
+      </p>
+      <p className={styles.titleCell} data-label="Title" title={title}>
         {title}
       </p>
-      <p className={styles.target}>{target}</p>
-      <p className={styles.owner}>{owner}</p>
-      <p className={styles.status}>
-        {status === "in_review"
-          ? "Under_Review".toUpperCase()
-          : status.toUpperCase()}
+      <p className={styles.targetCell} data-label="Target" title={target}>
+        {target}
       </p>
-      <p className={styles.reporter}>{reporter}</p>
+      <p className={styles.ownerCell} data-label="Listed owner" title={owner}>
+        {owner}
+      </p>
+      <p className={styles.statusCell} data-label="Status">
+        <span
+          className={`${styles.statusBadge} ${STATUS_CLASSES[status] || ""}`}
+        >
+          {statusLabel}
+        </span>
+      </p>
+      <p
+        className={styles.reporterCell}
+        data-label="Reporter"
+        title={reporter}
+      >
+        {reporter}
+      </p>
       <button
         type="button"
         className={styles.action}

@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
 import styles from "./DeleteMenu.module.css";
 import { TriangleAlert } from "lucide-react";
 import AsyncButton from "../AsyncButton/AsyncButton";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const DeleteMenu = ({
   img,
@@ -13,18 +13,7 @@ const DeleteMenu = ({
   errorMsg,
   isDeleting,
 }) => {
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen) {
-      dialog.showModal();
-    } else {
-      dialog.close();
-    }
-  }, [isOpen]);
+  const dialogRef = useModalDialog(isOpen);
 
   return (
     <dialog className={styles.DeleteMenu} ref={dialogRef} onClose={closeMenu}>

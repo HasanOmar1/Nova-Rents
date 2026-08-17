@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./AddBrandVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
 import axios from "axios";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog(isOpen);
   const modelCacheRef = useRef({});
   const { vehiclesBrands, vehiclesType, getBrands, getVehType } =
     useVehicleContext();
@@ -33,22 +35,14 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
       ? customBrandName
       : vehiclesBrands?.find((b) => String(b.brandId) === brandSelection)
           ?.brandName || "";
+  const debouncedBrandName = useDebouncedValue(activeBrandName, 500);
 
-  // 1. Manage Modal visibility and Initial Data loading
+  // Load initial data and reset the form around the dialog lifecycle.
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
     if (isOpen) {
-      if (!dialog.open) {
-        dialog.showModal();
-      }
       if (!vehiclesBrands || vehiclesBrands.length === 0) getBrands();
       if (!vehiclesType || vehiclesType.length === 0) getVehType();
     } else {
-      if (dialog.open) {
-        dialog.close();
-      }
       handleResetForm();
     }
   }, [isOpen]);
@@ -77,26 +71,14 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
     }
   };
 
-  // 3. Fetch Models from API dynamically as the Brand name changes
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (activeBrandName.trim().length >= 2) {
-        fetchModelsFromVpic(activeBrandName.trim());
-      } else {
-        setVpicModels([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [activeBrandName]);
-
-  const fetchModelsFromVpic = async (make) => {
+  const fetchModelsFromVpic = async (make, signal) => {
     const cacheKey = make.trim().toLowerCase();
 
     // --- CHECK CACHE FIRST ---
     if (modelCacheRef.current[cacheKey]) {
       setVpicModels(modelCacheRef.current[cacheKey]);
       setSelectedModel("0");
+      setIsLoadingModels(false);
       return;
     }
 
@@ -106,8 +88,10 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
     try {
       const res = await axios.get(
         `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMake/${encodeURIComponent(make)}?format=json`,
-        { withCredentials: false },
+        { signal, withCredentials: false },
       );
+
+      if (signal.aborted) return;
 
       const models = res.data.Results?.map((m) => m.Model_Name) || [];
       const uniqueModels = [...new Set(models)].sort();
@@ -118,13 +102,31 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
       setVpicModels(uniqueModels);
       setSelectedModel("0");
     } catch (error) {
+      if (signal.aborted) return;
+
       console.error("Failed to fetch models", error);
       setErrorMsg("Could not fetch models for this brand.");
       setVpicModels([]);
     } finally {
-      setIsLoadingModels(false);
+      if (!signal.aborted) setIsLoadingModels(false);
     }
   };
+
+  // Fetch models after the selected brand has stopped changing.
+  useEffect(() => {
+    const controller = new AbortController();
+    const brandName = debouncedBrandName.trim();
+
+    if (isOpen && brandName.length >= 2) {
+      void fetchModelsFromVpic(brandName, controller.signal);
+    } else {
+      setVpicModels([]);
+      setSelectedModel("0");
+      setIsLoadingModels(false);
+    }
+
+    return () => controller.abort();
+  }, [debouncedBrandName, isOpen]);
 
   const handleResetForm = () => {
     setBrandSelection("0");

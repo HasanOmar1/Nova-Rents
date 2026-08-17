@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import { RotateCcw } from "lucide-react";
 import Pagination from "../../../components/Pagination/Pagination";
+import { usePagination } from "../../../hooks/usePagination";
 
 const Vehicles = () => {
   const [filterBrand, setFilterBrand] = useState("");
@@ -13,10 +14,12 @@ const Vehicles = () => {
   const [filterLocation, setFilterLocation] = useState("");
   const [filterSeats, setFilterSeats] = useState("");
   const [sortOption, setSortOption] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
 
   const { getAllVehicles, allVehicles, allVehPagination, availableFilters } =
     useVehicleContext();
+  const { currentPage, nextPage, previousPage, resetPage } = usePagination({
+    totalPages: allVehPagination?.totalPages,
+  });
 
   const combinations = availableFilters?.combinations || [];
 
@@ -194,18 +197,6 @@ const Vehicles = () => {
     currentPage,
   ]);
 
-  const handleNextPage = () => {
-    if (allVehPagination?.currentPage < allVehPagination?.totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (allVehPagination?.currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
-
   const handleResetFilters = () => {
     setFilterBrand("");
     setFilterModel("");
@@ -213,7 +204,7 @@ const Vehicles = () => {
     setFilterLocation("");
     setFilterSeats(""); // <-- NEW
     setSortOption("");
-    setCurrentPage(1);
+    resetPage();
   };
 
   const isFilterActive =
@@ -244,7 +235,7 @@ const Vehicles = () => {
               value={filterBrand}
               onChange={(e) => {
                 setFilterBrand(e.target.value);
-                setCurrentPage(1);
+                resetPage();
               }}
             >
               <option value="">All Brands</option>
@@ -260,7 +251,7 @@ const Vehicles = () => {
               value={filterModel}
               onChange={(e) => {
                 setFilterModel(e.target.value);
-                setCurrentPage(1);
+                resetPage();
               }}
             >
               <option value="">All Models</option>
@@ -276,7 +267,7 @@ const Vehicles = () => {
               value={filterType}
               onChange={(e) => {
                 setFilterType(e.target.value);
-                setCurrentPage(1);
+                resetPage();
               }}
             >
               <option value="">All Categories</option>
@@ -292,7 +283,7 @@ const Vehicles = () => {
               value={filterLocation}
               onChange={(e) => {
                 setFilterLocation(e.target.value);
-                setCurrentPage(1);
+                resetPage();
               }}
             >
               <option value="">All Locations</option>
@@ -308,7 +299,7 @@ const Vehicles = () => {
               value={filterSeats}
               onChange={(e) => {
                 setFilterSeats(e.target.value);
-                setCurrentPage(1);
+                resetPage();
               }}
             >
               <option value="">All Seats</option>
@@ -324,7 +315,7 @@ const Vehicles = () => {
               value={sortOption}
               onChange={(e) => {
                 setSortOption(e.target.value);
-                setCurrentPage(1);
+                resetPage();
               }}
             >
               <option value="">Sort: Newest Added</option>
@@ -365,8 +356,8 @@ const Vehicles = () => {
         <Pagination
           currentPage={allVehPagination?.currentPage}
           totalPages={allVehPagination?.totalPages}
-          handlePrevPage={handlePrevPage}
-          handleNextPage={handleNextPage}
+          handlePrevPage={previousPage}
+          handleNextPage={nextPage}
           leftText={`Showing ${allVehicles?.length || 0} of ${allVehPagination?.totalVehicles || 0} vehicles`}
         />
       )}

@@ -556,7 +556,12 @@ const updateVehicle = async (req, res, next) => {
   }
 };
 
-const getAllVehicles = async (req, res, next) => {
+const listVehicles = async (
+  req,
+  res,
+  next,
+  { includeBlockedOwners = false } = {},
+) => {
   try {
     const {
       brand,
@@ -570,22 +575,26 @@ const getAllVehicles = async (req, res, next) => {
       limit = 5,
     } = req.query;
 
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    const parsedLimit = parseInt(limit);
+    const parsedPage = Math.max(Number.parseInt(page, 10) || 1, 1);
+    const requestedLimit = Number.parseInt(limit, 10);
+    const parsedLimit = Math.min(
+      Math.max(Number.isFinite(requestedLimit) ? requestedLimit : 5, 1),
+      100,
+    );
+    const offset = (parsedPage - 1) * parsedLimit;
 
     // 1. DYNAMIC STATUS FILTERING
     let whereClause = `WHERE 1=1`;
     const values = [];
 
-    // --- NEW: Exclude vehicles if the owner is blocked! ---
-    whereClause += ` AND u.status != 'blocked'`;
-
-    if (status && status !== "all") {
+    // Public browsing hides blocked owners. The protected admin inventory is
+    // system-wide and must include their listings as well.
+    if (!includeBlockedOwners) {
+      whereClause += ` AND u.status != 'blocked'`;
+      whereClause += ` AND v.status = 'available'`;
+    } else if (status && status !== "all") {
       whereClause += ` AND v.status = ?`;
       values.push(status);
-    } else if (!status) {
-      // Default to available for regular users visiting /vehicles
-      whereClause += ` AND v.status = 'available'`;
     }
 
     if (brand) {
@@ -655,7 +664,9 @@ const getAllVehicles = async (req, res, next) => {
     const totalPages = Math.ceil(totalVehicles / parsedLimit);
 
     // 4. GLOBAL STATS (For Top Cards)
-    // We also join users here so the top cards don't count blocked users' cars
+    const ownerVisibilityClause = includeBlockedOwners
+      ? ""
+      : "WHERE u.status != 'blocked'";
     const statsQuery = `
       SELECT 
         COUNT(*) as total,
@@ -665,7 +676,7 @@ const getAllVehicles = async (req, res, next) => {
         SUM(CASE WHEN v.status = 'inactive' THEN 1 ELSE 0 END) as inactive
       FROM vehicles v
       JOIN users u ON v.ownerId = u.userId
-      WHERE u.status != 'blocked'
+      ${ownerVisibilityClause}
     `;
     const statsResult = await doQuery(statsQuery, []);
 
@@ -677,11 +688,15 @@ const getAllVehicles = async (req, res, next) => {
       JOIN carbrands cb ON cm.brandId = cb.brandId
       JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       JOIN users u ON v.ownerId = u.userId
-      ${status === "all" ? "WHERE u.status != 'blocked'" : whereClause}
+      ${
+        includeBlockedOwners && (!status || status === "all")
+          ? "WHERE 1=1"
+          : whereClause
+      }
     `;
     const optionsData = await doQuery(
       optionsQuery,
-      status === "all" ? [] : values,
+      includeBlockedOwners && (!status || status === "all") ? [] : values,
     );
 
     const modelsWithBrands = [];
@@ -709,7 +724,7 @@ const getAllVehicles = async (req, res, next) => {
       pagination: {
         totalVehicles,
         totalPages,
-        currentPage: parseInt(page),
+        currentPage: parsedPage,
         limit: parsedLimit,
       },
     });
@@ -717,6 +732,11 @@ const getAllVehicles = async (req, res, next) => {
     next(error);
   }
 };
+
+const getAllVehicles = (req, res, next) => listVehicles(req, res, next);
+
+const getAdminVehicles = (req, res, next) =>
+  listVehicles(req, res, next, { includeBlockedOwners: true });
 
 const getAllCarBrands = async (req, res, next) => {
   try {
@@ -988,6 +1008,7 @@ module.exports = {
   updateVehicle,
   getUserVehicles,
   getAllVehicles,
+  getAdminVehicles,
   getAllCarBrands,
   getAllCarModels,
   getAllCarTypes,

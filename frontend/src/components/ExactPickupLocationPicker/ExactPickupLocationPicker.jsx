@@ -278,7 +278,7 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
     }
   };
 
-  const useCurrentLocation = () => {
+  const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
       setSearchError("Geolocation is not supported in this browser.");
       return;
@@ -384,7 +384,7 @@ const ExactPickupLocationPicker = ({ value, onChange }) => {
       <div className={styles.actions}>
         <button
           type="button"
-          onClick={useCurrentLocation}
+          onClick={handleUseCurrentLocation}
           disabled={isLocating}
         >
           {isLocating ? "Locating…" : "Use my current location"}
