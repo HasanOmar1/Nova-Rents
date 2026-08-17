@@ -8,15 +8,17 @@ import {
 } from "react";
 import axios from "axios";
 import { useUserContext } from "./UserContext";
+import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 
 const ActivityContext = createContext();
 
 const ActivityContextProvider = ({ children }) => {
   const { currentUser } = useUserContext();
+  const activeUserId = currentUser?.userId ?? null;
   const [activities, setActivities] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
-  const activeUserIdRef = useRef(currentUser?.userId ?? null);
+  const activeUserIdRef = useRef(activeUserId);
   const requestControllerRef = useRef(null);
 
   const loadActivities = useCallback(async () => {
@@ -62,7 +64,6 @@ const ActivityContextProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const activeUserId = currentUser?.userId ?? null;
     activeUserIdRef.current = activeUserId;
     requestControllerRef.current?.abort();
     requestControllerRef.current = null;
@@ -75,25 +76,17 @@ const ActivityContextProvider = ({ children }) => {
     }
 
     setActivityLoading(true);
-    loadActivities();
-
-    const intervalId = setInterval(loadActivities, 15000);
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") {
-        loadActivities();
-      }
-    };
-
-    window.addEventListener("focus", refreshWhenVisible);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       requestControllerRef.current?.abort();
-      clearInterval(intervalId);
-      window.removeEventListener("focus", refreshWhenVisible);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [currentUser?.userId, loadActivities]);
+  }, [activeUserId]);
+
+  useVisibilityPolling(loadActivities, {
+    enabled: Boolean(activeUserId),
+    intervalMs: 15000,
+    refreshKey: activeUserId,
+  });
 
   return (
     <ActivityContext.Provider

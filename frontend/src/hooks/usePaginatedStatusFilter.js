@@ -1,21 +1,28 @@
 import { useCallback, useState } from "react";
+import { usePagination } from "./usePagination";
 
-export const usePaginatedStatusFilter = (initialStatus = "all") => {
-  const [currentPage, setCurrentPage] = useState(1);
+export const usePaginatedStatusFilter = ({
+  initialStatus = "all",
+  totalPages = 1,
+} = {}) => {
   const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const pagination = usePagination({ totalPages });
+  const { resetPage } = pagination;
 
-  const handleStatusChange = useCallback((valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
+  const handleStatusChange = useCallback(
+    (valueOrEvent) => {
+      const status = valueOrEvent?.target
+        ? valueOrEvent.target.value
+        : valueOrEvent;
 
-    setStatusFilter(status);
-    setCurrentPage(1);
-  }, []);
+      setStatusFilter(status);
+      resetPage();
+    },
+    [resetPage],
+  );
 
   return {
-    currentPage,
-    setCurrentPage,
+    ...pagination,
     statusFilter,
     handleStatusChange,
   };

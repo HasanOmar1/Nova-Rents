@@ -7,10 +7,13 @@ import MapVehiclesCards from "../../../components/MapVehiclesCards/MapVehiclesCa
 import { useVehicleContext } from "../../../context/VehicleContext";
 import { parseImgs } from "../../../utils/parseImgs";
 import Pagination from "../../../components/Pagination/Pagination";
+import { usePagination } from "../../../hooks/usePagination";
 
 const Map = () => {
   const { allVehicles, getAllVehicles, allVehPagination } = useVehicleContext();
-  const [currentPage, setCurrentPage] = useState(1);
+  const { currentPage, nextPage, previousPage } = usePagination({
+    totalPages: allVehPagination?.totalPages,
+  });
   const [mapQuery, setMapQuery] = useState("Israel");
   const [activePlate, setActivePlate] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -135,12 +138,8 @@ const Map = () => {
               <Pagination
                 currentPage={allVehPagination.currentPage}
                 totalPages={allVehPagination.totalPages}
-                handlePrevPage={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                handleNextPage={() =>
-                  setCurrentPage((p) =>
-                    Math.min(p + 1, allVehPagination.totalPages),
-                  )
-                }
+                handlePrevPage={previousPage}
+                handleNextPage={nextPage}
                 leftText={`Total Vehicles: ${allVehPagination.totalVehicles || 0}`}
               />
             </div>

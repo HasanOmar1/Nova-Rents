@@ -5,6 +5,7 @@ import { useNotificationContext } from "../../../context/NotificationContext";
 import { useActivityContext } from "../../../context/ActivityContext";
 import Pagination from "../../Pagination/Pagination";
 import { useNavigate } from "react-router-dom";
+import { useClientPagination } from "../../../hooks/useClientPagination";
 
 const getNotificationDestination = (notification) => {
   if (notification.type === "owner_report") return "/complaints?view=reports#complaint-history";
@@ -23,20 +24,11 @@ const HomeMidCards = ({ title }) => {
   const { activities, activityLoading } = useActivityContext();
   const navigate = useNavigate();
 
-  const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState("all");
-  const itemsPerPage = 3;
 
   const isActivity = title === "Recent Activity";
   const isLoading = isActivity ? activityLoading : loading;
   const latestActivityId = activities[0]?.logId;
-  const [displayedActivityId, setDisplayedActivityId] =
-    useState(latestActivityId);
-
-  if (isActivity && latestActivityId !== displayedActivityId) {
-    setDisplayedActivityId(latestActivityId);
-    setCurrentPage(1);
-  }
 
   // --- NEW: Filter notifications before pagination ---
   let rawDataList = isActivity ? activities : notifications;
@@ -50,19 +42,19 @@ const HomeMidCards = ({ title }) => {
     }
   }
 
-  const totalPages = Math.ceil(dataList.length / itemsPerPage);
-  const currentItems = dataList.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
+  const {
+    currentPage,
+    nextPage,
+    paginatedItems: currentItems,
+    previousPage,
+    totalPages,
+  } = useClientPagination({
+    items: dataList,
+    pageSize: 3,
+    resetKey: isActivity
+      ? `activity:${latestActivityId ?? ""}`
+      : `notifications:${filter}`,
+  });
 
   const handleNotificationClick = async (notification) => {
     if (Number(notification.isRead) !== 1) {
@@ -82,7 +74,6 @@ const HomeMidCards = ({ title }) => {
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
-              setCurrentPage(1);
             }}
           >
             <option value="all">All</option>
@@ -159,8 +150,8 @@ const HomeMidCards = ({ title }) => {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            handlePrevPage={handlePrevPage}
-            handleNextPage={handleNextPage}
+            handlePrevPage={previousPage}
+            handleNextPage={nextPage}
             leftText={`${dataList.length} Total`}
           />
         </div>

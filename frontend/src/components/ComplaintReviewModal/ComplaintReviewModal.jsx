@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./ComplaintReviewModal.module.css";
 import {
   AlertCircle,
@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const EvidenceImage = ({ src, alt, isThumbnail = false }) => {
   const [hasError, setHasError] = useState(false);
@@ -43,7 +44,9 @@ const EvidenceImage = ({ src, alt, isThumbnail = false }) => {
 };
 
 const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog(isOpen && Boolean(complaint), {
+    lockBodyScroll: true,
+  });
   const [status, setStatus] = useState("open");
   const [resolutionMessage, setResolutionMessage] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
@@ -51,26 +54,14 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
+    if (!isOpen || !complaint) return;
 
-    if (isOpen && complaint) {
-      setStatus(complaint.status || "open");
-      setResolutionMessage(
-        complaint.resolutionMessage || complaint.adminNotes || "",
-      );
-      setAdminNotes(complaint.adminNotes || "");
-      setActiveImageIndex(0);
-      dialog.showModal();
-      document.body.style.overflow = "hidden";
-    } else {
-      dialog.close();
-      document.body.style.overflow = "auto";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
+    setStatus(complaint.status || "open");
+    setResolutionMessage(
+      complaint.resolutionMessage || complaint.adminNotes || "",
+    );
+    setAdminNotes(complaint.adminNotes || "");
+    setActiveImageIndex(0);
   }, [isOpen, complaint]);
 
   if (!complaint) return null;

@@ -6,9 +6,9 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
-import { createRecentMonthRange } from "../../../utils/dateFormat";
 import { formatEventLabel } from "../../../utils/displayFormat";
 import { useEffect, useState } from "react";
+import { useDateRange } from "../../../hooks/useDateRange";
 
 const CHART_COLORS = [
   "#5494ff",
@@ -44,17 +44,21 @@ const DashBoard = () => {
     getSystemActivityChart,
   } = useReportContext();
 
-  const [defaultRange] = useState(createRecentMonthRange);
-  const [fromDate, setFromDate] = useState(defaultRange.from);
-  const [toDate, setToDate] = useState(defaultRange.to);
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid,
+  } = useDateRange();
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showAllSeries, setShowAllSeries] = useState(false);
 
   useEffect(() => {
-    if (fromDate && toDate && fromDate <= toDate) {
+    if (isRangeValid) {
       getSystemActivityChart(fromDate, toDate);
     }
-  }, [fromDate, toDate]);
+  }, [fromDate, toDate, isRangeValid]);
 
   const categories = [
     ...new Set(systemActivitySeries.map((serie) => serie.category)),

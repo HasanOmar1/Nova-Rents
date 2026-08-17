@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import styles from "./OwnerVehicleReportsModal.module.css";
 import { formatComplaintStatus } from "../../utils/displayFormat";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -26,24 +26,7 @@ const OwnerVehicleReportsModal = ({
   isLoading = false,
   errorMessage = "",
 }) => {
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen) {
-      if (!dialog.open) dialog.showModal();
-      document.body.style.overflow = "hidden";
-    } else {
-      if (dialog.open) dialog.close();
-      document.body.style.overflow = "auto";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen]);
+  const dialogRef = useModalDialog(isOpen, { lockBodyScroll: true });
 
   return (
     <dialog

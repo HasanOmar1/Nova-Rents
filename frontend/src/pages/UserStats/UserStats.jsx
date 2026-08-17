@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import styles from "./UserStats.module.css";
 import {
@@ -18,6 +18,7 @@ import { parseImgs } from "../../utils/parseImgs";
 import Pagination from "../../components/Pagination/Pagination";
 import { useUserContext } from "../../context/UserContext";
 import { useRentContext } from "../../context/RentContext";
+import { usePagination } from "../../hooks/usePagination";
 
 const UserStats = () => {
   const { email } = useParams();
@@ -30,7 +31,10 @@ const UserStats = () => {
     currentUser,
   } = useUserContext();
   const { fetchRentalHistory, findPaidTripForOwner } = useRentContext();
-  const [currentPage, setCurrentPage] = useState(1);
+  const { currentPage, nextPage, previousPage } = usePagination({
+    totalPages: userStatsPerEmail?.pagination?.totalPages,
+    resetKey: email,
+  });
 
   useEffect(() => {
     fetchUserStats(email, currentPage);
@@ -42,21 +46,6 @@ const UserStats = () => {
       fetchRentalHistory();
     }
   }, [currentUser]);
-
-  const handleNextPage = () => {
-    if (
-      userStatsPerEmail?.pagination?.currentPage <
-      userStatsPerEmail?.pagination?.totalPages
-    ) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (userStatsPerEmail?.pagination?.currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   // --- NEW: Handles formatting and passing ALL data to VehicleDetails ---
   const handleVehicleClick = (veh) => {
@@ -237,8 +226,8 @@ const UserStats = () => {
                 <Pagination
                   currentPage={pagination.currentPage}
                   totalPages={pagination.totalPages}
-                  handlePrevPage={handlePrevPage}
-                  handleNextPage={handleNextPage}
+                  handlePrevPage={previousPage}
+                  handleNextPage={nextPage}
                   leftText={`Showing ${vehicles.length} of ${pagination.totalVehicles} vehicles`}
                 />
               </div>

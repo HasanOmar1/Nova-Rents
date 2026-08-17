@@ -10,8 +10,8 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
-import { createRecentMonthRange } from "../../../utils/dateFormat";
 import { formatCurrency } from "../../../utils/displayFormat";
+import { useDateRange } from "../../../hooks/useDateRange";
 import styles from "./VehicleAnalytics.module.css";
 
 const getVehicleChartColor = (index) => {
@@ -31,10 +31,14 @@ const formatComparisonDate = (value) => {
 };
 
 const VehicleAnalytics = () => {
-  const [defaultRange] = useState(createRecentMonthRange);
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid: isCustomRangeValid,
+  } = useDateRange();
   const [rangeMode, setRangeMode] = useState("all");
-  const [fromDate, setFromDate] = useState(defaultRange.from);
-  const [toDate, setToDate] = useState(defaultRange.to);
   const [appliedFilter, setAppliedFilter] = useState({ range: "all" });
   const [selectedReportVehicle, setSelectedReportVehicle] = useState(null);
   const [selectedVehicleReports, setSelectedVehicleReports] = useState([]);
@@ -51,10 +55,6 @@ const VehicleAnalytics = () => {
     vehicleComparisonErrorMsg,
     getVehicleComparison,
   } = useReportContext();
-
-  const isCustomRangeValid = Boolean(
-    fromDate && toDate && fromDate <= toDate,
-  );
 
   useEffect(() => {
     getVehicleComparison(appliedFilter);

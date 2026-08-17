@@ -15,6 +15,9 @@ import { parseImgs } from "../../../utils/parseImgs";
 import Pagination from "../../../components/Pagination/Pagination";
 import RentalRequestsModal from "../../../components/RentalRequestsModal/RentalRequestsModal";
 import { formatShortDate } from "../../../utils/dateFormat";
+import { useClientPagination } from "../../../hooks/useClientPagination";
+
+const ITEMS_PER_PAGE = 6;
 
 // takes an object and returns an array of the object values
 const groupByVehicle = (rentalsArray) => {
@@ -71,12 +74,7 @@ const RentalDashboard = () => {
     respondToRequest,
   } = useRentContext();
 
-  const [pendingPage, setPendingPage] = useState(1);
-  const [paymentPage, setPaymentPage] = useState(1);
-  const [approvalPage, setApprovalPage] = useState(1);
-  const [tripsPage, setTripsPage] = useState(1);
   const [tripStatusFilter, setTripStatusFilter] = useState("all");
-  const ITEMS_PER_PAGE = 6;
 
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
@@ -126,14 +124,6 @@ const RentalDashboard = () => {
     setModalConfig({ isOpen: false, groupData: null, mode: "" });
   };
 
-  if (historyLoading) {
-    return (
-      <div className={`${styles.RentalDashboard} page`}>
-        <p>Loading history...</p>
-      </div>
-    );
-  }
-
   const { pendingRequests = [], myTrips = [] } = rentalHistory;
 
   const groupedPending = groupByVehicle(pendingRequests);
@@ -156,40 +146,55 @@ const RentalDashboard = () => {
     .slice()
     .sort(compareTripsByStartDate);
 
-  const totalPendingPages = Math.ceil(groupedPending.length / ITEMS_PER_PAGE);
-  const totalPaymentPages = Math.ceil(awaitingPayments.length / ITEMS_PER_PAGE);
-  const currentPaymentPage = Math.min(
-    paymentPage,
-    Math.max(totalPaymentPages, 1),
-  );
-  const totalApprovalPages = Math.ceil(
-    waitingForApproval.length / ITEMS_PER_PAGE,
-  );
-  const currentApprovalPage = Math.min(
-    approvalPage,
-    Math.max(totalApprovalPages, 1),
-  );
-  const totalTripsPages = Math.ceil(groupedTrips.length / ITEMS_PER_PAGE);
+  const {
+    currentPage: pendingPage,
+    nextPage: nextPendingPage,
+    paginatedItems: displayedPending,
+    previousPage: previousPendingPage,
+    totalPages: totalPendingPages,
+  } = useClientPagination({
+    items: groupedPending,
+    pageSize: ITEMS_PER_PAGE,
+  });
+  const {
+    currentPage: paymentPage,
+    nextPage: nextPaymentPage,
+    paginatedItems: displayedPayments,
+    previousPage: previousPaymentPage,
+    totalPages: totalPaymentPages,
+  } = useClientPagination({
+    items: awaitingPayments,
+    pageSize: ITEMS_PER_PAGE,
+  });
+  const {
+    currentPage: approvalPage,
+    nextPage: nextApprovalPage,
+    paginatedItems: displayedApprovals,
+    previousPage: previousApprovalPage,
+    totalPages: totalApprovalPages,
+  } = useClientPagination({
+    items: waitingForApproval,
+    pageSize: ITEMS_PER_PAGE,
+  });
+  const {
+    currentPage: tripsPage,
+    nextPage: nextTripsPage,
+    paginatedItems: displayedTrips,
+    previousPage: previousTripsPage,
+    totalPages: totalTripsPages,
+  } = useClientPagination({
+    items: groupedTrips,
+    pageSize: ITEMS_PER_PAGE,
+    resetKey: tripStatusFilter,
+  });
 
-  const displayedPending = groupedPending.slice(
-    (pendingPage - 1) * ITEMS_PER_PAGE,
-    pendingPage * ITEMS_PER_PAGE,
-  );
-
-  const displayedPayments = awaitingPayments.slice(
-    (currentPaymentPage - 1) * ITEMS_PER_PAGE,
-    currentPaymentPage * ITEMS_PER_PAGE,
-  );
-
-  const displayedApprovals = waitingForApproval.slice(
-    (currentApprovalPage - 1) * ITEMS_PER_PAGE,
-    currentApprovalPage * ITEMS_PER_PAGE,
-  );
-
-  const displayedTrips = groupedTrips.slice(
-    (tripsPage - 1) * ITEMS_PER_PAGE,
-    tripsPage * ITEMS_PER_PAGE,
-  );
+  if (historyLoading) {
+    return (
+      <div className={`${styles.RentalDashboard} page`}>
+        <p>Loading history...</p>
+      </div>
+    );
+  }
 
   const completedCount = myTrips.filter(
     (t) => t.rentalStatus === "completed",
@@ -211,7 +216,6 @@ const RentalDashboard = () => {
 
   const handleTripStatusChange = (event) => {
     setTripStatusFilter(event.target.value);
-    setTripsPage(1);
   };
 
   return (
@@ -332,16 +336,10 @@ const RentalDashboard = () => {
           {totalPaymentPages > 1 && (
             <div className={styles.paginationWrapper}>
               <Pagination
-                currentPage={currentPaymentPage}
+                currentPage={paymentPage}
                 totalPages={totalPaymentPages}
-                handlePrevPage={() =>
-                  setPaymentPage(Math.max(currentPaymentPage - 1, 1))
-                }
-                handleNextPage={() =>
-                  setPaymentPage(
-                    Math.min(currentPaymentPage + 1, totalPaymentPages),
-                  )
-                }
+                handlePrevPage={previousPaymentPage}
+                handleNextPage={nextPaymentPage}
                 leftText={`Approved rentals awaiting payment: ${awaitingPayments.length}`}
               />
             </div>
@@ -442,16 +440,10 @@ const RentalDashboard = () => {
           {totalApprovalPages > 1 && (
             <div className={styles.paginationWrapper}>
               <Pagination
-                currentPage={currentApprovalPage}
+                currentPage={approvalPage}
                 totalPages={totalApprovalPages}
-                handlePrevPage={() =>
-                  setApprovalPage(Math.max(currentApprovalPage - 1, 1))
-                }
-                handleNextPage={() =>
-                  setApprovalPage(
-                    Math.min(currentApprovalPage + 1, totalApprovalPages),
-                  )
-                }
+                handlePrevPage={previousApprovalPage}
+                handleNextPage={nextApprovalPage}
                 leftText={`Rental requests waiting for approval: ${waitingForApproval.length}`}
               />
             </div>
@@ -522,10 +514,8 @@ const RentalDashboard = () => {
               <Pagination
                 currentPage={pendingPage}
                 totalPages={totalPendingPages}
-                handlePrevPage={() => setPendingPage((p) => Math.max(p - 1, 1))}
-                handleNextPage={() =>
-                  setPendingPage((p) => Math.min(p + 1, totalPendingPages))
-                }
+                handlePrevPage={previousPendingPage}
+                handleNextPage={nextPendingPage}
                 leftText={`Vehicles with Requests: ${groupedPending.length}`}
               />
             </div>
@@ -656,10 +646,8 @@ const RentalDashboard = () => {
                 <Pagination
                   currentPage={tripsPage}
                   totalPages={totalTripsPages}
-                  handlePrevPage={() => setTripsPage((p) => Math.max(p - 1, 1))}
-                  handleNextPage={() =>
-                    setTripsPage((p) => Math.min(p + 1, totalTripsPages))
-                  }
+                  handlePrevPage={previousTripsPage}
+                  handleNextPage={nextTripsPage}
                   leftText={
                     tripStatusFilter === "all"
                       ? `Rented Vehicles: ${groupedTrips.length}`

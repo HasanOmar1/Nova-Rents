@@ -8,7 +8,8 @@ import { useVehicleContext } from "../../../context/VehicleContext";
 import { useUserContext } from "../../../context/UserContext";
 import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
-import { createRecentMonthRange } from "../../../utils/dateFormat";
+import { useAppliedDateRange } from "../../../hooks/useAppliedDateRange";
+import { usePagination } from "../../../hooks/usePagination";
 import { Car, History, ShieldAlert } from "lucide-react";
 
 const TITLE_CHARACTER_LIMIT = 100;
@@ -90,23 +91,43 @@ const Complaints = () => {
   });
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const [defaultRange] = useState(createRecentMonthRange);
-  const [fromDate, setFromDate] = useState(defaultRange.from);
-  const [toDate, setToDate] = useState(defaultRange.to);
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid,
+    appliedFromDate,
+    appliedToDate,
+    applyDateRange,
+    initialRange: defaultRange,
+  } = useAppliedDateRange();
   const [statusFilter, setStatusFilter] = useState("all");
-  const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
-  const [appliedToDate, setAppliedToDate] = useState(toDate);
   const [appliedStatus, setAppliedStatus] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    currentPage,
+    nextPage: nextHistoryPage,
+    previousPage: previousHistoryPage,
+    resetPage: resetHistoryPage,
+  } = usePagination({ totalPages: myComplaintsPagination?.totalPages });
   const requestedView = searchParams.get("view");
   const initialHistoryView = ["history", "reports", "vehicleReports"].includes(requestedView)
     ? requestedView
     : "history";
   const [activeHistoryView, setActiveHistoryView] = useState(initialHistoryView);
-  const [reportsPage, setReportsPage] = useState(1);
-  const [vehicleReportsPage, setVehicleReportsPage] = useState(1);
+  const {
+    currentPage: reportsPage,
+    nextPage: nextReportsPage,
+    previousPage: previousReportsPage,
+  } = usePagination({ totalPages: reportsAboutMePagination?.totalPages });
+  const {
+    currentPage: vehicleReportsPage,
+    nextPage: nextVehicleReportsPage,
+    previousPage: previousVehicleReportsPage,
+  } = usePagination({
+    totalPages: reportsAboutMyVehiclesPagination?.totalPages,
+  });
 
-  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
   const isTargetLoading = isVehicleLoading || isOwnerLoading;
 
   const resetComplaintPrefill = useCallback(() => {
@@ -328,10 +349,9 @@ const Complaints = () => {
 
   const handleApplyFilters = () => {
     if (!isRangeValid || isMyComplaintsLoading) return;
-    setAppliedFromDate(fromDate);
-    setAppliedToDate(toDate);
+    applyDateRange();
     setAppliedStatus(statusFilter);
-    setCurrentPage(1);
+    resetHistoryPage();
   };
 
   const handleSubmitForm = async (e) => {
@@ -958,14 +978,8 @@ const Complaints = () => {
                   <Pagination
                     currentPage={myComplaintsPagination.currentPage}
                     totalPages={myComplaintsPagination.totalPages}
-                    handlePrevPage={() =>
-                      setCurrentPage((page) => Math.max(page - 1, 1))
-                    }
-                    handleNextPage={() =>
-                      setCurrentPage((page) =>
-                        Math.min(page + 1, myComplaintsPagination.totalPages),
-                      )
-                    }
+                    handlePrevPage={previousHistoryPage}
+                    handleNextPage={nextHistoryPage}
                     leftText={`Total: ${myComplaintsPagination.totalComplaints || 0}`}
                   />
                 </div>
@@ -1021,19 +1035,8 @@ const Complaints = () => {
                   <Pagination
                     currentPage={reportsAboutMePagination.currentPage}
                     totalPages={reportsAboutMePagination.totalPages}
-                    handlePrevPage={() =>
-                      setReportsPage(
-                        Math.max(reportsAboutMePagination.currentPage - 1, 1),
-                      )
-                    }
-                    handleNextPage={() =>
-                      setReportsPage(
-                        Math.min(
-                          reportsAboutMePagination.currentPage + 1,
-                          reportsAboutMePagination.totalPages,
-                        ),
-                      )
-                    }
+                    handlePrevPage={previousReportsPage}
+                    handleNextPage={nextReportsPage}
                     leftText={`Total: ${reportsAboutMePagination.totalReports || 0}`}
                   />
                 </div>
@@ -1110,22 +1113,8 @@ const Complaints = () => {
                       reportsAboutMyVehiclesPagination.currentPage
                     }
                     totalPages={reportsAboutMyVehiclesPagination.totalPages}
-                    handlePrevPage={() =>
-                      setVehicleReportsPage(
-                        Math.max(
-                          reportsAboutMyVehiclesPagination.currentPage - 1,
-                          1,
-                        ),
-                      )
-                    }
-                    handleNextPage={() =>
-                      setVehicleReportsPage(
-                        Math.min(
-                          reportsAboutMyVehiclesPagination.currentPage + 1,
-                          reportsAboutMyVehiclesPagination.totalPages,
-                        ),
-                      )
-                    }
+                    handlePrevPage={previousVehicleReportsPage}
+                    handleNextPage={nextVehicleReportsPage}
                     leftText={`Total: ${reportsAboutMyVehiclesPagination.totalReports || 0}`}
                   />
                 </div>

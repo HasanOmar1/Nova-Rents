@@ -11,7 +11,7 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
-import { createRecentMonthRange } from "../../../utils/dateFormat";
+import { useAppliedDateRange } from "../../../hooks/useAppliedDateRange";
 import {
   formatCurrency,
   formatEventLabel,
@@ -46,16 +46,18 @@ const Home = () => {
     getUserDashboardReport,
   } = useReportContext();
 
-  const [defaultRange] = useState(createRecentMonthRange);
-  // Editable input values — changing these sends no request.
-  const [fromDate, setFromDate] = useState(defaultRange.from);
-  const [toDate, setToDate] = useState(defaultRange.to);
-  // Applied query values — only updated when the user presses Apply.
-  const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
-  const [appliedToDate, setAppliedToDate] = useState(toDate);
+  // Keep date edits local until the user applies a complete range.
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid,
+    appliedFromDate,
+    appliedToDate,
+    applyDateRange,
+  } = useAppliedDateRange();
   const [showAllSeries, setShowAllSeries] = useState(false);
-
-  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
 
   useEffect(() => {
     fetchDashboardMetrics();
@@ -67,8 +69,7 @@ const Home = () => {
 
   const handleApplyDates = () => {
     if (isRangeValid && !isUserDashboardLoading) {
-      setAppliedFromDate(fromDate);
-      setAppliedToDate(toDate);
+      applyDateRange();
     }
   };
 

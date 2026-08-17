@@ -3,10 +3,12 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import axios from "axios";
 import { useActivityContext } from "./ActivityContext";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
 const ReportedUsersContext = createContext(null);
 
@@ -24,23 +26,26 @@ const ReportedUsersProvider = ({ children }) => {
     complaintStatus: "all",
     sortBy: "total_reports",
   });
-  const [query, setQuery] = useState("");
   const [modal, setModal] = useState(null);
   const [details, setDetails] = useState([]);
   const [reason, setReason] = useState("");
   const [warningError, setWarningError] = useState("");
   const [message, setMessage] = useState("");
   const [loadingAction, setLoadingAction] = useState("");
+  const loadControllerRef = useRef(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setQuery(filters.search.trim()), 300);
-    return () => clearTimeout(timer);
-  }, [filters.search]);
+  const debouncedSearch = useDebouncedValue(filters.search, 300);
+  const query = debouncedSearch.trim();
 
   const load = useCallback(
     async (page = 1) => {
+      loadControllerRef.current?.abort();
+      const controller = new AbortController();
+      loadControllerRef.current = controller;
+
       try {
         const { data } = await axios.get("/reported-users", {
+          signal: controller.signal,
           params: {
             page,
             limit: 10,
@@ -50,6 +55,9 @@ const ReportedUsersProvider = ({ children }) => {
             sortBy: filters.sortBy,
           },
         });
+
+        if (controller.signal.aborted) return false;
+
         setUsers(data.users || []);
         setPagination(
           data.pagination || {
@@ -61,17 +69,27 @@ const ReportedUsersProvider = ({ children }) => {
         setMessage("");
         return true;
       } catch (error) {
+        if (controller.signal.aborted) return false;
+
         setMessage(
           error.response?.data?.message || "Failed to load reported users",
         );
         return false;
+      } finally {
+        if (loadControllerRef.current === controller) {
+          loadControllerRef.current = null;
+        }
       }
     },
     [query, filters.accountStatus, filters.complaintStatus, filters.sortBy],
   );
 
   useEffect(() => {
-    load(1);
+    void load(1);
+
+    return () => {
+      loadControllerRef.current?.abort();
+    };
   }, [load]);
 
   const openDetails = async (user, type) => {
@@ -176,19 +194,6 @@ const ReportedUsersProvider = ({ children }) => {
   );
 };
 
-// Keep the provider and its consumer hook together, matching the project's
-// existing context-module convention.
-// eslint-disable-next-line react-refresh/only-export-components
-export const useReportedUsersContext = () => {
-  const context = useContext(ReportedUsersContext);
-
-  if (!context) {
-    throw new Error(
-      "useReportedUsersContext must be used within a ReportedUsersProvider",
-    );
-  }
-
-  return context;
-};
+export const useReportedUsersContext = () => useContext(ReportedUsersContext);
 
 export default ReportedUsersProvider;

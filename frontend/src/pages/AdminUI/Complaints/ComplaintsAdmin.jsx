@@ -11,30 +11,12 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
-import { createRecentMonthRange } from "../../../utils/dateFormat";
 import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
+import { useAppliedDateRange } from "../../../hooks/useAppliedDateRange";
 
 const ComplaintsAdmin = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const {
-    currentPage,
-    setCurrentPage,
-    statusFilter,
-    handleStatusChange,
-  } = usePaginatedStatusFilter();
-
-  const [defaultRange] = useState(createRecentMonthRange);
-  // Editable input values — changing these sends no request.
-  const [fromDate, setFromDate] = useState(defaultRange.from);
-  const [toDate, setToDate] = useState(defaultRange.to);
-  // Applied query values — only updated when the user presses Apply, so the
-  // chart never refetches with a half-edited range.
-  const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
-  const [appliedToDate, setAppliedToDate] = useState(toDate);
-
-  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
-
   const {
     putUpdateComplaintStatus,
     getAllComplaints,
@@ -46,6 +28,24 @@ const ComplaintsAdmin = () => {
     complaintTrendsErrorMsg,
     getComplaintTrends,
   } = useComplaintContext();
+  const {
+    currentPage,
+    nextPage,
+    previousPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter({ totalPages: pagination?.totalPages });
+
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid,
+    appliedFromDate,
+    appliedToDate,
+    applyDateRange,
+  } = useAppliedDateRange();
 
   // Fetch data when page or filter changes
   useEffect(() => {
@@ -61,8 +61,7 @@ const ComplaintsAdmin = () => {
 
   const handleApplyDates = () => {
     if (isRangeValid && !isComplaintTrendsLoading) {
-      setAppliedFromDate(fromDate);
-      setAppliedToDate(toDate);
+      applyDateRange();
     }
   };
 
@@ -240,10 +239,8 @@ const ComplaintsAdmin = () => {
           <Pagination
             currentPage={pagination.currentPage}
             totalPages={pagination.totalPages}
-            handlePrevPage={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            handleNextPage={() =>
-              setCurrentPage((p) => Math.min(p + 1, pagination.totalPages))
-            }
+            handlePrevPage={previousPage}
+            handleNextPage={nextPage}
             leftText={`Total Complaints: ${pagination.totalComplaints}`}
           />
         </div>

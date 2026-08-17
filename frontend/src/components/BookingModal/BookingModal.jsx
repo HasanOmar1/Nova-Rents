@@ -1,13 +1,14 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./BookingModal.module.css";
 import { useRentContext } from "../../context/RentContext";
 import { formatDateForInput } from "../../utils/dateFormat";
 import AsyncButton from "../AsyncButton/AsyncButton";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const BookingModal = ({ isOpen, onClose, vehicle }) => {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog(isOpen, { lockBodyScroll: true });
   const {
     rentVehicle,
     rentVehResponse,
@@ -21,26 +22,7 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
   const [endDate, setEndDate] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- 1. BLOCK BACKGROUND SCROLLING ---
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen) {
-      dialog.showModal();
-      document.body.style.overflow = "hidden"; // Locks the background
-    } else {
-      dialog.close();
-      document.body.style.overflow = "unset"; // Unlocks the background
-    }
-
-    // Cleanup just in case the component unmounts unexpectedly
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
-  // --- 2. SMART DATE CALCULATION ---
+  // --- SMART DATE CALCULATION ---
   // Finds the first available date that isn't inside the bookedRanges
   const findFirstAvailableDate = () => {
     let checkDate = new Date();

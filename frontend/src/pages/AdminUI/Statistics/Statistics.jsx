@@ -2,13 +2,13 @@ import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeB
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import styles from "./Statistics.module.css";
 import { BadgeDollarSign, Calendar } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useReportContext } from "../../../context/ReportContext";
+import { useDateRange } from "../../../hooks/useDateRange";
 import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
-import { createRecentMonthRange } from "../../../utils/dateFormat";
 import { formatCurrency } from "../../../utils/displayFormat";
 
 const Statistics = () => {
@@ -19,11 +19,13 @@ const Statistics = () => {
     getStatistics,
   } = useReportContext();
 
-  const [defaultRange] = useState(createRecentMonthRange);
-  const [fromDate, setFromDate] = useState(defaultRange.from);
-  const [toDate, setToDate] = useState(defaultRange.to);
-
-  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid,
+  } = useDateRange();
 
   useEffect(() => {
     getStatistics(fromDate, toDate);

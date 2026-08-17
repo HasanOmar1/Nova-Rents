@@ -26,4 +26,11 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    files: ['src/context/*.jsx'],
+    rules: {
+      // Context accessors intentionally live beside their matching providers.
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

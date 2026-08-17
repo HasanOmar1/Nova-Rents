@@ -16,43 +16,24 @@ import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilte
 
 const AllVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const {
-    currentPage,
-    setCurrentPage,
-    statusFilter,
-    handleStatusChange,
-  } = usePaginatedStatusFilter();
-
   const { getAllVehicles, allVehicles, allVehStats, allVehPagination } =
     useVehicleContext();
+  const {
+    currentPage,
+    nextPage,
+    previousPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter({
+    totalPages: allVehPagination?.totalPages,
+  });
 
   useEffect(() => {
     getAllVehicles({ status: statusFilter }, currentPage);
   }, [statusFilter, currentPage]);
 
-  useEffect(() => {
-    if (
-      allVehPagination?.totalPages &&
-      currentPage > allVehPagination.totalPages
-    ) {
-      setCurrentPage(allVehPagination.totalPages || 1);
-    }
-  }, [allVehPagination?.totalPages, currentPage, setCurrentPage]);
-
   const openAddBrandMenu = () => setIsOpen(true);
   const closeAddBrandMenu = () => setIsOpen(false);
-
-  const handleNextPage = () => {
-    if (allVehPagination?.currentPage < allVehPagination?.totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (allVehPagination?.currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   const topData = [
     {
@@ -153,8 +134,8 @@ const AllVehicles = () => {
             <Pagination
               currentPage={allVehPagination?.currentPage}
               totalPages={allVehPagination?.totalPages}
-              handlePrevPage={handlePrevPage}
-              handleNextPage={handleNextPage}
+              handlePrevPage={previousPage}
+              handleNextPage={nextPage}
               leftText={`Total Vehicles: ${allVehPagination?.totalVehicles || 0}`}
             />
           </>

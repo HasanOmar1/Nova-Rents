@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
 import { useGovApisContext } from "../../context/GovApisContext";
@@ -6,6 +6,7 @@ import { formattedMinDate } from "../../utils/minMaxDate";
 import { formatDateForInput } from "../../utils/dateFormat";
 import ExactPickupLocationPicker from "../ExactPickupLocationPicker/ExactPickupLocationPicker";
 import AsyncButton from "../AsyncButton/AsyncButton";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const initialFormState = {
   brandId: "0",
@@ -72,7 +73,7 @@ const VEHICLE_COLORS = [
 ];
 
 const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog(isOpen);
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -144,17 +145,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     }
   }, [vehicle, isOpen]);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen) {
-      if (!dialog.open) dialog.showModal();
-    } else {
-      if (dialog.open) dialog.close();
-    }
-  }, [isOpen]);
-
   // --- SCROLL TO TOP ON ERROR ---
   useEffect(() => {
     if (errorMsg && dialogRef.current) {
@@ -163,7 +153,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
         behavior: "smooth",
       });
     }
-  }, [errorMsg]);
+  }, [dialogRef, errorMsg]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
