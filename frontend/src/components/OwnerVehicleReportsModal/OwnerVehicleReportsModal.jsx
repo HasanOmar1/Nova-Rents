@@ -26,7 +26,7 @@ const OwnerVehicleReportsModal = ({
   isLoading = false,
   errorMessage = "",
 }) => {
-  const dialogRef = useModalDialog(isOpen, { lockBodyScroll: true });
+  const dialogRef = useModalDialog(isOpen);
 
   return (
     <dialog
@@ -81,9 +81,7 @@ const OwnerVehicleReportsModal = ({
               <section className={styles.detailBlock}>
                 <p className={styles.detailLabel}>Description</p>
                 <div className={styles.descriptionBox}>
-                  <p className={styles.descriptionText}>
-                    {report.description}
-                  </p>
+                  <p className={styles.descriptionText}>{report.description}</p>
                 </div>
               </section>
 

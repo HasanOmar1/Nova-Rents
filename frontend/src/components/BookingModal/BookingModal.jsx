@@ -8,7 +8,7 @@ import AsyncButton from "../AsyncButton/AsyncButton";
 import { useModalDialog } from "../../hooks/useModalDialog";
 
 const BookingModal = ({ isOpen, onClose, vehicle }) => {
-  const dialogRef = useModalDialog(isOpen, { lockBodyScroll: true });
+  const dialogRef = useModalDialog(isOpen);
   const {
     rentVehicle,
     rentVehResponse,
@@ -212,7 +212,12 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
           <button type="button" className={styles.cancelBtn} onClick={onClose}>
             Cancel
           </button>
-          <AsyncButton type="submit" className={styles.submitBtn} loading={isSubmitting} loadingText="Booking...">
+          <AsyncButton
+            type="submit"
+            className={styles.submitBtn}
+            loading={isSubmitting}
+            loadingText="Booking..."
+          >
             Confirm Booking
           </AsyncButton>
         </div>

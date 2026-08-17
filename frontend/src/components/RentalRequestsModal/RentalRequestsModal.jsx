@@ -22,9 +22,7 @@ const RentalRequestsModal = ({
   initialTripFilter = "all",
   respondToRequest,
 }) => {
-  const dialogRef = useModalDialog(isOpen && Boolean(groupData), {
-    lockBodyScroll: true,
-  });
+  const dialogRef = useModalDialog(isOpen && Boolean(groupData));
   const [tripFilter, setTripFilter] = useState("all");
   const [reportMenuRentalId, setReportMenuRentalId] = useState(null);
   const [pendingAction, setPendingAction] = useState("");
@@ -33,8 +31,11 @@ const RentalRequestsModal = ({
   const handleRentalAction = async (rentalId, action) => {
     const actionKey = `${action}-${rentalId}`;
     setPendingAction(actionKey);
-    try { await respondToRequest(rentalId, action); }
-    finally { setPendingAction(""); }
+    try {
+      await respondToRequest(rentalId, action);
+    } finally {
+      setPendingAction("");
+    }
   };
 
   useEffect(() => {
@@ -260,19 +261,23 @@ const RentalRequestsModal = ({
                 <div className={styles.actionBtns}>
                   <AsyncButton
                     className={styles.approveBtn}
-                    loading={pendingAction===`approve-${rental.rentalId}`}
+                    loading={pendingAction === `approve-${rental.rentalId}`}
                     loadingText="Approving..."
                     disabled={Boolean(pendingAction)}
-                    onClick={() => handleRentalAction(rental.rentalId, "approve")}
+                    onClick={() =>
+                      handleRentalAction(rental.rentalId, "approve")
+                    }
                   >
                     <CheckCircle size={16} /> Approve
                   </AsyncButton>
                   <AsyncButton
                     className={styles.declineBtn}
-                    loading={pendingAction===`reject-${rental.rentalId}`}
+                    loading={pendingAction === `reject-${rental.rentalId}`}
                     loadingText="Declining..."
                     disabled={Boolean(pendingAction)}
-                    onClick={() => handleRentalAction(rental.rentalId, "reject")}
+                    onClick={() =>
+                      handleRentalAction(rental.rentalId, "reject")
+                    }
                   >
                     <XCircle size={16} /> Decline
                   </AsyncButton>

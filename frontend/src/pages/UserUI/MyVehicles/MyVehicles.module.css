@@ -67,6 +67,12 @@
 }
 
 .MyVehicles .myVehiclesContainer {
+  --my-vehicles-columns: minmax(200px, 1.7fr) minmax(72px, 0.65fr)
+    minmax(110px, 1fr) minmax(72px, 0.6fr) minmax(105px, 0.8fr)
+    minmax(116px, 0.9fr);
+  --my-vehicles-column-gap: 16px;
+
+  container-type: inline-size;
   min-height: 200px;
   overflow: hidden;
   margin-top: 30px;
@@ -77,8 +83,10 @@
 }
 
 .MyVehicles .myVehiclesContainer .titles {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: var(--my-vehicles-columns);
+  align-items: center;
+  gap: var(--my-vehicles-column-gap);
   padding: 15px 20px;
   color: var(--gray);
   font-size: 0.75rem;
@@ -86,20 +94,13 @@
   text-transform: uppercase;
 }
 
-.MyVehicles .myVehiclesContainer .titles p:nth-child(1) {
-  width: 25%;
+.MyVehicles .myVehiclesContainer .titles p {
+  min-width: 0;
 }
 
-.MyVehicles .myVehiclesContainer .titles p:nth-child(2),
-.MyVehicles .myVehiclesContainer .titles p:nth-child(3),
-.MyVehicles .myVehiclesContainer .titles p:nth-child(4),
 .MyVehicles .myVehiclesContainer .titles p:nth-child(5),
 .MyVehicles .myVehiclesContainer .titles p:nth-child(6) {
-  width: 15%;
-}
-
-.MyVehicles .myVehiclesContainer .titles p:nth-child(6) {
-  text-align: center;
+  text-align: right;
 }
 
 .MyVehicles .myVehiclesContainer hr {
@@ -171,13 +172,15 @@
   color: var(--gray);
 }
 
+@container (max-width: 820px) {
+  .MyVehicles .myVehiclesContainer .titles {
+    display: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .MyVehicles .topCardsContainer {
     flex-wrap: wrap;
-  }
-
-  .MyVehicles .myVehiclesContainer .titles {
-    display: none;
   }
 }
 
