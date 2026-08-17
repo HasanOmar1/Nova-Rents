@@ -20,6 +20,7 @@ import RentalDashboard from "./pages/UserUI/RentalDashboard/RentalDashboard";
 import Payment from "./pages/UserUI/Payment/Payment";
 import UserStats from "./pages/UserStats/UserStats";
 import ReportedUsers from "./pages/AdminUI/ReportedUsers/ReportedUsers";
+import ReportedUsersProvider from "./context/ReportedUsersContext";
 
 function App() {
   const { currentUser, isLoading } = useUserContext();
@@ -65,7 +66,14 @@ function App() {
             <Route path="/allVehicles" element={<AllVehicles />} />
             <Route path="/complaintsAdmin" element={<ComplaintsAdmin />} />
             <Route path="/statistics" element={<Statistics />} />
-            <Route path="/reportedUsers" element={<ReportedUsers />} />
+            <Route
+              path="/reportedUsers"
+              element={
+                <ReportedUsersProvider>
+                  <ReportedUsers />
+                </ReportedUsersProvider>
+              }
+            />
           </>
         ) : (
           <>

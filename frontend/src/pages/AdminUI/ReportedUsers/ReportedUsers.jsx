@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
 import {
   AlertTriangle,
   Ban,
@@ -13,7 +11,7 @@ import {
 import Pagination from "../../../components/Pagination/Pagination";
 import styles from "./ReportedUsers.module.css";
 import AsyncButton from "../../../components/AsyncButton/AsyncButton";
-import { useActivityContext } from "../../../context/ActivityContext";
+import { useReportedUsersContext } from "../../../context/ReportedUsersContext";
 
 const risk = (count) =>
   count >= 6 ? "High Attention" : count >= 3 ? "Review" : "Normal";
@@ -23,77 +21,27 @@ const dateText = (value) =>
     : new Date(value).toLocaleDateString("en-GB");
 
 export default function ReportedUsers() {
-  const { loadActivities } = useActivityContext();
-  const [users, setUsers] = useState([]);
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalUsers: 0,
-  });
-  const [filters, setFilters] = useState({
-    search: "",
-    accountStatus: "all",
-    complaintStatus: "all",
-    sortBy: "total_reports",
-  });
-  const [query, setQuery] = useState("");
-  const [modal, setModal] = useState(null);
-  const [details, setDetails] = useState([]);
-  const [reason, setReason] = useState("");
-  const [warningError, setWarningError] = useState("");
-  const [message, setMessage] = useState("");
-  const [loadingAction, setLoadingAction] = useState("");
+  const {
+    users,
+    pagination,
+    filters,
+    setFilters,
+    modal,
+    setModal,
+    details,
+    reason,
+    setReason,
+    warningError,
+    setWarningError,
+    message,
+    loadingAction,
+    load,
+    openDetails,
+    issueWarning,
+    changeStatus,
+    removeLatestWarning,
+  } = useReportedUsersContext();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setQuery(filters.search.trim()), 300);
-    return () => clearTimeout(timer);
-  }, [filters.search]);
-  const load = useCallback(
-    async (page = 1) => {
-      try {
-        const { data } = await axios.get("/reported-users", {
-          params: {
-            page,
-            limit: 10,
-            search: query,
-            accountStatus: filters.accountStatus,
-            complaintStatus: filters.complaintStatus,
-            sortBy: filters.sortBy,
-          },
-        });
-        setUsers(data.users);
-        setPagination(data.pagination);
-        setMessage("");
-      } catch (error) {
-        setMessage(
-          error.response?.data?.message || "Failed to load reported users",
-        );
-      }
-    },
-    [query, filters.accountStatus, filters.complaintStatus, filters.sortBy],
-  );
-  useEffect(() => {
-    const refresh = async () => {
-      await load(1);
-    };
-    refresh();
-  }, [load]);
-
-  const openDetails = async (user, type) => {
-    setLoadingAction(`${type}-${user.userId}`);
-    try {
-      const endpoint = type === "reports" ? "reports" : "warnings";
-      const { data } = await axios.get(
-        `/reported-users/${user.userId}/${endpoint}`,
-      );
-      setDetails(data[endpoint]);
-      setModal({ type, user });
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to load details");
-    } finally {
-      setLoadingAction("");
-    }
-  };
   const requestWarningConfirmation = () => {
     const clean = reason.trim();
     if (clean.length < 5 || clean.length > 500) {
@@ -103,62 +51,9 @@ export default function ReportedUsers() {
     setWarningError("");
     setModal({ type: "confirmWarning", user: modal.user });
   };
-  const issueWarning = async () => {
-    const clean = reason.trim();
-    setLoadingAction(`warn-${modal.user.userId}`);
-    try {
-      const { data } = await axios.post(
-        `/reported-users/${modal.user.userId}/warnings`,
-        { reason: clean },
-      );
-      setModal(null);
-      setReason("");
-      setWarningError("");
-      await Promise.all([load(1), loadActivities()]);
-      setMessage(
-        `${data.message}${data.emailSent ? "" : " (email delivery failed)"}`,
-      );
-    } catch (error) {
-      setWarningError(
-        error.response?.data?.message || "Failed to issue warning",
-      );
-    } finally {
-      setLoadingAction("");
-    }
-  };
-  const changeStatus = async (user, block) => {
-    setLoadingAction(`status-${user.userId}`);
-    try {
-      const { data } = await axios.post(
-        `/users/${block ? "block" : "unblock"}/${encodeURIComponent(user.email)}`,
-      );
-      await Promise.all([load(1), loadActivities()]);
-      setMessage(data.message);
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to update account");
-    } finally {
-      setModal(null);
-      setLoadingAction("");
-    }
-  };
-  const removeLatestWarning = async (user) => {
-    setLoadingAction(`remove-${user.userId}`);
-    try {
-      const { data } = await axios.delete(
-        `/reported-users/${user.userId}/warnings/latest`,
-      );
-      await Promise.all([load(1), loadActivities()]);
-      setMessage(data.message);
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to remove warning");
-    } finally {
-      setModal(null);
-      setLoadingAction("");
-    }
-  };
 
   return (
-    <div className={`${styles.page} page`}>
+    <div className={`${styles.ReportedUsers} page`}>
       <div className={styles.heading}>
         <div>
           <h1>Reported Users</h1>
