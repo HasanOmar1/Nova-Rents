@@ -44,9 +44,7 @@ const EvidenceImage = ({ src, alt, isThumbnail = false }) => {
 };
 
 const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
-  const dialogRef = useModalDialog(isOpen && Boolean(complaint), {
-    lockBodyScroll: true,
-  });
+  const dialogRef = useModalDialog(isOpen && Boolean(complaint));
   const [status, setStatus] = useState("open");
   const [resolutionMessage, setResolutionMessage] = useState("");
   const [adminNotes, setAdminNotes] = useState("");

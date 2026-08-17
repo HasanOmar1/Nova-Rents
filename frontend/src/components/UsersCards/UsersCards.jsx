@@ -4,10 +4,12 @@ import { useState } from "react";
 import { Ban, ExternalLink, LockKeyhole, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import AsyncButton from "../AsyncButton/AsyncButton";
+import UserStatusConfirmationModal from "../UserStatusConfirmationModal/UserStatusConfirmationModal";
 
 const UsersCards = ({ user, blockUser, unBlockUser }) => {
   const { loadActivities } = useActivityContext();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
 
   const isBlocked = user.status === "blocked";
   const isProtected = user.role !== "user";
@@ -16,11 +18,11 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
   const profilePath = `/userStats/${encodeURIComponent(user.email)}`;
 
   const handleUserAction = async () => {
-    if (isUpdating) return;
+    if (isUpdating || !pendingAction) return;
     setIsUpdating(true);
 
     try {
-      const updated = isBlocked
+      const updated = pendingAction === "unblock"
         ? await unBlockUser(user.email)
         : await blockUser(user.email);
 
@@ -29,6 +31,7 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
       }
     } finally {
       setIsUpdating(false);
+      setPendingAction(null);
     }
   };
 
@@ -70,7 +73,9 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
             className={`${styles.action} ${
               isBlocked ? styles.unblockAction : styles.blockAction
             }`}
-            onClick={handleUserAction}
+            onClick={() =>
+              setPendingAction(isBlocked ? "unblock" : "block")
+            }
             loading={isUpdating}
             loadingText={isBlocked ? "Unblocking..." : "Blocking..."}
             aria-label={`${isBlocked ? "Unblock" : "Block"} ${fullName}`}
@@ -84,6 +89,16 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
           </AsyncButton>
         )}
       </div>
+
+      <UserStatusConfirmationModal
+        action={pendingAction}
+        user={user}
+        isUpdating={isUpdating}
+        onClose={() => {
+          if (!isUpdating) setPendingAction(null);
+        }}
+        onConfirm={handleUserAction}
+      />
     </div>
   );
 };

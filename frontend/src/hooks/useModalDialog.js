@@ -21,10 +21,7 @@ const unlockBodyScroll = () => {
   }
 };
 
-export const useModalDialog = (
-  isOpen,
-  { lockBodyScroll: shouldLockBodyScroll = false } = {},
-) => {
+export const useModalDialog = (isOpen) => {
   const dialogRef = useRef(null);
 
   useEffect(() => {
@@ -39,11 +36,11 @@ export const useModalDialog = (
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !shouldLockBodyScroll) return;
+    if (!isOpen) return;
 
     lockBodyScroll();
     return unlockBodyScroll;
-  }, [isOpen, shouldLockBodyScroll]);
+  }, [isOpen]);
 
   return dialogRef;
 };
