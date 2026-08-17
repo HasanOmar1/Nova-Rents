@@ -11,6 +11,11 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
+import { createRecentMonthRange } from "../../../utils/dateFormat";
+import {
+  formatCurrency,
+  formatEventLabel,
+} from "../../../utils/displayFormat";
 
 const CHART_COLORS = [
   "#5494ff",
@@ -29,25 +34,8 @@ const EVENT_LABELS = {
   vehicle_created: "Vehicles Listed",
 };
 
-const formatEventLabel = (eventName) =>
-  EVENT_LABELS[eventName] || eventName
-    .split("_")
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(" ");
-
 // Max usage series shown by default before the "Show all" toggle kicks in
 const TOP_SERIES_LIMIT = 6;
-
-// Project currency convention: "$" prefix + locale thousands separators
-const formatCurrency = (value) => `$${(Number(value) || 0).toLocaleString()}`;
-
-// Local-time date formatting (toISOString would shift the day near midnight)
-const formatDateForInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 const Home = () => {
   const { metrics, fetchDashboardMetrics } = useRentContext();
@@ -58,12 +46,10 @@ const Home = () => {
     getUserDashboardReport,
   } = useReportContext();
 
-  const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-
+  const [defaultRange] = useState(createRecentMonthRange);
   // Editable input values — changing these sends no request.
-  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
-  const [toDate, setToDate] = useState(formatDateForInput(today));
+  const [fromDate, setFromDate] = useState(defaultRange.from);
+  const [toDate, setToDate] = useState(defaultRange.to);
   // Applied query values — only updated when the user presses Apply.
   const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
   const [appliedToDate, setAppliedToDate] = useState(toDate);
@@ -106,7 +92,7 @@ const Home = () => {
 
   const usageChartSeries = visibleSeries.map((serie) => ({
     dataKey: serie.eventName,
-    name: formatEventLabel(serie.eventName),
+    name: formatEventLabel(serie.eventName, EVENT_LABELS),
     color:
       CHART_COLORS[
         userDashboardData.usageSeries.indexOf(serie) % CHART_COLORS.length

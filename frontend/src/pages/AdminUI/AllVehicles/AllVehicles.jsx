@@ -12,11 +12,16 @@ import { useVehicleContext } from "../../../context/VehicleContext";
 import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 import Pagination from "../../../components/Pagination/Pagination";
 import AddBrandVehicleMenu from "../../../components/AddBrandVehicleMenu/AddBrandVehicleMenu";
+import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
 
 const AllVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const {
+    currentPage,
+    setCurrentPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter();
 
   const { getAllVehicles, allVehicles, allVehStats, allVehPagination } =
     useVehicleContext();
@@ -32,16 +37,7 @@ const AllVehicles = () => {
     ) {
       setCurrentPage(allVehPagination.totalPages || 1);
     }
-  }, [allVehPagination?.totalPages, currentPage]);
-
-  const handleStatusChange = (valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
-
-    setStatusFilter(status);
-    setCurrentPage(1);
-  };
+  }, [allVehPagination?.totalPages, currentPage, setCurrentPage]);
 
   const openAddBrandMenu = () => setIsOpen(true);
   const closeAddBrandMenu = () => setIsOpen(false);

@@ -20,6 +20,7 @@ import { useUserContext } from "../../../context/UserContext";
 import { useEffect } from "react";
 import { useState } from "react";
 import AdminUsersTable from "../../../components/AdminUsersTable/AdminUsersTable";
+import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
 
 const axisTick = { fill: "rgba(255,255,255,0.45)", fontSize: 11 };
 const gridStroke = "rgba(255,255,255,0.06)";
@@ -27,8 +28,12 @@ const gridStroke = "rgba(255,255,255,0.06)";
 const Users = () => {
   const { getUsers, usersStats, pagination, userChartData, errorMsg } =
     useUserContext();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const {
+    currentPage,
+    setCurrentPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter();
 
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -43,7 +48,7 @@ const Users = () => {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchInput, debouncedSearch]);
+  }, [searchInput, debouncedSearch, setCurrentPage]);
 
   useEffect(() => {
     getUsers(currentPage, statusFilter, debouncedSearch);
@@ -53,7 +58,7 @@ const Users = () => {
     if (pagination?.totalPages && currentPage > pagination.totalPages) {
       setCurrentPage(pagination.totalPages);
     }
-  }, [pagination?.totalPages, currentPage]);
+  }, [pagination?.totalPages, currentPage, setCurrentPage]);
 
   const handleNextPage = () => {
     if (pagination?.currentPage < pagination?.totalPages) {
@@ -65,15 +70,6 @@ const Users = () => {
     if (pagination?.currentPage > 1) {
       setCurrentPage((prev) => prev - 1);
     }
-  };
-
-  const handleStatusChange = (valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
-
-    setStatusFilter(status);
-    setCurrentPage(1);
   };
 
   const handleSearchChange = (e) => {

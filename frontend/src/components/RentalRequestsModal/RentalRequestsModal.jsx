@@ -11,14 +11,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import AsyncButton from "../AsyncButton/AsyncButton";
-
-const formatDate = (dateStr) => {
-  return new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
+import { formatShortDate } from "../../utils/dateFormat";
 
 const RentalRequestsModal = ({
   isOpen,
@@ -172,8 +165,8 @@ const RentalRequestsModal = ({
 
               <div className={styles.detailsList}>
                 <p>
-                  <Calendar size={14} /> {formatDate(rental.startDate)} -{" "}
-                  {formatDate(rental.endDate)}
+                  <Calendar size={14} /> {formatShortDate(rental.startDate)} -{" "}
+                  {formatShortDate(rental.endDate)}
                 </p>
                 <p className={styles.price}>Total: ${rental.totalPrice}</p>
               </div>

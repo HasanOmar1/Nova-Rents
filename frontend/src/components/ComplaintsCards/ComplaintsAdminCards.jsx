@@ -1,11 +1,5 @@
 import styles from "./ComplaintsAdminCards.module.css";
-
-const STATUS_LABELS = {
-  open: "Open",
-  in_review: "Under review",
-  resolved: "Resolved",
-  closed: "Closed",
-};
+import { formatComplaintStatus } from "../../utils/displayFormat";
 
 const STATUS_CLASSES = {
   open: styles.open,
@@ -24,7 +18,7 @@ const ComplaintsAdminCards = ({
   action,
   onReview,
 }) => {
-  const statusLabel = STATUS_LABELS[status] || status || "Unknown";
+  const statusLabel = formatComplaintStatus(status);
   const typeClass = type === "Vehicle" ? styles.vehicle : "";
 
   return (

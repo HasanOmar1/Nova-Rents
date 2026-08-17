@@ -10,36 +10,14 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
+import { createRecentMonthRange } from "../../../utils/dateFormat";
+import { formatCurrency } from "../../../utils/displayFormat";
 import styles from "./VehicleAnalytics.module.css";
 
 const getVehicleChartColor = (index) => {
   const hue = Math.round((205 + index * 137.508) % 360);
   return `hsl(${hue}, 72%, 66%)`;
 };
-
-const formatDateForInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const createDefaultRange = () => {
-  const today = new Date();
-  const firstMonthInRange = new Date(
-    today.getFullYear(),
-    today.getMonth() - 5,
-    1,
-  );
-
-  return {
-    from: formatDateForInput(firstMonthInRange),
-    to: formatDateForInput(today),
-  };
-};
-
-const formatCurrency = (value) =>
-  `$${(Number(value) || 0).toLocaleString()}`;
 
 const formatComparisonDate = (value) => {
   const [year, month, day] = String(value).split("-").map(Number);
@@ -53,7 +31,7 @@ const formatComparisonDate = (value) => {
 };
 
 const VehicleAnalytics = () => {
-  const [defaultRange] = useState(createDefaultRange);
+  const [defaultRange] = useState(createRecentMonthRange);
   const [rangeMode, setRangeMode] = useState("all");
   const [fromDate, setFromDate] = useState(defaultRange.from);
   const [toDate, setToDate] = useState(defaultRange.to);

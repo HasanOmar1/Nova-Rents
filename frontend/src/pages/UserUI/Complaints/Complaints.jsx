@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import styles from "./Complaints.module.css";
 import ComplaintsHistoryCards from "../../../components/ComplaintsHistoryCards/ComplaintsHistoryCards";
@@ -8,17 +8,11 @@ import { useVehicleContext } from "../../../context/VehicleContext";
 import { useUserContext } from "../../../context/UserContext";
 import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
+import { createRecentMonthRange } from "../../../utils/dateFormat";
 import { Car, History, ShieldAlert } from "lucide-react";
 
 const TITLE_CHARACTER_LIMIT = 100;
 const DESCRIPTION_CHARACTER_LIMIT = 1000;
-
-const formatDateForInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 const formatSubmittedDate = (value) => {
   if (!value) return "Unknown date";
@@ -96,11 +90,9 @@ const Complaints = () => {
   });
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-
-  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
-  const [toDate, setToDate] = useState(formatDateForInput(today));
+  const [defaultRange] = useState(createRecentMonthRange);
+  const [fromDate, setFromDate] = useState(defaultRange.from);
+  const [toDate, setToDate] = useState(defaultRange.to);
   const [statusFilter, setStatusFilter] = useState("all");
   const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
   const [appliedToDate, setAppliedToDate] = useState(toDate);
@@ -116,6 +108,18 @@ const Complaints = () => {
 
   const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
   const isTargetLoading = isVehicleLoading || isOwnerLoading;
+
+  const resetComplaintPrefill = useCallback(() => {
+    setIsVehicleLocked(false);
+    setReportedVehicle(null);
+    setIsVehicleLoading(false);
+    setIsOwnerLocked(false);
+    setReportedOwner(null);
+    setLockedOwnerId(null);
+    setIsOwnerLoading(false);
+    setLockedRentalId(null);
+    setRentalSummary(null);
+  }, []);
 
   useEffect(() => {
     const view = searchParams.get("view");
@@ -147,18 +151,6 @@ const Complaints = () => {
 
     let cancelled = false;
 
-    const clearLocks = () => {
-      setIsVehicleLocked(false);
-      setReportedVehicle(null);
-      setIsVehicleLoading(false);
-      setIsOwnerLocked(false);
-      setReportedOwner(null);
-      setLockedOwnerId(null);
-      setIsOwnerLoading(false);
-      setLockedRentalId(null);
-      setRentalSummary(null);
-    };
-
     if (hasValidRentalId) {
       setLockedRentalId(rentalIdParam);
     } else {
@@ -171,7 +163,7 @@ const Complaints = () => {
         setLocalErrorMsg(
           "Invalid report link. Please select the complaint type and target manually.",
         );
-        clearLocks();
+        resetComplaintPrefill();
         return;
       }
 
@@ -222,7 +214,7 @@ const Complaints = () => {
         setLocalErrorMsg(
           "Invalid report link. Please select the complaint type and target manually.",
         );
-        clearLocks();
+        resetComplaintPrefill();
         return;
       }
 
@@ -274,8 +266,8 @@ const Complaints = () => {
     setLocalErrorMsg(
       "Invalid report link. Please select the complaint type and target manually.",
     );
-    clearLocks();
-  }, [searchParams]);
+    resetComplaintPrefill();
+  }, [resetComplaintPrefill, searchParams]);
 
   // Resolve rental summary from cached My Trips (same GET /rentals/history).
   useEffect(() => {
@@ -340,18 +332,6 @@ const Complaints = () => {
     setAppliedToDate(toDate);
     setAppliedStatus(statusFilter);
     setCurrentPage(1);
-  };
-
-  const clearPrefills = () => {
-    setIsVehicleLocked(false);
-    setReportedVehicle(null);
-    setIsVehicleLoading(false);
-    setIsOwnerLocked(false);
-    setReportedOwner(null);
-    setLockedOwnerId(null);
-    setIsOwnerLoading(false);
-    setLockedRentalId(null);
-    setRentalSummary(null);
   };
 
   const handleSubmitForm = async (e) => {
@@ -426,7 +406,7 @@ const Complaints = () => {
         description: "",
         images: [],
       });
-      clearPrefills();
+      resetComplaintPrefill();
       setSuccessMsg("Your complaint was submitted successfully!");
       setTimeout(() => setSuccessMsg(""), 5000);
       refreshMyComplaints();
@@ -444,14 +424,14 @@ const Complaints = () => {
   const switchActiveTabToOwner = () => {
     setActiveTab("owner");
     setLocalErrorMsg("");
-    clearPrefills();
+    resetComplaintPrefill();
     setFormData((prev) => ({ ...prev, relatedTarget: "" }));
   };
 
   const switchActiveTabToVehicle = () => {
     setActiveTab("vehicle");
     setLocalErrorMsg("");
-    clearPrefills();
+    resetComplaintPrefill();
     setFormData((prev) => ({ ...prev, relatedTarget: "" }));
   };
 
@@ -484,8 +464,8 @@ const Complaints = () => {
 
   const emptyMessage =
     appliedStatus !== "all" ||
-    appliedFromDate !== formatDateForInput(sixMonthsAgo) ||
-    appliedToDate !== formatDateForInput(today)
+    appliedFromDate !== defaultRange.from ||
+    appliedToDate !== defaultRange.to
       ? "No complaints found for the selected period."
       : "You have not submitted any complaints yet.";
 
@@ -494,11 +474,7 @@ const Complaints = () => {
     : "";
 
   const reportedOwnerJoined = reportedOwner?.createdAt
-    ? new Date(reportedOwner.createdAt).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+    ? formatSubmittedDate(reportedOwner.createdAt)
     : null;
 
   const reportedOwnerNameVehicle = reportedVehicle

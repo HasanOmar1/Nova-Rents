@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./BookingModal.module.css";
 import { useRentContext } from "../../context/RentContext";
+import { formatDateForInput } from "../../utils/dateFormat";
 import AsyncButton from "../AsyncButton/AsyncButton";
 
 const BookingModal = ({ isOpen, onClose, vehicle }) => {
@@ -122,17 +123,10 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
       return;
     }
 
-    const formatDateToString = (dateObj) => {
-      const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-      const day = String(dateObj.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    };
-
     const bookingPayload = {
       licensePlate: vehicle.licensePlate,
-      startDate: formatDateToString(startDate),
-      endDate: formatDateToString(endDate),
+      startDate: formatDateForInput(startDate),
+      endDate: formatDateForInput(endDate),
     };
 
     setIsSubmitting(true);

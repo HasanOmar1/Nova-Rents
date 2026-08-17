@@ -3,6 +3,7 @@ import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
 import { useGovApisContext } from "../../context/GovApisContext";
 import { formattedMinDate } from "../../utils/minMaxDate";
+import { formatDateForInput } from "../../utils/dateFormat";
 import ExactPickupLocationPicker from "../ExactPickupLocationPicker/ExactPickupLocationPicker";
 import AsyncButton from "../AsyncButton/AsyncButton";
 
@@ -69,15 +70,6 @@ const VEHICLE_COLORS = [
   "Yellow",
   "Other",
 ];
-
-const formatDateForInput = (dateString) => {
-  if (!dateString) return "";
-  const d = new Date(dateString);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   const dialogRef = useRef(null);

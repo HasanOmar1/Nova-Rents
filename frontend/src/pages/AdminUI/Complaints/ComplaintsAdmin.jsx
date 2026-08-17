@@ -11,27 +11,23 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
-
-// Local-time date formatting (toISOString would shift the day near midnight)
-const formatDateForInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+import { createRecentMonthRange } from "../../../utils/dateFormat";
+import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
 
 const ComplaintsAdmin = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    currentPage,
+    setCurrentPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter();
 
-  const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-
+  const [defaultRange] = useState(createRecentMonthRange);
   // Editable input values — changing these sends no request.
-  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
-  const [toDate, setToDate] = useState(formatDateForInput(today));
+  const [fromDate, setFromDate] = useState(defaultRange.from);
+  const [toDate, setToDate] = useState(defaultRange.to);
   // Applied query values — only updated when the user presses Apply, so the
   // chart never refetches with a half-edited range.
   const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
@@ -68,15 +64,6 @@ const ComplaintsAdmin = () => {
       setAppliedFromDate(fromDate);
       setAppliedToDate(toDate);
     }
-  };
-
-  const handleStatusChange = (valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
-
-    setStatusFilter(status);
-    setCurrentPage(1);
   };
 
   const openReviewModal = (complaint) => {

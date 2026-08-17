@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import styles from "./OwnerVehicleReportsModal.module.css";
+import { formatComplaintStatus } from "../../utils/displayFormat";
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -9,12 +10,6 @@ const formatDate = (value) => {
     month: "short",
     day: "numeric",
   });
-};
-
-const statusLabel = (status) => {
-  if (status === "in_review") return "In review";
-  if (!status) return "—";
-  return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
 /**
@@ -91,7 +86,7 @@ const OwnerVehicleReportsModal = ({
                 <div className={styles.reportTop}>
                   <h3 className={styles.reportTitle}>{report.title}</h3>
                   <span className={styles.badge}>
-                    {statusLabel(report.status)}
+                    {formatComplaintStatus(report.status, "—")}
                   </span>
                 </div>
               </section>

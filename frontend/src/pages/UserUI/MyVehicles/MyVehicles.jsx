@@ -16,12 +16,17 @@ import OwnerVehicleReportsModal from "../../../components/OwnerVehicleReportsMod
 import Pagination from "../../../components/Pagination/Pagination";
 import { useVehicleContext } from "../../../context/VehicleContext";
 import { useComplaintContext } from "../../../context/ComplaintContext";
+import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
 import styles from "./MyVehicles.module.css";
 
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const {
+    currentPage,
+    setCurrentPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter();
   const [selectedVehicleForReports, setSelectedVehicleForReports] =
     useState(null);
 
@@ -59,19 +64,10 @@ const MyVehicles = () => {
     if (pagination?.totalPages && currentPage > pagination.totalPages) {
       setCurrentPage(pagination.totalPages || 1);
     }
-  }, [pagination?.totalPages, currentPage]);
+  }, [pagination?.totalPages, currentPage, setCurrentPage]);
 
   const openAddVehMenu = () => setIsOpen(true);
   const closeAddVehMenu = () => setIsOpen(false);
-
-  const handleStatusChange = (valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
-
-    setStatusFilter(status);
-    setCurrentPage(1);
-  };
 
   const handleNextPage = () => {
     if (pagination?.currentPage < pagination?.totalPages) {

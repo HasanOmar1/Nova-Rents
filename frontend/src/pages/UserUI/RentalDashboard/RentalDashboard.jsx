@@ -14,6 +14,7 @@ import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
 import Pagination from "../../../components/Pagination/Pagination";
 import RentalRequestsModal from "../../../components/RentalRequestsModal/RentalRequestsModal";
+import { formatShortDate } from "../../../utils/dateFormat";
 
 // takes an object and returns an array of the object values
 const groupByVehicle = (rentalsArray) => {
@@ -54,13 +55,6 @@ const compareTripsByStartDate = (firstTrip, secondTrip) =>
   new Date(firstTrip.startDate).getTime() -
     new Date(secondTrip.startDate).getTime() ||
   Number(firstTrip.rentalId) - Number(secondTrip.rentalId);
-
-const formatDate = (dateStr) =>
-  new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
 
 const formatRentalTotal = (totalPrice) =>
   new Intl.NumberFormat("en-US", {
@@ -291,8 +285,8 @@ const RentalDashboard = () => {
                         <Car size={14} /> Plate: {rental.licensePlate}
                       </p>
                       <p>
-                        <Calendar size={14} /> {formatDate(rental.startDate)} -{" "}
-                        {formatDate(rental.endDate)}
+                        <Calendar size={14} /> {formatShortDate(rental.startDate)} -{" "}
+                        {formatShortDate(rental.endDate)}
                       </p>
                       {ownerName && <p>Vehicle owner: {ownerName}</p>}
                     </div>
@@ -411,8 +405,8 @@ const RentalDashboard = () => {
                         <Car size={14} /> Plate: {rental.licensePlate}
                       </p>
                       <p>
-                        <Calendar size={14} /> {formatDate(rental.startDate)} -{" "}
-                        {formatDate(rental.endDate)}
+                        <Calendar size={14} /> {formatShortDate(rental.startDate)} -{" "}
+                        {formatShortDate(rental.endDate)}
                       </p>
                       {ownerName && <p>Vehicle owner: {ownerName}</p>}
                     </div>

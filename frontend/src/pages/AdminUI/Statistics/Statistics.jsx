@@ -8,14 +8,8 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
-
-// Local-time date formatting (toISOString would shift the day near midnight)
-const formatDateForInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+import { createRecentMonthRange } from "../../../utils/dateFormat";
+import { formatCurrency } from "../../../utils/displayFormat";
 
 const Statistics = () => {
   const {
@@ -25,11 +19,9 @@ const Statistics = () => {
     getStatistics,
   } = useReportContext();
 
-  const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-
-  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
-  const [toDate, setToDate] = useState(formatDateForInput(today));
+  const [defaultRange] = useState(createRecentMonthRange);
+  const [fromDate, setFromDate] = useState(defaultRange.from);
+  const [toDate, setToDate] = useState(defaultRange.to);
 
   const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
 
@@ -50,7 +42,7 @@ const Statistics = () => {
       title: "Booking Value",
       value: isStatisticsLoading
         ? "..."
-        : `$${(Number(statisticsData.bookingValue) || 0).toLocaleString()}`,
+        : formatCurrency(statisticsData.bookingValue),
       icon: <BadgeDollarSign size={28} color="#a7d2eb" />,
     },
     {
