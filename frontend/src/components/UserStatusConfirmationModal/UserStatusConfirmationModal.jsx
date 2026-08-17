@@ -1,11 +1,5 @@
 import { useId } from "react";
-import {
-  AlertTriangle,
-  Ban,
-  ShieldCheck,
-  UserRound,
-  X,
-} from "lucide-react";
+import { AlertTriangle, Ban, ShieldCheck, UserRound, X } from "lucide-react";
 import AsyncButton from "../AsyncButton/AsyncButton";
 import { useModalDialog } from "../../hooks/useModalDialog";
 import styles from "./UserStatusConfirmationModal.module.css";
@@ -19,7 +13,7 @@ const UserStatusConfirmationModal = ({
 }) => {
   const isOpen = Boolean(action && user);
   const isUnblock = action === "unblock";
-  const dialogRef = useModalDialog(isOpen, { lockBodyScroll: true });
+  const dialogRef = useModalDialog(isOpen);
   const titleId = useId();
   const descriptionId = useId();
 
@@ -133,9 +127,7 @@ const UserStatusConfirmationModal = ({
           </button>
           <AsyncButton
             type="button"
-            className={
-              isUnblock ? styles.unblockButton : styles.blockButton
-            }
+            className={isUnblock ? styles.unblockButton : styles.blockButton}
             onClick={onConfirm}
             loading={isUpdating}
             loadingText={isUnblock ? "Unblocking..." : "Blocking..."}
