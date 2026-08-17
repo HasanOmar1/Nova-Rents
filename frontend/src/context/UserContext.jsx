@@ -183,7 +183,8 @@ const UserContextProvider = ({ children }) => {
     try {
       setIsStatsLoading(true);
       const res = await axios.get(
-        `/users/stats/${email}?page=${currentPage}&limit=3`,
+        `/users/stats/${encodeURIComponent(email)}`,
+        { params: { page: currentPage, limit: 3 } },
       );
       setUserStatsPerEmail(res.data);
       setErrorMsg("");

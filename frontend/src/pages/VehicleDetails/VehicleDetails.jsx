@@ -17,7 +17,7 @@ import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
 import { parseImgs } from "../../utils/parseImgs";
 import { useUserContext } from "../../context/UserContext";
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useRentContext } from "../../context/RentContext";
 import BookingModal from "../../components/BookingModal/BookingModal";
 import { useVehicleContext } from "../../context/VehicleContext";
@@ -42,20 +42,23 @@ const hasAllDisplayedSpecifications = (vehicle) =>
 const formatVehicleForDetails = (vehicle) => {
   if (!vehicle) return null;
 
+  const derivedName = [vehicle.brandName, vehicle.modelName]
+    .filter(Boolean)
+    .join(" ");
+
   return {
     ...vehicle,
-    vehName:
-      vehicle.vehName ||
-      [vehicle.brandName, vehicle.modelName].filter(Boolean).join(" "),
+    vehName: derivedName || vehicle.vehName || "Vehicle",
   };
 };
 
 const VehicleDetails = () => {
-  const [hideBooking, setHideBooking] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { currentUser } = useUserContext();
   const { id } = useParams();
-  const { state: routeVehicle } = useLocation();
+  const { state: routeState } = useLocation();
+  const routeVehicle = routeState?.vehicle ?? routeState;
+  const routeReturnTo = routeState?.returnTo;
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [vehicle, setVehicle] = useState(() =>
@@ -75,43 +78,74 @@ const VehicleDetails = () => {
   } = useRentContext();
   const intervalRef = useRef(null);
   const imageUrls = vehicle?.image ? parseImgs(vehicle.image, true) : [];
-  const isOwnVehicle = currentUser?.email === vehicle?.ownerEmail;
+  const hasOwnerIds =
+    currentUser?.userId != null && vehicle?.ownerId != null;
+  const isOwnVehicle = hasOwnerIds
+    ? Number(currentUser.userId) === Number(vehicle.ownerId)
+    : Boolean(currentUser?.email && vehicle?.ownerEmail) &&
+      currentUser.email.toLowerCase() === vehicle.ownerEmail.toLowerCase();
   const plate = vehicle?.licensePlate || id;
+  const defaultVehicleListPath =
+    currentUser?.role === "admin" ? "/allVehicles" : "/vehicles";
+  const canUseReturnPath =
+    routeReturnTo === defaultVehicleListPath ||
+    (currentUser?.role === "user" && routeReturnTo === "/myVehicles");
+  const vehicleListPath = canUseReturnPath
+    ? routeReturnTo
+    : defaultVehicleListPath;
   const paidTripForVehicle = currentUser ? findPaidTripForVehicle(plate) : null;
   const canReportVehicle = Boolean(paidTripForVehicle);
+
+  const startSlideshow = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setCurrentIndex((prevIndex) => {
+        return prevIndex === imageUrls.length - 1 ? 0 : prevIndex + 1;
+      });
+    }, 2500);
+  }, [imageUrls.length]);
 
   useEffect(() => {
     let isCurrentRequest = true;
     const navigationVehicle = formatVehicleForDetails(routeVehicle);
 
-    setVehicle(navigationVehicle);
-    setVehicleLoadError("");
-
-    if (hasAllDisplayedSpecifications(navigationVehicle)) {
-      setIsVehicleLoading(false);
-      return () => {
-        isCurrentRequest = false;
-      };
-    }
-
-    setIsVehicleLoading(true);
-
     const loadCompleteVehicle = async () => {
-      const completeVehicle = await getVehicleByLicensePlate(id);
-      if (!isCurrentRequest) return;
+      try {
+        // Route state makes navigation feel instant, but the URL endpoint is
+        // the authority for ownership and other mutable vehicle data.
+        const completeVehicle = await getVehicleByLicensePlate(id, {
+          silent: true,
+        });
+        if (!isCurrentRequest) return;
 
-      if (completeVehicle) {
+        if (!completeVehicle) {
+          setVehicle(null);
+          setVehicleLoadError("Vehicle not found.");
+          return;
+        }
+
         setVehicle(
           formatVehicleForDetails({
             ...(navigationVehicle || {}),
             ...completeVehicle,
           }),
         );
-      } else if (!navigationVehicle) {
-        setVehicleLoadError("Vehicle details could not be loaded.");
-      }
+        setVehicleLoadError("");
+      } catch (error) {
+        if (!isCurrentRequest) return;
 
-      setIsVehicleLoading(false);
+        if (error?.response?.status === 404) {
+          setVehicle(null);
+          setVehicleLoadError("Vehicle not found.");
+        } else if (navigationVehicle) {
+          setVehicle(navigationVehicle);
+        } else {
+          setVehicle(null);
+          setVehicleLoadError("Vehicle details could not be loaded.");
+        }
+      } finally {
+        if (isCurrentRequest) setIsVehicleLoading(false);
+      }
     };
 
     loadCompleteVehicle();
@@ -122,19 +156,13 @@ const VehicleDetails = () => {
   }, [getVehicleByLicensePlate, id, routeVehicle]);
 
   useEffect(() => {
-    if (isOwnVehicle) {
-      setHideBooking(true);
-    } else setHideBooking(false);
-  }, [isOwnVehicle]);
-
-  useEffect(() => {
     if (imageUrls.length > 1) {
       startSlideshow();
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [imageUrls.length]);
+  }, [imageUrls.length, startSlideshow]);
 
   useEffect(() => {
     if (plate) fetchBookedDates(plate);
@@ -146,15 +174,6 @@ const VehicleDetails = () => {
       fetchRentalHistory();
     }
   }, [currentUser]);
-
-  const startSlideshow = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        return prevIndex === imageUrls.length - 1 ? 0 : prevIndex + 1;
-      });
-    }, 2500);
-  };
 
   const handleThumbnailClick = (index) => {
     setCurrentIndex(index);
@@ -189,7 +208,7 @@ const VehicleDetails = () => {
     return (
       <div className={`${styles.VehicleDetails} page`}>
         <p>{vehicleLoadError || "Vehicle not found."}</p>
-        <Link to="/vehicles" className={styles.backBtn}>
+        <Link to={vehicleListPath} className={styles.backBtn}>
           Back to vehicles
         </Link>
       </div>
@@ -199,6 +218,7 @@ const VehicleDetails = () => {
   const ownerFullName = [vehicle.ownerFirstName, vehicle.ownerLastName]
     .filter(Boolean)
     .join(" ");
+  const ownerLabel = ownerFullName || vehicle.ownerEmail || "Unknown owner";
 
   const cardsData = [
     {
@@ -228,10 +248,10 @@ const VehicleDetails = () => {
       title: "Owner",
       value: (
         <span className={styles.ownerLinkContainer}>
-          <span>{ownerFullName}</span>
+          <span>{ownerLabel}</span>
           {vehicle.ownerEmail && (
             <Link
-              to={`/userStats/${vehicle.ownerEmail}`}
+              to={`/userStats/${encodeURIComponent(vehicle.ownerEmail)}`}
               className={styles.viewProfileLink}
             >
               <ExternalLink size={12} /> View Profile
@@ -253,7 +273,7 @@ const VehicleDetails = () => {
       <div className={styles.top}>
         <h1>{vehicle.vehName}</h1>
         <div className={styles.btnsContainer}>
-          <Link to={"/vehicles"} className={styles.backBtn}>
+          <Link to={vehicleListPath} className={styles.backBtn}>
             Back to vehicles
           </Link>
           {!isOwnVehicle && (
@@ -322,7 +342,7 @@ const VehicleDetails = () => {
                   </p>
                 </div>
 
-                {!hideBooking &&
+                {!isOwnVehicle &&
                   vehicle.status === "available" &&
                   vehicle.ownerStatus !== "blocked" && (
                     <button

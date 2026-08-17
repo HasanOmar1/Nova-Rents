@@ -5,12 +5,13 @@ const { isAuthenticated, isAdmin } = require("../middleWare/authMiddleware");
 const vehicleQueries = require("../controllers/vehiclesController");
 const upload = require("../middleWare/uploadMiddleware");
 
-router.get("/", vehicleQueries.getAllVehicles);
+router.get("/", isAuthenticated, vehicleQueries.getAllVehicles);
+router.get("/admin", isAdmin, vehicleQueries.getAdminVehicles);
 router.get("/brands", vehicleQueries.getAllCarBrands);
 router.get("/models", vehicleQueries.getAllCarModels);
 router.get("/types", vehicleQueries.getAllCarTypes);
 router.get("/myVehicles", isAuthenticated, vehicleQueries.getUserVehicles);
-router.get("/:licensePlate", vehicleQueries.getVehicleById);
+router.get("/:licensePlate", isAuthenticated, vehicleQueries.getVehicleById);
 router.delete("/:licensePlate", isAuthenticated, vehicleQueries.deleteVehicle);
 
 router.put(

@@ -40,15 +40,26 @@ const VehiclesCardsTable = ({
 
   const imageUrl = parseImgs(veh.image);
   const fullName = `${veh.brandName} ${veh.modelName}`;
-  const ownerFullName = `${currentUser.firstName} ${currentUser.lastName}`;
-
-  const vehWithUser = {
-    ...veh,
-    ownerFirstName: currentUser?.firstName,
-    ownerLastName: currentUser?.lastName,
-    ownerPhone: currentUser?.phone,
-    ownerEmail: currentUser?.email,
-  };
+  // Admin inventory vehicles already contain their authoritative owner from
+  // the backend. My Vehicles does not join owner details, so only that view
+  // needs the signed-in owner as a fallback.
+  const vehicleForDetails = admin
+    ? veh
+    : {
+        ...veh,
+        ownerFirstName: veh.ownerFirstName ?? currentUser?.firstName,
+        ownerLastName: veh.ownerLastName ?? currentUser?.lastName,
+        ownerPhone: veh.ownerPhone ?? currentUser?.phone,
+        ownerEmail: veh.ownerEmail ?? currentUser?.email,
+      };
+  const ownerFullName = [
+    vehicleForDetails.ownerFirstName,
+    vehicleForDetails.ownerLastName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const ownerLabel =
+    vehicleForDetails.ownerEmail || ownerFullName || "Unknown owner";
 
   return (
     <div className={styles.VehiclesCardsTable}>
@@ -56,7 +67,10 @@ const VehiclesCardsTable = ({
         <Link
           className={styles.nameContainer}
           to={`/vehicles/${veh.licensePlate}`}
-          state={vehWithUser}
+          state={{
+            vehicle: vehicleForDetails,
+            returnTo: admin ? "/allVehicles" : "/myVehicles",
+          }}
         >
           <img src={imageUrl} alt={fullName} />
           <div className={styles.nameAndYear}>
@@ -87,7 +101,7 @@ const VehiclesCardsTable = ({
       <p className={styles.type}>{veh.carTypeName}</p>
       <p className={styles.address}>{veh.address}</p>
       <p className={styles.price}>${veh.price}</p>
-      {admin && <p className={styles.owner}>{ownerFullName}</p>}
+      {admin && <p className={styles.owner}>{ownerLabel}</p>}
       <p
         className={`${styles.status} ${veh.status === "available" ? styles.available : veh.status === "rented" ? styles.rented : styles.maintenance} `}
       >

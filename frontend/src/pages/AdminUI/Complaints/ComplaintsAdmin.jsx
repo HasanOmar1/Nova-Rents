@@ -1,5 +1,11 @@
 import styles from "./ComplaintsAdmin.module.css";
-import { FileWarning, Clock, AlertTriangle, BookCheck } from "lucide-react";
+import {
+  FileWarning,
+  Clock,
+  AlertTriangle,
+  BookCheck,
+  CalendarRange,
+} from "lucide-react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import ComplaintsAdminCards from "../../../components/ComplaintsCards/ComplaintsAdminCards";
@@ -161,34 +167,6 @@ const ComplaintsAdmin = () => {
             <option value="closed">Closed</option>
           </select>
         </div>
-        <div className={styles.filterGroup}>
-          <label htmlFor="trendsFromDate">From</label>
-          <input
-            id="trendsFromDate"
-            type="date"
-            value={fromDate}
-            max={toDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-        </div>
-        <div className={styles.filterGroup}>
-          <label htmlFor="trendsToDate">To</label>
-          <input
-            id="trendsToDate"
-            type="date"
-            value={toDate}
-            min={fromDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </div>
-        <button
-          type="button"
-          className={styles.applyBtn}
-          onClick={handleApplyDates}
-          disabled={!isRangeValid || isComplaintTrendsLoading}
-        >
-          {isComplaintTrendsLoading ? "Loading..." : "Apply"}
-        </button>
       </div>
 
       <div className={styles.complaintsContainer}>
@@ -247,6 +225,52 @@ const ComplaintsAdmin = () => {
       </div>
 
       <div className={styles.trendsContainer}>
+        <div className={styles.trendsToolbar}>
+          <div className={styles.trendsToolbarHeading}>
+            <span className={styles.trendsIcon} aria-hidden="true">
+              <CalendarRange size={20} />
+            </span>
+            <div>
+              <h2>Trend date range</h2>
+              <p>
+                Choose the chart period. The selected complaint status also
+                applies.
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.trendsDateControls}>
+            <div className={styles.filterGroup}>
+              <label htmlFor="trendsFromDate">From</label>
+              <input
+                id="trendsFromDate"
+                type="date"
+                value={fromDate}
+                max={toDate}
+                onChange={(event) => setFromDate(event.target.value)}
+              />
+            </div>
+            <div className={styles.filterGroup}>
+              <label htmlFor="trendsToDate">To</label>
+              <input
+                id="trendsToDate"
+                type="date"
+                value={toDate}
+                min={fromDate}
+                onChange={(event) => setToDate(event.target.value)}
+              />
+            </div>
+            <button
+              type="button"
+              className={styles.applyBtn}
+              onClick={handleApplyDates}
+              disabled={!isRangeValid || isComplaintTrendsLoading}
+            >
+              {isComplaintTrendsLoading ? "Loading..." : "Apply range"}
+            </button>
+          </div>
+        </div>
+
         {complaintTrendsErrorMsg && (
           <p className={styles.trendsError}>{complaintTrendsErrorMsg}</p>
         )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import styles from "./AllVehicles.module.css";
 import {
   Car,
@@ -16,7 +16,7 @@ import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilte
 
 const AllVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { getAllVehicles, allVehicles, allVehStats, allVehPagination } =
+  const { getAdminVehicles, allVehicles, allVehStats, allVehPagination } =
     useVehicleContext();
   const {
     currentPage,
@@ -29,8 +29,17 @@ const AllVehicles = () => {
   });
 
   useEffect(() => {
-    getAllVehicles({ status: statusFilter }, currentPage);
-  }, [statusFilter, currentPage]);
+    getAdminVehicles({ status: statusFilter }, currentPage);
+  }, [getAdminVehicles, statusFilter, currentPage]);
+
+  const totalVehicles = Number(allVehPagination?.totalVehicles) || 0;
+  const pageLimit = Number(allVehPagination?.limit) || 6;
+  const firstVehicleNumber = allVehicles?.length
+    ? (currentPage - 1) * pageLimit + 1
+    : 0;
+  const lastVehicleNumber = allVehicles?.length
+    ? firstVehicleNumber + allVehicles.length - 1
+    : 0;
 
   const openAddBrandMenu = () => setIsOpen(true);
   const closeAddBrandMenu = () => setIsOpen(false);
@@ -48,6 +57,13 @@ const AllVehicles = () => {
       value: allVehStats?.available || 0,
       icon: <CheckCircle2 size={28} color="#a7d2eb" />,
       onClick: () => handleStatusChange("available"),
+      isAction: true,
+    },
+    {
+      title: "Rented",
+      value: allVehStats?.rented || 0,
+      icon: <CalendarClock size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("rented"),
       isAction: true,
     },
     {
@@ -82,12 +98,14 @@ const AllVehicles = () => {
           <div className={styles.filterContainer}>
             <label htmlFor="status">Filter:</label>
             <select
+              id="status"
               name="status"
               value={statusFilter}
               onChange={handleStatusChange}
             >
               <option value="all">All Vehicles</option>
               <option value="available">Available</option>
+              <option value="rented">Rented</option>
               <option value="maintenance">Maintenance</option>
               <option value="inactive">Inactive</option>
             </select>
@@ -132,11 +150,11 @@ const AllVehicles = () => {
               </div>
             ))}
             <Pagination
-              currentPage={allVehPagination?.currentPage}
+              currentPage={currentPage}
               totalPages={allVehPagination?.totalPages}
               handlePrevPage={previousPage}
               handleNextPage={nextPage}
-              leftText={`Total Vehicles: ${allVehPagination?.totalVehicles || 0}`}
+              leftText={`Showing ${firstVehicleNumber}-${lastVehicleNumber} of ${totalVehicles} vehicles`}
             />
           </>
         ) : (

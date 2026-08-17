@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Header from "./components/Header/Header";
 import { useUserContext } from "./context/UserContext";
 import LoginRegister from "./pages/LoginRegister/LoginRegister";
@@ -24,6 +24,7 @@ import ReportedUsersProvider from "./context/ReportedUsersContext";
 
 function App() {
   const { currentUser, isLoading } = useUserContext();
+  const { pathname } = useLocation();
 
   if (isLoading) {
     return (
@@ -87,7 +88,10 @@ function App() {
 
         {currentUser && (
           <>
-            <Route path="/vehicles/:id" element={<VehicleDetails />} />
+            <Route
+              path="/vehicles/:id"
+              element={<VehicleDetails key={pathname} />}
+            />
             <Route path="/userStats/:email" element={<UserStats />} />
           </>
         )}

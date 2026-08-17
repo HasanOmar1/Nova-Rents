@@ -1,7 +1,8 @@
 import { useActivityContext } from "../../context/ActivityContext";
 import styles from "./UsersCards.module.css";
 import { useState } from "react";
-import { Ban, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Ban, ExternalLink, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import AsyncButton from "../AsyncButton/AsyncButton";
 
 const UsersCards = ({ user, blockUser, unBlockUser }) => {
@@ -12,6 +13,7 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
   const isProtected = user.role !== "user";
   const fullName =
     `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
+  const profilePath = `/userStats/${encodeURIComponent(user.email)}`;
 
   const handleUserAction = async () => {
     if (isUpdating) return;
@@ -32,7 +34,21 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
 
   return (
     <div className={styles.UsersCards}>
-      <p className={styles.name}>{fullName}</p>
+      <Link
+        className={styles.profileLink}
+        to={profilePath}
+        aria-label={`View ${fullName}'s profile`}
+        title={`View ${fullName}'s profile`}
+      />
+
+      <p className={styles.name}>
+        <span>{fullName}</span>
+        <ExternalLink
+          size={15}
+          className={styles.profileIcon}
+          aria-hidden="true"
+        />
+      </p>
       <p className={styles.email}>{user.email}</p>
       <p
         className={`${styles.status} ${user.status === "active" ? styles.active : styles.blocked}`}
