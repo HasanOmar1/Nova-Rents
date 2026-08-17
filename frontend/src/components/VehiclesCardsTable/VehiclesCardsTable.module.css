@@ -1,37 +1,47 @@
 .VehiclesCardsTable {
+  align-items: center;
+  padding: 15px 20px;
+  color: var(--gray);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.VehiclesCardsTable.ownerRow {
   display: flex;
   justify-content: space-between;
-  padding: 15px 20px;
-  font-size: 0.65rem;
-  font-weight: bold;
-  color: var(--gray);
-  align-items: center;
-  transition: 0.3s ease;
+  transition: background-color 0.25s ease;
 }
 
 .VehiclesCardsTable .vehicleIdentity {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+}
+
+.VehiclesCardsTable.ownerRow .vehicleIdentity {
   width: 25%;
 }
 
 .VehiclesCardsTable .nameContainer {
-  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
   overflow: hidden;
   padding: 0;
-  justify-content: flex-start;
-  color: inherit;
-  text-decoration: none;
-  display: flex;
-  gap: 20px;
-  width: 100%;
-  align-items: center;
-  border-radius: 20px;
   border: 1px solid transparent;
+  border-radius: 18px;
   background: transparent;
-  font-size: 0.65rem;
+  color: inherit;
+  font-size: inherit;
+  text-decoration: none;
+}
+
+.VehiclesCardsTable.ownerRow .nameContainer {
   transition:
     transform 0.22s ease,
     background-color 0.22s ease,
@@ -39,81 +49,85 @@
     box-shadow 0.22s ease;
 }
 
-.VehiclesCardsTable .nameContainer:hover,
-.VehiclesCardsTable .nameContainer:focus-visible {
-  transform: translateY(-2px);
+.VehiclesCardsTable.ownerRow .nameContainer:hover,
+.VehiclesCardsTable.ownerRow .nameContainer:focus-visible {
+  border-color: rgba(59, 130, 246, 0.45);
   background: linear-gradient(
     110deg,
     var(--icons-bg-color),
     rgba(24, 39, 66, 0.32)
   );
-  border-color: rgba(59, 130, 246, 0.45);
   box-shadow: 0 10px 24px rgba(2, 6, 23, 0.35);
-  cursor: pointer;
+  transform: translateY(-2px);
 }
 
-.VehiclesCardsTable .nameContainer:focus-visible {
+.VehiclesCardsTable.ownerRow .nameContainer:focus-visible {
   outline: 2px solid var(--input-focus-border-color);
   outline-offset: 2px;
 }
 
 .VehiclesCardsTable img {
-  width: 130px;
-  height: 100px;
-  border-radius: 20px;
-  object-fit: cover;
+  width: 120px;
+  height: 90px;
   flex-shrink: 0;
+  border-radius: 16px;
+  object-fit: cover;
   transition:
     transform 0.25s ease,
     filter 0.25s ease;
 }
 
-.VehiclesCardsTable .nameContainer:hover img,
-.VehiclesCardsTable .nameContainer:focus-visible img {
-  transform: scale(1.035);
+.VehiclesCardsTable.ownerRow .nameContainer:hover img,
+.VehiclesCardsTable.ownerRow .nameContainer:focus-visible img,
+.VehiclesCardsTable.adminRow:hover img,
+.VehiclesCardsTable.adminRow:focus-visible img {
   filter: saturate(1.08) brightness(1.04);
+  transform: scale(1.035);
 }
 
 .VehiclesCardsTable .nameAndYear {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
   min-width: 0;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .VehiclesCardsTable .name {
-  color: white;
-  line-height: 1.35;
   overflow-wrap: anywhere;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  line-height: 1.35;
   transition: color 0.2s ease;
 }
 
 .VehiclesCardsTable .year {
-  color: var(--gray);
-  transition: color 0.2s ease;
+  color: #a5a8af;
 }
 
-.VehiclesCardsTable .nameContainer:hover .name,
-.VehiclesCardsTable .nameContainer:focus-visible .name {
+.VehiclesCardsTable .licensePlate {
+  color: #718096;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.VehiclesCardsTable.ownerRow .nameContainer:hover .name,
+.VehiclesCardsTable.ownerRow .nameContainer:focus-visible .name,
+.VehiclesCardsTable.adminRow:hover .name,
+.VehiclesCardsTable.adminRow:focus-visible .name {
   color: var(--icons-color);
-}
-
-.VehiclesCardsTable .nameContainer:hover .year,
-.VehiclesCardsTable .nameContainer:focus-visible .year {
-  color: #cbd5e1;
 }
 
 .VehiclesCardsTable .reportBadge,
 .VehiclesCardsTable .reportBadgeMuted {
   display: inline-flex;
+  width: fit-content;
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
   border-radius: 8px;
   font-size: 0.7rem;
-  font-weight: bold;
-  cursor: pointer;
-  width: fit-content;
+  font-weight: 700;
   transition: background-color 0.2s ease;
 }
 
@@ -143,24 +157,30 @@
   outline-offset: 2px;
 }
 
-.VehiclesCardsTable .type,
-.VehiclesCardsTable .address,
-.VehiclesCardsTable .price,
-.VehiclesCardsTable .status,
-.VehiclesCardsTable .owner,
-.VehiclesCardsTable .actionsContainer {
-  width: 15%;
+.VehiclesCardsTable .cellLabel {
+  display: none;
 }
 
-.VehiclesCardsTable .owner {
+.VehiclesCardsTable .cellValue {
   min-width: 0;
-  overflow-wrap: anywhere;
+}
+
+.VehiclesCardsTable .statusCell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
 }
 
 .VehiclesCardsTable .status {
-  padding: 10px;
-  text-align: center;
+  display: inline-flex;
+  min-width: 100px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
   border-radius: 10px;
+  text-align: center;
+  text-transform: capitalize;
+  white-space: nowrap;
 }
 
 .VehiclesCardsTable .available {
@@ -169,32 +189,126 @@
 }
 
 .VehiclesCardsTable .rented {
-  color: #f9e081;
   background-color: #392d1f;
+  color: #f9e081;
 }
 
 .VehiclesCardsTable .maintenance {
-  color: #f9bb81;
   background-color: #39251f;
+  color: #f9bb81;
 }
 
-.VehiclesCardsTable .address {
-  font-size: 0.55rem;
+.VehiclesCardsTable .inactive {
+  background-color: rgba(100, 116, 139, 0.16);
+  color: #cbd5e1;
+}
+
+.VehiclesCardsTable .unknownStatus {
+  background-color: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
+/* The admin inventory uses one native link for the complete row. */
+.VehiclesCardsTable.adminRow {
+  display: grid;
+  width: 100%;
+  min-height: 126px;
+  grid-template-columns: var(
+    --all-vehicles-columns,
+    minmax(200px, 1.7fr) minmax(72px, 0.65fr) minmax(110px, 1fr)
+      minmax(72px, 0.6fr) minmax(150px, 1.35fr) minmax(105px, 0.8fr)
+  );
+  gap: var(--all-vehicles-column-gap, 16px);
+  justify-content: stretch;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--gray);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.22s ease,
+    box-shadow 0.22s ease,
+    color 0.22s ease;
+}
+
+.VehiclesCardsTable.adminRow:hover,
+.VehiclesCardsTable.adminRow:focus-visible {
+  background: linear-gradient(
+    100deg,
+    rgba(29, 78, 216, 0.12),
+    rgba(15, 23, 42, 0.2) 58%,
+    rgba(14, 165, 233, 0.07)
+  );
+  box-shadow: inset 4px 0 0 rgba(96, 165, 250, 0.78);
+  color: #b9c1cf;
+}
+
+.VehiclesCardsTable.adminRow:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.7);
+  outline-offset: -3px;
+}
+
+.VehiclesCardsTable.adminRow .vehicleIdentity,
+.VehiclesCardsTable.adminRow .type,
+.VehiclesCardsTable.adminRow .address,
+.VehiclesCardsTable.adminRow .price,
+.VehiclesCardsTable.adminRow .owner,
+.VehiclesCardsTable.adminRow .statusCell {
+  width: auto;
+  min-width: 0;
+}
+
+.VehiclesCardsTable.adminRow .nameContainer {
+  pointer-events: none;
+}
+
+.VehiclesCardsTable.adminRow .address {
+  overflow-wrap: anywhere;
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.VehiclesCardsTable.adminRow .owner .cellValue {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.VehiclesCardsTable.adminRow .statusCell {
+  justify-content: flex-end;
+}
+
+.VehiclesCardsTable.ownerRow .type,
+.VehiclesCardsTable.ownerRow .address,
+.VehiclesCardsTable.ownerRow .price,
+.VehiclesCardsTable.ownerRow .statusCell,
+.VehiclesCardsTable.ownerRow .actionsContainer {
+  width: 15%;
+}
+
+.VehiclesCardsTable.ownerRow .address {
+  font-size: 0.58rem;
+}
+
+.VehiclesCardsTable.ownerRow .status {
+  width: 100%;
 }
 
 .VehiclesCardsTable .actionsContainer {
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
-  justify-content: right;
 }
 
 .VehiclesCardsTable .actionsContainer p {
   padding: 10px 15px;
   border: var(--cards-border);
   border-radius: 20px;
-  cursor: pointer;
   background-color: #212226;
-  transition: all 0.3s;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
 .VehiclesCardsTable .actionsContainer .delete {
@@ -203,110 +317,205 @@
 }
 
 .VehiclesCardsTable .actionsContainer p:hover {
-  scale: 1.1;
+  transform: scale(1.1);
 }
 
-/* Tablet (1024px) */
+.VehiclesCardsTable .actionsContainer .disabledAction {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+@container (max-width: 820px) {
+  .VehiclesCardsTable.adminRow {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "vehicle vehicle"
+      "type price"
+      "address address"
+      "owner status";
+    gap: 12px 16px;
+    padding: 18px;
+  }
+
+  .VehiclesCardsTable.adminRow .vehicleIdentity {
+    grid-area: vehicle;
+    padding-bottom: 4px;
+  }
+
+  .VehiclesCardsTable.adminRow .type {
+    grid-area: type;
+  }
+
+  .VehiclesCardsTable.adminRow .address {
+    grid-area: address;
+  }
+
+  .VehiclesCardsTable.adminRow .price {
+    grid-area: price;
+  }
+
+  .VehiclesCardsTable.adminRow .owner {
+    grid-area: owner;
+  }
+
+  .VehiclesCardsTable.adminRow .statusCell {
+    grid-area: status;
+  }
+
+  .VehiclesCardsTable.adminRow .type,
+  .VehiclesCardsTable.adminRow .address,
+  .VehiclesCardsTable.adminRow .price,
+  .VehiclesCardsTable.adminRow .owner,
+  .VehiclesCardsTable.adminRow .statusCell {
+    display: flex;
+    min-height: 60px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid rgba(71, 85, 105, 0.5);
+    border-radius: 10px;
+    background-color: rgba(15, 23, 42, 0.38);
+  }
+
+  .VehiclesCardsTable.adminRow .cellLabel {
+    display: block;
+    color: #6f7b8f;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .VehiclesCardsTable.adminRow .owner .cellValue {
+    overflow: visible;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .VehiclesCardsTable.adminRow .status {
+    min-width: 112px;
+  }
+}
+
 @media (max-width: 1024px) {
-  .VehiclesCardsTable {
+  .VehiclesCardsTable.ownerRow {
     flex-wrap: wrap;
     gap: 20px;
   }
 
-  .VehiclesCardsTable .vehicleIdentity,
-  .VehiclesCardsTable .nameContainer {
+  .VehiclesCardsTable.ownerRow .vehicleIdentity,
+  .VehiclesCardsTable.ownerRow .nameContainer {
     width: 100%;
   }
 
-  .VehiclesCardsTable .reportBadge,
-  .VehiclesCardsTable .reportBadgeMuted {
-    margin-left: 150px;
+  .VehiclesCardsTable.ownerRow .reportBadge,
+  .VehiclesCardsTable.ownerRow .reportBadgeMuted {
+    margin-left: 136px;
   }
 
-  .VehiclesCardsTable .type,
-  .VehiclesCardsTable .address,
-  .VehiclesCardsTable .price,
-  .VehiclesCardsTable .status,
-  .VehiclesCardsTable .owner {
+  .VehiclesCardsTable.ownerRow .type,
+  .VehiclesCardsTable.ownerRow .address,
+  .VehiclesCardsTable.ownerRow .price,
+  .VehiclesCardsTable.ownerRow .statusCell {
     width: auto;
     flex: 1;
   }
 
-  .VehiclesCardsTable .actionsContainer {
+  .VehiclesCardsTable.ownerRow .actionsContainer {
     width: 100%;
-    justify-content: flex-end;
   }
 }
 
-/* Mobile (768px) */
 @media (max-width: 768px) {
-  .VehiclesCardsTable .type,
-  .VehiclesCardsTable .address,
-  .VehiclesCardsTable .price,
-  .VehiclesCardsTable .status,
-  .VehiclesCardsTable .owner {
+  .VehiclesCardsTable.ownerRow .type,
+  .VehiclesCardsTable.ownerRow .address,
+  .VehiclesCardsTable.ownerRow .price,
+  .VehiclesCardsTable.ownerRow .statusCell {
     flex: 1 1 40%;
     margin-bottom: 5px;
   }
 
-  .VehiclesCardsTable .actionsContainer {
+  .VehiclesCardsTable.ownerRow .actionsContainer {
     justify-content: flex-start;
   }
 }
 
-/* Small Mobile (480px) */
-@media (max-width: 480px) {
-  .VehiclesCardsTable {
-    flex-direction: column;
-    align-items: flex-start;
+@container (max-width: 520px) {
+  .VehiclesCardsTable.adminRow {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "vehicle"
+      "type"
+      "address"
+      "price"
+      "owner"
+      "status";
     padding: 15px;
-    gap: 15px;
   }
 
-  .VehiclesCardsTable .nameContainer img {
+  .VehiclesCardsTable.adminRow img {
+    width: 98px;
+    height: 74px;
+  }
+
+  .VehiclesCardsTable.adminRow .status {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .VehiclesCardsTable.ownerRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .VehiclesCardsTable.ownerRow .nameContainer img {
     width: 100px;
     height: 80px;
   }
 
-  .VehiclesCardsTable .type,
-  .VehiclesCardsTable .address,
-  .VehiclesCardsTable .price,
-  .VehiclesCardsTable .status,
-  .VehiclesCardsTable .owner {
+  .VehiclesCardsTable.ownerRow .type,
+  .VehiclesCardsTable.ownerRow .address,
+  .VehiclesCardsTable.ownerRow .price,
+  .VehiclesCardsTable.ownerRow .statusCell,
+  .VehiclesCardsTable.ownerRow .actionsContainer {
     width: 100%;
     flex: none;
   }
 
-  .VehiclesCardsTable .reportBadge,
-  .VehiclesCardsTable .reportBadgeMuted {
+  .VehiclesCardsTable.ownerRow .reportBadge,
+  .VehiclesCardsTable.ownerRow .reportBadgeMuted {
     margin-left: 0;
   }
 
-  .VehiclesCardsTable .actionsContainer {
-    width: 100%;
-    margin-top: 5px;
-  }
-
-  .VehiclesCardsTable .actionsContainer p {
-    padding: 12px 15px;
-    flex: 1;
+  .VehiclesCardsTable.ownerRow .actionsContainer p {
     display: flex;
+    flex: 1;
     justify-content: center;
+    padding: 12px 15px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .VehiclesCardsTable,
   .VehiclesCardsTable .nameContainer,
-  .VehiclesCardsTable .nameContainer img,
+  .VehiclesCardsTable img,
   .VehiclesCardsTable .name,
-  .VehiclesCardsTable .year {
+  .VehiclesCardsTable .actionsContainer p {
     transition: none;
   }
 
-  .VehiclesCardsTable .nameContainer:hover,
-  .VehiclesCardsTable .nameContainer:focus-visible,
-  .VehiclesCardsTable .nameContainer:hover img,
-  .VehiclesCardsTable .nameContainer:focus-visible img {
+  .VehiclesCardsTable.ownerRow .nameContainer:hover,
+  .VehiclesCardsTable.ownerRow .nameContainer:focus-visible,
+  .VehiclesCardsTable.ownerRow .nameContainer:hover img,
+  .VehiclesCardsTable.ownerRow .nameContainer:focus-visible img,
+  .VehiclesCardsTable.adminRow:hover img,
+  .VehiclesCardsTable.adminRow:focus-visible img,
+  .VehiclesCardsTable .actionsContainer p:hover {
     transform: none;
   }
 }

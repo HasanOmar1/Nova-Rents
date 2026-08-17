@@ -965,7 +965,7 @@ const getUserStatsByEmail = async (req, res, next) => {
       JOIN carbrands cb ON cm.brandId = cb.brandId
       JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       WHERE v.ownerId = ?
-      ORDER BY v.createdAt DESC
+      ORDER BY v.createdAt DESC, v.licensePlate DESC
       LIMIT ? OFFSET ?
     `;
     const vehicles = await doQuery(vehiclesQuery, [

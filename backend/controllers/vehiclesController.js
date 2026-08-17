@@ -91,7 +91,7 @@ const getUserVehicles = async (req, res, next) => {
       queryParams.push(status);
     }
 
-    query += ` ORDER BY v.createdAt DESC LIMIT ? OFFSET ?`;
+    query += ` ORDER BY v.createdAt DESC, v.licensePlate DESC LIMIT ? OFFSET ?`;
 
     const vehicles = await doQuery(query, [...queryParams, limit, offset]);
 
@@ -618,13 +618,17 @@ const listVehicles = async (
       values.push(seats);
     }
 
-    let orderByClause = `ORDER BY v.createdAt DESC`;
-    if (sort === "price_asc") orderByClause = `ORDER BY v.price ASC`;
-    if (sort === "price_desc") orderByClause = `ORDER BY v.price DESC`;
-    if (sort === "year_desc") orderByClause = `ORDER BY v.year DESC`;
-    if (sort === "year_asc") orderByClause = `ORDER BY v.year ASC`;
-    if (sort === "seats_desc") orderByClause = `ORDER BY v.seats DESC`;
-    if (sort === "seats_asc") orderByClause = `ORDER BY v.seats ASC`;
+    let sortExpression = `v.createdAt DESC`;
+    if (sort === "price_asc") sortExpression = `v.price ASC`;
+    if (sort === "price_desc") sortExpression = `v.price DESC`;
+    if (sort === "year_desc") sortExpression = `v.year DESC`;
+    if (sort === "year_asc") sortExpression = `v.year ASC`;
+    if (sort === "seats_desc") sortExpression = `v.seats DESC`;
+    if (sort === "seats_asc") sortExpression = `v.seats ASC`;
+
+    // LIMIT/OFFSET pagination needs a unique final sort key. Many imported
+    // vehicles share the same timestamp and other sortable values.
+    const orderByClause = `ORDER BY ${sortExpression}, v.licensePlate DESC`;
 
     // 2. FETCH VEHICLES
     let query = `

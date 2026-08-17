@@ -61,23 +61,44 @@ const VehiclesCardsTable = ({
   const ownerLabel =
     vehicleForDetails.ownerEmail || ownerFullName || "Unknown owner";
 
-  return (
-    <div className={styles.VehiclesCardsTable}>
+  const vehicleDetailsPath = `/vehicles/${encodeURIComponent(veh.licensePlate)}`;
+  const vehicleDetailsState = {
+    vehicle: vehicleForDetails,
+    returnTo: admin ? "/allVehicles" : "/myVehicles",
+  };
+  const statusClass =
+    {
+      available: styles.available,
+      rented: styles.rented,
+      maintenance: styles.maintenance,
+      inactive: styles.inactive,
+    }[veh.status] || styles.unknownStatus;
+
+  const vehicleNameContent = (
+    <>
+      <img src={imageUrl} alt={fullName} />
+      <div className={styles.nameAndYear}>
+        <p className={styles.name}>{fullName}</p>
+        <p className={styles.year}>{veh.year}</p>
+        <p className={styles.licensePlate}>Plate: {veh.licensePlate}</p>
+      </div>
+    </>
+  );
+
+  const rowContent = (
+    <>
       <div className={styles.vehicleIdentity}>
-        <Link
-          className={styles.nameContainer}
-          to={`/vehicles/${veh.licensePlate}`}
-          state={{
-            vehicle: vehicleForDetails,
-            returnTo: admin ? "/allVehicles" : "/myVehicles",
-          }}
-        >
-          <img src={imageUrl} alt={fullName} />
-          <div className={styles.nameAndYear}>
-            <p className={styles.name}>{fullName}</p>
-            <p className={styles.year}>{veh.year}</p>
-          </div>
-        </Link>
+        {admin ? (
+          <div className={styles.nameContainer}>{vehicleNameContent}</div>
+        ) : (
+          <Link
+            className={styles.nameContainer}
+            to={vehicleDetailsPath}
+            state={vehicleDetailsState}
+          >
+            {vehicleNameContent}
+          </Link>
+        )}
 
         {!admin && activeReportCount !== 0 && (
           <button
@@ -98,15 +119,28 @@ const VehiclesCardsTable = ({
         )}
       </div>
 
-      <p className={styles.type}>{veh.carTypeName}</p>
-      <p className={styles.address}>{veh.address}</p>
-      <p className={styles.price}>${veh.price}</p>
-      {admin && <p className={styles.owner}>{ownerLabel}</p>}
-      <p
-        className={`${styles.status} ${veh.status === "available" ? styles.available : veh.status === "rented" ? styles.rented : styles.maintenance} `}
-      >
-        {veh.status}
+      <p className={styles.type}>
+        <span className={styles.cellLabel}>Category</span>
+        <span className={styles.cellValue}>{veh.carTypeName}</span>
       </p>
+      <p className={styles.address}>
+        <span className={styles.cellLabel}>{admin ? "Location" : "Address"}</span>
+        <span className={styles.cellValue}>{veh.address}</span>
+      </p>
+      <p className={styles.price}>
+        <span className={styles.cellLabel}>Price</span>
+        <span className={styles.cellValue}>${veh.price}</span>
+      </p>
+      {admin && (
+        <p className={styles.owner} title={ownerLabel}>
+          <span className={styles.cellLabel}>Owner</span>
+          <span className={styles.cellValue}>{ownerLabel}</span>
+        </p>
+      )}
+      <div className={styles.statusCell}>
+        <span className={styles.cellLabel}>Status</span>
+        <span className={`${styles.status} ${statusClass}`}>{veh.status}</span>
+      </div>
 
       {!admin && (
         <div className={styles.actionsContainer}>
@@ -133,6 +167,25 @@ const VehiclesCardsTable = ({
           )}
         </div>
       )}
+    </>
+  );
+
+  if (admin) {
+    return (
+      <Link
+        className={`${styles.VehiclesCardsTable} ${styles.adminRow}`}
+        to={vehicleDetailsPath}
+        state={vehicleDetailsState}
+        aria-label={`View details for ${fullName}, license plate ${veh.licensePlate}`}
+      >
+        {rowContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={`${styles.VehiclesCardsTable} ${styles.ownerRow}`}>
+      {rowContent}
 
       <DeleteMenu
         img={imageUrl}
