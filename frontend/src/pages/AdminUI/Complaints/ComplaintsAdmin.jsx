@@ -215,14 +215,13 @@ const ComplaintsAdmin = () => {
           <p>Reporter</p>
           <p>Action</p>
         </div>
-        <hr />
 
         {complaints.length === 0 ? (
           <p className={styles.emptyMsg}>
             No complaints found for this filter.
           </p>
         ) : (
-          complaints.map((comp, i) => {
+          complaints.map((comp) => {
             const listedOwner =
               comp.complaintType === "vehicle"
                 ? `${comp.vehicleOwnerFirstName || ""} ${comp.vehicleOwnerLastName || ""}`
@@ -234,18 +233,17 @@ const ComplaintsAdmin = () => {
                 : comp.ownerEmail || "—";
 
             return (
-              <div key={comp.complaintId}>
+              <div className={styles.complaintRow} key={comp.complaintId}>
                 <ComplaintsAdminCards
                   action="Review"
-                  owner={listedOwner}
-                  reporter={comp.complainerEmail || comp.userId}
+                  owner={listedOwner.trim() || "—"}
+                  reporter={comp.complainerEmail || comp.userId || "—"}
                   status={comp.status}
                   target={target}
-                  title={comp.title}
+                  title={comp.title || "Untitled complaint"}
                   type={comp.complaintType === "vehicle" ? "Vehicle" : "Owner"}
                   onReview={() => openReviewModal(comp)}
                 />
-                {i < complaints.length - 1 && <hr />}
               </div>
             );
           })

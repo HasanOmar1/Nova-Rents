@@ -64,6 +64,11 @@
 }
 
 .ComplaintsAdmin .complaintsContainer {
+  --complaints-grid-columns:
+    minmax(0, 0.65fr) minmax(0, 1.35fr) minmax(0, 1.45fr)
+    minmax(0, 1.25fr) minmax(0, 1.1fr) minmax(0, 1.45fr)
+    minmax(88px, 0.85fr);
+  --complaints-grid-gap: clamp(8px, 1.1vw, 18px);
   border: var(--cards-border);
   background-color: var(--bg-gray);
   min-height: 200px;
@@ -76,35 +81,35 @@
 }
 
 .ComplaintsAdmin .complaintsContainer .titles {
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 20px;
-  font-size: 0.8rem;
+  display: grid;
+  grid-template-columns: var(--complaints-grid-columns);
+  column-gap: var(--complaints-grid-gap);
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: var(--cards-border);
+  background: rgba(255, 255, 255, 0.012);
+  font-size: 0.72rem;
+  letter-spacing: 0.035em;
   text-transform: uppercase;
   font-weight: bold;
 }
 
-.ComplaintsAdmin .complaintsContainer .titles p:nth-child(1),
-.ComplaintsAdmin .complaintsContainer .titles p:nth-child(2),
-.ComplaintsAdmin .complaintsContainer .titles p:nth-child(3),
-.ComplaintsAdmin .complaintsContainer .titles p:nth-child(4),
-.ComplaintsAdmin .complaintsContainer .titles p:nth-child(5),
-.ComplaintsAdmin .complaintsContainer .titles p:nth-child(6),
-.ComplaintsAdmin .complaintsContainer .titles p:nth-child(7) {
-  width: 15.3%;
-}
-
-.ComplaintsAdmin .complaintsContainer .titles p:nth-child(1) {
-  width: 8%;
+.ComplaintsAdmin .complaintsContainer .titles p {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ComplaintsAdmin .complaintsContainer .titles p:nth-child(7) {
   text-align: center;
 }
 
-.ComplaintsAdmin .complaintsContainer hr {
-  margin: 0;
-  border: none;
+.ComplaintsAdmin .complaintRow {
+  min-width: 0;
+}
+
+.ComplaintsAdmin .complaintRow + .complaintRow {
   border-top: var(--cards-border);
 }
 
@@ -210,6 +215,18 @@
 
   .ComplaintsAdmin .complaintsContainer .titles {
     display: none;
+  }
+
+  .ComplaintsAdmin .complaintRow {
+    margin: 12px;
+  }
+
+  .ComplaintsAdmin .complaintRow + .complaintRow {
+    border-top: 0;
+  }
+
+  .ComplaintsAdmin .paginationWrapper {
+    padding: 12px;
   }
 }
 
