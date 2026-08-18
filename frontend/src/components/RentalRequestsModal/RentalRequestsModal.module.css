@@ -244,28 +244,6 @@
   border-color: var(--icons-color);
 }
 
-/* Test payment (renter trips view) */
-.RentalRequestsModal .payNowBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 10px;
-  background-color: #2563eb;
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.RentalRequestsModal .payNowBtn:hover {
-  background-color: #1d4ed8;
-}
-
 .RentalRequestsModal .paidLabel {
   display: flex;
   align-items: center;

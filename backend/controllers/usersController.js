@@ -27,6 +27,10 @@ const {
   createSystemHistory,
 } = require("../database/queries/systemHistoryQueries");
 const { formatDateForInput } = require("../utils/formatDate");
+const {
+  sendAccountBlockedEmail,
+  sendAccountUnblockedEmail,
+} = require("../services/emailService");
 
 const sendVerificationCode = async (req, res) => {
   const { email } = req.body;
@@ -523,36 +527,84 @@ const blockUserByEmail = async (req, res, next) => {
 
     if (!validateEmailInBody(email, res)) return;
 
-    const updateQuery = "UPDATE users SET status = 'blocked' WHERE email = ?";
-    const result = await doQuery(updateQuery, [email]);
-
-    // MySQL returns 'affectedRows'. If 0, the email doesnt exist!
-    if (result.affectedRows === 0) {
+    const targetUser = await getUserByEmail(email);
+    if (!targetUser) {
       return res
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "User not found" });
     }
 
-    await createActivity(
-      req.session.user.userId,
-      "Blocked a user",
-      `Blocked: ${email}`,
-    );
-    await createSystemHistory(
-      req.session.user.userId,
-      "admin",
-      "block",
-      "user_blocked",
-      "user",
-      email,
-      null,
-      null,
-      `Blocked: ${email}`,
-    );
+    if (targetUser.role !== "user") {
+      return res
+        .status(STATUS_CODE.FORBIDDEN)
+        .json({ message: "Protected accounts cannot be blocked" });
+    }
+
+    if (targetUser.status === "blocked") {
+      return res
+        .status(STATUS_CODE.CONFLICT)
+        .json({ message: "User is already blocked" });
+    }
+
+    const updateQuery = `
+      UPDATE users
+      SET status = 'blocked'
+      WHERE userId = ? AND role = 'user' AND status = 'active'
+    `;
+    const result = await doQuery(updateQuery, [targetUser.userId]);
+    if (result.affectedRows !== 1) {
+      return res
+        .status(STATUS_CODE.CONFLICT)
+        .json({ message: "User status changed before the block completed" });
+    }
+
+    let auditLogged = true;
+    try {
+      await createActivity(
+        req.session.user.userId,
+        "Blocked a user",
+        `Blocked: ${targetUser.email}`,
+      );
+      await createSystemHistory(
+        req.session.user.userId,
+        "admin",
+        "block",
+        "user_blocked",
+        "user",
+        targetUser.email,
+        null,
+        null,
+        `Blocked: ${targetUser.email}`,
+      );
+    } catch (auditError) {
+      auditLogged = false;
+      console.error(
+        `[audit] User ${targetUser.userId} was blocked, but audit logging failed:`,
+        auditError.message,
+      );
+    }
+
+    let emailSent = true;
+    try {
+      await sendAccountBlockedEmail({
+        to: targetUser.email,
+        firstName: targetUser.firstName,
+      });
+    } catch (emailError) {
+      emailSent = false;
+      console.error(
+        `[email] User ${targetUser.userId} was blocked, but delivery failed:`,
+        emailError.message,
+      );
+    }
 
     res.send({
       success: true,
-      message: `User ${email} has been blocked successfully.`,
+      emailSent,
+      auditLogged,
+      message: emailSent
+        ? `User ${targetUser.email} has been blocked and notified by email.`
+        : `User ${targetUser.email} has been blocked, but the email could not be delivered.`,
     });
   } catch (error) {
     next(error);
@@ -571,32 +623,87 @@ const unblockUserByEmail = async (req, res, next) => {
         .json({ message: "Only admins can unblock users" });
     }
     if (!validateEmailInBody(email, res)) return;
-    const updateQuery = "UPDATE users SET status = 'active' WHERE email = ?";
-    const result = await doQuery(updateQuery, [email]);
-    if (result.affectedRows === 0) {
+
+    const targetUser = await getUserByEmail(email);
+    if (!targetUser) {
       return res
         .status(STATUS_CODE.NOT_FOUND)
         .json({ message: "User not found" });
     }
-    await createActivity(
-      req.session.user.userId,
-      "Unblocked a user",
-      `Unblocked: ${email}`,
-    );
-    await createSystemHistory(
-      req.session.user.userId,
-      "admin",
-      "unblock",
-      "user_unblocked",
-      "user",
-      email,
-      null,
-      null,
-      `Unblocked: ${email}`,
-    );
+
+    if (targetUser.role !== "user") {
+      return res
+        .status(STATUS_CODE.FORBIDDEN)
+        .json({ message: "Protected accounts cannot be unblocked" });
+    }
+
+    if (targetUser.status === "active") {
+      return res
+        .status(STATUS_CODE.CONFLICT)
+        .json({ message: "User is already active" });
+    }
+
+    const updateQuery = `
+      UPDATE users
+      SET status = 'active'
+      WHERE userId = ? AND role = 'user' AND status = 'blocked'
+    `;
+    const result = await doQuery(updateQuery, [targetUser.userId]);
+    if (result.affectedRows !== 1) {
+      return res
+        .status(STATUS_CODE.CONFLICT)
+        .json({ message: "User status changed before the unblock completed" });
+    }
+
+    const unblockedAt = new Date();
+    let auditLogged = true;
+    try {
+      await createActivity(
+        req.session.user.userId,
+        "Unblocked a user",
+        `Unblocked: ${targetUser.email}`,
+      );
+      await createSystemHistory(
+        req.session.user.userId,
+        "admin",
+        "unblock",
+        "user_unblocked",
+        "user",
+        targetUser.email,
+        null,
+        null,
+        `Unblocked: ${targetUser.email}`,
+      );
+    } catch (auditError) {
+      auditLogged = false;
+      console.error(
+        `[audit] User ${targetUser.userId} was unblocked, but audit logging failed:`,
+        auditError.message,
+      );
+    }
+
+    let emailSent = true;
+    try {
+      await sendAccountUnblockedEmail({
+        to: targetUser.email,
+        firstName: targetUser.firstName,
+        unblockedAt,
+      });
+    } catch (emailError) {
+      emailSent = false;
+      console.error(
+        `[email] User ${targetUser.userId} was unblocked, but delivery failed:`,
+        emailError.message,
+      );
+    }
+
     res.send({
       success: true,
-      message: `User ${email} has been unblocked successfully.`,
+      emailSent,
+      auditLogged,
+      message: emailSent
+        ? `User ${targetUser.email} has been unblocked and notified by email.`
+        : `User ${targetUser.email} has been unblocked, but the email could not be delivered.`,
     });
   } catch (error) {
     next(error);
@@ -792,7 +899,7 @@ const updateUserProfile = async (req, res, next) => {
       currentUserId,
       "user",
       "update",
-      "user_profile_updated",
+      "user_Updated Profile",
       "user",
       String(currentUserId),
       null,
@@ -858,7 +965,7 @@ const getUserStatsByEmail = async (req, res, next) => {
       JOIN carbrands cb ON cm.brandId = cb.brandId
       JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       WHERE v.ownerId = ?
-      ORDER BY v.createdAt DESC
+      ORDER BY v.createdAt DESC, v.licensePlate DESC
       LIMIT ? OFFSET ?
     `;
     const vehicles = await doQuery(vehiclesQuery, [

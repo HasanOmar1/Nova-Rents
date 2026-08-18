@@ -239,6 +239,83 @@ async function getOwnerEarningsChartByRange(
   return doQuery(query, [dateFormat, ownerId, startDate, endDate]);
 }
 
+// Owner-scoped bounds for the same lifecycle-complete rows used by the vehicle
+// comparison. The end bound extends through today so an all-time trend also
+// shows any quiet periods since the owner's latest completed rental.
+async function getOwnerVehicleEarningsComparisonBounds(ownerId) {
+  const query = `
+    SELECT
+      DATE_FORMAT(MIN(r.endDate), '%Y-%m-%d') AS startDate,
+      CASE
+        WHEN COUNT(r.rentalId) = 0 THEN NULL
+        ELSE DATE_FORMAT(GREATEST(MAX(r.endDate), CURRENT_DATE()), '%Y-%m-%d')
+      END AS endDate
+    FROM vehicles v
+    LEFT JOIN rentals r
+      ON r.licensePlate = v.licensePlate
+      AND (
+        r.status = 'completed'
+        OR (r.status = 'approved' AND r.endDate < CURRENT_DATE())
+      )
+    WHERE v.ownerId = ?
+  `;
+
+  return doQuery(query, [ownerId]);
+}
+
+// Completed-rental value for every vehicle an owner currently has. Expired
+// approved rows are treated as lifecycle-complete too, so the report remains
+// accurate even before the rental status synchronizer next runs. Date filters
+// stay in the LEFT JOIN so zero-value vehicles are still returned. Omitting
+// both dates is reserved for the server-resolved all-time/no-history case.
+async function getOwnerVehicleEarningsComparisonByRange(
+  ownerId,
+  startDate,
+  endDate,
+  dateFormat,
+) {
+  const hasDateRange = Boolean(startDate && endDate);
+  const dateFilter = hasDateRange
+    ? `
+      AND r.endDate >= ?
+      AND r.endDate < DATE_ADD(?, INTERVAL 1 DAY)`
+    : "";
+
+  const query = `
+    SELECT
+      CAST(v.licensePlate AS CHAR) AS licensePlate,
+      cb.brandName,
+      cm.modelName,
+      DATE_FORMAT(r.endDate, ?) AS periodKey,
+      COALESCE(SUM(r.totalPrice), 0) AS earnings
+    FROM vehicles v
+    JOIN carmodels cm ON v.modelId = cm.modelId
+    JOIN carbrands cb ON cm.brandId = cb.brandId
+    LEFT JOIN rentals r
+      ON r.licensePlate = v.licensePlate
+      AND (
+        r.status = 'completed'
+        OR (r.status = 'approved' AND r.endDate < CURRENT_DATE())
+      )${dateFilter}
+    WHERE v.ownerId = ?
+    GROUP BY
+      v.licensePlate,
+      cb.brandName,
+      cm.modelName,
+      periodKey
+    ORDER BY
+      cb.brandName ASC,
+      cm.modelName ASC,
+      v.licensePlate ASC,
+      periodKey ASC
+  `;
+
+  const params = hasDateRange
+    ? [dateFormat, startDate, endDate, ownerId]
+    : [dateFormat, ownerId];
+  return doQuery(query, params);
+}
+
 async function getPendingRequestsCountByOwnerId(ownerId) {
   const query = `
     SELECT COUNT(*) AS count
@@ -470,6 +547,8 @@ module.exports = {
   getBookingValueByRange,
   getBookingsChartByRange,
   getOwnerEarningsChartByRange,
+  getOwnerVehicleEarningsComparisonBounds,
+  getOwnerVehicleEarningsComparisonByRange,
   getPendingRequestsCountByOwnerId,
   getUpcomingTripsCountByUserId,
   getPastTripsCountByRenterId,

@@ -1,0 +1,602 @@
+.ReportedUsers {
+  gap: 24px;
+}
+.ReportedUsers .heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.ReportedUsers .heading > div {
+  min-width: 0;
+}
+.ReportedUsers .heading > svg {
+  flex: 0 0 auto;
+}
+.ReportedUsers .heading p,
+.ReportedUsers .message,
+.ReportedUsers .empty {
+  color: var(--gray);
+  margin-top: 6px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.ReportedUsers .message {
+  color: #fbbf24;
+}
+.ReportedUsers .filters,
+.ReportedUsers .tableWrap {
+  border: var(--cards-border);
+  background: var(--bg-gray);
+  border-radius: 20px;
+  padding: 20px;
+}
+.ReportedUsers .filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 18px;
+  align-items: end;
+}
+.ReportedUsers .filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--gray);
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-width: 0;
+}
+.ReportedUsers .filters input,
+.ReportedUsers .filters select,
+.ReportedUsers .modal textarea {
+  width: 100%;
+  padding: 12px;
+  color: white;
+  background: var(--input-bg);
+  border: var(--cards-border);
+  border-radius: 12px;
+  outline: none;
+}
+.ReportedUsers .search {
+  position: relative;
+  min-width: 0;
+}
+.ReportedUsers .search svg {
+  position: absolute;
+  left: 11px;
+  top: 12px;
+}
+.ReportedUsers .search input {
+  padding-left: 36px;
+}
+
+.ReportedUsers .filters input:focus-visible,
+.ReportedUsers .filters select:focus-visible,
+.ReportedUsers .modal textarea:focus-visible {
+  border-color: var(--input-focus-border-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+}
+
+.ReportedUsers .scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+.ReportedUsers .tableWrap table {
+  width: 100%;
+  min-width: 1000px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.ReportedUsers .tableWrap th,
+.ReportedUsers .tableWrap td {
+  padding: 14px 6px;
+  text-align: left;
+  border-bottom: 1px solid #2e3442;
+  font-size: 0.82rem;
+}
+.ReportedUsers .tableWrap th {
+  color: var(--gray);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+.ReportedUsers .tableWrap th:nth-child(1) {
+  width: 17%;
+}
+.ReportedUsers .tableWrap th:nth-child(2),
+.ReportedUsers .tableWrap th:nth-child(3),
+.ReportedUsers .tableWrap th:nth-child(4),
+.ReportedUsers .tableWrap th:nth-child(5) {
+  width: 5.5%;
+}
+.ReportedUsers .tableWrap th:nth-child(6) {
+  width: 8%;
+}
+.ReportedUsers .tableWrap th:nth-child(7) {
+  width: 7.5%;
+}
+.ReportedUsers .tableWrap th:nth-child(8) {
+  width: 9%;
+}
+.ReportedUsers .tableWrap th:nth-child(9) {
+  width: 10%;
+}
+.ReportedUsers .tableWrap th:nth-child(10) {
+  width: 15%;
+}
+.ReportedUsers .emailCell {
+  color: #dbeafe;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ReportedUsers .warningCell,
+.ReportedUsers .warningCell .link {
+  white-space: nowrap;
+}
+.ReportedUsers .actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-start;
+}
+.ReportedUsers .actions button,
+.ReportedUsers .primary {
+  border-radius: 8px;
+  color: white;
+  padding: 7px 9px;
+  white-space: nowrap;
+  border-color: transparent;
+}
+.ReportedUsers .actions button {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  padding: 0;
+}
+.ReportedUsers .actions button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.12);
+}
+.ReportedUsers .actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+.ReportedUsers .viewAction {
+  background: #1d4ed8;
+}
+.ReportedUsers .warnAction {
+  background: #92400e;
+}
+.ReportedUsers .removeWarningAction {
+  background: #475569;
+}
+.ReportedUsers .blockAction {
+  background: #991b1b;
+}
+.ReportedUsers .unblockAction {
+  background: #166534;
+}
+.ReportedUsers .link {
+  color: #93c5fd;
+  background: transparent;
+  padding: 0;
+}
+.ReportedUsers .badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  background: #334155;
+}
+.ReportedUsers .active,
+.ReportedUsers .Normal {
+  color: #86efac;
+}
+.ReportedUsers .blocked,
+.ReportedUsers .HighAttention {
+  color: #fca5a5;
+}
+.ReportedUsers .Review {
+  color: #fde68a;
+}
+.ReportedUsers .empty {
+  text-align: center;
+  padding: 35px;
+}
+.ReportedUsers .overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(2, 6, 23, 0.82);
+  padding: clamp(12px, 3vw, 20px);
+}
+.ReportedUsers .modal {
+  width: min(650px, 100%);
+  max-height: min(85vh, calc(100dvh - 40px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  background: var(--bg-gray);
+  border: var(--cards-border);
+  border-radius: 18px;
+  padding: clamp(18px, 4vw, 25px);
+}
+.ReportedUsers .modal h2 {
+  padding-right: 42px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.ReportedUsers .modal > p {
+  color: var(--gray);
+  margin: 6px 0 20px;
+  padding-right: 42px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.ReportedUsers .close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  color: white;
+  border-radius: 10px;
+}
+.ReportedUsers .close:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.ReportedUsers .close:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: 2px;
+}
+.ReportedUsers .modal textarea {
+  min-height: 130px;
+  resize: none;
+  line-height: 1.5;
+}
+.ReportedUsers .modal small {
+  color: var(--gray);
+}
+.ReportedUsers .primary {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  padding: 11px 18px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(180, 83, 9, 0.22);
+}
+.ReportedUsers .warningForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ReportedUsers .warningForm label {
+  color: #e5e7eb;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.ReportedUsers .formFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.ReportedUsers .invalid {
+  color: #fca5a5 !important;
+}
+.ReportedUsers .modalError {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin: 0 !important;
+  padding: 10px 12px;
+  color: #fecaca !important;
+  background: rgba(153, 27, 27, 0.18);
+  border: 1px solid rgba(252, 165, 165, 0.3);
+  border-radius: 9px;
+  font-size: 0.8rem;
+  text-align: left;
+}
+.ReportedUsers .confirmContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 18px;
+  padding: 10px 4px 2px;
+}
+.ReportedUsers .confirmContent > p {
+  max-width: 500px;
+  color: #d1d5db;
+  line-height: 1.55;
+}
+.ReportedUsers .confirmIcon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fbbf24;
+  background: rgba(217, 119, 6, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+.ReportedUsers .dangerIcon {
+  color: #fca5a5;
+  background: rgba(153, 27, 27, 0.18);
+  border-color: rgba(252, 165, 165, 0.3);
+}
+.ReportedUsers .successIcon {
+  color: #86efac;
+  background: rgba(22, 101, 52, 0.2);
+  border-color: rgba(134, 239, 172, 0.3);
+}
+.ReportedUsers .removeIcon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #bfdbfe;
+  background: rgba(30, 64, 175, 0.18);
+  border: 1px solid rgba(147, 197, 253, 0.3);
+}
+.ReportedUsers .reasonPreview {
+  width: 100%;
+  padding: 14px;
+  text-align: left;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: var(--cards-border);
+}
+.ReportedUsers .reasonPreview span,
+.ReportedUsers .reportFields span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--gray);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ReportedUsers .reasonPreview p,
+.ReportedUsers .reportFields p {
+  color: #e5e7eb;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.ReportedUsers .modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  padding-top: 4px;
+}
+.ReportedUsers .modalActions button {
+  border-radius: 9px;
+  padding: 10px 16px;
+  color: white;
+  font-weight: 700;
+}
+.ReportedUsers .cancelButton {
+  background: #334155;
+}
+.ReportedUsers .warningConfirmButton {
+  background: #b45309;
+}
+.ReportedUsers .dangerButton {
+  background: #991b1b;
+}
+.ReportedUsers .successButton {
+  background: #166534;
+}
+.ReportedUsers .removeWarningButton {
+  background: #1d4ed8;
+}
+.ReportedUsers .cards {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.ReportedUsers .cards article {
+  background: var(--input-bg);
+  border: var(--cards-border);
+  border-radius: 12px;
+  padding: 15px;
+  min-width: 0;
+}
+.ReportedUsers .cardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #2e3442;
+}
+.ReportedUsers .cardHeading h3 {
+  text-transform: capitalize;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ReportedUsers .cardHeading span {
+  flex: none;
+  color: var(--gray);
+  font-size: 0.75rem;
+}
+.ReportedUsers .reportFields {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.ReportedUsers .reportFields > div {
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .ReportedUsers .tableWrap th,
+  .ReportedUsers .tableWrap td {
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 0.76rem;
+  }
+  .ReportedUsers .badge {
+    padding: 3px 5px;
+    font-size: 0.66rem;
+  }
+  .ReportedUsers .actions {
+    gap: 3px;
+  }
+  .ReportedUsers .actions button {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+}
+
+@media (max-width: 900px) {
+  .ReportedUsers .tableWrap {
+    padding: 16px;
+  }
+  .ReportedUsers .scroll {
+    overflow: visible;
+  }
+  .ReportedUsers .tableWrap table,
+  .ReportedUsers .tableWrap tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .ReportedUsers .tableWrap thead {
+    display: none;
+  }
+  .ReportedUsers .tableWrap tbody {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 12px;
+  }
+  .ReportedUsers .tableWrap tr {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid #2e3442;
+    border-radius: 14px;
+    background: var(--input-bg);
+  }
+  .ReportedUsers .tableWrap td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(46, 52, 66, 0.72);
+    text-align: right;
+    font-size: 0.8rem;
+  }
+  .ReportedUsers .tableWrap td:last-child {
+    border-bottom: 0;
+  }
+  .ReportedUsers .tableWrap td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--gray);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  .ReportedUsers .emailCell {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+  .ReportedUsers .warningCell,
+  .ReportedUsers .warningCell .link {
+    white-space: normal;
+  }
+  .ReportedUsers .actionsCell {
+    align-items: flex-start;
+  }
+  .ReportedUsers .actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .ReportedUsers .actions button {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ReportedUsers {
+    gap: 18px;
+  }
+  .ReportedUsers .heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .ReportedUsers .heading > svg {
+    width: 26px;
+    height: 26px;
+  }
+  .ReportedUsers .filters,
+  .ReportedUsers .tableWrap {
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .ReportedUsers .filters {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .ReportedUsers .tableWrap tr {
+    padding: 10px 12px;
+  }
+  .ReportedUsers .overlay {
+    padding: 12px;
+  }
+  .ReportedUsers .modal {
+    max-height: calc(100dvh - 24px);
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .ReportedUsers .modal h2,
+  .ReportedUsers .modal > p {
+    padding-right: 38px;
+  }
+  .ReportedUsers .modal textarea {
+    min-height: 110px;
+  }
+  .ReportedUsers .formFooter,
+  .ReportedUsers .modalActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .ReportedUsers .formFooter small {
+    align-self: flex-end;
+  }
+  .ReportedUsers .formFooter .primary,
+  .ReportedUsers .modalActions button {
+    width: 100%;
+  }
+  .ReportedUsers .cardHeading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}

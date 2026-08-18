@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import styles from "./Complaints.module.css";
 import ComplaintsHistoryCards from "../../../components/ComplaintsHistoryCards/ComplaintsHistoryCards";
@@ -8,13 +8,12 @@ import { useVehicleContext } from "../../../context/VehicleContext";
 import { useUserContext } from "../../../context/UserContext";
 import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
+import { useAppliedDateRange } from "../../../hooks/useAppliedDateRange";
+import { usePagination } from "../../../hooks/usePagination";
+import { Car, History, ShieldAlert } from "lucide-react";
 
-const formatDateForInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+const TITLE_CHARACTER_LIMIT = 100;
+const DESCRIPTION_CHARACTER_LIMIT = 1000;
 
 const formatSubmittedDate = (value) => {
   if (!value) return "Unknown date";
@@ -55,8 +54,14 @@ const Complaints = () => {
     myComplaintsError,
     getReportsAboutMe,
     reportsAboutMe,
+    reportsAboutMePagination,
     isReportsAboutMeLoading,
     reportsAboutMeError,
+    getReportsAboutMyVehicles,
+    reportsAboutMyVehicles,
+    reportsAboutMyVehiclesPagination,
+    isReportsAboutMyVehiclesLoading,
+    reportsAboutMyVehiclesError,
   } = useComplaintContext();
   const { getVehicleByLicensePlate } = useVehicleContext();
   const { getUserById, currentUser } = useUserContext();
@@ -86,19 +91,63 @@ const Complaints = () => {
   });
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-
-  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
-  const [toDate, setToDate] = useState(formatDateForInput(today));
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid,
+    appliedFromDate,
+    appliedToDate,
+    applyDateRange,
+    initialRange: defaultRange,
+  } = useAppliedDateRange();
   const [statusFilter, setStatusFilter] = useState("all");
-  const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
-  const [appliedToDate, setAppliedToDate] = useState(toDate);
   const [appliedStatus, setAppliedStatus] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    currentPage,
+    nextPage: nextHistoryPage,
+    previousPage: previousHistoryPage,
+    resetPage: resetHistoryPage,
+  } = usePagination({ totalPages: myComplaintsPagination?.totalPages });
+  const requestedView = searchParams.get("view");
+  const initialHistoryView = ["history", "reports", "vehicleReports"].includes(requestedView)
+    ? requestedView
+    : "history";
+  const [activeHistoryView, setActiveHistoryView] = useState(initialHistoryView);
+  const {
+    currentPage: reportsPage,
+    nextPage: nextReportsPage,
+    previousPage: previousReportsPage,
+  } = usePagination({ totalPages: reportsAboutMePagination?.totalPages });
+  const {
+    currentPage: vehicleReportsPage,
+    nextPage: nextVehicleReportsPage,
+    previousPage: previousVehicleReportsPage,
+  } = usePagination({
+    totalPages: reportsAboutMyVehiclesPagination?.totalPages,
+  });
 
-  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
   const isTargetLoading = isVehicleLoading || isOwnerLoading;
+
+  const resetComplaintPrefill = useCallback(() => {
+    setIsVehicleLocked(false);
+    setReportedVehicle(null);
+    setIsVehicleLoading(false);
+    setIsOwnerLocked(false);
+    setReportedOwner(null);
+    setLockedOwnerId(null);
+    setIsOwnerLoading(false);
+    setLockedRentalId(null);
+    setRentalSummary(null);
+  }, []);
+
+  useEffect(() => {
+    const view = searchParams.get("view");
+    if (["history", "reports", "vehicleReports"].includes(view)) {
+      setActiveHistoryView(view);
+    }
+  }, [searchParams]);
 
   // Load My Trips once so rental summary can be shown without a new API.
   useEffect(() => {
@@ -123,18 +172,6 @@ const Complaints = () => {
 
     let cancelled = false;
 
-    const clearLocks = () => {
-      setIsVehicleLocked(false);
-      setReportedVehicle(null);
-      setIsVehicleLoading(false);
-      setIsOwnerLocked(false);
-      setReportedOwner(null);
-      setLockedOwnerId(null);
-      setIsOwnerLoading(false);
-      setLockedRentalId(null);
-      setRentalSummary(null);
-    };
-
     if (hasValidRentalId) {
       setLockedRentalId(rentalIdParam);
     } else {
@@ -147,7 +184,7 @@ const Complaints = () => {
         setLocalErrorMsg(
           "Invalid report link. Please select the complaint type and target manually.",
         );
-        clearLocks();
+        resetComplaintPrefill();
         return;
       }
 
@@ -198,7 +235,7 @@ const Complaints = () => {
         setLocalErrorMsg(
           "Invalid report link. Please select the complaint type and target manually.",
         );
-        clearLocks();
+        resetComplaintPrefill();
         return;
       }
 
@@ -250,8 +287,8 @@ const Complaints = () => {
     setLocalErrorMsg(
       "Invalid report link. Please select the complaint type and target manually.",
     );
-    clearLocks();
-  }, [searchParams]);
+    resetComplaintPrefill();
+  }, [resetComplaintPrefill, searchParams]);
 
   // Resolve rental summary from cached My Trips (same GET /rentals/history).
   useEffect(() => {
@@ -294,8 +331,12 @@ const Complaints = () => {
   }, [appliedFromDate, appliedToDate, appliedStatus, currentPage]);
 
   useEffect(() => {
-    getReportsAboutMe();
-  }, []);
+    getReportsAboutMe({ page: reportsPage });
+  }, [reportsPage]);
+
+  useEffect(() => {
+    getReportsAboutMyVehicles({ page: vehicleReportsPage });
+  }, [getReportsAboutMyVehicles, vehicleReportsPage]);
 
   const refreshMyComplaints = () => {
     getMyComplaints({
@@ -308,22 +349,9 @@ const Complaints = () => {
 
   const handleApplyFilters = () => {
     if (!isRangeValid || isMyComplaintsLoading) return;
-    setAppliedFromDate(fromDate);
-    setAppliedToDate(toDate);
+    applyDateRange();
     setAppliedStatus(statusFilter);
-    setCurrentPage(1);
-  };
-
-  const clearPrefills = () => {
-    setIsVehicleLocked(false);
-    setReportedVehicle(null);
-    setIsVehicleLoading(false);
-    setIsOwnerLocked(false);
-    setReportedOwner(null);
-    setLockedOwnerId(null);
-    setIsOwnerLoading(false);
-    setLockedRentalId(null);
-    setRentalSummary(null);
+    resetHistoryPage();
   };
 
   const handleSubmitForm = async (e) => {
@@ -398,7 +426,7 @@ const Complaints = () => {
         description: "",
         images: [],
       });
-      clearPrefills();
+      resetComplaintPrefill();
       setSuccessMsg("Your complaint was submitted successfully!");
       setTimeout(() => setSuccessMsg(""), 5000);
       refreshMyComplaints();
@@ -416,14 +444,14 @@ const Complaints = () => {
   const switchActiveTabToOwner = () => {
     setActiveTab("owner");
     setLocalErrorMsg("");
-    clearPrefills();
+    resetComplaintPrefill();
     setFormData((prev) => ({ ...prev, relatedTarget: "" }));
   };
 
   const switchActiveTabToVehicle = () => {
     setActiveTab("vehicle");
     setLocalErrorMsg("");
-    clearPrefills();
+    resetComplaintPrefill();
     setFormData((prev) => ({ ...prev, relatedTarget: "" }));
   };
 
@@ -456,25 +484,17 @@ const Complaints = () => {
 
   const emptyMessage =
     appliedStatus !== "all" ||
-    appliedFromDate !== formatDateForInput(sixMonthsAgo) ||
-    appliedToDate !== formatDateForInput(today)
+    appliedFromDate !== defaultRange.from ||
+    appliedToDate !== defaultRange.to
       ? "No complaints found for the selected period."
       : "You have not submitted any complaints yet.";
 
   const reportedOwnerName = reportedOwner
-    ? displayName(
-        reportedOwner.firstName,
-        reportedOwner.lastName,
-        null,
-      )
+    ? displayName(reportedOwner.firstName, reportedOwner.lastName, null)
     : "";
 
   const reportedOwnerJoined = reportedOwner?.createdAt
-    ? new Date(reportedOwner.createdAt).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+    ? formatSubmittedDate(reportedOwner.createdAt)
     : null;
 
   const reportedOwnerNameVehicle = reportedVehicle
@@ -670,8 +690,23 @@ const Complaints = () => {
           )}
 
           <div className={styles.labelAndInputContainer}>
-            <p>Title</p>
+            <div className={styles.fieldHeading}>
+              <label htmlFor="complaint-title">Title</label>
+              <small
+                id="complaint-title-count"
+                className={styles.characterCounter}
+              >
+                <span aria-hidden="true">
+                  {formData.title.length} / {TITLE_CHARACTER_LIMIT} chars
+                </span>
+                <span className={styles.srOnly}>
+                  {TITLE_CHARACTER_LIMIT - formData.title.length} characters
+                  remaining
+                </span>
+              </small>
+            </div>
             <input
+              id="complaint-title"
               type="text"
               name="title"
               value={formData.title}
@@ -679,18 +714,38 @@ const Complaints = () => {
                 setFormData({ ...formData, title: e.target.value })
               }
               disabled={isSubmitting}
+              maxLength={TITLE_CHARACTER_LIMIT}
+              aria-describedby="complaint-title-count"
             />
           </div>
 
           <div className={styles.labelAndInputContainer}>
-            <p>Description</p>
+            <div className={styles.fieldHeading}>
+              <label htmlFor="complaint-description">Description</label>
+              <small
+                id="complaint-description-count"
+                className={styles.characterCounter}
+              >
+                <span aria-hidden="true">
+                  {formData.description.length} /{" "}
+                  {DESCRIPTION_CHARACTER_LIMIT} chars
+                </span>
+                <span className={styles.srOnly}>
+                  {DESCRIPTION_CHARACTER_LIMIT - formData.description.length}{" "}
+                  characters remaining
+                </span>
+              </small>
+            </div>
             <textarea
+              id="complaint-description"
               name="description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
               disabled={isSubmitting}
+              maxLength={DESCRIPTION_CHARACTER_LIMIT}
+              aria-describedby="complaint-description-count"
             ></textarea>
           </div>
           <label className={styles.customFileUpload}>
@@ -739,159 +794,334 @@ const Complaints = () => {
         </button>
       </form>
 
-      <div className={styles.complaintsHistoryContainer}>
-        <h4>Previous complaints</h4>
-
-        <div className={styles.historyFilters}>
-          <div className={styles.filterGroup}>
-            <label htmlFor="myComplaintsFrom">From</label>
-            <input
-              id="myComplaintsFrom"
-              type="date"
-              value={fromDate}
-              max={toDate}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
-          </div>
-          <div className={styles.filterGroup}>
-            <label htmlFor="myComplaintsTo">To</label>
-            <input
-              id="myComplaintsTo"
-              type="date"
-              value={toDate}
-              min={fromDate}
-              onChange={(e) => setToDate(e.target.value)}
-            />
-          </div>
-          <div className={styles.filterGroup}>
-            <label htmlFor="myComplaintsStatus">Status</label>
-            <select
-              id="myComplaintsStatus"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="open">Open</option>
-              <option value="in_review">In Review</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
-            </select>
-          </div>
+      <section id="complaint-history" className={styles.complaintsHistoryContainer}>
+        <div
+          className={styles.historyViewSwitcher}
+          role="group"
+          aria-label="Complaint records"
+        >
           <button
             type="button"
-            className={styles.applyBtn}
-            onClick={handleApplyFilters}
-            disabled={!isRangeValid || isMyComplaintsLoading}
+            className={`${styles.historyViewButton} ${
+              activeHistoryView === "history"
+                ? styles.activeHistoryViewButton
+                : ""
+            }`}
+            onClick={() => setActiveHistoryView("history")}
+            aria-pressed={activeHistoryView === "history"}
           >
-            {isMyComplaintsLoading ? "Loading..." : "Apply"}
+            <History size={18} aria-hidden="true" />
+            <span>Complaint History</span>
+            <span className={styles.historyViewCount}>
+              {isMyComplaintsLoading
+                ? "..."
+                : myComplaintsPagination?.totalComplaints || 0}
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.historyViewButton} ${
+              activeHistoryView === "reports"
+                ? styles.activeHistoryViewButton
+                : ""
+            }`}
+            onClick={() => setActiveHistoryView("reports")}
+            aria-pressed={activeHistoryView === "reports"}
+          >
+            <ShieldAlert size={18} aria-hidden="true" />
+            <span>Reports About You</span>
+            <span className={styles.historyViewCount}>
+              {isReportsAboutMeLoading
+                ? "..."
+                : reportsAboutMePagination?.totalReports || 0}
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.historyViewButton} ${
+              activeHistoryView === "vehicleReports"
+                ? styles.activeHistoryViewButton
+                : ""
+            }`}
+            onClick={() => setActiveHistoryView("vehicleReports")}
+            aria-pressed={activeHistoryView === "vehicleReports"}
+          >
+            <Car size={18} aria-hidden="true" />
+            <span>Reports on Your Vehicles</span>
+            <span className={styles.historyViewCount}>
+              {isReportsAboutMyVehiclesLoading
+                ? "..."
+                : reportsAboutMyVehiclesPagination?.totalReports || 0}
+            </span>
           </button>
         </div>
 
-        {myComplaintsError && (
-          <p className={styles.historyError}>{myComplaintsError}</p>
-        )}
-
-        {isMyComplaintsLoading ? (
-          <p className={styles.historyEmpty}>Loading your complaints...</p>
-        ) : myComplaints.length === 0 && !myComplaintsError ? (
-          <p className={styles.historyEmpty}>{emptyMessage}</p>
-        ) : (
-          myComplaints.map((comp) => {
-            const isVehicle = comp.complaintType === "vehicle";
-            const vehicleLabel = [
-              comp.brandName,
-              comp.modelName,
-              comp.vehicleLicensePlate
-                ? `(${comp.vehicleLicensePlate})`
-                : null,
-            ]
-              .filter(Boolean)
-              .join(" ");
-
-            const ownerTarget = displayName(
-              comp.ownerFirstName,
-              comp.ownerLastName,
-              comp.ownerEmail,
-            );
-
-            const listedOwner = isVehicle
-              ? displayName(
-                  comp.vehicleOwnerFirstName,
-                  comp.vehicleOwnerLastName,
-                  comp.vehicleOwnerEmail,
-                )
-              : null;
-
-            return (
-              <ComplaintsHistoryCards
-                key={comp.complaintId}
-                title={comp.title}
-                status={comp.status}
-                targetLabel={isVehicle ? "Reported vehicle" : "Reported owner"}
-                targetValue={
-                  isVehicle ? vehicleLabel || "Unknown vehicle" : ownerTarget
-                }
-                listedOwner={listedOwner}
-                submittedDate={formatSubmittedDate(comp.createdAt)}
-                description={comp.description}
-                adminResponse={comp.resolutionMessage?.trim() || null}
-              />
-            );
-          })
-        )}
-
-        {!isMyComplaintsLoading &&
-          myComplaintsPagination?.totalPages > 1 && (
-            <div className={styles.paginationWrapper}>
-              <Pagination
-                currentPage={myComplaintsPagination.currentPage}
-                totalPages={myComplaintsPagination.totalPages}
-                handlePrevPage={() =>
-                  setCurrentPage((p) => Math.max(p - 1, 1))
-                }
-                handleNextPage={() =>
-                  setCurrentPage((p) =>
-                    Math.min(p + 1, myComplaintsPagination.totalPages),
-                  )
-                }
-                leftText={`Total: ${myComplaintsPagination.totalComplaints || 0}`}
-              />
+        {activeHistoryView === "history" ? (
+          <div id="complaint-history-panel" className={styles.historyPanel}>
+            <div className={styles.historyPanelHeader}>
+              <div>
+                <p className={styles.historyEyebrow}>Submitted by you</p>
+                <h4>Complaint History</h4>
+              </div>
+              <p className={styles.historyHint}>
+                Track your submitted complaints and Nova Rents responses.
+              </p>
             </div>
-          )}
-      </div>
 
-      <div className={styles.complaintsHistoryContainer}>
-        <h4>Reports about me</h4>
-        <p className={styles.aboutMeHint}>
-          Owner reports filed against your account. Reporter identity is never
-          shown.
-        </p>
+            <div className={styles.historyFilters}>
+              <div className={styles.filterGroup}>
+                <label htmlFor="myComplaintsFrom">From</label>
+                <input
+                  id="myComplaintsFrom"
+                  type="date"
+                  value={fromDate}
+                  max={toDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                />
+              </div>
+              <div className={styles.filterGroup}>
+                <label htmlFor="myComplaintsTo">To</label>
+                <input
+                  id="myComplaintsTo"
+                  type="date"
+                  value={toDate}
+                  min={fromDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                />
+              </div>
+              <div className={styles.filterGroup}>
+                <label htmlFor="myComplaintsStatus">Status</label>
+                <select
+                  id="myComplaintsStatus"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">All</option>
+                  <option value="open">Open</option>
+                  <option value="in_review">In Review</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                className={styles.applyBtn}
+                onClick={handleApplyFilters}
+                disabled={!isRangeValid || isMyComplaintsLoading}
+              >
+                {isMyComplaintsLoading ? "Loading..." : "Apply"}
+              </button>
+            </div>
 
-        {reportsAboutMeError && (
-          <p className={styles.historyError}>{reportsAboutMeError}</p>
-        )}
+            {myComplaintsError && (
+              <p className={styles.historyError}>{myComplaintsError}</p>
+            )}
 
-        {isReportsAboutMeLoading ? (
-          <p className={styles.historyEmpty}>Loading reports about you...</p>
-        ) : reportsAboutMe.length === 0 && !reportsAboutMeError ? (
-          <p className={styles.historyEmpty}>
-            No reports have been filed against your account.
-          </p>
+            {isMyComplaintsLoading ? (
+              <p className={styles.historyEmpty}>Loading your complaints...</p>
+            ) : myComplaints.length === 0 && !myComplaintsError ? (
+              <p className={styles.historyEmpty}>{emptyMessage}</p>
+            ) : (
+              <div className={styles.historyList}>
+                {myComplaints.map((comp) => {
+                  const isVehicle = comp.complaintType === "vehicle";
+                  const vehicleLabel = [
+                    comp.brandName,
+                    comp.modelName,
+                    comp.vehicleLicensePlate
+                      ? `(${comp.vehicleLicensePlate})`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+
+                  const ownerTarget = displayName(
+                    comp.ownerFirstName,
+                    comp.ownerLastName,
+                    comp.ownerEmail,
+                  );
+
+                  const listedOwner = isVehicle
+                    ? displayName(
+                        comp.vehicleOwnerFirstName,
+                        comp.vehicleOwnerLastName,
+                        comp.vehicleOwnerEmail,
+                      )
+                    : null;
+
+                  return (
+                    <ComplaintsHistoryCards
+                      key={comp.complaintId}
+                      title={comp.title}
+                      status={comp.status}
+                      targetLabel={
+                        isVehicle ? "Reported vehicle" : "Reported owner"
+                      }
+                      targetValue={
+                        isVehicle
+                          ? vehicleLabel || "Unknown vehicle"
+                          : ownerTarget
+                      }
+                      listedOwner={listedOwner}
+                      submittedDate={formatSubmittedDate(comp.createdAt)}
+                      description={comp.description}
+                      adminResponse={comp.resolutionMessage?.trim() || null}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {!isMyComplaintsLoading &&
+              myComplaintsPagination?.totalPages > 1 && (
+                <div className={styles.paginationWrapper}>
+                  <Pagination
+                    currentPage={myComplaintsPagination.currentPage}
+                    totalPages={myComplaintsPagination.totalPages}
+                    handlePrevPage={previousHistoryPage}
+                    handleNextPage={nextHistoryPage}
+                    leftText={`Total: ${myComplaintsPagination.totalComplaints || 0}`}
+                  />
+                </div>
+              )}
+          </div>
+        ) : activeHistoryView === "reports" ? (
+          <div id="reports-about-me-panel" className={styles.historyPanel}>
+            <div className={styles.historyPanelHeader}>
+              <div>
+                <p className={styles.historyEyebrow}>
+                  Received by your account
+                </p>
+                <h4>Reports About You</h4>
+              </div>
+              <p className={styles.historyHint}>
+                Reports filed against your account. Reporter identity remains
+                private.
+              </p>
+            </div>
+
+            {reportsAboutMeError && (
+              <p className={styles.historyError}>{reportsAboutMeError}</p>
+            )}
+
+            {isReportsAboutMeLoading ? (
+              <p className={styles.historyEmpty}>
+                Loading reports about you...
+              </p>
+            ) : reportsAboutMe.length === 0 && !reportsAboutMeError ? (
+              <p className={styles.historyEmpty}>
+                No reports have been filed against your account.
+              </p>
+            ) : (
+              <div className={styles.historyList}>
+                {reportsAboutMe.map((comp) => (
+                  <ComplaintsHistoryCards
+                    key={comp.complaintId}
+                    title={comp.title}
+                    status={comp.status}
+                    targetLabel="Reference"
+                    targetValue={`#${comp.complaintId}`}
+                    submittedDate={formatSubmittedDate(comp.createdAt)}
+                    description={comp.description}
+                    adminResponse={comp.resolutionMessage?.trim() || null}
+                  />
+                ))}
+              </div>
+            )}
+
+            {!isReportsAboutMeLoading &&
+              reportsAboutMePagination?.totalPages > 1 && (
+                <div className={styles.paginationWrapper}>
+                  <Pagination
+                    currentPage={reportsAboutMePagination.currentPage}
+                    totalPages={reportsAboutMePagination.totalPages}
+                    handlePrevPage={previousReportsPage}
+                    handleNextPage={nextReportsPage}
+                    leftText={`Total: ${reportsAboutMePagination.totalReports || 0}`}
+                  />
+                </div>
+              )}
+          </div>
         ) : (
-          reportsAboutMe.map((comp) => (
-            <ComplaintsHistoryCards
-              key={comp.complaintId}
-              title={comp.title}
-              status={comp.status}
-              targetLabel="Reference"
-              targetValue={`#${comp.complaintId}`}
-              submittedDate={formatSubmittedDate(comp.createdAt)}
-              description={comp.description}
-              adminResponse={comp.resolutionMessage?.trim() || null}
-            />
-          ))
+          <div
+            id="reports-about-my-vehicles-panel"
+            className={styles.historyPanel}
+          >
+            <div className={styles.historyPanelHeader}>
+              <div>
+                <p className={styles.historyEyebrow}>
+                  Received by your listings
+                </p>
+                <h4>Reports on Your Vehicles</h4>
+              </div>
+              <p className={styles.historyHint}>
+                Reports filed against vehicles you own. Reporter identity
+                remains private.
+              </p>
+            </div>
+
+            {reportsAboutMyVehiclesError && (
+              <p className={styles.historyError}>
+                {reportsAboutMyVehiclesError}
+              </p>
+            )}
+
+            {isReportsAboutMyVehiclesLoading ? (
+              <p className={styles.historyEmpty}>
+                Loading reports on your vehicles...
+              </p>
+            ) : reportsAboutMyVehicles.length === 0 &&
+              !reportsAboutMyVehiclesError ? (
+              <p className={styles.historyEmpty}>
+                No reports have been filed against your vehicles.
+              </p>
+            ) : (
+              <div className={styles.historyList}>
+                {reportsAboutMyVehicles.map((comp) => {
+                  const vehicleLabel = [
+                    comp.brandName,
+                    comp.modelName,
+                    comp.vehicleLicensePlate
+                      ? `(${comp.vehicleLicensePlate})`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+
+                  return (
+                    <ComplaintsHistoryCards
+                      key={comp.complaintId}
+                      title={comp.title}
+                      status={comp.status}
+                      targetLabel="Reported vehicle"
+                      targetValue={vehicleLabel || "Unknown vehicle"}
+                      referenceValue={`#${comp.complaintId}`}
+                      submittedDate={formatSubmittedDate(comp.createdAt)}
+                      description={comp.description}
+                      adminResponse={comp.resolutionMessage?.trim() || null}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {!isReportsAboutMyVehiclesLoading &&
+              reportsAboutMyVehiclesPagination?.totalPages > 1 && (
+                <div className={styles.paginationWrapper}>
+                  <Pagination
+                    currentPage={
+                      reportsAboutMyVehiclesPagination.currentPage
+                    }
+                    totalPages={reportsAboutMyVehiclesPagination.totalPages}
+                    handlePrevPage={previousVehicleReportsPage}
+                    handleNextPage={nextVehicleReportsPage}
+                    leftText={`Total: ${reportsAboutMyVehiclesPagination.totalReports || 0}`}
+                  />
+                </div>
+              )}
+          </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };

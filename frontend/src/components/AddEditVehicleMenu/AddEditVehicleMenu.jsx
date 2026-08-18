@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
 import { useGovApisContext } from "../../context/GovApisContext";
-import { useActivityContext } from "../../context/ActivityContext";
 import { formattedMinDate } from "../../utils/minMaxDate";
+import { formatDateForInput } from "../../utils/dateFormat";
 import ExactPickupLocationPicker from "../ExactPickupLocationPicker/ExactPickupLocationPicker";
+import AsyncButton from "../AsyncButton/AsyncButton";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const initialFormState = {
   brandId: "0",
@@ -30,18 +32,50 @@ const initialFormState = {
   images: [],
 };
 
-const formatDateForInput = (dateString) => {
-  if (!dateString) return "";
-  const d = new Date(dateString);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+const VEHICLE_COLORS = [
+  "Beige",
+  "Black",
+  "Blue",
+  "Bronze",
+  "Brown",
+  "Burgundy",
+  "Champagne",
+  "Copper",
+  "Cream",
+  "Dark Blue",
+  "Dark Brown",
+  "Dark Gray",
+  "Dark Green",
+  "Dark Red",
+  "Gold",
+  "Gray",
+  "Green",
+  "Ivory",
+  "Light Blue",
+  "Light Gray",
+  "Light Green",
+  "Maroon",
+  "Navy Blue",
+  "Olive",
+  "Orange",
+  "Pearl White",
+  "Pink",
+  "Purple",
+  "Red",
+  "Silver",
+  "Tan",
+  "Teal",
+  "Turquoise",
+  "Violet",
+  "White",
+  "Yellow",
+  "Other",
+];
 
 const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog(isOpen);
   const [formData, setFormData] = useState(initialFormState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     getBrands,
@@ -111,17 +145,6 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     }
   }, [vehicle, isOpen]);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen) {
-      if (!dialog.open) dialog.showModal();
-    } else {
-      if (dialog.open) dialog.close();
-    }
-  }, [isOpen]);
-
   // --- SCROLL TO TOP ON ERROR ---
   useEffect(() => {
     if (errorMsg && dialogRef.current) {
@@ -130,7 +153,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
         behavior: "smooth",
       });
     }
-  }, [errorMsg]);
+  }, [dialogRef, errorMsg]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -172,6 +195,8 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     const submitData = new FormData();
 
@@ -218,6 +243,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     }
 
     if (isSuccess) handleCloseAndReset();
+    setIsSubmitting(false);
   };
 
   const isEditMode = Boolean(vehicle);
@@ -379,14 +405,23 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
 
           <div className={styles.inputGroup}>
             <label>Color</label>
-            <input
-              type="text"
+
+            <select
               name="color"
               value={formData.color}
               onChange={handleChange}
               required
-              placeholder="Obsidian Black"
-            />
+            >
+              <option value="" disabled hidden>
+                Select Color
+              </option>
+
+              {VEHICLE_COLORS.map((color) => (
+                <option key={color} value={color}>
+                  {color}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className={styles.inputGroup}>
@@ -398,6 +433,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               onChange={handleChange}
               required
               placeholder="15000"
+              max={999999}
             />
           </div>
 
@@ -567,9 +603,9 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
           >
             Cancel
           </button>
-          <button type="submit" className={styles.submitBtn}>
+          <AsyncButton type="submit" className={styles.submitBtn} loading={isSubmitting} loadingText={isEditMode ? "Saving changes..." : "Saving vehicle..."}>
             {isEditMode ? "Save Changes" : "Save Vehicle"}
-          </button>
+          </AsyncButton>
         </div>
       </form>
     </dialog>

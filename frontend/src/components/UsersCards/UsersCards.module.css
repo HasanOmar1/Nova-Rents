@@ -1,8 +1,39 @@
 .UsersCards {
+  position: relative;
+  isolation: isolate;
   display: flex;
   justify-content: space-between;
   padding: 15px 20px;
   align-items: center;
+  border-radius: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.UsersCards:hover {
+  background-color: rgba(255, 255, 255, 0.018);
+}
+
+.UsersCards .profileLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.UsersCards .profileLink:hover {
+  background-color: rgba(59, 130, 246, 0.035);
+  box-shadow: inset 3px 0 0 rgba(96, 165, 250, 0.8);
+}
+
+.UsersCards .profileLink:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.52);
+  outline-offset: -3px;
+  background-color: rgba(59, 130, 246, 0.055);
+  box-shadow: inset 3px 0 0 #60a5fa;
 }
 
 .UsersCards p {
@@ -10,14 +41,40 @@
 }
 
 .UsersCards .name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: white;
   width: 35%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.UsersCards .name span {
+  min-width: 0;
+}
+
+.UsersCards .profileIcon {
+  flex: 0 0 auto;
+  color: #60a5fa;
+  opacity: 0.55;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.UsersCards:hover .profileIcon,
+.UsersCards:focus-within .profileIcon {
+  opacity: 1;
+  transform: translate(1px, -1px);
 }
 
 .UsersCards .email {
   width: 35%;
+  min-width: 0;
   color: var(--gray);
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .UsersCards .status {
@@ -27,34 +84,88 @@
 }
 
 .UsersCards .actionContainer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   width: 15%;
-  text-align: right;
   font-size: 0.9rem;
 }
 
 .UsersCards .action {
-  transition: 0.2s color ease;
-  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   margin-left: auto;
-  padding: 10px 20px;
+  padding: 10px 12px;
+  min-height: 42px;
   border-radius: 10px;
-  background-color: var(--input-bg);
-  width: 120px;
+  border: 1px solid transparent;
+  width: 140px;
+  color: #e5e7eb;
+  font-weight: 700;
   text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
-.UsersCards .action:hover {
-  color: var(--icons-color);
+.UsersCards .action svg {
+  flex: 0 0 auto;
+}
+
+.UsersCards .blockAction {
+  color: #fda4af;
+  background-color: rgba(244, 63, 94, 0.1);
+  border-color: rgba(251, 113, 133, 0.3);
+}
+
+.UsersCards .blockAction:hover:not(:disabled) {
+  color: #fff;
+  background-color: #be123c;
+  border-color: #e11d48;
+  box-shadow: 0 8px 20px rgba(190, 18, 60, 0.25);
+  transform: translateY(-1px);
+}
+
+.UsersCards .unblockAction {
+  color: #86efac;
+  background-color: rgba(34, 197, 94, 0.1);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.UsersCards .unblockAction:hover:not(:disabled) {
+  color: #fff;
+  background-color: #15803d;
+  border-color: #22c55e;
+  box-shadow: 0 8px 20px rgba(21, 128, 61, 0.24);
+  transform: translateY(-1px);
+}
+
+.UsersCards .action:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.42);
+  outline-offset: 2px;
+}
+
+.UsersCards .action:disabled {
+  cursor: wait;
+  opacity: 0.68;
+  box-shadow: none;
+  transform: none;
 }
 
 .UsersCards .protected {
   color: var(--gray);
-  cursor: auto;
-  background-color: transparent;
-}
-
-.UsersCards .protected:hover {
-  color: var(--gray);
+  cursor: default;
+  background-color: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .UsersCards .active {
@@ -83,7 +194,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .UsersCards {
     flex-wrap: wrap;
     gap: 15px;
@@ -109,7 +220,7 @@
 
   .UsersCards .action {
     width: 100%;
-    max-width: 120px;
+    max-width: 140px;
   }
 }
 
@@ -129,6 +240,10 @@
     text-align: left;
   }
 
+  .UsersCards .actionContainer {
+    justify-content: flex-start;
+  }
+
   .UsersCards .status {
     text-align: center;
   }
@@ -137,5 +252,23 @@
     margin-left: 0;
     width: 100%;
     max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .UsersCards,
+  .UsersCards .action,
+  .UsersCards .profileLink,
+  .UsersCards .profileIcon {
+    transition: none;
+  }
+
+  .UsersCards .action:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .UsersCards:hover .profileIcon,
+  .UsersCards:focus-within .profileIcon {
+    transform: none;
   }
 }

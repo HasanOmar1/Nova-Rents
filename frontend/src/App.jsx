@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Header from "./components/Header/Header";
 import { useUserContext } from "./context/UserContext";
 import LoginRegister from "./pages/LoginRegister/LoginRegister";
@@ -8,6 +8,7 @@ import Profile from "./pages/UserUI/Profile/Profile";
 import Vehicles from "./pages/UserUI/Vehicles/Vehicles";
 import Map from "./pages/UserUI/Map/Map";
 import MyVehicles from "./pages/UserUI/MyVehicles/MyVehicles";
+import VehicleAnalytics from "./pages/UserUI/VehicleAnalytics/VehicleAnalytics";
 import Complaints from "./pages/UserUI/Complaints/Complaints";
 import DashBoard from "./pages/AdminUI/DashBoard/DashBoard";
 import Users from "./pages/AdminUI/Users/Users";
@@ -18,9 +19,12 @@ import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
 import RentalDashboard from "./pages/UserUI/RentalDashboard/RentalDashboard";
 import Payment from "./pages/UserUI/Payment/Payment";
 import UserStats from "./pages/UserStats/UserStats";
+import ReportedUsers from "./pages/AdminUI/ReportedUsers/ReportedUsers";
+import ReportedUsersProvider from "./context/ReportedUsersContext";
 
 function App() {
   const { currentUser, isLoading } = useUserContext();
+  const { pathname } = useLocation();
 
   if (isLoading) {
     return (
@@ -44,6 +48,10 @@ function App() {
             <Route path="/vehicles" element={<Vehicles />} />
             <Route path="/map" element={<Map />} />
             <Route path="/myVehicles" element={<MyVehicles />} />
+            <Route
+              path="/myVehicles/analytics"
+              element={<VehicleAnalytics />}
+            />
             <Route path="/profile" element={<Profile />} />
             <Route path="/complaints" element={<Complaints />} />
             <Route path="/rentalDashboard" element={<RentalDashboard />} />
@@ -59,6 +67,14 @@ function App() {
             <Route path="/allVehicles" element={<AllVehicles />} />
             <Route path="/complaintsAdmin" element={<ComplaintsAdmin />} />
             <Route path="/statistics" element={<Statistics />} />
+            <Route
+              path="/reportedUsers"
+              element={
+                <ReportedUsersProvider>
+                  <ReportedUsers />
+                </ReportedUsersProvider>
+              }
+            />
           </>
         ) : (
           <>
@@ -72,7 +88,10 @@ function App() {
 
         {currentUser && (
           <>
-            <Route path="/vehicles/:id" element={<VehicleDetails />} />
+            <Route
+              path="/vehicles/:id"
+              element={<VehicleDetails key={pathname} />}
+            />
             <Route path="/userStats/:email" element={<UserStats />} />
           </>
         )}

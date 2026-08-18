@@ -121,8 +121,9 @@
 }
 
 @media (max-width: 1024px) {
-  .Vehicles .inputsContainer .top {
-    grid-template-columns: repeat(4, 1fr) !important;
+  .Vehicles .inputsContainer .top,
+  .Vehicles .inputsContainer .top.hasActiveFilters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .Vehicles .filterActions {
@@ -138,8 +139,9 @@
 }
 
 @media (max-width: 768px) {
-  .Vehicles .inputsContainer .top {
-    grid-template-columns: repeat(2, 1fr) !important;
+  .Vehicles .inputsContainer .top,
+  .Vehicles .inputsContainer .top.hasActiveFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -161,8 +163,13 @@
     display: flex;
   }
 
-  .Vehicles .inputsContainer .top {
-    grid-template-columns: 1fr;
+  .Vehicles .inputsContainer .top,
+  .Vehicles .inputsContainer .top.hasActiveFilters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .Vehicles .vehiclesCardsContainer {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .Vehicles .pagination {

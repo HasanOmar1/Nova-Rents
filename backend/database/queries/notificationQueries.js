@@ -8,8 +8,20 @@ async function createNotification(userId, rentalId, type, title, message) {
 }
 
 async function getNotificationsByUserId(userId) {
-  const getNotificationsByUserId = `SELECT notificationId , userId , rentalId , type , title , message, isRead , DATE_FORMAT(createdAt, '%d/%m/%Y %H:%i:%s') AS createdAt
- FROM notifications WHERE userId = ? ORDER BY createdAt DESC`;
+  const getNotificationsByUserId = `
+    SELECT
+      n.notificationId,
+      n.userId,
+      n.rentalId,
+      n.type,
+      n.title,
+      n.message,
+      n.isRead,
+      DATE_FORMAT(n.createdAt, '%d/%m/%Y %H:%i:%s') AS createdAt
+    FROM notifications n
+    WHERE n.userId = ?
+    ORDER BY n.createdAt DESC, n.notificationId DESC
+  `;
   const valuesOfgetNotificationsByUserId = [userId];
   const result = await doQuery(
     getNotificationsByUserId,

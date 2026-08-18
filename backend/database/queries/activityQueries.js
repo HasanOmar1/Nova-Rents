@@ -21,7 +21,7 @@ async function getActivitiesByUserId(userId) {
       DATE_FORMAT(createdAt, '%d/%m/%Y %H:%i:%s') AS createdAt
     FROM activity_logs
     WHERE userId = ?
-    ORDER BY createdAt DESC
+    ORDER BY activity_logs.createdAt DESC, activity_logs.logId DESC
     LIMIT 10
   `;
 

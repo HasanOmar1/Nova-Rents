@@ -70,11 +70,11 @@ async function findEligibleRentalForVehicleReportOnConnection(
   rentalId,
   licensePlate,
 ) {
-  const rows = await queryOnConnection(connection, ELIGIBLE_VEHICLE_REPORT_SQL, [
-    rentalId,
-    renterId,
-    licensePlate,
-  ]);
+  const rows = await queryOnConnection(
+    connection,
+    ELIGIBLE_VEHICLE_REPORT_SQL,
+    [rentalId, renterId, licensePlate],
+  );
   return rows[0];
 }
 
@@ -211,7 +211,10 @@ async function getActiveVehicleComplaintsForOwner(ownerId) {
  * Owner-type complaints targeting the session user as reported owner.
  * Never selects reporter identity columns (userId / email / name / phone).
  */
-async function getComplaintsAboutOwner(ownerId) {
+async function getComplaintsAboutOwner(
+  ownerId,
+  { limit = 5, offset = 0 } = {},
+) {
   const query = `
     SELECT
       c.complaintId,
@@ -226,8 +229,121 @@ async function getComplaintsAboutOwner(ownerId) {
     WHERE c.ownerId = ?
       AND c.complaintType = 'owner'
     ORDER BY c.createdAt DESC
+    LIMIT ? OFFSET ?
   `;
+  return doQuery(query, [ownerId, limit, offset]);
+}
+
+async function countComplaintsAboutOwner(ownerId) {
+  const result = await doQuery(
+    `
+      SELECT COUNT(*) AS totalReports
+      FROM complaints
+      WHERE ownerId = ?
+        AND complaintType = 'owner'
+    `,
+    [ownerId],
+  );
+
+  return Number(result[0]?.totalReports) || 0;
+}
+
+/**
+ * All vehicle-type complaints targeting vehicles currently owned by the
+ * session user. Reporter identity and private admin notes are intentionally
+ * excluded from the result.
+ */
+async function getComplaintsAboutOwnerVehicles(
+  ownerId,
+  { limit = 5, offset = 0 } = {},
+) {
+  const query = `
+    SELECT
+      c.complaintId,
+      c.vehicleLicensePlate,
+      c.title,
+      c.description,
+      c.status,
+      c.resolutionMessage,
+      c.respondedAt,
+      c.createdAt,
+      cb.brandName,
+      cm.modelName
+    FROM complaints c
+    INNER JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
+    LEFT JOIN carmodels cm ON v.modelId = cm.modelId
+    LEFT JOIN carbrands cb ON cm.brandId = cb.brandId
+    WHERE v.ownerId = ?
+      AND c.complaintType = 'vehicle'
+    ORDER BY c.createdAt DESC, c.complaintId DESC
+    LIMIT ? OFFSET ?
+  `;
+
+  return doQuery(query, [ownerId, limit, offset]);
+}
+
+async function countComplaintsAboutOwnerVehicles(ownerId) {
+  const result = await doQuery(
+    `
+      SELECT COUNT(*) AS totalReports
+      FROM complaints c
+      INNER JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
+      WHERE v.ownerId = ?
+        AND c.complaintType = 'vehicle'
+    `,
+    [ownerId],
+  );
+
+  return Number(result[0]?.totalReports) || 0;
+}
+
+// Lifetime vehicle-report totals for each vehicle currently owned by the
+// session user. This deliberately has no date or status filter: the vehicle
+// performance page uses it as a stable "times reported" counter while its
+// rental-value period changes.
+async function getVehicleComplaintCountsForOwner(ownerId) {
+  const query = `
+    SELECT
+      CAST(v.licensePlate AS CHAR) AS licensePlate,
+      COUNT(c.complaintId) AS reportCount
+    FROM vehicles v
+    LEFT JOIN complaints c
+      ON c.vehicleLicensePlate = v.licensePlate
+      AND c.complaintType = 'vehicle'
+    WHERE v.ownerId = ?
+    GROUP BY v.licensePlate
+  `;
+
   return doQuery(query, [ownerId]);
+}
+
+// Complete report history for one vehicle currently owned by the session
+// user. Reporter identity and private admin notes are intentionally omitted.
+async function getVehicleComplaintsForOwnerByPlate(ownerId, licensePlate) {
+  const query = `
+    SELECT
+      c.complaintId,
+      c.vehicleLicensePlate,
+      c.title,
+      c.description,
+      c.status,
+      c.resolutionMessage,
+      c.respondedAt,
+      c.createdAt,
+      c.rentalId,
+      cb.brandName,
+      cm.modelName
+    FROM complaints c
+    INNER JOIN vehicles v ON c.vehicleLicensePlate = v.licensePlate
+    LEFT JOIN carmodels cm ON v.modelId = cm.modelId
+    LEFT JOIN carbrands cb ON cm.brandId = cb.brandId
+    WHERE v.ownerId = ?
+      AND v.licensePlate = ?
+      AND c.complaintType = 'vehicle'
+    ORDER BY c.createdAt DESC, c.complaintId DESC
+  `;
+
+  return doQuery(query, [ownerId, licensePlate]);
 }
 
 // Personal complaint history for one reporter. Always scoped by userId.
@@ -334,6 +450,7 @@ async function getAllComplaints(status, limit, offset) {
   const query = `
     SELECT 
       c.complaintId,
+      c.userId,
       c.complaintType,
       c.vehicleLicensePlate,
       c.ownerId,
@@ -349,6 +466,7 @@ async function getAllComplaints(status, limit, offset) {
       cb.brandName,
       u.firstName AS ownerFirstName,
       u.lastName AS ownerLastName,
+      u.email AS ownerEmail,
       complainer.firstName AS complainerFirstName,
       complainer.lastName AS complainerLastName,
       complainer.email AS complainerEmail,
@@ -395,7 +513,9 @@ async function getComplaintStats() {
       COUNT(*) as total,
       SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open,
       SUM(CASE WHEN status = 'in_review' THEN 1 ELSE 0 END) as review,
-      SUM(CASE WHEN status = 'resolved'  THEN 1 ELSE 0 END) as resolved
+      SUM(CASE WHEN status = 'resolved'  THEN 1 ELSE 0 END) as resolved,
+      SUM(CASE WHEN status = 'closed'  THEN 1 ELSE 0 END) as closed
+
     FROM complaints
   `;
   const result = await doQuery(query);
@@ -417,12 +537,7 @@ async function updateComplaintStatus(
     WHERE complaintId = ?
   `;
 
-  return doQuery(query, [
-    status,
-    resolutionMessage,
-    adminNotes,
-    complaintId,
-  ]);
+  return doQuery(query, [status, resolutionMessage, adminNotes, complaintId]);
 }
 
 async function getComplaintReporterById(complaintId) {
@@ -491,6 +606,11 @@ module.exports = {
   createComplaintOnConnection,
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
+  countComplaintsAboutOwner,
+  getComplaintsAboutOwnerVehicles,
+  countComplaintsAboutOwnerVehicles,
+  getVehicleComplaintCountsForOwner,
+  getVehicleComplaintsForOwnerByPlate,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,

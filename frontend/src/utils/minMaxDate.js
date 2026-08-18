@@ -1,3 +1,5 @@
+import { formatDateForInput } from "./dateFormat";
+
 const today = new Date();
 
 // 2. Calculate exactly 18 years ago for the MAX date
@@ -6,14 +8,14 @@ const maxAgeDate = new Date(
   today.getMonth(),
   today.getDate(),
 );
-const formattedMaxDate = maxAgeDate.toISOString().split("T")[0];
+const formattedMaxDate = formatDateForInput(maxAgeDate);
 
-// 3. Calculate 100 years ago for the MIN date
+// 3. Calculate 70 years ago for the MIN date
 const minAgeDate = new Date(
   today.getFullYear() - 70,
   today.getMonth(),
   today.getDate(),
 );
-const formattedMinDate = minAgeDate.toISOString().split("T")[0];
+const formattedMinDate = formatDateForInput(minAgeDate);
 
 export { formattedMinDate, formattedMaxDate };

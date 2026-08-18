@@ -1,9 +1,11 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 import axios from "axios";
+import { useActivityContext } from "./ActivityContext";
 
 const ComplaintContext = createContext();
 
 const ComplaintContextProvider = ({ children }) => {
+  const { loadActivities } = useActivityContext();
   const [complaints, setComplaints] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [pagination, setPagination] = useState({});
@@ -30,12 +32,25 @@ const ComplaintContextProvider = ({ children }) => {
 
   // Owner-type complaints where the session user is the reported target.
   const [reportsAboutMe, setReportsAboutMe] = useState([]);
+  const [reportsAboutMePagination, setReportsAboutMePagination] = useState({});
   const [isReportsAboutMeLoading, setIsReportsAboutMeLoading] = useState(false);
   const [reportsAboutMeError, setReportsAboutMeError] = useState("");
+
+  // Vehicle-type complaints against listings owned by the session user.
+  // This is an all-status, paginated history and intentionally remains
+  // separate from ownerVehicleReports, which only powers active-report badges.
+  const [reportsAboutMyVehicles, setReportsAboutMyVehicles] = useState([]);
+  const [reportsAboutMyVehiclesPagination, setReportsAboutMyVehiclesPagination] =
+    useState({});
+  const [isReportsAboutMyVehiclesLoading, setIsReportsAboutMyVehiclesLoading] =
+    useState(false);
+  const [reportsAboutMyVehiclesError, setReportsAboutMyVehiclesError] =
+    useState("");
 
   const createComplaint = async (complaintData) => {
     try {
       await axios.post("/complaints", complaintData);
+      await loadActivities();
       setErrorMsg("");
       return true;
     } catch (error) {
@@ -145,15 +160,32 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
-  const getReportsAboutMe = async () => {
+  const getOwnerVehicleReportHistory = useCallback(async (licensePlate) => {
+    try {
+      const response = await axios.get(
+        `/complaints/owner-vehicle-reports/${encodeURIComponent(licensePlate)}`,
+      );
+      return response.data.reports || [];
+    } catch (error) {
+      throw new Error(
+        error?.response?.data?.message || "Failed to load vehicle reports",
+      );
+    }
+  }, []);
+
+  const getReportsAboutMe = async ({ page = 1, limit = 5 } = {}) => {
     try {
       setIsReportsAboutMeLoading(true);
-      const response = await axios.get("/complaints/about-me");
+      const response = await axios.get("/complaints/about-me", {
+        params: { page, limit },
+      });
       setReportsAboutMe(response.data.reports || []);
+      setReportsAboutMePagination(response.data.pagination || {});
       setReportsAboutMeError("");
       return response.data.reports || [];
     } catch (error) {
       setReportsAboutMe([]);
+      setReportsAboutMePagination({});
       setReportsAboutMeError(
         error?.response?.data?.message || "Failed to load reports about you",
       );
@@ -162,6 +194,32 @@ const ComplaintContextProvider = ({ children }) => {
       setIsReportsAboutMeLoading(false);
     }
   };
+
+  const getReportsAboutMyVehicles = useCallback(
+    async ({ page = 1, limit = 5 } = {}) => {
+      try {
+        setIsReportsAboutMyVehiclesLoading(true);
+        const response = await axios.get("/complaints/about-my-vehicles", {
+          params: { page, limit },
+        });
+        setReportsAboutMyVehicles(response.data.reports || []);
+        setReportsAboutMyVehiclesPagination(response.data.pagination || {});
+        setReportsAboutMyVehiclesError("");
+        return response.data.reports || [];
+      } catch (error) {
+        setReportsAboutMyVehicles([]);
+        setReportsAboutMyVehiclesPagination({});
+        setReportsAboutMyVehiclesError(
+          error?.response?.data?.message ||
+            "Failed to load reports about your vehicles",
+        );
+        return [];
+      } finally {
+        setIsReportsAboutMyVehiclesLoading(false);
+      }
+    },
+    [],
+  );
 
   return (
     <ComplaintContext.Provider
@@ -188,10 +246,17 @@ const ComplaintContextProvider = ({ children }) => {
         isOwnerVehicleReportsLoading,
         ownerVehicleReportsError,
         getOwnerVehicleReports,
+        getOwnerVehicleReportHistory,
         reportsAboutMe,
+        reportsAboutMePagination,
         isReportsAboutMeLoading,
         reportsAboutMeError,
         getReportsAboutMe,
+        reportsAboutMyVehicles,
+        reportsAboutMyVehiclesPagination,
+        isReportsAboutMyVehiclesLoading,
+        reportsAboutMyVehiclesError,
+        getReportsAboutMyVehicles,
       }}
     >
       {children}

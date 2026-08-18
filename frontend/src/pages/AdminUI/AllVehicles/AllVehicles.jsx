@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import styles from "./AllVehicles.module.css";
 import {
   Car,
@@ -12,51 +12,37 @@ import { useVehicleContext } from "../../../context/VehicleContext";
 import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesCardsTable";
 import Pagination from "../../../components/Pagination/Pagination";
 import AddBrandVehicleMenu from "../../../components/AddBrandVehicleMenu/AddBrandVehicleMenu";
+import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
 
 const AllVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  const { getAllVehicles, allVehicles, allVehStats, allVehPagination } =
+  const { getAdminVehicles, allVehicles, allVehStats, allVehPagination } =
     useVehicleContext();
+  const {
+    currentPage,
+    nextPage,
+    previousPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter({
+    totalPages: allVehPagination?.totalPages,
+  });
 
   useEffect(() => {
-    getAllVehicles({ status: statusFilter }, currentPage);
-  }, [statusFilter, currentPage]);
+    getAdminVehicles({ status: statusFilter }, currentPage);
+  }, [getAdminVehicles, statusFilter, currentPage]);
 
-  useEffect(() => {
-    if (
-      allVehPagination?.totalPages &&
-      currentPage > allVehPagination.totalPages
-    ) {
-      setCurrentPage(allVehPagination.totalPages || 1);
-    }
-  }, [allVehPagination?.totalPages, currentPage]);
-
-  const handleStatusChange = (valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
-
-    setStatusFilter(status);
-    setCurrentPage(1);
-  };
+  const totalVehicles = Number(allVehPagination?.totalVehicles) || 0;
+  const pageLimit = Number(allVehPagination?.limit) || 6;
+  const firstVehicleNumber = allVehicles?.length
+    ? (currentPage - 1) * pageLimit + 1
+    : 0;
+  const lastVehicleNumber = allVehicles?.length
+    ? firstVehicleNumber + allVehicles.length - 1
+    : 0;
 
   const openAddBrandMenu = () => setIsOpen(true);
   const closeAddBrandMenu = () => setIsOpen(false);
-
-  const handleNextPage = () => {
-    if (allVehPagination?.currentPage < allVehPagination?.totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (allVehPagination?.currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
 
   const topData = [
     {
@@ -71,6 +57,13 @@ const AllVehicles = () => {
       value: allVehStats?.available || 0,
       icon: <CheckCircle2 size={28} color="#a7d2eb" />,
       onClick: () => handleStatusChange("available"),
+      isAction: true,
+    },
+    {
+      title: "Rented",
+      value: allVehStats?.rented || 0,
+      icon: <CalendarClock size={28} color="#a7d2eb" />,
+      onClick: () => handleStatusChange("rented"),
       isAction: true,
     },
     {
@@ -105,12 +98,14 @@ const AllVehicles = () => {
           <div className={styles.filterContainer}>
             <label htmlFor="status">Filter:</label>
             <select
+              id="status"
               name="status"
               value={statusFilter}
               onChange={handleStatusChange}
             >
               <option value="all">All Vehicles</option>
               <option value="available">Available</option>
+              <option value="rented">Rented</option>
               <option value="maintenance">Maintenance</option>
               <option value="inactive">Inactive</option>
             </select>
@@ -155,11 +150,11 @@ const AllVehicles = () => {
               </div>
             ))}
             <Pagination
-              currentPage={allVehPagination?.currentPage}
+              currentPage={currentPage}
               totalPages={allVehPagination?.totalPages}
-              handlePrevPage={handlePrevPage}
-              handleNextPage={handleNextPage}
-              leftText={`Total Vehicles: ${allVehPagination?.totalVehicles || 0}`}
+              handlePrevPage={previousPage}
+              handleNextPage={nextPage}
+              leftText={`Showing ${firstVehicleNumber}-${lastVehicleNumber} of ${totalVehicles} vehicles`}
             />
           </>
         ) : (

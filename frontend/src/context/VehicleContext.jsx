@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 import axios from "axios";
 import { useActivityContext } from "./ActivityContext";
 
@@ -14,6 +19,7 @@ const VehicleContextProvider = ({ children }) => {
   const [vehicleStats, setVehicleStats] = useState({});
   const [pagination, setPagination] = useState({});
   const [currentStatus, setCurrentStatus] = useState("all");
+  const [vehicleInventoryVersion, setVehicleInventoryVersion] = useState(0);
   const [allVehPagination, setAllVehPagination] = useState({});
   const [availableFilters, setAvailableFilters] = useState({
     locations: [],
@@ -24,9 +30,9 @@ const VehicleContextProvider = ({ children }) => {
   const [allVehStats, setAllVehStats] = useState(null);
   const { loadActivities } = useActivityContext();
 
-  const getAllVehicles = async (filters = {}, page = 1) => {
+  const loadVehicles = useCallback(async (endpoint, filters = {}, page = 1) => {
     try {
-      const response = await axios.get("/vehicles", {
+      const response = await axios.get(endpoint, {
         params: { ...filters, page, limit: 6 },
       });
       setAllVehicles(response.data.vehicles);
@@ -38,7 +44,18 @@ const VehicleContextProvider = ({ children }) => {
       console.log(error?.response?.data?.message);
       setErrorMsg(error?.response?.data?.message);
     }
-  };
+  }, []);
+
+  const getAllVehicles = useCallback(
+    (filters = {}, page = 1) => loadVehicles("/vehicles", filters, page),
+    [loadVehicles],
+  );
+
+  const getAdminVehicles = useCallback(
+    (filters = {}, page = 1) =>
+      loadVehicles("/vehicles/admin", filters, page),
+    [loadVehicles],
+  );
 
   const getUserVehicles = async (page = 1, status = "all") => {
     try {
@@ -63,6 +80,7 @@ const VehicleContextProvider = ({ children }) => {
       getUserVehicles(pagination.currentPage || 1, currentStatus);
       setErrorMsg("");
       loadActivities();
+      setVehicleInventoryVersion((version) => version + 1);
       return true;
     } catch (error) {
       setErrorMsg(error?.response?.data?.message);
@@ -105,10 +123,11 @@ const VehicleContextProvider = ({ children }) => {
 
   const addVehicle = async (vehData) => {
     try {
-      const response = await axios.post("/vehicles/add", vehData);
+      await axios.post("/vehicles/add", vehData);
       await Promise.all([getAllVehicles(), getUserVehicles(1, currentStatus)]);
       setErrorMsg("");
       loadActivities();
+      setVehicleInventoryVersion((version) => version + 1);
       return true;
     } catch (error) {
       console.log(error?.response.data?.message);
@@ -119,13 +138,14 @@ const VehicleContextProvider = ({ children }) => {
 
   const updateVehicle = async (licensePlate, vehData) => {
     try {
-      const response = await axios.put(`/vehicles/${licensePlate}`, vehData);
+      await axios.put(`/vehicles/${licensePlate}`, vehData);
       await Promise.all([
         getAllVehicles(),
         getUserVehicles(pagination.currentPage || 1, currentStatus),
       ]);
 
       loadActivities();
+      setVehicleInventoryVersion((version) => version + 1);
 
       setErrorMsg("");
       return true;
@@ -147,6 +167,7 @@ const VehicleContextProvider = ({ children }) => {
       ]);
 
       loadActivities();
+      setVehicleInventoryVersion((version) => version + 1);
       setErrorMsg("");
       return true;
     } catch (error) {
@@ -158,22 +179,27 @@ const VehicleContextProvider = ({ children }) => {
 
   // Fetch a single vehicle by plate via the existing GET /vehicles/:licensePlate.
   // Returns the vehicle object, or null when not found / request failed.
-  const getVehicleByLicensePlate = async (licensePlate) => {
-    try {
-      const response = await axios.get(`/vehicles/${licensePlate}`);
-      setErrorMsg("");
-      return response.data.vehicle || null;
-    } catch (error) {
-      setErrorMsg(error?.response?.data?.message);
-      return null;
-    }
-  };
+  const getVehicleByLicensePlate = useCallback(
+    async (licensePlate, { silent = false } = {}) => {
+      try {
+        const response = await axios.get(`/vehicles/${licensePlate}`);
+        if (!silent) setErrorMsg("");
+        return response.data.vehicle || null;
+      } catch (error) {
+        if (silent) throw error;
+        setErrorMsg(error?.response?.data?.message);
+        return null;
+      }
+    },
+    [],
+  );
 
   return (
     <VehicleContext.Provider
       value={{
         errorMsg,
         getAllVehicles,
+        getAdminVehicles,
         allVehicles,
         getUserVehicles,
         userVehicles,
@@ -194,6 +220,7 @@ const VehicleContextProvider = ({ children }) => {
         allVehStats,
         updateVehicleStatus,
         getVehicleByLicensePlate,
+        vehicleInventoryVersion,
       }}
     >
       {children}

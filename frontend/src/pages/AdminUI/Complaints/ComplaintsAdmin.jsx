@@ -1,5 +1,11 @@
 import styles from "./ComplaintsAdmin.module.css";
-import { FileWarning, Clock, AlertTriangle, BookCheck } from "lucide-react";
+import {
+  FileWarning,
+  Clock,
+  AlertTriangle,
+  BookCheck,
+  CalendarRange,
+} from "lucide-react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import ComplaintsAdminCards from "../../../components/ComplaintsCards/ComplaintsAdminCards";
@@ -11,34 +17,12 @@ import {
   formatPeriodTick,
   formatPeriodTooltip,
 } from "../../../utils/periodFormat";
-
-// Local-time date formatting (toISOString would shift the day near midnight)
-const formatDateForInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
+import { useAppliedDateRange } from "../../../hooks/useAppliedDateRange";
 
 const ComplaintsAdmin = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const today = new Date();
-  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-
-  // Editable input values — changing these sends no request.
-  const [fromDate, setFromDate] = useState(formatDateForInput(sixMonthsAgo));
-  const [toDate, setToDate] = useState(formatDateForInput(today));
-  // Applied query values — only updated when the user presses Apply, so the
-  // chart never refetches with a half-edited range.
-  const [appliedFromDate, setAppliedFromDate] = useState(fromDate);
-  const [appliedToDate, setAppliedToDate] = useState(toDate);
-
-  const isRangeValid = Boolean(fromDate && toDate && fromDate <= toDate);
-
   const {
     putUpdateComplaintStatus,
     getAllComplaints,
@@ -50,6 +34,24 @@ const ComplaintsAdmin = () => {
     complaintTrendsErrorMsg,
     getComplaintTrends,
   } = useComplaintContext();
+  const {
+    currentPage,
+    nextPage,
+    previousPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter({ totalPages: pagination?.totalPages });
+
+  const {
+    fromDate,
+    toDate,
+    setFromDate,
+    setToDate,
+    isRangeValid,
+    appliedFromDate,
+    appliedToDate,
+    applyDateRange,
+  } = useAppliedDateRange();
 
   // Fetch data when page or filter changes
   useEffect(() => {
@@ -65,18 +67,8 @@ const ComplaintsAdmin = () => {
 
   const handleApplyDates = () => {
     if (isRangeValid && !isComplaintTrendsLoading) {
-      setAppliedFromDate(fromDate);
-      setAppliedToDate(toDate);
+      applyDateRange();
     }
-  };
-
-  const handleStatusChange = (valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
-
-    setStatusFilter(status);
-    setCurrentPage(1);
   };
 
   const openReviewModal = (complaint) => {
@@ -126,6 +118,13 @@ const ComplaintsAdmin = () => {
       onClick: () => handleStatusChange("resolved"),
       isAction: true,
     },
+    {
+      title: "Closed",
+      value: complaintStats?.closed || 0,
+      icon: <BookCheck size={28} color="#3b82f6" />,
+      onClick: () => handleStatusChange("closed"),
+      isAction: true,
+    },
   ];
 
   return (
@@ -168,34 +167,6 @@ const ComplaintsAdmin = () => {
             <option value="closed">Closed</option>
           </select>
         </div>
-        <div className={styles.filterGroup}>
-          <label htmlFor="trendsFromDate">From</label>
-          <input
-            id="trendsFromDate"
-            type="date"
-            value={fromDate}
-            max={toDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-        </div>
-        <div className={styles.filterGroup}>
-          <label htmlFor="trendsToDate">To</label>
-          <input
-            id="trendsToDate"
-            type="date"
-            value={toDate}
-            min={fromDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-        </div>
-        <button
-          type="button"
-          className={styles.applyBtn}
-          onClick={handleApplyDates}
-          disabled={!isRangeValid || isComplaintTrendsLoading}
-        >
-          {isComplaintTrendsLoading ? "Loading..." : "Apply"}
-        </button>
       </div>
 
       <div className={styles.complaintsContainer}>
@@ -208,14 +179,13 @@ const ComplaintsAdmin = () => {
           <p>Reporter</p>
           <p>Action</p>
         </div>
-        <hr />
 
         {complaints.length === 0 ? (
           <p className={styles.emptyMsg}>
             No complaints found for this filter.
           </p>
         ) : (
-          complaints.map((comp, i) => {
+          complaints.map((comp) => {
             const listedOwner =
               comp.complaintType === "vehicle"
                 ? `${comp.vehicleOwnerFirstName || ""} ${comp.vehicleOwnerLastName || ""}`
@@ -227,18 +197,17 @@ const ComplaintsAdmin = () => {
                 : comp.ownerEmail || "—";
 
             return (
-              <div key={comp.complaintId}>
+              <div className={styles.complaintRow} key={comp.complaintId}>
                 <ComplaintsAdminCards
                   action="Review"
-                  owner={listedOwner}
-                  reporter={comp.complainerEmail || comp.userId}
+                  owner={listedOwner.trim() || "—"}
+                  reporter={comp.complainerEmail || comp.userId || "—"}
                   status={comp.status}
                   target={target}
-                  title={comp.title}
+                  title={comp.title || "Untitled complaint"}
                   type={comp.complaintType === "vehicle" ? "Vehicle" : "Owner"}
                   onReview={() => openReviewModal(comp)}
                 />
-                {i < complaints.length - 1 && <hr />}
               </div>
             );
           })
@@ -248,16 +217,60 @@ const ComplaintsAdmin = () => {
           <Pagination
             currentPage={pagination.currentPage}
             totalPages={pagination.totalPages}
-            handlePrevPage={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            handleNextPage={() =>
-              setCurrentPage((p) => Math.min(p + 1, pagination.totalPages))
-            }
+            handlePrevPage={previousPage}
+            handleNextPage={nextPage}
             leftText={`Total Complaints: ${pagination.totalComplaints}`}
           />
         </div>
       </div>
 
       <div className={styles.trendsContainer}>
+        <div className={styles.trendsToolbar}>
+          <div className={styles.trendsToolbarHeading}>
+            <span className={styles.trendsIcon} aria-hidden="true">
+              <CalendarRange size={20} />
+            </span>
+            <div>
+              <h2>Trend date range</h2>
+              <p>
+                Choose the chart period. The selected complaint status also
+                applies.
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.trendsDateControls}>
+            <div className={styles.filterGroup}>
+              <label htmlFor="trendsFromDate">From</label>
+              <input
+                id="trendsFromDate"
+                type="date"
+                value={fromDate}
+                max={toDate}
+                onChange={(event) => setFromDate(event.target.value)}
+              />
+            </div>
+            <div className={styles.filterGroup}>
+              <label htmlFor="trendsToDate">To</label>
+              <input
+                id="trendsToDate"
+                type="date"
+                value={toDate}
+                min={fromDate}
+                onChange={(event) => setToDate(event.target.value)}
+              />
+            </div>
+            <button
+              type="button"
+              className={styles.applyBtn}
+              onClick={handleApplyDates}
+              disabled={!isRangeValid || isComplaintTrendsLoading}
+            >
+              {isComplaintTrendsLoading ? "Loading..." : "Apply range"}
+            </button>
+          </div>
+        </div>
+
         {complaintTrendsErrorMsg && (
           <p className={styles.trendsError}>{complaintTrendsErrorMsg}</p>
         )}

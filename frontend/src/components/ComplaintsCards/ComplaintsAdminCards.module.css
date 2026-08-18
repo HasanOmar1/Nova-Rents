@@ -1,87 +1,215 @@
 .ComplaintsAdminCards {
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 20px;
+  display: grid;
+  grid-template-columns: var(--complaints-grid-columns);
+  column-gap: var(--complaints-grid-gap);
   align-items: center;
+  min-width: 0;
+  padding: 16px 20px;
+  transition: background-color 0.2s ease;
 }
 
-.ComplaintsAdminCards .type {
-  width: 8%;
+.ComplaintsAdminCards:hover {
+  background-color: rgba(84, 148, 255, 0.045);
 }
 
 .ComplaintsAdminCards p {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gray);
   font-weight: 500;
-  width: 15.3%;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.ComplaintsAdminCards .title {
+.ComplaintsAdminCards .titleCell {
   color: white;
+  font-weight: 650;
+}
+
+.ComplaintsAdminCards .typeBadge,
+.ComplaintsAdminCards .statusBadge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 5px 10px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ComplaintsAdminCards .typeBadge {
+  color: #c4b5fd;
+  background-color: rgba(139, 92, 246, 0.12);
+  border-color: rgba(167, 139, 250, 0.2);
+}
+
+.ComplaintsAdminCards .typeBadge.vehicle {
+  color: #93c5fd;
+  background-color: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+.ComplaintsAdminCards .statusBadge {
+  color: #93c5fd;
+  background-color: rgba(59, 130, 246, 0.12);
+}
+
+.ComplaintsAdminCards .statusBadge.open {
+  color: #fcd34d;
+  background-color: rgba(234, 179, 8, 0.12);
+  border-color: rgba(250, 204, 21, 0.2);
+}
+
+.ComplaintsAdminCards .statusBadge.inReview {
+  color: #93c5fd;
+  background-color: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+.ComplaintsAdminCards .statusBadge.resolved {
+  color: #6ee7b7;
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.ComplaintsAdminCards .statusBadge.closed {
+  color: #cbd5e1;
+  background-color: rgba(100, 116, 139, 0.16);
+  border-color: rgba(148, 163, 184, 0.2);
 }
 
 .ComplaintsAdminCards .action {
-  color: white;
-  transition: 0.2s color ease;
-  cursor: pointer;
-  margin-left: auto;
-  padding: 10px 20px;
+  justify-self: center;
+  width: 100%;
+  max-width: 120px;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(84, 148, 255, 0.16);
   border-radius: 10px;
   background-color: var(--input-bg);
-  width: 120px;
+  color: white;
+  cursor: pointer;
   text-align: center;
+  white-space: nowrap;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .ComplaintsAdminCards .action:hover {
   color: var(--icons-color);
+  border-color: rgba(84, 148, 255, 0.45);
+  background-color: rgba(84, 148, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.ComplaintsAdminCards .action:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1024px) {
   .ComplaintsAdminCards {
-    flex-wrap: wrap;
-    gap: 15px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "type status"
+      "title title"
+      "target owner"
+      "reporter reporter"
+      "action action";
+    column-gap: 28px;
+    padding: 16px 18px;
+    background: var(--input-bg);
+    border: 1px solid #2e3442;
+    border-radius: 14px;
   }
 
   .ComplaintsAdminCards p {
-    width: 20%;
+    padding: 10px 0;
+    overflow: visible;
+    border-bottom: 1px solid rgba(46, 52, 66, 0.72);
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
-  .ComplaintsAdminCards .type {
-    width: 15%;
+  .ComplaintsAdminCards p::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    color: #6f7580;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .ComplaintsAdminCards .typeCell {
+    grid-area: type;
+  }
+
+  .ComplaintsAdminCards .titleCell {
+    grid-area: title;
+  }
+
+  .ComplaintsAdminCards .targetCell {
+    grid-area: target;
+  }
+
+  .ComplaintsAdminCards .ownerCell {
+    grid-area: owner;
+  }
+
+  .ComplaintsAdminCards .statusCell {
+    grid-area: status;
+  }
+
+  .ComplaintsAdminCards .reporterCell {
+    grid-area: reporter;
+    border-bottom: 0;
   }
 
   .ComplaintsAdminCards .action {
+    grid-area: action;
     width: 100%;
-    margin-left: 0;
-    margin-top: 5px;
+    max-width: none;
+    margin-top: 10px;
   }
 }
 
 @media (max-width: 768px) {
-  .ComplaintsAdminCards p {
-    width: 45%;
-    font-size: 0.9rem;
+  .ComplaintsAdminCards {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "type"
+      "title"
+      "target"
+      "owner"
+      "status"
+      "reporter"
+      "action";
+    column-gap: 0;
+    padding: 15px;
   }
 
-  .ComplaintsAdminCards .type,
-  .ComplaintsAdminCards .title {
-    width: 100%;
+  .ComplaintsAdminCards .reporterCell {
+    border-bottom: 1px solid rgba(46, 52, 66, 0.72);
   }
 }
 
 @media (max-width: 480px) {
-  .ComplaintsAdminCards {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 15px;
-    gap: 10px;
-  }
-
-  .ComplaintsAdminCards p,
-  .ComplaintsAdminCards .type {
-    width: 100%;
-  }
-
   .ComplaintsAdminCards .action {
-    width: 100%;
-    margin-top: 5px;
+    min-height: 44px;
   }
 }

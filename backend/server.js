@@ -3,7 +3,10 @@ const session = require("express-session");
 const cors = require("cors");
 const errorHandler = require("./middleWare/errorMiddleware");
 const path = require("path");
-require("dotenv").config({ quiet: true }); // quiet = removes the ad from the dotenv developer
+require("dotenv").config({
+  path: path.join(__dirname, ".env"),
+  quiet: true,
+});
 
 // routes
 const usersRoute = require("./routes/usersRoute");
@@ -16,6 +19,7 @@ const activityRoute = require("./routes/activityRoute");
 const complaintsRoute = require("./routes/complaintsRoute");
 const reportRoute = require("./routes/reportRoute");
 const paymentsRoute = require("./routes/paymentsRoute");
+const reportedUsersRoute = require("./routes/reportedUsersRoute");
 
 const isProduction = process.env.NODE_ENV === "production";
 const app = express();
@@ -61,6 +65,7 @@ app.use("/activity", activityRoute);
 app.use("/complaints", complaintsRoute);
 app.use("/reports", reportRoute);
 app.use("/payments", paymentsRoute);
+app.use("/reported-users", reportedUsersRoute);
 app.use(errorHandler);
 
 startRentalReminderJob();

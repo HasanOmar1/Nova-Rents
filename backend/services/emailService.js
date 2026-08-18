@@ -654,6 +654,7 @@ Submitted:
 ${submittedLabel}
 
 Nova Rents support will review the report.
+You can track it in the Reports on Your Vehicles section of the Complaints page.
 You will be notified when the report status changes.
 
 ${closingText()}
@@ -677,6 +678,10 @@ ${closingText()}
       </p>
       ${buildDetailBlock("Report details", rows)}
       <p>Nova Rents support will review the report.</p>
+      <p>
+        You can track it in the <strong>Reports on Your Vehicles</strong>
+        section of the Complaints page.
+      </p>
       <p>You will be notified when the report status changes.</p>
     `,
   );
@@ -1009,7 +1014,7 @@ ${respondedLabel}
 ${
   status === "in_review"
     ? "You will be notified when the review is completed."
-    : "You can view the final decision on your My Vehicles Active Reports page."
+    : "You can view the final decision in the Reports on Your Vehicles section of the Complaints page."
 }
 
 ${closingText()}
@@ -1039,7 +1044,7 @@ ${closingText()}
   const followUpHtml =
     status === "in_review"
       ? "<p>You will be notified when the review is completed.</p>"
-      : "<p>You can view the final decision on your My Vehicles Active Reports page.</p>";
+      : "<p>You can view the final decision in the <strong>Reports on Your Vehicles</strong> section of the Complaints page.</p>";
 
   const html = buildEmailShell(
     subject.replace(` — ${vehicleName}`, ""),
@@ -1601,6 +1606,148 @@ ${closingText(TEST_ENV_CONFIRMATION_DISCLOSURE)}
   return info;
 };
 
+const sendAccountWarningEmail = async ({ to, firstName, reason, warningCount, blocked }) => {
+  if (!to) throw new Error("Warning email recipient is required");
+  const greeting = escapeHtml(firstName || "there");
+  const subject = blocked ? "Nova Rents Account Blocked" : "Nova Rents Account Warning";
+  const statusText = blocked
+    ? "Your account has received its third warning and has now been blocked. You can no longer sign in or use restricted Nova Rents functionality."
+    : `You currently have ${warningCount} of 3 warnings. If your account reaches 3 warnings, it will be blocked.`;
+  const text = `Hello ${firstName || "there"},\n\nYour Nova Rents account has received an official warning.\n\nReason: ${reason}\nCurrent warning count: ${warningCount}/3\n\n${statusText}\n\nAccounts that receive 3 warnings will be blocked from Nova Rents.\n\nNova Rents Support Team`;
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`, to, subject, text,
+    html: buildEmailShell(blocked ? "Account Blocked" : "Account Warning", `
+      <p>Hello ${greeting},</p><p>Your Nova Rents account has received an official warning.</p>
+      ${buildDetailBlock("Warning details", buildDetailRow("Reason", escapeHtml(reason)) + buildDetailRow("Warning count", `${warningCount}/3`))}
+      <p>${escapeHtml(statusText)}</p><p><strong>Accounts that receive 3 warnings will be blocked from Nova Rents.</strong></p>`),
+  });
+
+  const normalizedRecipient = String(to).trim().toLowerCase();
+  const accepted = (info.accepted || []).map((email) => String(email).toLowerCase());
+  if (!accepted.includes(normalizedRecipient)) {
+    const rejected = (info.rejected || []).join(", ") || normalizedRecipient;
+    throw new Error(`Warning email recipient was rejected: ${rejected}`);
+  }
+
+  logEmailResult(
+    `${blocked ? "account blocked" : `account warning ${warningCount}/3`} to ${normalizedRecipient}`,
+    info,
+  );
+  return info;
+};
+
+const sendAccountBlockedEmail = async ({
+  to,
+  firstName,
+  blockedAt = new Date(),
+}) => {
+  const recipient = String(to || "").trim();
+  if (!recipient) throw new Error("Blocked account email recipient is required");
+
+  const greeting = String(firstName || "there").trim() || "there";
+  const formattedBlockedAt = formatEmailDateTime(blockedAt);
+  const subject = "Nova Rents Account Blocked";
+  const text = `Hello ${greeting},\n\nYour Nova Rents account has been blocked by an administrator.\n\nAccount status: Blocked\nBlocked on: ${formattedBlockedAt}\n\nFuture sign-ins are disabled while your account remains blocked. If you believe this was a mistake, please contact Nova Rents support.\n\nNova Rents Support Team`;
+
+  const blockedBadge = `
+    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background-color:#fff1f2;color:#be123c;font-size:13px;font-weight:700;">
+      Blocked
+    </span>
+  `;
+  const rows =
+    buildDetailRow("Account status", blockedBadge) +
+    buildDetailRow("Blocked on", escapeHtml(formattedBlockedAt));
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to: recipient,
+    subject,
+    text,
+    html: buildEmailShell(
+      "Account Blocked",
+      `
+        <p>Hello ${escapeHtml(greeting)},</p>
+        <p>Your Nova Rents account has been blocked by an administrator.</p>
+        ${buildDetailBlock("Account update", rows)}
+        <p>Future sign-ins are disabled while your account remains blocked.</p>
+        <div style="margin-top:20px;padding:14px 16px;border-left:4px solid #e11d48;border-radius:8px;background-color:#fff1f2;color:#881337;">
+          If you believe this was a mistake, please contact Nova Rents support.
+        </div>
+      `,
+    ),
+  });
+
+  const normalizedRecipient = recipient.toLowerCase();
+  const accepted = (info.accepted || []).map((email) =>
+    String(email).toLowerCase(),
+  );
+  if (!accepted.includes(normalizedRecipient)) {
+    const rejected = (info.rejected || []).join(", ") || normalizedRecipient;
+    throw new Error(`Blocked account email recipient was rejected: ${rejected}`);
+  }
+
+  logEmailResult(`account blocked to ${normalizedRecipient}`, info);
+  return info;
+};
+
+const sendAccountUnblockedEmail = async ({
+  to,
+  firstName,
+  unblockedAt = new Date(),
+}) => {
+  const recipient = String(to || "").trim();
+  if (!recipient) {
+    throw new Error("Unblocked account email recipient is required");
+  }
+
+  const greeting = String(firstName || "there").trim() || "there";
+  const formattedUnblockedAt = formatEmailDateTime(unblockedAt);
+  const subject = "Nova Rents Account Unblocked";
+  const text = `Hello ${greeting},\n\nYour Nova Rents account has been unblocked by an administrator.\n\nAccount status: Active\nUnblocked on: ${formattedUnblockedAt}\n\nYou can sign in to Nova Rents again. If you did not expect this change or need assistance, please contact Nova Rents support.\n\nNova Rents Support Team`;
+
+  const activeBadge = `
+    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background-color:#f0fdf4;color:#15803d;font-size:13px;font-weight:700;">
+      Active
+    </span>
+  `;
+  const rows =
+    buildDetailRow("Account status", activeBadge) +
+    buildDetailRow("Unblocked on", escapeHtml(formattedUnblockedAt));
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to: recipient,
+    subject,
+    text,
+    html: buildEmailShell(
+      "Account Unblocked",
+      `
+        <p>Hello ${escapeHtml(greeting)},</p>
+        <p>Your Nova Rents account has been unblocked by an administrator.</p>
+        ${buildDetailBlock("Account update", rows)}
+        <p>You can sign in to Nova Rents again.</p>
+        <div style="margin-top:20px;padding:14px 16px;border-left:4px solid #22c55e;border-radius:8px;background-color:#f0fdf4;color:#166534;">
+          If you did not expect this change or need assistance, please contact Nova Rents support.
+        </div>
+      `,
+    ),
+  });
+
+  const normalizedRecipient = recipient.toLowerCase();
+  const accepted = (info.accepted || []).map((email) =>
+    String(email).toLowerCase(),
+  );
+  if (!accepted.includes(normalizedRecipient)) {
+    const rejected = (info.rejected || []).join(", ") || normalizedRecipient;
+    throw new Error(
+      `Unblocked account email recipient was rejected: ${rejected}`,
+    );
+  }
+
+  logEmailResult(`account unblocked to ${normalizedRecipient}`, info);
+  return info;
+};
+
 module.exports = {
   sendOTPEmail,
   handleEmailVerification,
@@ -1614,4 +1761,7 @@ module.exports = {
   sendOwnerPaymentReceivedEmail,
   sendRentalRequestEmail,
   sendRentalRejectedEmail,
+  sendAccountWarningEmail,
+  sendAccountBlockedEmail,
+  sendAccountUnblockedEmail,
 };

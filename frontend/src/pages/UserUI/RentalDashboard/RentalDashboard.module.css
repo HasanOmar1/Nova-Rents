@@ -41,6 +41,245 @@
   text-align: center;
 }
 
+.RentalDashboard .paymentSection {
+  padding: 24px;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(245, 158, 11, 0.12), transparent 48%),
+    var(--bg-gray);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.RentalDashboard .paymentSectionHeader,
+.RentalDashboard .approvalSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.RentalDashboard .paymentSectionHeader h2 {
+  margin-bottom: 6px;
+  color: #fbbf24;
+}
+
+.RentalDashboard .paymentIntro {
+  max-width: 720px;
+  color: var(--gray);
+  line-height: 1.5;
+}
+
+.RentalDashboard .paymentCountBadge {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 999px;
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+.RentalDashboard .approvalSection {
+  padding: 24px;
+  border: 1px solid rgba(59, 130, 246, 0.42);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(59, 130, 246, 0.12), transparent 48%),
+    var(--bg-gray);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.RentalDashboard .approvalSectionHeader h2 {
+  margin-bottom: 6px;
+  color: #60a5fa;
+}
+
+.RentalDashboard .approvalIntro {
+  max-width: 720px;
+  color: var(--gray);
+  line-height: 1.5;
+}
+
+.RentalDashboard .approvalCountBadge {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 999px;
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+.RentalDashboard .card.approvalCard {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.RentalDashboard .pendingApprovalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background-color: rgba(59, 130, 246, 0.14);
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+}
+
+.RentalDashboard .paymentActions.approvalActions {
+  grid-template-columns: 1fr;
+}
+
+.RentalDashboard .grid.paymentGrid {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.RentalDashboard .card.paymentCard {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.RentalDashboard .paymentImageWrapper {
+  overflow: hidden;
+  background-color: var(--input-bg);
+}
+
+.RentalDashboard .paymentImageWrapper .carImg {
+  height: 170px;
+}
+
+.RentalDashboard .paymentCardHeading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+
+.RentalDashboard .paymentCardHeading h3 {
+  margin-bottom: 0;
+}
+
+.RentalDashboard .approvedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background-color: rgba(34, 197, 94, 0.14);
+  color: #4ade80;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+}
+
+.RentalDashboard .paymentDetails {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 15px;
+  color: var(--gray);
+  font-size: 0.88rem;
+}
+
+.RentalDashboard .paymentDetails p {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+
+.RentalDashboard .paymentTotalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: var(--cards-border);
+  border-bottom: var(--cards-border);
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.RentalDashboard .paymentTotalRow strong {
+  color: #fff;
+  font-size: 1.05rem;
+}
+
+.RentalDashboard .paymentClarityCopy {
+  margin: 14px 0;
+  color: #d1d5db;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.RentalDashboard .paymentActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.RentalDashboard .payNowBtn,
+.RentalDashboard .paymentDetailsBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.RentalDashboard .payNowBtn {
+  border: 1px solid #2563eb;
+  background-color: #2563eb;
+  color: #fff;
+}
+
+.RentalDashboard .payNowBtn:hover {
+  border-color: #1d4ed8;
+  background-color: #1d4ed8;
+}
+
+.RentalDashboard .paymentDetailsBtn {
+  border: 1px solid rgba(167, 210, 235, 0.4);
+  background-color: transparent;
+  color: var(--icons-color);
+}
+
+.RentalDashboard .paymentDetailsBtn:hover {
+  border-color: var(--icons-color);
+  background-color: rgba(167, 210, 235, 0.1);
+}
+
+.RentalDashboard .payNowBtn:active,
+.RentalDashboard .paymentDetailsBtn:active {
+  transform: translateY(1px);
+}
+
+.RentalDashboard .payNowBtn:focus-visible,
+.RentalDashboard .paymentDetailsBtn:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.45);
+  outline-offset: 2px;
+}
+
 .RentalDashboard .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -178,10 +417,75 @@
   margin-bottom: 0;
 }
 
+.RentalDashboard .tripHeaderControls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.RentalDashboard .tripFilterContainer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 12px;
+  border: var(--cards-border);
+  border-radius: 10px;
+  background-color: var(--bg-gray);
+}
+
+.RentalDashboard .tripFilterContainer label {
+  color: var(--gray);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.RentalDashboard .tripFilterContainer select {
+  border: none;
+  outline: none;
+  background-color: var(--bg-gray);
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.RentalDashboard .tripFilterContainer:focus-within {
+  border-color: var(--icons-color);
+}
+
 .RentalDashboard .tripCounters {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.RentalDashboard .tripFilterMatchBadge {
+  align-self: flex-start;
+  margin-bottom: 15px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+}
+
+.RentalDashboard .tripFilterMatchBadge.approved {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.RentalDashboard .tripFilterMatchBadge.completed {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.RentalDashboard .tripFilterMatchBadge.rejected,
+.RentalDashboard .tripFilterMatchBadge.cancelled {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
 }
 
 .RentalDashboard .counterBadge {
@@ -198,9 +502,9 @@
   color: #3b82f6;
 }
 
-.RentalDashboard .counterBadge.pending {
-  background-color: rgba(234, 179, 8, 0.15);
-  color: #eab308;
+.RentalDashboard .counterBadge.approved {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
 }
 
 .RentalDashboard .counterBadge.rejected,
@@ -217,10 +521,34 @@
   .RentalDashboard .header h1 {
     font-size: 1.8rem;
   }
+
+  .RentalDashboard .paymentSectionHeader,
+  .RentalDashboard .approvalSectionHeader {
+    flex-direction: column;
+  }
+
+  .RentalDashboard .tripHeaderControls {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
   .RentalDashboard .grid {
     grid-template-columns: 1fr;
+  }
+
+  .RentalDashboard .paymentSection,
+  .RentalDashboard .approvalSection {
+    padding: 18px;
+  }
+
+  .RentalDashboard .paymentActions {
+    grid-template-columns: 1fr;
+  }
+
+  .RentalDashboard .tripFilterContainer,
+  .RentalDashboard .tripFilterContainer select {
+    width: 100%;
   }
 }

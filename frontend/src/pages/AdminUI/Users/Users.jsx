@@ -3,15 +3,11 @@ import {
   Shield,
   CheckCircle2,
   Search,
-  ChevronLeft,
-  ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 import styles from "./Users.module.css";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
-import UsersCards from "../../../components/UsersCards/UsersCards";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   CartesianGrid,
@@ -24,60 +20,30 @@ import { useUserContext } from "../../../context/UserContext";
 import { useEffect } from "react";
 import { useState } from "react";
 import AdminUsersTable from "../../../components/AdminUsersTable/AdminUsersTable";
+import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 
 const axisTick = { fill: "rgba(255,255,255,0.45)", fontSize: 11 };
 const gridStroke = "rgba(255,255,255,0.06)";
 
 const Users = () => {
-  const { getUsers, usersStats, pagination, userChartData } = useUserContext();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const { getUsers, usersStats, pagination, userChartData, errorMsg } =
+    useUserContext();
+  const {
+    currentPage,
+    nextPage,
+    previousPage,
+    resetPage,
+    statusFilter,
+    handleStatusChange,
+  } = usePaginatedStatusFilter({ totalPages: pagination?.totalPages });
 
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // ---  THE DEBOUNCE EFFECT (Only delays typing!) ---
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (debouncedSearch !== searchInput) {
-        setDebouncedSearch(searchInput);
-        setCurrentPage(1);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchInput, debouncedSearch]);
+  const debouncedSearch = useDebouncedValue(searchInput, 300, resetPage);
 
   useEffect(() => {
     getUsers(currentPage, statusFilter, debouncedSearch);
   }, [currentPage, statusFilter, debouncedSearch]);
-
-  useEffect(() => {
-    if (pagination?.totalPages && currentPage > pagination.totalPages) {
-      setCurrentPage(pagination.totalPages);
-    }
-  }, [pagination?.totalPages, currentPage]);
-
-  const handleNextPage = () => {
-    if (pagination?.currentPage < pagination?.totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (pagination?.currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
-
-  const handleStatusChange = (valueOrEvent) => {
-    const status = valueOrEvent?.target
-      ? valueOrEvent.target.value
-      : valueOrEvent;
-
-    setStatusFilter(status);
-    setCurrentPage(1);
-  };
 
   const handleSearchChange = (e) => {
     setSearchInput(e.target.value);
@@ -163,9 +129,16 @@ const Users = () => {
         </div>
       </div>
 
+      {errorMsg && (
+        <div className={styles.actionFeedback} role="alert">
+          <AlertTriangle size={19} aria-hidden="true" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
       <AdminUsersTable
-        handleNextPage={handleNextPage}
-        handlePrevPage={handlePrevPage}
+        handleNextPage={nextPage}
+        handlePrevPage={previousPage}
       />
 
       <div className={styles.userGrowthContainer}>

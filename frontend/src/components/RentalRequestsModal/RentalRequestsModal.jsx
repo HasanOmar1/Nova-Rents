@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./RentalRequestsModal.module.css";
 import {
@@ -7,54 +7,43 @@ import {
   CheckCircle,
   XCircle,
   ExternalLink,
-  CreditCard,
   MapPin,
   AlertTriangle,
 } from "lucide-react";
-
-const formatDate = (dateStr) => {
-  return new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
+import AsyncButton from "../AsyncButton/AsyncButton";
+import { formatShortDate } from "../../utils/dateFormat";
+import { useModalDialog } from "../../hooks/useModalDialog";
 
 const RentalRequestsModal = ({
   isOpen,
   onClose,
   groupData,
   mode,
+  initialTripFilter = "all",
   respondToRequest,
 }) => {
-  const dialogRef = useRef(null);
+  const dialogRef = useModalDialog(isOpen && Boolean(groupData));
   const [tripFilter, setTripFilter] = useState("all");
   const [reportMenuRentalId, setReportMenuRentalId] = useState(null);
+  const [pendingAction, setPendingAction] = useState("");
   const navigate = useNavigate();
+
+  const handleRentalAction = async (rentalId, action) => {
+    const actionKey = `${action}-${rentalId}`;
+    setPendingAction(actionKey);
+    try {
+      await respondToRequest(rentalId, action);
+    } finally {
+      setPendingAction("");
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
-      setTripFilter("all");
+      setTripFilter(mode === "pending" ? "all" : initialTripFilter);
       setReportMenuRentalId(null);
     }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen && groupData) {
-      dialog.showModal();
-      document.body.style.overflow = "hidden";
-    } else {
-      dialog.close();
-      document.body.style.overflow = "auto";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen, groupData]);
+  }, [initialTripFilter, isOpen, mode]);
 
   useEffect(() => {
     if (isOpen && groupData && groupData.rentals.length === 0) {
@@ -105,7 +94,6 @@ const RentalRequestsModal = ({
               className={styles.filterSelect}
             >
               <option value="all">All Trips</option>
-              <option value="pending">Pending</option>
               <option value="completed">Completed</option>
               <option value="rejected">Rejected</option>
               <option value="cancelled">Cancelled</option>
@@ -164,31 +152,11 @@ const RentalRequestsModal = ({
 
               <div className={styles.detailsList}>
                 <p>
-                  <Calendar size={14} /> {formatDate(rental.startDate)} -{" "}
-                  {formatDate(rental.endDate)}
+                  <Calendar size={14} /> {formatShortDate(rental.startDate)} -{" "}
+                  {formatShortDate(rental.endDate)}
                 </p>
                 <p className={styles.price}>Total: ${rental.totalPrice}</p>
               </div>
-
-              {/* Test payment entry for the renter's own approved trips */}
-              {!isPendingMode &&
-                rental.rentalStatus === "approved" &&
-                rental.paymentStatus === "pending" &&
-                rental.paymentToken && (
-                  <>
-                    <p className={styles.pickupHint}>
-                      Exact pickup details will be available after payment.
-                    </p>
-                    <button
-                      className={styles.payNowBtn}
-                      onClick={() =>
-                        navigate(`/payments/${rental.paymentToken}`)
-                      }
-                    >
-                      <CreditCard size={16} /> Pay Now
-                    </button>
-                  </>
-                )}
 
               {!isPendingMode && rental.paymentStatus === "paid" && (
                 <>
@@ -291,18 +259,28 @@ const RentalRequestsModal = ({
 
               {isPendingMode && (
                 <div className={styles.actionBtns}>
-                  <button
+                  <AsyncButton
                     className={styles.approveBtn}
-                    onClick={() => respondToRequest(rental.rentalId, "approve")}
+                    loading={pendingAction === `approve-${rental.rentalId}`}
+                    loadingText="Approving..."
+                    disabled={Boolean(pendingAction)}
+                    onClick={() =>
+                      handleRentalAction(rental.rentalId, "approve")
+                    }
                   >
                     <CheckCircle size={16} /> Approve
-                  </button>
-                  <button
+                  </AsyncButton>
+                  <AsyncButton
                     className={styles.declineBtn}
-                    onClick={() => respondToRequest(rental.rentalId, "reject")}
+                    loading={pendingAction === `reject-${rental.rentalId}`}
+                    loadingText="Declining..."
+                    disabled={Boolean(pendingAction)}
+                    onClick={() =>
+                      handleRentalAction(rental.rentalId, "reject")
+                    }
                   >
                     <XCircle size={16} /> Decline
-                  </button>
+                  </AsyncButton>
                 </div>
               )}
             </div>

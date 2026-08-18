@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import styles from "./Payment.module.css";
 import { useRentContext } from "../../../context/RentContext";
 import { parseImgs } from "../../../utils/parseImgs";
+import { formatShortDate } from "../../../utils/dateFormat";
 import {
   Car,
   Calendar,
@@ -12,15 +13,6 @@ import {
   ArrowLeft,
   MapPin,
 } from "lucide-react";
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return "Unknown date";
-  return new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
 
 const formatAmount = (amount, currency) => {
   const numericAmount = Number(amount);
@@ -175,8 +167,8 @@ const Payment = () => {
               <Car size={14} /> Plate: {payment.licensePlate}
             </p>
             <p>
-              <Calendar size={14} /> {formatDate(payment.startDate)} -{" "}
-              {formatDate(payment.endDate)}
+              <Calendar size={14} /> {formatShortDate(payment.startDate)} -{" "}
+              {formatShortDate(payment.endDate)}
             </p>
             {ownerName && <p>Vehicle owner: {ownerName}</p>}
             {payment.vehicleAddress && (
@@ -240,7 +232,7 @@ const Payment = () => {
               </p>
               {payment.paidAt && (
                 <p className={styles.paidDate}>
-                  Paid on {formatDate(payment.paidAt)}
+                  Paid on {formatShortDate(payment.paidAt)}
                 </p>
               )}
             </div>

@@ -1,0 +1,537 @@
+.VehicleAnalytics {
+  min-width: 0;
+  padding-bottom: 40px;
+}
+
+.VehicleAnalytics .topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.VehicleAnalytics .backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: var(--icons-color);
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.VehicleAnalytics .backLink:hover {
+  color: #fff;
+  transform: translateX(-2px);
+}
+
+.VehicleAnalytics .appliedRangeBadge {
+  padding: 7px 12px;
+  border: 1px solid rgba(46, 209, 153, 0.3);
+  border-radius: 999px;
+  background-color: rgba(46, 209, 153, 0.08);
+  color: #6ee7b7;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+.VehicleAnalytics .pageHeader {
+  margin-bottom: 28px;
+}
+
+.VehicleAnalytics .eyebrow {
+  margin: 0 0 7px;
+  color: #60a5fa;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.VehicleAnalytics .pageHeader h1 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 2.15rem;
+}
+
+.VehicleAnalytics .pageHeader > p:last-child {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gray);
+  line-height: 1.55;
+}
+
+.VehicleAnalytics .rangePanel,
+.VehicleAnalytics .vehicleValueSummary {
+  padding: 24px;
+  border: var(--cards-border);
+  border-radius: 20px;
+  background-color: var(--bg-gray);
+}
+
+.VehicleAnalytics .rangePanel {
+  margin-bottom: 20px;
+}
+
+.VehicleAnalytics .rangePanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.VehicleAnalytics .rangeTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.VehicleAnalytics .rangeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: rgba(59, 130, 246, 0.14);
+  color: #60a5fa;
+}
+
+.VehicleAnalytics .rangeTitle h2,
+.VehicleAnalytics .vehicleValueHeader h2 {
+  margin: 0 0 5px;
+  color: #fff;
+  font-size: 1.15rem;
+}
+
+.VehicleAnalytics .rangeTitle p,
+.VehicleAnalytics .vehicleValueHeader p {
+  margin: 0;
+  color: var(--gray);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.VehicleAnalytics .rangeToggle {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  flex-shrink: 0;
+  padding: 4px;
+  border: var(--cards-border);
+  border-radius: 12px;
+  background-color: var(--input-bg);
+}
+
+.VehicleAnalytics .rangeToggle button {
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--gray);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.VehicleAnalytics .rangeToggle button:hover {
+  color: #fff;
+}
+
+.VehicleAnalytics .rangeToggle .activeRange {
+  border-color: rgba(59, 130, 246, 0.35);
+  background-color: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+}
+
+.VehicleAnalytics .customDateControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: var(--cards-border);
+}
+
+.VehicleAnalytics .dateField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.VehicleAnalytics .dateField label {
+  color: var(--gray);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.VehicleAnalytics .dateField input,
+.VehicleAnalytics .applyDatesBtn {
+  height: 48px;
+  box-sizing: border-box;
+  border: var(--cards-border);
+  border-radius: 13px;
+  background-color: var(--input-bg);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.84rem;
+}
+
+.VehicleAnalytics .dateField input {
+  width: 205px;
+  padding: 0 14px;
+  outline: none;
+}
+
+.VehicleAnalytics .dateField input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.VehicleAnalytics .applyDatesBtn {
+  min-width: 120px;
+  padding: 0 18px;
+  cursor: pointer;
+}
+
+.VehicleAnalytics .applyDatesBtn:hover:not(:disabled) {
+  border-color: var(--input-focus-border-color);
+  background-color: rgba(59, 130, 246, 0.12);
+}
+
+.VehicleAnalytics .applyDatesBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.VehicleAnalytics .backLink:focus-visible,
+.VehicleAnalytics .rangeToggle button:focus-visible,
+.VehicleAnalytics .dateField input:focus-visible,
+.VehicleAnalytics .applyDatesBtn:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.45);
+  outline-offset: 2px;
+}
+
+.VehicleAnalytics .analyticsError {
+  margin: 0 0 16px;
+  color: #ff8a8a;
+  font-size: 0.82rem;
+}
+
+.VehicleAnalytics .vehicleValueSummary {
+  margin-bottom: 20px;
+}
+
+.VehicleAnalytics .vehicleValueHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.VehicleAnalytics .fleetTotalValue {
+  flex-shrink: 0;
+  min-width: 145px;
+  padding: 10px 14px;
+  border: 1px solid rgba(46, 209, 153, 0.3);
+  border-radius: 12px;
+  background-color: rgba(46, 209, 153, 0.08);
+  text-align: right;
+}
+
+.VehicleAnalytics .fleetTotalValue span,
+.VehicleAnalytics .fleetTotalValue strong {
+  display: block;
+}
+
+.VehicleAnalytics .fleetTotalValue span {
+  margin-bottom: 3px;
+  color: var(--gray);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.VehicleAnalytics .fleetTotalValue strong {
+  color: #2ed199;
+  font-size: 1.15rem;
+}
+
+.VehicleAnalytics .vehicleValueList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.VehicleAnalytics .vehicleValueRow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) minmax(105px, auto);
+  align-items: center;
+  gap: 14px;
+  padding: 13px 15px;
+  border: var(--cards-border);
+  border-radius: 14px;
+  background-color: var(--input-bg);
+}
+
+.VehicleAnalytics .vehicleValueRank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgba(167, 210, 235, 0.1);
+  color: var(--icons-color);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.VehicleAnalytics .vehicleValueDetails,
+.VehicleAnalytics .vehicleValueIdentity > div {
+  min-width: 0;
+}
+
+.VehicleAnalytics .vehicleValueIdentity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  margin-bottom: 9px;
+}
+
+.VehicleAnalytics .vehicleValueIdentity strong,
+.VehicleAnalytics .vehicleValueIdentity span {
+  display: block;
+}
+
+.VehicleAnalytics .vehicleValueIdentity strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.VehicleAnalytics .vehicleValueMeta {
+  width: 100%;
+}
+
+.VehicleAnalytics .vehicleValueNameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.VehicleAnalytics .vehicleValueNameRow > strong {
+  flex: 1;
+  min-width: 0;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .vehiclePlate {
+  margin-top: 2px;
+  color: var(--gray);
+  font-size: 0.72rem;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border: 1px solid rgba(249, 187, 129, 0.35);
+  border-radius: 999px;
+  background-color: rgba(249, 187, 129, 0.1);
+  color: #f9bb81;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountButton {
+  min-height: 30px;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountButton:hover {
+  border-color: rgba(249, 187, 129, 0.55);
+  background-color: rgba(249, 187, 129, 0.2);
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountButton:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: 2px;
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountButton:active {
+  transform: translateY(1px);
+}
+
+.VehicleAnalytics .vehicleValueIdentity .reportCountBadgeEmpty {
+  border-color: rgba(167, 210, 235, 0.2);
+  background-color: rgba(167, 210, 235, 0.07);
+  color: var(--gray);
+}
+
+.VehicleAnalytics .vehicleValueDot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.VehicleAnalytics .vehicleValueBar {
+  overflow: hidden;
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.VehicleAnalytics .vehicleValueBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.25s ease;
+}
+
+.VehicleAnalytics .vehicleValueAmount {
+  text-align: right;
+}
+
+.VehicleAnalytics .vehicleValueAmount span,
+.VehicleAnalytics .vehicleValueAmount strong {
+  display: block;
+}
+
+.VehicleAnalytics .vehicleValueAmount span {
+  margin-bottom: 3px;
+  color: #2ed199;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+.VehicleAnalytics .vehicleValueAmount strong {
+  color: #fff;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.VehicleAnalytics .vehicleValueState {
+  margin: 0;
+  padding: 30px 15px;
+  border: var(--cards-border);
+  border-radius: 14px;
+  color: var(--gray);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.VehicleAnalytics .chartSection {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .VehicleAnalytics .rangePanelHeader,
+  .VehicleAnalytics .vehicleValueHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .VehicleAnalytics .rangeToggle,
+  .VehicleAnalytics .fleetTotalValue {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .VehicleAnalytics .fleetTotalValue {
+    text-align: left;
+  }
+
+  .VehicleAnalytics .customDateControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .VehicleAnalytics .dateField,
+  .VehicleAnalytics .dateField input,
+  .VehicleAnalytics .applyDatesBtn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .VehicleAnalytics .topBar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .VehicleAnalytics .pageHeader h1 {
+    font-size: 1.75rem;
+  }
+
+  .VehicleAnalytics .rangePanel,
+  .VehicleAnalytics .vehicleValueSummary {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .VehicleAnalytics .rangeTitle {
+    align-items: flex-start;
+  }
+
+  .VehicleAnalytics .rangeToggle button {
+    padding-inline: 10px;
+  }
+
+  .VehicleAnalytics .vehicleValueRow {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .VehicleAnalytics .vehicleValueRank {
+    width: 27px;
+    height: 27px;
+  }
+
+  .VehicleAnalytics .vehicleValueIdentity strong {
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .VehicleAnalytics .vehicleValueAmount {
+    grid-column: 2;
+    text-align: left;
+  }
+}

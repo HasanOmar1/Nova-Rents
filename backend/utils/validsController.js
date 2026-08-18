@@ -481,11 +481,33 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
 function validateComplaintFields(body, res) {
   const { complaintType, title, description, rentalId } = body;
 
-  if (!complaintType || !title?.trim() || !description?.trim()) {
+  if (
+    !complaintType ||
+    typeof title !== "string" ||
+    typeof description !== "string" ||
+    !title.trim() ||
+    !description.trim()
+  ) {
     return sendValidationError(
       res,
       STATUS_CODE.BAD_REQUEST,
       "complaintType, title, and description are required",
+    );
+  }
+
+  if (title.length > 100) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Complaint title must be at most 100 characters",
+    );
+  }
+
+  if (description.length > 1000) {
+    return sendValidationError(
+      res,
+      STATUS_CODE.BAD_REQUEST,
+      "Complaint description must be at most 1000 characters",
     );
   }
 

@@ -1,14 +1,5 @@
 import styles from "./ComplaintsHistoryCards.module.css";
-
-const STATUS_LABELS = {
-  open: "Open",
-  in_review: "In Review",
-  resolved: "Resolved",
-  closed: "Closed",
-};
-
-const formatStatusLabel = (status) =>
-  STATUS_LABELS[status] || status || "Unknown";
+import { formatComplaintStatus } from "../../utils/displayFormat";
 
 const statusClassName = (status) => {
   if (status === "open") return styles.open;
@@ -23,6 +14,7 @@ const ComplaintsHistoryCards = ({
   status,
   targetLabel,
   targetValue,
+  referenceValue,
   listedOwner,
   submittedDate,
   description,
@@ -33,13 +25,19 @@ const ComplaintsHistoryCards = ({
       <div className={styles.titleAndStatusContainer}>
         <h5>{title}</h5>
         <p className={`${styles.status} ${statusClassName(status)}`}>
-          {formatStatusLabel(status)}
+          {formatComplaintStatus(status)}
         </p>
       </div>
 
       <p>
         <span className={styles.metaLabel}>{targetLabel}:</span> {targetValue}
       </p>
+
+      {referenceValue && (
+        <p>
+          <span className={styles.metaLabel}>Reference:</span> {referenceValue}
+        </p>
+      )}
 
       {listedOwner && (
         <p>

@@ -15,6 +15,10 @@ const {
   createComplaintOnConnection,
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
+  countComplaintsAboutOwner,
+  getComplaintsAboutOwnerVehicles,
+  countComplaintsAboutOwnerVehicles,
+  getVehicleComplaintsForOwnerByPlate,
   getComplaintsByUserId,
   countComplaintsByUserId,
   getAllComplaints,
@@ -41,7 +45,10 @@ const {
   validateComplaintFields,
 } = require("../utils/validsController");
 
-const { getUserByEmail, getUserById } = require("../database/queries/userQueries");
+const {
+  getUserByEmail,
+  getUserById,
+} = require("../database/queries/userQueries");
 const {
   createNotification,
 } = require("../database/queries/notificationQueries");
@@ -188,8 +195,7 @@ async function createComplaint_controller(req, res, next) {
 
     const plateForInsert =
       complaintType === "vehicle" ? eligibleRental.licensePlate : null;
-    const ownerForInsert =
-      complaintType === "owner" ? resolvedOwnerId : null;
+    const ownerForInsert = complaintType === "owner" ? resolvedOwnerId : null;
 
     let insertResult;
     try {
@@ -302,7 +308,7 @@ async function createComplaint_controller(req, res, next) {
     // Side effects only after successful COMMIT.
     await createActivity(
       userId,
-      "complaint_created",
+      "Created a Complaint",
       userActivityDescription,
       insertResult.insertId,
     );
@@ -311,7 +317,7 @@ async function createComplaint_controller(req, res, next) {
       userId,
       "complaint",
       "create",
-      "complaint_created",
+      "Created a Complaint",
       "complaint",
       String(insertResult.insertId),
       parsedRentalId,
@@ -320,23 +326,25 @@ async function createComplaint_controller(req, res, next) {
     );
 
     // Notify all admins (existing behavior)
-    const admins = await doQuery(
-      "SELECT userId FROM users WHERE role = 'admin'",
-    );
+    try {
+      const admins = await doQuery(
+        "SELECT userId FROM users WHERE role = 'admin'",
+      );
 
-    for (const admin of admins) {
-      await doQuery(
-        `
-          INSERT INTO notifications
-          (userId, type, title, message)
-          VALUES (?, ?, ?, ?)
-        `,
-        [
+      for (const admin of admins) {
+        await createNotification(
           admin.userId,
-          "system",
+          parsedRentalId,
+          "complaint_admin",
           "New Complaint Received",
-          adminHistoryDescription,
-        ],
+          adminHistoryDescription.slice(0, 255),
+        );
+      }
+    } catch (adminNotifyError) {
+      // Admin delivery must never prevent notifying the reported user below.
+      console.error(
+        "Failed to notify admins about complaint:",
+        adminNotifyError.message,
       );
     }
 
@@ -345,7 +353,8 @@ async function createComplaint_controller(req, res, next) {
     // Failure must not undo the committed complaint.
     if (complaintType === "vehicle" && plateForInsert != null) {
       try {
-        const vehicleNotice = await getVehicleLabelForOwnerNotice(plateForInsert);
+        const vehicleNotice =
+          await getVehicleLabelForOwnerNotice(plateForInsert);
         if (vehicleNotice && vehicleNotice.ownerId) {
           const vehicleLabel = `${vehicleNotice.brandName} ${vehicleNotice.modelName}`;
           const reasonText = String(title || "").trim();
@@ -962,6 +971,36 @@ async function getOwnerVehicleReports_controller(req, res, next) {
   }
 }
 
+async function getOwnerVehicleReportHistory_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+      return;
+    }
+
+    const licensePlate = String(req.params.licensePlate || "").trim();
+    if (!/^\d{7,8}$/.test(licensePlate)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Enter a valid Israeli license plate (7 or 8 digits).",
+      });
+    }
+
+    // Ownership always comes from the session and is enforced in the query.
+    const ownerId = req.session.user.userId;
+    const reports = await getVehicleComplaintsForOwnerByPlate(
+      ownerId,
+      licensePlate,
+    );
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Vehicle report history fetched successfully",
+      count: reports.length,
+      reports,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function getComplaintsAboutMe_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -970,12 +1009,66 @@ async function getComplaintsAboutMe_controller(req, res, next) {
 
     // Reported-owner scope always from session — never from client ownerId.
     const ownerId = req.session.user.userId;
-    const reports = await getComplaintsAboutOwner(ownerId);
+    const parsedPage = Number.parseInt(req.query.page, 10);
+    const parsedLimit = Number.parseInt(req.query.limit, 10);
+    const requestedPage = parsedPage > 0 ? parsedPage : 1;
+    const limit = parsedLimit > 0 ? Math.min(parsedLimit, 50) : 5;
+
+    const totalReports = await countComplaintsAboutOwner(ownerId);
+    const totalPages = Math.max(Math.ceil(totalReports / limit), 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+    const offset = (currentPage - 1) * limit;
+    const reports = await getComplaintsAboutOwner(ownerId, { limit, offset });
 
     return res.status(STATUS_CODE.OK).json({
       message: "Reports about you fetched successfully",
-      count: reports.length,
+      count: totalReports,
       reports,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalReports,
+        limit,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getComplaintsAboutMyVehicles_controller(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+      return;
+    }
+
+    // Vehicle-owner scope always comes from the session. Never accept an
+    // ownerId or license plate from the client for this history endpoint.
+    const ownerId = req.session.user.userId;
+    const parsedPage = Number.parseInt(req.query.page, 10);
+    const parsedLimit = Number.parseInt(req.query.limit, 10);
+    const requestedPage = parsedPage > 0 ? parsedPage : 1;
+    const limit = parsedLimit > 0 ? Math.min(parsedLimit, 50) : 5;
+
+    const totalReports = await countComplaintsAboutOwnerVehicles(ownerId);
+    const totalPages = Math.max(Math.ceil(totalReports / limit), 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+    const offset = (currentPage - 1) * limit;
+    const reports = await getComplaintsAboutOwnerVehicles(ownerId, {
+      limit,
+      offset,
+    });
+
+    return res.status(STATUS_CODE.OK).json({
+      message: "Reports about your vehicles fetched successfully",
+      count: totalReports,
+      reports,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalReports,
+        limit,
+      },
     });
   } catch (error) {
     next(error);
@@ -989,5 +1082,7 @@ module.exports = {
   getAllComplaints_controller,
   getComplaintTrends_controller,
   getOwnerVehicleReports_controller,
+  getOwnerVehicleReportHistory_controller,
   getComplaintsAboutMe_controller,
+  getComplaintsAboutMyVehicles_controller,
 };

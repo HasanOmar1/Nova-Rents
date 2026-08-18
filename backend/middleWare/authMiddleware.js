@@ -24,4 +24,15 @@ const isAdmin = (req, res, next) => {
       .json({ message: "You must be an admin to do this action!" });
   }
 };
-module.exports = { isAuthenticated, isAdmin };
+
+const isUser = (req, res, next) => {
+  if (req.session.user?.role === "user") {
+    return next();
+  }
+
+  return res
+    .status(STATUS_CODE.FORBIDDEN)
+    .json({ message: "Only user accounts can rent vehicles." });
+};
+
+module.exports = { isAuthenticated, isAdmin, isUser };

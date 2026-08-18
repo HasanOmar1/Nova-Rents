@@ -24,9 +24,21 @@ router.get(
 );
 
 router.get(
+  "/owner-vehicle-reports/:licensePlate",
+  isAuthenticated,
+  complaintsController.getOwnerVehicleReportHistory_controller,
+);
+
+router.get(
   "/about-me",
   isAuthenticated,
   complaintsController.getComplaintsAboutMe_controller,
+);
+
+router.get(
+  "/about-my-vehicles",
+  isAuthenticated,
+  complaintsController.getComplaintsAboutMyVehicles_controller,
 );
 
 router.get(
