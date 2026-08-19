@@ -146,8 +146,8 @@ const DocumentsAdmin = () => {
     <div className={`${styles.DocumentsAdmin} page`}>
       <h1>Document verification</h1>
       <p className={styles.intro}>
-        Review identity and vehicle documents. Government checks are a separate
-        official lookup and cannot be marked verified by hand.
+        Review identity and vehicle documents. Official government vehicle
+        lookup is separate and cannot be marked verified by hand.
       </p>
 
       <DocumentReviewModal
@@ -226,7 +226,7 @@ const DocumentsAdmin = () => {
           <p>Account</p>
           <p>Plate</p>
           <p>Status</p>
-          <p>Government</p>
+          <p>Gov. verification</p>
           <p>Action</p>
         </div>
 

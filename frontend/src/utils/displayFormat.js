@@ -22,15 +22,221 @@ const COMPLAINT_STATUS_LABELS = {
 export const formatComplaintStatus = (status, fallback = "Unknown") =>
   COMPLAINT_STATUS_LABELS[status] || status || fallback;
 
-const DOCUMENT_TYPE_LABELS = {
-  identity_card: "Identity Card",
-  passport: "Passport",
-  driver_license: "Driver License",
-  insurance: "Insurance",
-  vehicle_registration: "Vehicle Registration",
+const DOCUMENT_DISPLAY_CONFIG = {
+  identity_card: {
+    title: "Identity Card",
+    documentNumberLabel: "ID Number",
+    documentNumberPlaceholder: "Enter the number shown on your ID",
+    expirationDateLabel: "ID Expiration Date",
+    showStartDate: false,
+    firstUploadButton: "Upload Document",
+    nextStepByStatus: {
+      not_uploaded: "Upload a photo of your identity card.",
+      pending_review:
+        "Your identity card was uploaded successfully. An administrator will review it.",
+      rejected:
+        "We could not verify this document. Review the reason below and upload a corrected document.",
+      expired: "This identity card has expired. Upload a valid identity card.",
+    },
+    actionByStatus: {
+      not_uploaded: "Upload Document",
+      pending_review: "Upload New Version",
+      verified: "Upload New Version",
+      rejected: "Upload Corrected Document",
+      expired: "Upload New Version",
+    },
+  },
+  passport: {
+    title: "Passport",
+    documentNumberLabel: "Passport Number",
+    documentNumberPlaceholder: "Enter your passport number",
+    expirationDateLabel: "Passport Expiration Date",
+    showStartDate: false,
+    firstUploadButton: "Upload Document",
+    nextStepByStatus: {
+      not_uploaded: "Upload a photo of your passport.",
+      pending_review:
+        "Your passport was uploaded successfully. An administrator will review it.",
+      rejected:
+        "We could not verify this document. Review the reason below and upload a corrected document.",
+      expired: "This passport has expired. Upload a valid passport.",
+    },
+    actionByStatus: {
+      not_uploaded: "Upload Document",
+      pending_review: "Upload New Version",
+      verified: "Upload New Version",
+      rejected: "Upload Corrected Document",
+      expired: "Upload New Version",
+    },
+  },
+  driver_license: {
+    title: "Driver License",
+    documentNumberLabel: "Driver License Number",
+    documentNumberPlaceholder: "Enter the number shown on your driver license",
+    documentNumberHelp: "Enter the number shown on your driver license.",
+    expirationDateLabel: "Driver License Expiration Date",
+    showStartDate: false,
+    firstUploadButton: "Upload Document",
+    nextStepByStatus: {
+      not_uploaded: "Upload a photo of your driver license.",
+      pending_review:
+        "Your driver license was uploaded successfully. An administrator will review it.",
+      rejected:
+        "We could not verify this document. Review the reason below and upload a corrected document.",
+      expired:
+        "Your driver license has expired. Upload a valid driver license before renting.",
+    },
+    actionByStatus: {
+      not_uploaded: "Upload Document",
+      pending_review: "Upload New Version",
+      verified: "Upload New Version",
+      rejected: "Upload Corrected Document",
+      expired: "Upload New Version",
+    },
+  },
+  insurance: {
+    title: "Insurance",
+    documentNumberLabel: "Policy Number",
+    documentNumberPlaceholder: "Enter insurance policy number",
+    documentNumberHelp: "Found on your insurance policy.",
+    insuranceCompanyLabel: "Insurance Company",
+    startDateLabel: "Coverage Start Date",
+    startDateHelp: "The date your insurance coverage begins.",
+    expirationDateLabel: "Coverage End Date",
+    expirationDateHelp: "The date your insurance coverage expires.",
+    adminStartDateLabel: "Insurance Coverage Start",
+    adminExpirationDateLabel: "Insurance Coverage End",
+    showStartDate: true,
+    firstUploadButton: "Upload Document",
+    nextStepByStatus: {
+      not_uploaded: "Upload your vehicle insurance policy.",
+      pending_review:
+        "Your insurance was uploaded successfully. An administrator will review it.",
+      rejected:
+        "We could not verify this document. Review the reason below and upload a corrected document.",
+      expired:
+        "Your insurance coverage has expired. Upload renewed insurance before accepting new rentals.",
+    },
+    actionByStatus: {
+      not_uploaded: "Upload Document",
+      pending_review: "Upload New Version",
+      verified: "Upload New Version",
+      rejected: "Upload Corrected Document",
+      expired: "Upload Renewed Insurance",
+    },
+  },
+  vehicle_registration: {
+    title: "Vehicle Registration",
+    documentNumberLabel: "Vehicle Registration Number",
+    documentNumberPlaceholder: "Enter vehicle registration number",
+    expirationDateLabel: "Vehicle Registration Valid Until",
+    showStartDate: false,
+    firstUploadButton: "Upload Document",
+    nextStepByStatus: {
+      not_uploaded: "Upload your vehicle registration document.",
+      pending_review:
+        "Your vehicle registration was uploaded successfully. An administrator will review it.",
+      rejected:
+        "We could not verify this document. Review the reason below and upload a corrected document.",
+      expired:
+        "This vehicle registration is no longer valid. Upload an updated registration.",
+    },
+    actionByStatus: {
+      not_uploaded: "Upload Document",
+      pending_review: "Upload New Version",
+      verified: "Upload New Version",
+      rejected: "Upload Corrected Document",
+      expired: "Upload New Version",
+    },
+  },
 };
 
-const DOCUMENT_STATUS_LABELS = {
+const FALLBACK_DOCUMENT_DISPLAY = {
+  title: "Document",
+  documentNumberLabel: "Document Number",
+  documentNumberPlaceholder: "Enter document number",
+  expirationDateLabel: "Expiration Date",
+  startDateLabel: "Start date",
+  insuranceCompanyLabel: "Insurance Company",
+  showStartDate: false,
+  firstUploadButton: "Upload Document",
+  nextStepByStatus: {},
+  actionByStatus: {
+    not_uploaded: "Upload Document",
+    pending_review: "Upload New Version",
+    verified: "Upload New Version",
+    rejected: "Upload Corrected Document",
+    expired: "Upload New Version",
+  },
+};
+
+export const getDocumentDisplayConfig = (documentType, audience = "user") => {
+  const config = DOCUMENT_DISPLAY_CONFIG[documentType] || {
+    ...FALLBACK_DOCUMENT_DISPLAY,
+    title: formatEventLabel(documentType) || FALLBACK_DOCUMENT_DISPLAY.title,
+  };
+  if (audience !== "admin") return config;
+  return {
+    ...config,
+    startDateLabel: config.adminStartDateLabel || config.startDateLabel,
+    expirationDateLabel:
+      config.adminExpirationDateLabel || config.expirationDateLabel,
+  };
+};
+
+export const getDocumentActionLabel = (documentType, status) => {
+  const config = getDocumentDisplayConfig(documentType);
+  return (
+    config.actionByStatus?.[status] ||
+    (status === "not_uploaded" || !status
+      ? config.firstUploadButton
+      : "Upload New Version")
+  );
+};
+
+export const getDocumentGuidance = (documentType, status) => {
+  const config = getDocumentDisplayConfig(documentType);
+  return config.nextStepByStatus?.[status] || null;
+};
+
+export const getDocumentUploadCopy = (documentType, status, isReplace) => {
+  const config = getDocumentDisplayConfig(documentType);
+  const action = getDocumentActionLabel(documentType, status);
+  return {
+    title: isReplace ? action : `Upload ${config.title}`,
+    submitLabel: action,
+    verifiedWarning:
+      "Uploading a new version of a verified document sends it back for review.",
+  };
+};
+
+export const GOVERNMENT_VEHICLE_TITLE = "Government Vehicle Verification";
+export const GOVERNMENT_VEHICLE_EXPLANATION =
+  "We compare your vehicle details with official government vehicle records. This does not verify the uploaded file, insurance, or your identity.";
+
+const USER_GOV_STATUS_GUIDANCE = {
+  not_checked: "This vehicle has not been compared with government records yet.",
+  mismatch:
+    "The vehicle details in our system do not match official government records.",
+  not_found: "This vehicle was not found in official government records.",
+  unavailable:
+    "We couldn't verify the vehicle right now because the government service is unavailable. Please try again later.",
+  error:
+    "Vehicle verification could not be completed. Please try again later.",
+};
+
+export const getGovernmentCheckGuidance = (status) =>
+  USER_GOV_STATUS_GUIDANCE[status] || null;
+
+const USER_DOCUMENT_STATUS_LABELS = {
+  not_uploaded: "Not Uploaded",
+  pending_review: "Waiting for Review",
+  verified: "Verified",
+  rejected: "Needs Attention",
+  expired: "Expired",
+};
+
+const ADMIN_DOCUMENT_STATUS_LABELS = {
   not_uploaded: "Not uploaded",
   pending_review: "Pending review",
   verified: "Verified",
@@ -38,7 +244,17 @@ const DOCUMENT_STATUS_LABELS = {
   expired: "Expired",
 };
 
-const GOV_CHECK_STATUS_LABELS = {
+const USER_GOV_CHECK_STATUS_LABELS = {
+  not_checked: "Not Checked Yet",
+  pending: "Check In Progress",
+  verified: "Vehicle Details Verified",
+  mismatch: "Vehicle Details Don't Match",
+  not_found: "Vehicle Not Found",
+  unavailable: "Government Service Temporarily Unavailable",
+  error: "Verification Could Not Be Completed",
+};
+
+const ADMIN_GOV_CHECK_STATUS_LABELS = {
   not_checked: "Not checked",
   pending: "Pending",
   verified: "Match",
@@ -59,13 +275,23 @@ const REJECTION_CODE_LABELS = {
 };
 
 export const formatDocumentType = (documentType) =>
-  DOCUMENT_TYPE_LABELS[documentType] || formatEventLabel(documentType);
+  DOCUMENT_DISPLAY_CONFIG[documentType]?.title || formatEventLabel(documentType);
 
-export const formatDocumentStatus = (status) =>
-  DOCUMENT_STATUS_LABELS[status] || formatEventLabel(status);
+export const formatDocumentStatus = (status, audience = "user") => {
+  const labels =
+    audience === "admin"
+      ? ADMIN_DOCUMENT_STATUS_LABELS
+      : USER_DOCUMENT_STATUS_LABELS;
+  return labels[status] || formatEventLabel(status);
+};
 
-export const formatGovCheckStatus = (status) =>
-  GOV_CHECK_STATUS_LABELS[status] || formatEventLabel(status);
+export const formatGovCheckStatus = (status, audience = "user") => {
+  const labels =
+    audience === "admin"
+      ? ADMIN_GOV_CHECK_STATUS_LABELS
+      : USER_GOV_CHECK_STATUS_LABELS;
+  return labels[status] || formatEventLabel(status);
+};
 
 export const formatRejectionCode = (code) =>
   REJECTION_CODE_LABELS[code] || formatEventLabel(code);
@@ -82,47 +308,49 @@ export const maskSensitiveNumber = (value) => {
 
 const RENTER_ELIGIBILITY_MESSAGES = {
   IDENTITY_NOT_UPLOADED:
-    "Upload a verified identity document (identity card or passport) before renting.",
+    "Upload a verified identity card or passport before renting.",
   IDENTITY_PENDING_REVIEW:
-    "Your identity verification is still pending. You can rent after admin approval.",
+    "Your identity document is waiting for review. You can rent after it is verified.",
   IDENTITY_REJECTED:
-    "Your identity document was rejected. Upload a valid identity document before renting.",
+    "Your identity document needs attention. Upload a corrected document before renting.",
   IDENTITY_EXPIRED:
-    "Your identity document has expired. Upload a valid identity document before renting.",
+    "Your identity document has expired. Upload a valid identity card or passport before renting.",
   DRIVER_LICENSE_NOT_UPLOADED:
     "Upload a driver license before renting.",
   DRIVER_LICENSE_PENDING_REVIEW:
-    "Your driver license is still pending review.",
+    "Your driver license is waiting for review. You can rent after it is verified.",
   DRIVER_LICENSE_REJECTED:
-    "Your driver license was rejected. Upload a valid driver license before renting.",
+    "Your driver license needs attention. Upload a corrected document before renting.",
   DRIVER_LICENSE_EXPIRED:
     "Your driver license has expired. Upload a valid driver license before renting.",
 };
 
 const VEHICLE_ELIGIBILITY_MESSAGES = {
-  OWNER_IDENTITY_NOT_UPLOADED: "Owner identity is not verified.",
-  OWNER_IDENTITY_PENDING_REVIEW: "Owner identity verification is pending.",
-  OWNER_IDENTITY_REJECTED: "Owner identity verification was rejected.",
-  OWNER_IDENTITY_EXPIRED: "Owner identity document has expired.",
-  INSURANCE_NOT_UPLOADED: "Insurance is not uploaded.",
-  INSURANCE_PENDING_REVIEW: "Insurance is pending review.",
-  INSURANCE_REJECTED: "Insurance was rejected.",
-  INSURANCE_EXPIRED: "Insurance has expired.",
+  OWNER_IDENTITY_NOT_UPLOADED: "The owner's identity document is not uploaded.",
+  OWNER_IDENTITY_PENDING_REVIEW: "The owner's identity document is waiting for review.",
+  OWNER_IDENTITY_REJECTED: "The owner's identity document needs attention.",
+  OWNER_IDENTITY_EXPIRED: "The owner's identity document has expired.",
+  INSURANCE_NOT_UPLOADED: "Vehicle insurance is not uploaded.",
+  INSURANCE_PENDING_REVIEW: "Vehicle insurance is waiting for review.",
+  INSURANCE_REJECTED: "Vehicle insurance needs attention.",
+  INSURANCE_EXPIRED: "Vehicle insurance coverage has expired.",
   INSURANCE_DOES_NOT_COVER_RENTAL_PERIOD:
-    "The vehicle's insurance expires before the end of your requested rental period. Please choose different dates or wait for the owner to renew the insurance.",
+    "The vehicle's insurance coverage ends before this rental. Choose different dates or wait for the owner to renew insurance.",
   VEHICLE_REGISTRATION_NOT_UPLOADED: "Vehicle registration is not uploaded.",
-  VEHICLE_REGISTRATION_PENDING_REVIEW: "Vehicle registration is pending review.",
-  VEHICLE_REGISTRATION_REJECTED: "Vehicle registration was rejected.",
-  VEHICLE_REGISTRATION_EXPIRED: "Vehicle registration has expired.",
-  GOVERNMENT_CHECK_NOT_RUN: "Government vehicle check has not been completed.",
+  VEHICLE_REGISTRATION_PENDING_REVIEW:
+    "Vehicle registration is waiting for review.",
+  VEHICLE_REGISTRATION_REJECTED: "Vehicle registration needs attention.",
+  VEHICLE_REGISTRATION_EXPIRED: "Vehicle registration is no longer valid.",
+  GOVERNMENT_CHECK_NOT_RUN:
+    "This vehicle has not been compared with government records yet.",
   GOVERNMENT_CHECK_MISMATCH:
-    "Government records do not match this vehicle. Admin review is required.",
+    "This vehicle's details do not match official government records.",
   GOVERNMENT_CHECK_NOT_FOUND:
-    "This vehicle was not found in government records.",
+    "This vehicle was not found in official government records.",
   GOVERNMENT_CHECK_UNAVAILABLE:
-    "Government check is temporarily unavailable. Retry later.",
+    "We couldn't verify the vehicle right now because the government service is unavailable. Please try again later.",
   GOVERNMENT_CHECK_ERROR:
-    "Government check failed due to a service error. Retry later.",
+    "Vehicle verification could not be completed. Please try again later.",
 };
 
 export const formatEligibilityReason = (reason) =>
@@ -156,7 +384,7 @@ export const buildVehicleEligibilitySummary = (rentalEligibility) => {
     },
     {
       key: "governmentCheck",
-      label: "Government check",
+      label: "Government vehicle verification",
       ok: statuses.governmentCheck === "verified",
     },
   ];

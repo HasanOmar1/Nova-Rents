@@ -18,6 +18,74 @@ export const formatDateForInput = (value) => {
   return `${year}-${month}-${day}`;
 };
 
+/** Converts API YYYY-MM-DD (or Date) to DD/MM/YYYY for display/typing. */
+export const formatIsoDateToDisplay = (value) => {
+  if (!value) return "";
+  const iso = String(value).slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return "";
+  return `${match[3]}/${match[2]}/${match[1]}`;
+};
+
+const isRealCalendarDate = (year, month, day) => {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return false;
+  }
+  if (year < 1000 || year > 9999 || month < 1 || month > 12 || day < 1 || day > 31) {
+    return false;
+  }
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+};
+
+/**
+ * Parses a typed DD/MM/YYYY string into YYYY-MM-DD.
+ * Rejects incomplete and impossible dates without overflowing (e.g. 31/02/2028).
+ */
+export const parseDisplayDateToIso = (value) => {
+  const text = String(value || "").trim();
+  if (!text) {
+    return { ok: true, iso: "", complete: false };
+  }
+
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);
+  if (!match) {
+    return { ok: false, iso: "", complete: text.length >= 10 };
+  }
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  if (!isRealCalendarDate(year, month, day)) {
+    return { ok: false, iso: "", complete: true };
+  }
+
+  return {
+    ok: true,
+    complete: true,
+    iso: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+  };
+};
+
+/** Keeps typed date input as digits with optional slashes, max DD/MM/YYYY. */
+export const maskDisplayDateInput = (raw, { inserting = true } = {}) => {
+  const digits = String(raw || "").replace(/\D/g, "").slice(0, 8);
+  if (!inserting) {
+    return String(raw || "")
+      .replace(/[^\d/]/g, "")
+      .slice(0, 10);
+  }
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+export const DISPLAY_DATE_ERROR = "Enter a valid date in DD/MM/YYYY format.";
+
 /** Returns an inclusive recent-month range ending today. */
 export const createRecentMonthRange = (
   monthCount = 6,

@@ -1,0 +1,72 @@
+.DateInput {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.DateInput .control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.DateInput .textInput {
+  width: 100%;
+  background-color: var(--input-bg);
+  border: var(--cards-border);
+  border-radius: 12px;
+  color: #fff;
+  padding: 12px 44px 12px 12px;
+  outline: none;
+  font: inherit;
+}
+
+.DateInput .textInput:focus {
+  border-color: var(--input-focus-border-color);
+}
+
+.DateInput .textInput:disabled {
+  opacity: 0.65;
+}
+
+.DateInput .calendarBtn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #dbe7f3;
+  cursor: pointer;
+}
+
+.DateInput .calendarBtn:hover:not(:disabled) {
+  background-color: #3f444d;
+  color: #fff;
+}
+
+.DateInput .calendarBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.DateInput .nativePicker {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.DateInput .errorText {
+  color: #ffa3a3 !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
