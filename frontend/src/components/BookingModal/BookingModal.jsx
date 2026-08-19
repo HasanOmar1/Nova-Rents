@@ -115,7 +115,7 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
     const isSuccess = await rentVehicle(bookingPayload);
 
     // --- 3. INSTANT RE-FETCH ON SUCCESS ---
-    if (isSuccess) {
+    if (isSuccess?.success) {
       await fetchBookedDates(vehicle.licensePlate); // This updates the grayed-out dates immediately!
 
       // Close the modal shortly after success

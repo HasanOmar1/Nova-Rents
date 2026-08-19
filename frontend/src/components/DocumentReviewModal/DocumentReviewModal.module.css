@@ -1,0 +1,160 @@
+.DocumentReviewModal {
+  border: var(--cards-border);
+  border-radius: 16px;
+  background-color: var(--bg-gray);
+  color: white;
+  padding: 0;
+  width: 90%;
+  max-width: 640px;
+  max-height: 85vh;
+  margin: auto;
+  overflow-y: auto;
+}
+
+.DocumentReviewModal::backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.DocumentReviewModal .header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  background-color: #2f3f58;
+}
+
+.DocumentReviewModal .header h2 {
+  font-size: 1.15rem;
+  margin-bottom: 4px;
+}
+
+.DocumentReviewModal .header p,
+.DocumentReviewModal .meta,
+.DocumentReviewModal .label {
+  color: var(--gray);
+  font-size: 0.85rem;
+}
+
+.DocumentReviewModal .closeIconBtn {
+  background: none;
+  border: none;
+  color: var(--gray);
+  cursor: pointer;
+}
+
+.DocumentReviewModal .content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 22px 24px;
+}
+
+.DocumentReviewModal .errorMsg {
+  color: #ffa3a3;
+  font-weight: 600;
+}
+
+.DocumentReviewModal .block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.DocumentReviewModal .value {
+  font-weight: 700;
+}
+
+.DocumentReviewModal .govHeader {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.DocumentReviewModal .govBadge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: rgba(100, 116, 139, 0.16);
+  color: #cbd5e1;
+}
+
+.DocumentReviewModal .mismatchList {
+  margin: 0;
+  padding-left: 18px;
+  color: #fcd34d;
+  font-size: 0.82rem;
+}
+
+.DocumentReviewModal .field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.DocumentReviewModal select,
+.DocumentReviewModal textarea {
+  background-color: var(--input-bg);
+  border: var(--cards-border);
+  border-radius: 12px;
+  color: #fff;
+  padding: 12px;
+  font-family: inherit;
+}
+
+.DocumentReviewModal .actions,
+.DocumentReviewModal .decisionRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.DocumentReviewModal .secondaryBtn,
+.DocumentReviewModal .verifyBtn,
+.DocumentReviewModal .rejectBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 140px;
+  border-radius: 10px;
+  color: white;
+  padding: 11px 16px;
+  border: var(--cards-border);
+}
+
+.DocumentReviewModal .secondaryBtn {
+  background-color: #2e3442;
+}
+
+.DocumentReviewModal .verifyBtn {
+  background-color: #0f766e;
+  border: none;
+}
+
+.DocumentReviewModal .rejectBtn {
+  background-color: #a04944;
+  border: none;
+}
+
+.DocumentReviewModal .reviewForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 480px) {
+  .DocumentReviewModal .decisionRow {
+    flex-direction: column;
+  }
+
+  .DocumentReviewModal .secondaryBtn,
+  .DocumentReviewModal .verifyBtn,
+  .DocumentReviewModal .rejectBtn {
+    width: 100%;
+  }
+}

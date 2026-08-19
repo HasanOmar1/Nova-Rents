@@ -624,3 +624,23 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.VehicleDetails .eligibilityNotice {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(249, 224, 129, 0.35);
+  background: rgba(249, 224, 129, 0.08);
+  color: #f9e081;
+  font-size: 0.9rem;
+}
+
+.VehicleDetails .eligibilityNotice p {
+  margin: 0 0 8px;
+}
+
+.VehicleDetails .eligibilityNotice a {
+  color: #a7d2eb;
+  font-weight: 600;
+  text-decoration: none;
+}

@@ -21,6 +21,9 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { useRentContext } from "../../context/RentContext";
 import BookingModal from "../../components/BookingModal/BookingModal";
 import { useVehicleContext } from "../../context/VehicleContext";
+import {
+  getPrimaryRenterEligibilityMessage,
+} from "../../utils/displayFormat";
 
 const displayedSpecificationFields = [
   "seats",
@@ -75,6 +78,8 @@ const VehicleDetails = () => {
     setRentVehResponse,
     fetchRentalHistory,
     findPaidTripForVehicle,
+    rentalEligibility,
+    fetchRentalEligibility,
   } = useRentContext();
   const intervalRef = useRef(null);
   const imageUrls = vehicle?.image ? parseImgs(vehicle.image, true) : [];
@@ -88,7 +93,19 @@ const VehicleDetails = () => {
     currentUser?.role === "user" &&
     !isOwnVehicle &&
     vehicle?.status === "available" &&
-    vehicle?.ownerStatus !== "blocked";
+    vehicle?.ownerStatus !== "blocked" &&
+    rentalEligibility?.eligible !== false &&
+    vehicle?.rentalEligible !== false;
+  const renterEligibilityMessage =
+    currentUser?.role === "user" && rentalEligibility?.eligible === false
+      ? getPrimaryRenterEligibilityMessage(rentalEligibility.reasons)
+      : null;
+  const vehicleUnavailableForRentals =
+    currentUser?.role === "user" &&
+    !isOwnVehicle &&
+    vehicle?.status === "available" &&
+    vehicle?.ownerStatus !== "blocked" &&
+    vehicle?.rentalEligible === false;
   const plate = vehicle?.licensePlate || id;
   const defaultVehicleListPath =
     currentUser?.role === "admin" ? "/allVehicles" : "/vehicles";
@@ -109,6 +126,12 @@ const VehicleDetails = () => {
       });
     }, 2500);
   }, [imageUrls.length]);
+
+  useEffect(() => {
+    if (currentUser?.role === "user") {
+      fetchRentalEligibility();
+    }
+  }, [currentUser?.role, fetchRentalEligibility]);
 
   useEffect(() => {
     let isCurrentRequest = true;
@@ -362,6 +385,23 @@ const VehicleDetails = () => {
                   </button>
                 )}
               </div>
+
+              {(renterEligibilityMessage || vehicleUnavailableForRentals) && (
+                <div className={styles.eligibilityNotice}>
+                  {renterEligibilityMessage && (
+                    <>
+                      <p>{renterEligibilityMessage}</p>
+                      <Link to="/profile">Go to Documents</Link>
+                    </>
+                  )}
+                  {!renterEligibilityMessage && vehicleUnavailableForRentals && (
+                    <p>
+                      This vehicle is not currently accepting new rental
+                      requests.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className={styles.cards}>
                 {cardsData.map((item) => (

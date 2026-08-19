@@ -12,6 +12,7 @@ import RentContextProvider from "./context/RentContext.jsx";
 import GovApisContextProvider from "./context/GovApisContext.jsx";
 import ComplaintContextProvider from "./context/ComplaintContext.jsx";
 import ReportContextProvider from "./context/ReportContext.jsx";
+import DocumentContextProvider from "./context/DocumentContext.jsx";
 
 axios.defaults.baseURL = import.meta.env.PROD
   ? import.meta.env.VITE_API_URL
@@ -29,7 +30,9 @@ createRoot(document.getElementById("root")).render(
               <GovApisContextProvider>
                 <ComplaintContextProvider>
                   <ReportContextProvider>
-                    <App />
+                    <DocumentContextProvider>
+                      <App />
+                    </DocumentContextProvider>
                   </ReportContextProvider>
                 </ComplaintContextProvider>
               </GovApisContextProvider>

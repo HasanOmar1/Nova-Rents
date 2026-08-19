@@ -7,6 +7,7 @@ import AddEditVehicleMenu from "../AddEditVehicleMenu/AddEditVehicleMenu";
 import { Link } from "react-router-dom";
 import { parseImgs } from "../../utils/parseImgs";
 import { useUserContext } from "../../context/UserContext";
+import { buildVehicleEligibilitySummary } from "../../utils/displayFormat";
 
 const VehiclesCardsTable = ({
   veh,
@@ -64,6 +65,10 @@ const VehiclesCardsTable = ({
     admin &&
     String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
   const displayedStatus = isOwnerBlocked ? "unavailable" : veh.status;
+  const eligibilitySummary =
+    !admin && veh.rentalEligibility
+      ? buildVehicleEligibilitySummary(veh.rentalEligibility)
+      : null;
 
   const vehicleDetailsPath = `/vehicles/${encodeURIComponent(veh.licensePlate)}`;
   const vehicleDetailsState = {
@@ -151,6 +156,25 @@ const VehiclesCardsTable = ({
           {displayedStatus}
         </span>
       </div>
+
+      {!admin && eligibilitySummary && !eligibilitySummary.eligible && (
+        <div className={styles.eligibilityCell}>
+          <span className={styles.cellLabel}>Verification</span>
+          <div className={styles.eligibilitySummary}>
+            <p className={styles.eligibilityTitle}>Verification incomplete</p>
+            <ul className={styles.eligibilityChecks}>
+              {eligibilitySummary.checks.map((check) => (
+                <li key={check.key}>
+                  {check.ok ? "✓" : "✗"} {check.label}
+                </li>
+              ))}
+            </ul>
+            <Link to="/profile" className={styles.eligibilityAction}>
+              Manage Documents
+            </Link>
+          </div>
+        </div>
+      )}
 
       {!admin && (
         <div className={styles.actionsContainer}>

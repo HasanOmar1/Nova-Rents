@@ -15,6 +15,7 @@ import Users from "./pages/AdminUI/Users/Users";
 import AllVehicles from "./pages/AdminUI/AllVehicles/AllVehicles";
 import Statistics from "./pages/AdminUI/Statistics/Statistics";
 import ComplaintsAdmin from "./pages/AdminUI/Complaints/ComplaintsAdmin";
+import DocumentsAdmin from "./pages/AdminUI/Documents/DocumentsAdmin";
 import VehicleDetails from "./pages/VehicleDetails/VehicleDetails";
 import RentalDashboard from "./pages/UserUI/RentalDashboard/RentalDashboard";
 import Payment from "./pages/UserUI/Payment/Payment";
@@ -66,6 +67,7 @@ function App() {
             <Route path="/users" element={<Users />} />
             <Route path="/allVehicles" element={<AllVehicles />} />
             <Route path="/complaintsAdmin" element={<ComplaintsAdmin />} />
+            <Route path="/documentsAdmin" element={<DocumentsAdmin />} />
             <Route path="/statistics" element={<Statistics />} />
             <Route
               path="/reportedUsers"

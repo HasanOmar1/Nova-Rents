@@ -573,6 +573,40 @@
   }
 }
 
+.VehiclesCardsTable .eligibilityCell {
+  grid-column: 1 / -1;
+}
+
+.VehiclesCardsTable .eligibilitySummary {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(249, 224, 129, 0.35);
+  background: rgba(249, 224, 129, 0.08);
+}
+
+.VehiclesCardsTable .eligibilityTitle {
+  margin: 0 0 8px;
+  color: #f9e081;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.VehiclesCardsTable .eligibilityChecks {
+  margin: 0 0 8px;
+  padding-left: 0;
+  list-style: none;
+  color: var(--gray);
+  font-size: 0.82rem;
+}
+
+.VehiclesCardsTable .eligibilityAction {
+  color: #a7d2eb;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .VehiclesCardsTable,
   .VehiclesCardsTable .nameContainer,
