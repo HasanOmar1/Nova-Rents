@@ -55,7 +55,9 @@ const isPastDate = (value) => {
 };
 
 const getVehicleDocSummary = (documents = []) => {
-  const verifiedCount = documents.filter((slot) => slot.status === "verified").length;
+  const verifiedCount = documents.filter(
+    (slot) => slot.status === "verified",
+  ).length;
   return {
     verifiedCount,
     total: documents.length || 2,
@@ -69,12 +71,7 @@ const getVehicleDocSummary = (documents = []) => {
   };
 };
 
-const DocumentSlot = ({
-  slot,
-  onUpload,
-  onView,
-  viewingId,
-}) => {
+const DocumentSlot = ({ slot, onUpload, onView, viewingId }) => {
   const status = slot.status || "not_uploaded";
   const canView = Boolean(slot.documentId);
   const maskedNumber = maskSensitiveNumber(slot.documentNumber);
@@ -89,7 +86,9 @@ const DocumentSlot = ({
         <div className={styles.slotInfo}>
           <div className={styles.slotTitleRow}>
             <p>{formatDocumentType(slot.documentType)}</p>
-            <span className={`${styles.statusBadge} ${STATUS_CLASS[status] || ""}`}>
+            <span
+              className={`${styles.statusBadge} ${STATUS_CLASS[status] || ""}`}
+            >
               {formatDocumentStatus(status)}
             </span>
           </div>
@@ -139,12 +138,7 @@ const DocumentSlot = ({
   );
 };
 
-const CompactVehicleDocumentRow = ({
-  slot,
-  onUpload,
-  onView,
-  viewingId,
-}) => {
+const CompactVehicleDocumentRow = ({ slot, onUpload, onView, viewingId }) => {
   const status = slot.status || "not_uploaded";
   const canView = Boolean(slot.documentId);
   const maskedNumber = maskSensitiveNumber(slot.documentNumber);
@@ -160,11 +154,16 @@ const CompactVehicleDocumentRow = ({
           <p className={styles.compactDocTitle}>
             {formatDocumentType(slot.documentType)}
           </p>
-          <span className={`${styles.statusBadge} ${STATUS_CLASS[status] || ""}`}>
+          <span
+            className={`${styles.statusBadge} ${STATUS_CLASS[status] || ""}`}
+          >
             {formatDocumentStatus(status)}
           </span>
         </div>
-        {(maskedNumber || slot.expirationDate || status === "rejected" || guidance) && (
+        {(maskedNumber ||
+          slot.expirationDate ||
+          status === "rejected" ||
+          guidance) && (
           <div className={styles.compactDocMeta}>
             {maskedNumber && (
               <small>
@@ -181,7 +180,9 @@ const CompactVehicleDocumentRow = ({
             {status === "rejected" && (
               <small className={styles.rejection}>
                 {formatRejectionCode(slot.rejectionCode)}
-                {slot.rejectionReasonText ? ` — ${slot.rejectionReasonText}` : ""}
+                {slot.rejectionReasonText
+                  ? ` — ${slot.rejectionReasonText}`
+                  : ""}
               </small>
             )}
             {guidance && <small className={styles.guidance}>{guidance}</small>}
@@ -242,7 +243,9 @@ const VehicleDocumentsAccordion = ({
           {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         </span>
         <span className={styles.vehicleHeaderMain}>
-          <span className={styles.vehiclePlate}>Plate {vehicle.licensePlate}</span>
+          <span className={styles.vehiclePlate}>
+            Plate {vehicle.licensePlate}
+          </span>
           {!isExpanded && (
             <span className={styles.vehicleDocCount}>
               Verified documents: {summary.verifiedCount}/{summary.total}
@@ -393,7 +396,9 @@ const DocumentsCards = () => {
           {renterEligibilityMessage && (
             <div className={styles.eligibilityBanner}>
               <p>{renterEligibilityMessage}</p>
-              <span>Update the documents below if you need to take action.</span>
+              <span>
+                Update the documents below if you need to take action.
+              </span>
             </div>
           )}
 
@@ -419,7 +424,8 @@ const DocumentsCards = () => {
               <h5>Vehicles</h5>
               {vehicles.length > 0 && (
                 <span className={styles.vehiclesCount}>
-                  {vehicles.length} {vehicles.length === 1 ? "vehicle" : "vehicles"}
+                  {vehicles.length}{" "}
+                  {vehicles.length === 1 ? "vehicle" : "vehicles"}
                 </span>
               )}
             </div>
