@@ -2,7 +2,8 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { useModalDialog } from "../../hooks/useModalDialog";
 import AsyncButton from "../AsyncButton/AsyncButton";
-import { formatDocumentType } from "../../utils/displayFormat";
+import DateInput from "../DateInput/DateInput";
+import { formatDocumentType, getDocumentDisplayConfig, getDocumentUploadCopy } from "../../utils/displayFormat";
 import styles from "./DocumentUploadModal.module.css";
 
 const emptyForm = {
@@ -51,15 +52,25 @@ const DocumentUploadModal = ({
   const slotKey = slotKeyOf(slot, isOpen);
   const [trackedKey, setTrackedKey] = useState(slotKey);
   const [form, setForm] = useState(() => formFromSlot(slot));
+  const [datesValid, setDatesValid] = useState({
+    startDate: true,
+    expirationDate: true,
+  });
   if (trackedKey !== slotKey) {
     setTrackedKey(slotKey);
     setForm(formFromSlot(slot));
+    setDatesValid({ startDate: true, expirationDate: true });
   }
 
   const isReplace = Boolean(slot?.documentId);
-  const title = formatDocumentType(slot?.documentType);
-  const numberLabel =
-    slot?.documentType === "insurance" ? "Policy number" : "Document number";
+  const fieldLabels = getDocumentDisplayConfig(slot?.documentType);
+  const uploadCopy = getDocumentUploadCopy(
+    slot?.documentType,
+    slot?.status,
+    isReplace,
+  );
+  const showInsuranceDates = Boolean(fieldLabels.showStartDate);
+  const showDocumentNumber = slot?.documentType !== "vehicle_registration";
 
   const handleChange = (event) => {
     const { name, value, files } = event.target;
@@ -73,6 +84,8 @@ const DocumentUploadModal = ({
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!slot) return;
+    if (!datesValid.expirationDate) return;
+    if (showInsuranceDates && !datesValid.startDate) return;
     const ok = await onSubmit({
       file: form.file,
       documentType: slot.documentType,
@@ -95,9 +108,9 @@ const DocumentUploadModal = ({
         <>
       <div className={styles.header}>
         <div>
-          <h2>{isReplace ? "Replace document" : "Upload document"}</h2>
+          <h2>{uploadCopy.title}</h2>
           <p>
-            {title}
+            {formatDocumentType(slot.documentType)}
             {slot.licensePlate ? ` · Plate ${slot.licensePlate}` : ""}
           </p>
         </div>
@@ -116,9 +129,7 @@ const DocumentUploadModal = ({
         {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
 
         {slot.status === "verified" && (
-          <p className={styles.warning}>
-            Replacing a verified document sends it back to pending review.
-          </p>
+          <p className={styles.warning}>{uploadCopy.verifiedWarning}</p>
         )}
 
         <label className={styles.field}>
@@ -133,51 +144,100 @@ const DocumentUploadModal = ({
           {form.file && <small>{form.file.name}</small>}
         </label>
 
-        <label className={styles.field}>
-          <span>{numberLabel}</span>
-          <input
-            type="text"
-            name="documentNumber"
-            maxLength={64}
-            value={form.documentNumber}
-            onChange={handleChange}
-            autoComplete="off"
-          />
-        </label>
-
-        {slot.documentType === "insurance" && (
+        {showDocumentNumber && (
           <label className={styles.field}>
-            <span>Insurance company</span>
+            <span>{fieldLabels.documentNumberLabel}</span>
+            <input
+              type="text"
+              name="documentNumber"
+              maxLength={64}
+              value={form.documentNumber}
+              onChange={handleChange}
+              placeholder={fieldLabels.documentNumberPlaceholder}
+              autoComplete="off"
+            />
+            {fieldLabels.documentNumberHelp && (
+              <small className={styles.helpText}>
+                {fieldLabels.documentNumberHelp}
+              </small>
+            )}
+          </label>
+        )}
+
+        {showInsuranceDates && (
+          <label className={styles.field}>
+            <span>{fieldLabels.insuranceCompanyLabel}</span>
             <input
               type="text"
               name="insuranceCompany"
               maxLength={100}
               value={form.insuranceCompany}
               onChange={handleChange}
+              placeholder="Enter insurance company name"
             />
           </label>
         )}
 
-        <div className={styles.dates}>
+        {showInsuranceDates ? (
+          <div className={styles.dates}>
+            <label className={styles.field}>
+              <span>{fieldLabels.startDateLabel}</span>
+              <DateInput
+                key={`${slotKey}-startDate`}
+                name="startDate"
+                value={form.startDate}
+                onChange={handleChange}
+                onValidityChange={(ok) =>
+                  setDatesValid((prev) =>
+                    prev.startDate === ok ? prev : { ...prev, startDate: ok },
+                  )
+                }
+                disabled={isUploading}
+              />
+              {fieldLabels.startDateHelp && (
+                <small className={styles.helpText}>
+                  {fieldLabels.startDateHelp}
+                </small>
+              )}
+            </label>
+            <label className={styles.field}>
+              <span>{fieldLabels.expirationDateLabel}</span>
+              <DateInput
+                key={`${slotKey}-expirationDate`}
+                name="expirationDate"
+                value={form.expirationDate}
+                onChange={handleChange}
+                onValidityChange={(ok) =>
+                  setDatesValid((prev) =>
+                    prev.expirationDate === ok ? prev : { ...prev, expirationDate: ok },
+                  )
+                }
+                disabled={isUploading}
+              />
+              {fieldLabels.expirationDateHelp && (
+                <small className={styles.helpText}>
+                  {fieldLabels.expirationDateHelp}
+                </small>
+              )}
+            </label>
+          </div>
+        ) : (
           <label className={styles.field}>
-            <span>Start date</span>
-            <input
-              type="date"
-              name="startDate"
-              value={form.startDate}
-              onChange={handleChange}
-            />
-          </label>
-          <label className={styles.field}>
-            <span>Expiration date</span>
-            <input
-              type="date"
+            <span>{fieldLabels.expirationDateLabel}</span>
+            <DateInput
+              key={`${slotKey}-expirationDate`}
               name="expirationDate"
               value={form.expirationDate}
               onChange={handleChange}
+              onValidityChange={(ok) =>
+                setDatesValid((prev) =>
+                  prev.expirationDate === ok ? prev : { ...prev, expirationDate: ok },
+                )
+              }
+              disabled={isUploading}
             />
           </label>
-        </div>
+        )}
 
         <div className={styles.actions}>
           <button
@@ -194,7 +254,7 @@ const DocumentUploadModal = ({
             loading={isUploading}
             loadingText="Uploading..."
           >
-            {isReplace ? "Replace" : "Upload"}
+            {uploadCopy.submitLabel}
           </AsyncButton>
         </div>
       </form>

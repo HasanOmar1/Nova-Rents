@@ -75,7 +75,7 @@
   font-size: 0.8rem;
 }
 
-.DocumentUploadModal .field input {
+.DocumentUploadModal .field > input {
   background-color: var(--input-bg);
   border: var(--cards-border);
   border-radius: 12px;
@@ -84,12 +84,19 @@
   outline: none;
 }
 
-.DocumentUploadModal .field input:focus {
+.DocumentUploadModal .field > input:focus {
   border-color: var(--input-focus-border-color);
 }
 
 .DocumentUploadModal .field small {
   color: #eeeaeaef;
+}
+
+.DocumentUploadModal .helpText {
+  color: var(--gray) !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 .DocumentUploadModal .dates {

@@ -42,12 +42,12 @@ const DocumentsAdminCards = ({
     </p>
     <p className={styles.statusCell} data-label="Status">
       <span className={`${styles.statusBadge} ${STATUS_CLASS[status] || ""}`}>
-        {formatDocumentStatus(status)}
+        {formatDocumentStatus(status, "admin")}
       </span>
     </p>
-    <p className={styles.govCell} data-label="Government">
+    <p className={styles.govCell} data-label="Gov. verification">
       <span className={`${styles.statusBadge} ${GOV_CLASS[govStatus] || ""}`}>
-        {formatGovCheckStatus(govStatus)}
+        {formatGovCheckStatus(govStatus, "admin")}
       </span>
     </p>
     <button

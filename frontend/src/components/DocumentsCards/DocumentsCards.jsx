@@ -9,6 +9,12 @@ import {
   formatRejectionCode,
   maskSensitiveNumber,
   getPrimaryRenterEligibilityMessage,
+  getDocumentDisplayConfig,
+  getDocumentActionLabel,
+  getDocumentGuidance,
+  GOVERNMENT_VEHICLE_TITLE,
+  GOVERNMENT_VEHICLE_EXPLANATION,
+  getGovernmentCheckGuidance,
 } from "../../utils/displayFormat";
 import styles from "./DocumentsCards.module.css";
 import { useRentContext } from "../../context/RentContext";
@@ -73,6 +79,9 @@ const DocumentSlot = ({
   const canView = Boolean(slot.documentId);
   const maskedNumber = maskSensitiveNumber(slot.documentNumber);
   const expirationPassed = isPastDate(slot.expirationDate);
+  const fieldLabels = getDocumentDisplayConfig(slot.documentType);
+  const actionLabel = getDocumentActionLabel(slot.documentType, status);
+  const guidance = getDocumentGuidance(slot.documentType, status);
 
   return (
     <div className={styles.dataContainer}>
@@ -85,11 +94,14 @@ const DocumentSlot = ({
             </span>
           </div>
           {maskedNumber && (
-            <small className={styles.meta}>Number {maskedNumber}</small>
+            <small className={styles.meta}>
+              {fieldLabels.documentNumberLabel} {maskedNumber}
+            </small>
           )}
           {slot.expirationDate && (
             <small className={styles.meta}>
-              Expires {String(slot.expirationDate).slice(0, 10)}
+              {fieldLabels.expirationDateLabel}{" "}
+              {String(slot.expirationDate).slice(0, 10)}
               {expirationPassed ? " · date has passed" : ""}
             </small>
           )}
@@ -99,6 +111,7 @@ const DocumentSlot = ({
               {slot.rejectionReasonText ? ` — ${slot.rejectionReasonText}` : ""}
             </small>
           )}
+          {guidance && <small className={styles.guidance}>{guidance}</small>}
         </div>
         <div className={styles.slotActions}>
           {canView && (
@@ -116,7 +129,7 @@ const DocumentSlot = ({
             type="button"
             className={styles.iconBtn}
             onClick={() => onUpload(slot)}
-            aria-label={`${canView ? "Replace" : "Upload"} ${formatDocumentType(slot.documentType)}`}
+            aria-label={actionLabel}
           >
             <Upload size={20} />
           </button>
@@ -136,6 +149,9 @@ const CompactVehicleDocumentRow = ({
   const canView = Boolean(slot.documentId);
   const maskedNumber = maskSensitiveNumber(slot.documentNumber);
   const expirationPassed = isPastDate(slot.expirationDate);
+  const fieldLabels = getDocumentDisplayConfig(slot.documentType);
+  const actionLabel = getDocumentActionLabel(slot.documentType, status);
+  const guidance = getDocumentGuidance(slot.documentType, status);
 
   return (
     <div className={styles.compactDocRow}>
@@ -148,12 +164,17 @@ const CompactVehicleDocumentRow = ({
             {formatDocumentStatus(status)}
           </span>
         </div>
-        {(maskedNumber || slot.expirationDate || status === "rejected") && (
+        {(maskedNumber || slot.expirationDate || status === "rejected" || guidance) && (
           <div className={styles.compactDocMeta}>
-            {maskedNumber && <small>Number {maskedNumber}</small>}
+            {maskedNumber && (
+              <small>
+                {fieldLabels.documentNumberLabel} {maskedNumber}
+              </small>
+            )}
             {slot.expirationDate && (
               <small>
-                Expires {String(slot.expirationDate).slice(0, 10)}
+                {fieldLabels.expirationDateLabel}{" "}
+                {String(slot.expirationDate).slice(0, 10)}
                 {expirationPassed ? " · passed" : ""}
               </small>
             )}
@@ -163,6 +184,7 @@ const CompactVehicleDocumentRow = ({
                 {slot.rejectionReasonText ? ` — ${slot.rejectionReasonText}` : ""}
               </small>
             )}
+            {guidance && <small className={styles.guidance}>{guidance}</small>}
           </div>
         )}
       </div>
@@ -184,7 +206,7 @@ const CompactVehicleDocumentRow = ({
           onClick={() => onUpload(slot)}
         >
           <Upload size={14} />
-          {canView ? "Replace" : "Upload"}
+          {actionLabel}
         </button>
       </div>
     </div>
@@ -203,6 +225,7 @@ const VehicleDocumentsAccordion = ({
   const documents = vehicle.documents || [];
   const summary = getVehicleDocSummary(documents);
   const panelId = `vehicle-docs-${vehicle.licensePlate}`;
+  const govGuidance = getGovernmentCheckGuidance(govStatus);
 
   return (
     <div
@@ -222,27 +245,35 @@ const VehicleDocumentsAccordion = ({
           <span className={styles.vehiclePlate}>Plate {vehicle.licensePlate}</span>
           {!isExpanded && (
             <span className={styles.vehicleDocCount}>
-              Documents: {summary.verifiedCount}/{summary.total}
+              Verified documents: {summary.verifiedCount}/{summary.total}
             </span>
           )}
         </span>
         <span
           className={`${styles.statusBadge} ${styles.vehicleGovBadge} ${GOV_CLASS[govStatus] || ""}`}
         >
-          Government: {formatGovCheckStatus(govStatus)}
+          {formatGovCheckStatus(govStatus)}
         </span>
       </button>
 
       {isExpanded && (
         <div id={panelId} className={styles.vehicleAccordionBody}>
           <div className={styles.vehicleExpandedMeta}>
-            <span className={styles.vehiclePlateInline}>
-              Plate {vehicle.licensePlate}
-            </span>
+            <div className={styles.govCopy}>
+              <span className={styles.vehiclePlateInline}>
+                {GOVERNMENT_VEHICLE_TITLE}
+              </span>
+              <small className={styles.govExplanation}>
+                {GOVERNMENT_VEHICLE_EXPLANATION}
+              </small>
+              {govGuidance && (
+                <small className={styles.guidance}>{govGuidance}</small>
+              )}
+            </div>
             <span
               className={`${styles.statusBadge} ${GOV_CLASS[govStatus] || ""}`}
             >
-              Government: {formatGovCheckStatus(govStatus)}
+              {formatGovCheckStatus(govStatus)}
             </span>
           </div>
           {documents.map((slot) => (
@@ -362,7 +393,7 @@ const DocumentsCards = () => {
           {renterEligibilityMessage && (
             <div className={styles.eligibilityBanner}>
               <p>{renterEligibilityMessage}</p>
-              <span>Update your documents below to rent vehicles.</span>
+              <span>Update the documents below if you need to take action.</span>
             </div>
           )}
 

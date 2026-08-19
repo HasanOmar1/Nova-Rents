@@ -8,6 +8,7 @@ import {
   formatGovCheckStatus,
   formatRejectionCode,
   REJECTION_CODE_OPTIONS,
+  getDocumentDisplayConfig,
 } from "../../utils/displayFormat";
 import styles from "./DocumentReviewModal.module.css";
 
@@ -36,6 +37,7 @@ const DocumentReviewModal = ({
 
   const isPending = document?.status === "pending_review";
   const gov = document?.governmentCheck || {};
+  const fieldLabels = getDocumentDisplayConfig(document?.documentType, "admin");
   const accountName = `${document?.account?.firstName || ""} ${document?.account?.lastName || ""}`.trim();
   const mismatched = gov.mismatchedFields || [];
   const matched = gov.matchedFields || [];
@@ -78,22 +80,33 @@ const DocumentReviewModal = ({
         </section>
 
         <section className={styles.block}>
-          <p className={styles.label}>Document</p>
+          <p className={styles.label}>Uploaded / stored document information</p>
           <p className={styles.value}>
-            {formatDocumentStatus(document.status)}
+            {formatDocumentType(document.documentType)} ·{" "}
+            {formatDocumentStatus(document.status, "admin")}
             {document.verificationMethod
               ? ` · ${document.verificationMethod}`
               : ""}
           </p>
           {document.documentNumber && (
-            <p className={styles.meta}>Number {document.documentNumber}</p>
+            <p className={styles.meta}>
+              {fieldLabels.documentNumberLabel}: {document.documentNumber}
+            </p>
           )}
           {document.insuranceCompany && (
-            <p className={styles.meta}>Insurer {document.insuranceCompany}</p>
+            <p className={styles.meta}>
+              {fieldLabels.insuranceCompanyLabel}: {document.insuranceCompany}
+            </p>
+          )}
+          {document.startDate && (
+            <p className={styles.meta}>
+              {fieldLabels.startDateLabel}: {String(document.startDate).slice(0, 10)}
+            </p>
           )}
           {document.expirationDate && (
             <p className={styles.meta}>
-              Expires {String(document.expirationDate).slice(0, 10)}
+              {fieldLabels.expirationDateLabel}:{" "}
+              {String(document.expirationDate).slice(0, 10)}
               {document.expirationCheck === "expired" ? " · expired" : ""}
             </p>
           )}
@@ -113,32 +126,38 @@ const DocumentReviewModal = ({
         <section className={styles.block}>
           <p className={styles.label}>Related identity</p>
           <p className={styles.meta}>
-            ID / passport: {formatDocumentStatus(detail.related?.identityStatus)}
+            ID / passport:{" "}
+            {formatDocumentStatus(detail.related?.identityStatus, "admin")}
           </p>
           <p className={styles.meta}>
             Driver license:{" "}
-            {formatDocumentStatus(detail.related?.driverLicenseStatus)}
+            {formatDocumentStatus(detail.related?.driverLicenseStatus, "admin")}
           </p>
         </section>
 
         {document.licensePlate && (
           <section className={styles.block}>
             <div className={styles.govHeader}>
-              <p className={styles.label}>Government check</p>
+              <p className={styles.label}>Comparison result</p>
               <span className={styles.govBadge}>
-                {formatGovCheckStatus(gov.status)}
+                {formatGovCheckStatus(gov.status, "admin")}
               </span>
             </div>
+            <p className={styles.meta}>
+              Official government vehicle data is compared with stored vehicle
+              details. This does not verify the uploaded file, insurance, or
+              identity.
+            </p>
             {matched.length > 0 && (
               <p className={styles.meta}>
-                Matched: {matched.map((item) => item.field).join(", ")}
+                Matched stored fields: {matched.map((item) => item.field).join(", ")}
               </p>
             )}
             {mismatched.length > 0 && (
               <ul className={styles.mismatchList}>
                 {mismatched.map((item) => (
                   <li key={item.field}>
-                    {item.field}: ours {item.ours || "—"} / government{" "}
+                    {item.field}: stored {item.ours || "—"} / official government{" "}
                     {item.government || "—"}
                   </li>
                 ))}
@@ -146,7 +165,7 @@ const DocumentReviewModal = ({
             )}
             {gov.displayOnly?.chassis && (
               <p className={styles.meta}>
-                Chassis (display only) {gov.displayOnly.chassis}
+                Official chassis (display only) {gov.displayOnly.chassis}
               </p>
             )}
             {gov.errorMessage && (
@@ -160,7 +179,7 @@ const DocumentReviewModal = ({
               loadingText="Checking..."
             >
               <RefreshCw size={16} />
-              Retry government check
+              Retry official government lookup
             </AsyncButton>
           </section>
         )}

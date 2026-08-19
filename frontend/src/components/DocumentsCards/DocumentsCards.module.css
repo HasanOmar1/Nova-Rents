@@ -141,8 +141,11 @@
 }
 
 .DocumentsCards .vehicleGovBadge {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   margin-left: auto;
+  max-width: 100%;
+  white-space: normal;
+  text-align: right;
 }
 
 .DocumentsCards .vehicleAccordionBody {
@@ -247,6 +250,9 @@
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.2;
 }
 
 .DocumentsCards .compactUploadBtn:hover {
@@ -301,6 +307,30 @@
 
 .DocumentsCards .rejection {
   color: #ffa3a3;
+}
+
+.DocumentsCards .guidance {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--gray);
+  line-height: 1.4;
+}
+
+.DocumentsCards .govCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.DocumentsCards .govExplanation {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--gray);
+  line-height: 1.4;
 }
 
 .DocumentsCards .slotActions {
