@@ -7,6 +7,11 @@ const {
   updateVehicleConditions,
 } = require("../database/queries/vehicleQueries");
 const {
+  getPublicVerificationEligibilitySql,
+  getVehicleEligibilitySummariesForPlates,
+  getVehicleRentalEligibility,
+} = require("../database/queries/eligibilityQueries");
+const {
   validateAndNormalizeVehicleCreate,
   validateAndMergeVehicleUpdate,
   validateAuthenticatedUser,
@@ -94,6 +99,25 @@ const getUserVehicles = async (req, res, next) => {
     query += ` ORDER BY v.createdAt DESC, v.licensePlate DESC LIMIT ? OFFSET ?`;
 
     const vehicles = await doQuery(query, [...queryParams, limit, offset]);
+    const eligibilitySummaries = await getVehicleEligibilitySummariesForPlates(
+      vehicles.map((vehicle) => ({
+        licensePlate: vehicle.licensePlate,
+        ownerId: vehicle.ownerId,
+      })),
+    );
+    const vehiclesWithEligibility = vehicles.map((vehicle) => {
+      const rentalEligibility =
+        eligibilitySummaries.get(String(vehicle.licensePlate)) || {
+          eligible: false,
+          reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
+          statuses: {},
+        };
+      return {
+        ...vehicle,
+        rentalEligible: rentalEligibility.eligible,
+        rentalEligibility,
+      };
+    });
 
     const countResult = await doQuery(countQuery, queryParams);
     const totalVehicles = countResult[0].totalCount;
@@ -123,7 +147,7 @@ const getUserVehicles = async (req, res, next) => {
 
     res.status(STATUS_CODE.OK).json({
       message: "User vehicles fetched successfully",
-      vehicles,
+      vehicles: vehiclesWithEligibility,
       stats,
       pagination: { totalVehicles, totalPages, currentPage: page, limit },
     });
@@ -288,11 +312,21 @@ const getVehicleById = async (req, res, next) => {
       });
     }
 
+    const vehicle = result[0];
+    const rentalEligibility = await getVehicleRentalEligibility(
+      licensePlate,
+      vehicle.ownerId,
+    );
+
     // Public detail endpoint: never return private exact pickup fields,
     // even when the session user owns the vehicle (owners use /myVehicles).
     res.status(STATUS_CODE.OK).json({
       message: "Vehicle fetched successfully",
-      vehicle: omitPrivatePickupFields(result[0]),
+      vehicle: {
+        ...omitPrivatePickupFields(vehicle),
+        rentalEligible: rentalEligibility.eligible,
+        rentalEligibility,
+      },
     });
   } catch (error) {
     next(error);
@@ -592,6 +626,7 @@ const listVehicles = async (
     if (!includeBlockedOwners) {
       whereClause += ` AND u.status != 'blocked'`;
       whereClause += ` AND v.status = 'available'`;
+      whereClause += ` AND (${getPublicVerificationEligibilitySql({ vehicleAlias: "v" })})`;
     } else if (status && status !== "all") {
       whereClause += ` AND v.status = ?`;
       values.push(status);

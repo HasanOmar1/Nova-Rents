@@ -1,6 +1,7 @@
 const nodemailer = require("nodemailer");
 const generateOTP = require("../utils/generateOTP");
 const { buildMapsDirectionsUrl } = require("../utils/mapsDirections");
+const { buildInsuranceReminderCopy } = require("../utils/insuranceReminder");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -1748,6 +1749,70 @@ const sendAccountUnblockedEmail = async ({
   return info;
 };
 
+const sendInsuranceExpirationEmail = async ({
+  to,
+  firstName,
+  stage,
+  vehicleLabel,
+  licensePlateDisplay,
+  expirationDate,
+}) => {
+  const recipient = String(to || "").trim();
+  if (!recipient) throw new Error("Insurance reminder email recipient is required");
+  if (!["7d", "1d", "expired"].includes(stage)) {
+    throw new Error("Invalid insurance reminder stage");
+  }
+
+  const greeting = String(firstName || "there").trim() || "there";
+  const { emailSubject, emailIntro, emailAction } = buildInsuranceReminderCopy(
+    stage,
+    vehicleLabel,
+  );
+
+  const formattedExpiration = expirationDate
+    ? new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZone: "Asia/Jerusalem",
+      }).format(new Date(expirationDate))
+    : "Not available";
+
+  const subtitle =
+    stage === "7d"
+      ? "Insurance Expiring Soon"
+      : stage === "1d"
+        ? "Insurance Expires Tomorrow"
+        : "Insurance Expired";
+
+  const text = `Hello ${greeting},\n\n${emailIntro}\n\nVehicle: ${vehicleLabel}\nLicense plate: ${licensePlateDisplay}\nExpiration date: ${formattedExpiration}\n\n${emailAction}\n\nYou can update your documents from your Nova Rents profile.\n\nNova Rents Support Team`;
+
+  const rows =
+    buildDetailRow("Vehicle", escapeHtml(vehicleLabel)) +
+    buildDetailRow("License plate", escapeHtml(licensePlateDisplay)) +
+    buildDetailRow("Expiration date", escapeHtml(formattedExpiration));
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to: recipient,
+    subject: emailSubject,
+    text,
+    html: buildEmailShell(
+      subtitle,
+      `
+        <p>Hello ${escapeHtml(greeting)},</p>
+        <p>${escapeHtml(emailIntro)}</p>
+        ${buildDetailBlock("Insurance details", rows)}
+        <p>${escapeHtml(emailAction)}</p>
+        <p>You can update your documents from your Nova Rents profile.</p>
+      `,
+    ),
+  });
+
+  logEmailResult(`insurance ${stage} reminder to ${recipient}`, info);
+  return info;
+};
+
 module.exports = {
   sendOTPEmail,
   handleEmailVerification,
@@ -1764,4 +1829,5 @@ module.exports = {
   sendAccountWarningEmail,
   sendAccountBlockedEmail,
   sendAccountUnblockedEmail,
+  sendInsuranceExpirationEmail,
 };

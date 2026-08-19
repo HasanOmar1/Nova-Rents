@@ -3,6 +3,12 @@ const router = express.Router();
 const { isAuthenticated, isUser } = require("../middleWare/authMiddleware");
 const rentalController = require("../controllers/rentalController");
 
+router.get(
+  "/eligibility",
+  isAuthenticated,
+  isUser,
+  rentalController.getRentalEligibility,
+);
 router.post(
   "/rent",
   isAuthenticated,

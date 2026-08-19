@@ -12,6 +12,8 @@ const getNotificationDestination = (notification) => {
   if (notification.type === "vehicle_report") return "/complaints?view=vehicleReports#complaint-history";
   if (notification.type === "complaint_update") return "/complaints?view=history#complaint-history";
   if (notification.type === "complaint_admin") return "/complaintsAdmin";
+  if (notification.type === "document_update") return "/profile";
+  if (notification.type === "document_admin") return "/documentsAdmin";
   if (notification.type === "system" && /complaint/i.test(notification.title || "")) return "/complaintsAdmin";
   if (["rental_request", "rental_approved", "rental_rejected", "rental_cancelled",
     "rental_reminder", "rental_ending_soon", "payment_request", "payment_received",

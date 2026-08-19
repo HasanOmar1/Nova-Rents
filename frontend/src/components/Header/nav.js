@@ -8,12 +8,13 @@ import {
   BarChart3,
   Users,
   FileWarning,
+  ShieldCheck,
 } from "lucide-react";
 
 export const navByRole = {
   guest: [],
   user: ["home", "vehicles", "map", "myVehicles", "profile", "complaints"],
-  admin: ["dashboard", "users", "reportedUsers", "allVehicles", "complaintsAdmin", "statistics"],
+  admin: ["dashboard", "users", "reportedUsers", "allVehicles", "documentsAdmin", "complaintsAdmin", "statistics"],
 };
 
 export const icons = {
@@ -26,6 +27,7 @@ export const icons = {
   dashboard: BarChart3,
   users: Users,
   complaintsAdmin: FileWarning,
+  documentsAdmin: ShieldCheck,
   statistics: BarChart3,
   allVehicles: Car,
   reportedUsers: AlertTriangle,
@@ -41,6 +43,7 @@ export const labels = {
   complaints: "Complaints",
   users: "Users",
   complaintsAdmin: "Complaints",
+  documentsAdmin: "Documents",
   statistics: "Statistics",
   allVehicles: "All Vehicles",
   reportedUsers: "Reported Users",

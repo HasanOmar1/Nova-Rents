@@ -1,0 +1,156 @@
+.DocumentsAdminCards {
+  display: grid;
+  grid-template-columns: var(--documents-grid-columns);
+  column-gap: var(--documents-grid-gap);
+  align-items: center;
+  min-width: 0;
+  padding: 16px 20px;
+}
+
+.DocumentsAdminCards:hover {
+  background-color: rgba(84, 148, 255, 0.045);
+}
+
+.DocumentsAdminCards p {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gray);
+  font-weight: 500;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.DocumentsAdminCards .accountCell {
+  color: white;
+  font-weight: 650;
+}
+
+.DocumentsAdminCards .typeBadge,
+.DocumentsAdminCards .statusBadge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 5px 10px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.DocumentsAdminCards .typeBadge {
+  color: #93c5fd;
+  background-color: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+.DocumentsAdminCards .pending {
+  color: #93c5fd;
+  background-color: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+.DocumentsAdminCards .verified {
+  color: #6ee7b7;
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.DocumentsAdminCards .rejected,
+.DocumentsAdminCards .expired {
+  color: #ffa3a3;
+  background-color: rgba(160, 73, 68, 0.16);
+  border-color: rgba(255, 163, 163, 0.2);
+}
+
+.DocumentsAdminCards .mismatch {
+  color: #fcd34d;
+  background-color: rgba(234, 179, 8, 0.12);
+  border-color: rgba(250, 204, 21, 0.2);
+}
+
+.DocumentsAdminCards .notChecked {
+  color: #cbd5e1;
+  background-color: rgba(100, 116, 139, 0.16);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.DocumentsAdminCards .action {
+  justify-self: center;
+  width: 100%;
+  max-width: 120px;
+  padding: 10px 14px;
+  border: 1px solid rgba(84, 148, 255, 0.16);
+  border-radius: 10px;
+  background-color: var(--input-bg);
+  color: white;
+  cursor: pointer;
+}
+
+.DocumentsAdminCards .action:hover {
+  color: var(--icons-color);
+  border-color: rgba(84, 148, 255, 0.45);
+}
+
+@media (max-width: 1024px) {
+  .DocumentsAdminCards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "type status"
+      "account account"
+      "plate gov"
+      "action action";
+    padding: 16px 18px;
+    background: var(--input-bg);
+    border: 1px solid #2e3442;
+    border-radius: 14px;
+  }
+
+  .DocumentsAdminCards p {
+    padding: 10px 0;
+    overflow: visible;
+    border-bottom: 1px solid rgba(46, 52, 66, 0.72);
+    white-space: normal;
+  }
+
+  .DocumentsAdminCards p::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    color: #6f7580;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .DocumentsAdminCards .typeCell { grid-area: type; }
+  .DocumentsAdminCards .accountCell { grid-area: account; }
+  .DocumentsAdminCards .plateCell { grid-area: plate; }
+  .DocumentsAdminCards .statusCell { grid-area: status; }
+  .DocumentsAdminCards .govCell { grid-area: gov; }
+  .DocumentsAdminCards .action {
+    grid-area: action;
+    max-width: none;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .DocumentsAdminCards {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "type"
+      "account"
+      "plate"
+      "status"
+      "gov"
+      "action";
+  }
+}

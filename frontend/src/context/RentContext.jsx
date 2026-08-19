@@ -1,5 +1,5 @@
 import axios from "axios";
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { useActivityContext } from "./ActivityContext";
 
 const RentContext = createContext();
@@ -22,17 +22,52 @@ const RentContextProvider = ({ children }) => {
     myTrips: [],
   });
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [rentalEligibility, setRentalEligibility] = useState(null);
+  const eligibilityRequestRef = useRef(null);
+
+  const fetchRentalEligibility = useCallback(async ({ force = false } = {}) => {
+    if (!force && eligibilityRequestRef.current) {
+      return eligibilityRequestRef.current;
+    }
+
+    const request = (async () => {
+      try {
+        const res = await axios.get("/rentals/eligibility");
+        setRentalEligibility(res.data);
+        return res.data;
+      } catch (error) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch rental eligibility";
+        console.error("fetchRentalEligibility failed:", message);
+        setRentalEligibility(null);
+        return null;
+      } finally {
+        eligibilityRequestRef.current = null;
+      }
+    })();
+
+    eligibilityRequestRef.current = request;
+    return request;
+  }, []);
 
   const rentVehicle = async (data) => {
     try {
       const res = await axios.post(`/rentals/rent`, data);
       setRentVehResponse(res.data.message);
       loadActivities();
-      return true;
+      return { success: true, message: res.data.message };
     } catch (error) {
-      console.log(error?.response?.data?.message);
-      setRentVehResponse(error?.response?.data?.message || "Booking failed.");
-      return false;
+      const payload = error?.response?.data || {};
+      const message = payload.message || "Booking failed.";
+      setRentVehResponse(message);
+      return {
+        success: false,
+        message,
+        reasons: payload.reasons || [],
+        statuses: payload.statuses || {},
+      };
     }
   };
 
@@ -162,6 +197,8 @@ const RentContextProvider = ({ children }) => {
         payByToken,
         findPaidTripForVehicle,
         findPaidTripForOwner,
+        rentalEligibility,
+        fetchRentalEligibility,
       }}
     >
       {children}

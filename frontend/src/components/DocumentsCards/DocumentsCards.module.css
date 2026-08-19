@@ -5,11 +5,271 @@
   border-radius: 20px;
 }
 
+.DocumentsCards h5 {
+  margin: 22px 0 4px;
+  color: var(--gray);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.DocumentsCards .errorMsg {
+  margin-top: 12px;
+  color: #ffa3a3;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.DocumentsCards .hint {
+  margin-top: 12px;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.DocumentsCards .eligibilityBanner {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(249, 224, 129, 0.35);
+  background: rgba(249, 224, 129, 0.08);
+  color: #f9e081;
+  font-size: 0.9rem;
+}
+
+.DocumentsCards .eligibilityBanner p {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.DocumentsCards .eligibilityBanner span {
+  color: var(--gray);
+  font-size: 0.85rem;
+}
+
+.DocumentsCards .vehicleBlock {
+  margin-top: 8px;
+}
+
+.DocumentsCards .vehiclesSectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.DocumentsCards .vehiclesSectionHeader h5 {
+  margin-bottom: 0;
+}
+
+.DocumentsCards .vehiclesCount {
+  color: var(--gray);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.DocumentsCards .vehiclesSummary {
+  margin: 6px 0 10px;
+  color: var(--gray);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.DocumentsCards .vehicleAccordionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.DocumentsCards .vehicleAccordion {
+  border: var(--cards-border);
+  border-radius: 14px;
+  background-color: rgba(42, 46, 53, 0.35);
+  overflow: hidden;
+}
+
+.DocumentsCards .vehicleAccordionExpanded {
+  background-color: rgba(42, 46, 53, 0.55);
+}
+
+.DocumentsCards .vehicleAccordionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  color: #eeeaeaef;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.DocumentsCards .vehicleAccordionHeader:hover {
+  background-color: rgba(63, 68, 77, 0.25);
+}
+
+.DocumentsCards .vehicleChevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--gray);
+}
+
+.DocumentsCards .vehicleHeaderMain {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  min-width: 0;
+}
+
+.DocumentsCards .vehiclePlate,
+.DocumentsCards .vehiclePlateInline {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #eeeaeaef;
+}
+
+.DocumentsCards .vehicleDocCount {
+  color: var(--gray);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.DocumentsCards .vehicleGovBadge {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.DocumentsCards .vehicleAccordionBody {
+  padding: 0 14px 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.DocumentsCards .vehicleExpandedMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0 8px;
+}
+
+.DocumentsCards .compactDocRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border: var(--cards-border);
+  border-radius: 12px;
+  background-color: var(--bg-gray);
+}
+
+.DocumentsCards .compactDocMain {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.DocumentsCards .compactDocTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.DocumentsCards .compactDocTitle {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #eeeaeaef;
+}
+
+.DocumentsCards .compactDocMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 4px;
+}
+
+.DocumentsCards .compactDocMeta small {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--gray);
+}
+
+.DocumentsCards .compactDocActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.DocumentsCards .compactIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: var(--cards-border);
+  border-radius: 8px;
+  background-color: #2a2e35;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.DocumentsCards .compactIconBtn:hover:not(:disabled) {
+  background-color: #3f444d;
+}
+
+.DocumentsCards .compactIconBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.DocumentsCards .compactUploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: var(--cards-border);
+  border-radius: 8px;
+  background-color: #2a2e35;
+  color: #eeeaeaef;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.DocumentsCards .compactUploadBtn:hover {
+  background-color: #3f444d;
+}
+
+.DocumentsCards .vehicleHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  color: #eeeaeaef;
+  font-weight: 700;
+}
+
 .DocumentsCards .dataContainer .data {
-  margin-top: 20px;
+  margin-top: 16px;
   background-color: var(--bg-gray);
   border: var(--cards-border);
   display: flex;
+  gap: 12px;
   padding: 20px;
   border-radius: 20px;
   font-weight: bold;
@@ -18,11 +278,38 @@
   align-items: center;
 }
 
-.DocumentsCards .customFileUpload input[type="file"] {
-  display: none;
+.DocumentsCards .slotInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
-.DocumentsCards .customFileUpload {
+.DocumentsCards .slotTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.DocumentsCards .meta,
+.DocumentsCards .rejection {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--gray);
+}
+
+.DocumentsCards .rejection {
+  color: #ffa3a3;
+}
+
+.DocumentsCards .slotActions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.DocumentsCards .iconBtn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,10 +320,66 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   border: var(--cards-border);
+  color: inherit;
 }
 
-.DocumentsCards .customFileUpload:hover {
+.DocumentsCards .iconBtn:hover:not(:disabled) {
   background-color: #3f444d;
+}
+
+.DocumentsCards .iconBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.DocumentsCards .statusBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.DocumentsCards .notUploaded {
+  color: #cbd5e1;
+  background-color: rgba(100, 116, 139, 0.16);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.DocumentsCards .pending {
+  color: #93c5fd;
+  background-color: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+.DocumentsCards .verified {
+  color: #6ee7b7;
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.DocumentsCards .rejected,
+.DocumentsCards .expired {
+  color: #ffa3a3;
+  background-color: rgba(160, 73, 68, 0.16);
+  border-color: rgba(255, 163, 163, 0.2);
+}
+
+.DocumentsCards .mismatch {
+  color: #fcd34d;
+  background-color: rgba(234, 179, 8, 0.12);
+  border-color: rgba(250, 204, 21, 0.2);
+}
+
+.DocumentsCards .unavailable {
+  color: #cbd5e1;
+  background-color: rgba(100, 116, 139, 0.16);
+  border-color: rgba(148, 163, 184, 0.2);
 }
 
 @media (max-width: 768px) {
@@ -46,6 +389,14 @@
 
   .DocumentsCards .dataContainer .data {
     padding: 15px;
+  }
+
+  .DocumentsCards .vehicleAccordionHeader {
+    align-items: flex-start;
+  }
+
+  .DocumentsCards .vehicleGovBadge {
+    margin-left: 0;
   }
 }
 
@@ -60,14 +411,35 @@
   }
 
   .DocumentsCards .dataContainer .data {
+    align-items: flex-start;
     padding: 12px 15px;
     margin-top: 15px;
     border-radius: 16px;
     font-size: 0.9rem;
   }
 
-  .DocumentsCards .customFileUpload {
+  .DocumentsCards .iconBtn {
     width: 36px;
     height: 36px;
+  }
+
+  .DocumentsCards .vehicleAccordionHeader {
+    padding: 11px 12px;
+    gap: 8px;
+  }
+
+  .DocumentsCards .vehicleHeaderMain {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .DocumentsCards .compactDocRow {
+    align-items: flex-start;
+  }
+
+  .DocumentsCards .compactDocActions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }

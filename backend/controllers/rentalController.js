@@ -1,6 +1,10 @@
 const {
   getVehicleByLicensePlate,
 } = require("../database/queries/vehicleQueries");
+const {
+  getUserRentalEligibility,
+  getVehicleRentalEligibilityForNewRental,
+} = require("../database/queries/eligibilityQueries");
 const doQuery = require("../database/query");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
@@ -122,6 +126,16 @@ async function createRental(req, res, next) {
       });
     }
 
+    const renterEligibility = await getUserRentalEligibility(renterId);
+    if (!renterEligibility.eligible) {
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "You are not eligible to create a new rental.",
+        eligible: false,
+        reasons: renterEligibility.reasons,
+        statuses: renterEligibility.statuses,
+      });
+    }
+
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
 
@@ -139,6 +153,20 @@ async function createRental(req, res, next) {
       return res
         .status(STATUS_CODE.BAD_REQUEST)
         .json({ message: "Start date must be tomorrow or later" });
+
+    const vehicleEligibility = await getVehicleRentalEligibilityForNewRental(
+      licensePlate,
+      vehicle.ownerId,
+      endDate,
+    );
+    if (!vehicleEligibility.eligible) {
+      return res.status(STATUS_CODE.FORBIDDEN).json({
+        message: "This vehicle is not eligible for new rentals.",
+        eligible: false,
+        reasons: vehicleEligibility.reasons,
+        statuses: vehicleEligibility.statuses,
+      });
+    }
 
     const hasDateCollision = await checkIfVehicleIsAvailable(
       licensePlate,
@@ -675,8 +703,23 @@ const getRentalHistory = async (req, res, next) => {
   }
 };
 
+async function getRentalEligibility(req, res, next) {
+  try {
+    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) return;
+    const userId = req.session.user.userId;
+    const eligibility = await getUserRentalEligibility(userId);
+    return res.status(STATUS_CODE.OK).json({
+      message: "Rental eligibility fetched successfully",
+      ...eligibility,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createRental,
+  getRentalEligibility,
   getMyRentals,
   getRequestsForMyVehicles,
   approveRental,

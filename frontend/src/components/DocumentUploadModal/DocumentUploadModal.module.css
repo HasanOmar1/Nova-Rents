@@ -1,0 +1,135 @@
+.DocumentUploadModal {
+  border: var(--cards-border);
+  border-radius: 16px;
+  background-color: var(--bg-gray);
+  color: white;
+  padding: 0;
+  width: 90%;
+  max-width: 520px;
+  max-height: 85vh;
+  margin: auto;
+  overflow-y: auto;
+}
+
+.DocumentUploadModal::backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.DocumentUploadModal .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 22px;
+  background-color: #2f3f58;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+}
+
+.DocumentUploadModal .header h2 {
+  font-size: 1.15rem;
+  margin-bottom: 4px;
+}
+
+.DocumentUploadModal .header p {
+  color: var(--gray);
+  font-size: 0.85rem;
+}
+
+.DocumentUploadModal .closeIconBtn {
+  background: none;
+  border: none;
+  color: var(--gray);
+  cursor: pointer;
+}
+
+.DocumentUploadModal .closeIconBtn:hover {
+  color: white;
+}
+
+.DocumentUploadModal .content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 22px 24px;
+}
+
+.DocumentUploadModal .errorMsg {
+  color: #ffa3a3;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.DocumentUploadModal .warning {
+  color: #fcd34d;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.DocumentUploadModal .field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.DocumentUploadModal .field input {
+  background-color: var(--input-bg);
+  border: var(--cards-border);
+  border-radius: 12px;
+  color: #fff;
+  padding: 12px;
+  outline: none;
+}
+
+.DocumentUploadModal .field input:focus {
+  border-color: var(--input-focus-border-color);
+}
+
+.DocumentUploadModal .field small {
+  color: #eeeaeaef;
+}
+
+.DocumentUploadModal .dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.DocumentUploadModal .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.DocumentUploadModal .actions button {
+  min-width: 120px;
+  border-radius: 10px;
+  color: white;
+  padding: 11px 16px;
+}
+
+.DocumentUploadModal .cancelBtn {
+  background-color: #2e3442;
+  border: var(--cards-border);
+}
+
+.DocumentUploadModal .submitBtn {
+  background-color: #1d4ed8;
+  border: none;
+}
+
+@media (max-width: 480px) {
+  .DocumentUploadModal .dates,
+  .DocumentUploadModal .actions {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .DocumentUploadModal .actions button {
+    width: 100%;
+  }
+}

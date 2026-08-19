@@ -15,11 +15,13 @@ const rentalRoute = require("./routes/rentalRoute");
 const govRoute = require("./routes/govRoute");
 const notificationRoute = require("./routes/notificationRoute");
 const { startRentalReminderJob } = require("./jobs/rentalReminderJob");
+const { startDocumentExpirationJob } = require("./jobs/documentExpirationJob");
 const activityRoute = require("./routes/activityRoute");
 const complaintsRoute = require("./routes/complaintsRoute");
 const reportRoute = require("./routes/reportRoute");
 const paymentsRoute = require("./routes/paymentsRoute");
 const reportedUsersRoute = require("./routes/reportedUsersRoute");
+const documentsRoute = require("./routes/documentsRoute");
 
 const isProduction = process.env.NODE_ENV === "production";
 const app = express();
@@ -66,9 +68,11 @@ app.use("/complaints", complaintsRoute);
 app.use("/reports", reportRoute);
 app.use("/payments", paymentsRoute);
 app.use("/reported-users", reportedUsersRoute);
+app.use("/documents", documentsRoute);
 app.use(errorHandler);
 
 startRentalReminderJob();
+startDocumentExpirationJob();
 
 app.listen(port, () => {
   console.log(
