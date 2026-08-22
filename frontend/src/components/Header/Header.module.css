@@ -16,7 +16,7 @@
   gap: 15px;
   justify-content: center;
   align-items: center;
-  margin-left: 10%;
+  margin-left: 5%;
 }
 
 .Header .logo {
@@ -102,7 +102,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-right: 10%;
+  margin-right: 5%;
 }
 
 .Header .notifyButton,
