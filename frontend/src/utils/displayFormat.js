@@ -215,14 +215,14 @@ export const GOVERNMENT_VEHICLE_EXPLANATION =
   "We compare your vehicle details with official government vehicle records. This does not verify the uploaded file, insurance, or your identity.";
 
 const USER_GOV_STATUS_GUIDANCE = {
-  not_checked: "This vehicle has not been compared with government records yet.",
+  not_checked:
+    "This vehicle has not been compared with government records yet.",
   mismatch:
     "The vehicle details in our system do not match official government records.",
   not_found: "This vehicle was not found in official government records.",
   unavailable:
     "We couldn't verify the vehicle right now because the government service is unavailable. Please try again later.",
-  error:
-    "Vehicle verification could not be completed. Please try again later.",
+  error: "Vehicle verification could not be completed. Please try again later.",
 };
 
 export const getGovernmentCheckGuidance = (status) =>
@@ -275,7 +275,8 @@ const REJECTION_CODE_LABELS = {
 };
 
 export const formatDocumentType = (documentType) =>
-  DOCUMENT_DISPLAY_CONFIG[documentType]?.title || formatEventLabel(documentType);
+  DOCUMENT_DISPLAY_CONFIG[documentType]?.title ||
+  formatEventLabel(documentType);
 
 export const formatDocumentStatus = (status, audience = "user") => {
   const labels =
@@ -315,8 +316,7 @@ const RENTER_ELIGIBILITY_MESSAGES = {
     "Your identity document needs attention. Upload a corrected document before renting.",
   IDENTITY_EXPIRED:
     "Your identity document has expired. Upload a valid identity card or passport before renting.",
-  DRIVER_LICENSE_NOT_UPLOADED:
-    "Upload a driver license before renting.",
+  DRIVER_LICENSE_NOT_UPLOADED: "Upload a driver license before renting.",
   DRIVER_LICENSE_PENDING_REVIEW:
     "Your driver license is waiting for review. You can rent after it is verified.",
   DRIVER_LICENSE_REJECTED:
@@ -327,7 +327,8 @@ const RENTER_ELIGIBILITY_MESSAGES = {
 
 const VEHICLE_ELIGIBILITY_MESSAGES = {
   OWNER_IDENTITY_NOT_UPLOADED: "The owner's identity document is not uploaded.",
-  OWNER_IDENTITY_PENDING_REVIEW: "The owner's identity document is waiting for review.",
+  OWNER_IDENTITY_PENDING_REVIEW:
+    "The owner's identity document is waiting for review.",
   OWNER_IDENTITY_REJECTED: "The owner's identity document needs attention.",
   OWNER_IDENTITY_EXPIRED: "The owner's identity document has expired.",
   INSURANCE_NOT_UPLOADED: "Vehicle insurance is not uploaded.",
@@ -391,11 +392,10 @@ export const buildVehicleEligibilitySummary = (rentalEligibility) => {
   return {
     eligible: Boolean(rentalEligibility.eligible),
     checks,
-    message:
-      rentalEligibility.eligible
-        ? null
-        : (rentalEligibility.reasons || [])
-            .map((reason) => formatEligibilityReason(reason))
-            .join(" "),
+    message: rentalEligibility.eligible
+      ? null
+      : (rentalEligibility.reasons || [])
+          .map((reason) => formatEligibilityReason(reason))
+          .join(" "),
   };
 };

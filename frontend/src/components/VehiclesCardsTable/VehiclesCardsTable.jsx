@@ -62,8 +62,7 @@ const VehiclesCardsTable = ({
   const ownerLabel =
     vehicleForDetails.ownerEmail || ownerFullName || "Unknown owner";
   const isOwnerBlocked =
-    admin &&
-    String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
+    admin && String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
   const displayedStatus = isOwnerBlocked ? "unavailable" : veh.status;
   const eligibilitySummary =
     !admin && veh.rentalEligibility
@@ -124,7 +123,9 @@ const VehiclesCardsTable = ({
         <span className={styles.cellValue}>{veh.carTypeName}</span>
       </p>
       <p className={styles.address}>
-        <span className={styles.cellLabel}>{admin ? "Location" : "Address"}</span>
+        <span className={styles.cellLabel}>
+          {admin ? "Location" : "Address"}
+        </span>
         <span className={styles.cellValue}>{veh.address}</span>
       </p>
       <p className={styles.price}>
@@ -156,25 +157,6 @@ const VehiclesCardsTable = ({
           {displayedStatus}
         </span>
       </div>
-
-      {!admin && eligibilitySummary && !eligibilitySummary.eligible && (
-        <div className={styles.eligibilityCell}>
-          <span className={styles.cellLabel}>Verification</span>
-          <div className={styles.eligibilitySummary}>
-            <p className={styles.eligibilityTitle}>Verification incomplete</p>
-            <ul className={styles.eligibilityChecks}>
-              {eligibilitySummary.checks.map((check) => (
-                <li key={check.key}>
-                  {check.ok ? "✓" : "✗"} {check.label}
-                </li>
-              ))}
-            </ul>
-            <Link to="/profile" className={styles.eligibilityAction}>
-              Manage Documents
-            </Link>
-          </div>
-        </div>
-      )}
 
       {!admin && (
         <div className={styles.actionsContainer}>
@@ -211,6 +193,25 @@ const VehiclesCardsTable = ({
                   <Trash2 size={18} aria-hidden="true" />
                 </button>
               ))}
+          </div>
+        </div>
+      )}
+
+      {!admin && eligibilitySummary && !eligibilitySummary.eligible && (
+        <div className={styles.eligibilityCell}>
+          <span className={styles.cellLabel}>Verification</span>
+          <div className={styles.eligibilitySummary}>
+            <p className={styles.eligibilityTitle}>Verification incomplete</p>
+            <ul className={styles.eligibilityChecks}>
+              {eligibilitySummary.checks.map((check) => (
+                <li key={check.key}>
+                  {check.ok ? "✓" : "✗"} {check.label}
+                </li>
+              ))}
+            </ul>
+            <Link to="/profile" className={styles.eligibilityAction}>
+              Manage Documents
+            </Link>
           </div>
         </div>
       )}
