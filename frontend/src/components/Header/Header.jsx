@@ -1,5 +1,12 @@
 import styles from "./Header.module.css";
-import { Car, Bell, LogOut, TableOfContents, History } from "lucide-react";
+import {
+  Car,
+  Bell,
+  LogOut,
+  TableOfContents,
+  History,
+  Mail,
+} from "lucide-react";
 import { navByRole, labels, icons } from "./nav";
 import { useUserContext } from "../../context/UserContext";
 import { useState } from "react";
@@ -98,19 +105,46 @@ const Header = () => {
               {currentUser?.role === "user" ? (
                 <>
                   <div className={styles.tabsContainer} ref={tabsRef}>
-                    <button className={styles.tabsButton} onClick={handleTabs}>
+                    <button
+                      type="button"
+                      className={styles.tabsButton}
+                      onClick={handleTabs}
+                      aria-label="Open account menu"
+                      aria-expanded={areMoreTabsOpen}
+                      aria-controls="account-menu"
+                    >
                       <TableOfContents className={`${styles.iconLarge} icon`} />
                     </button>
 
                     {areMoreTabsOpen && (
-                      <div className={styles.moreTabsContainer}>
+                      <div
+                        id="account-menu"
+                        className={styles.moreTabsContainer}
+                      >
                         <Link
-                          className={styles.rentsButton}
-                          to={"/RentalDashboard"}
+                          className={styles.menuLink}
+                          to="/rentalDashboard"
                           onClick={() => setAreMoreTabsOpen(false)}
                         >
                           <History className={` ${styles.iconSmall} icon `} />
                           Rental Dashboard
+                        </Link>
+                        <Link
+                          className={`${styles.menuLink} ${
+                            location.pathname === "/contact"
+                              ? styles.activeMenuLink
+                              : ""
+                          }`}
+                          to="/contact"
+                          onClick={() => setAreMoreTabsOpen(false)}
+                          aria-current={
+                            location.pathname === "/contact"
+                              ? "page"
+                              : undefined
+                          }
+                        >
+                          <Mail className={`${styles.iconSmall} icon`} />
+                          Contact Us
                         </Link>
                         <AsyncButton
                           className={styles.logoutButton}

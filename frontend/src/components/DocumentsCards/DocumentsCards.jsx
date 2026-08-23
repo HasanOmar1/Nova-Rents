@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useDocumentContext } from "../../context/DocumentContext";
 import { useRentContext } from "../../context/RentContext";
 import { getPrimaryRenterEligibilityMessage } from "../../utils/displayFormat";
@@ -6,10 +7,19 @@ import DocumentUploadModal from "../DocumentUploadModal/DocumentUploadModal";
 import DocumentSlot from "./DocumentSlot";
 import VehicleDocumentsAccordion from "./VehicleDocumentsAccordion";
 import { GOV_ISSUE_STATUSES } from "./DocumentsCards.constants";
-import { getVehicleDocSummary } from "./DocumentsCards.utils";
+import {
+  getVehicleDocSummary,
+  getVehicleDocumentsId,
+} from "./DocumentsCards.utils";
 import styles from "./DocumentsCards.module.css";
 
+const EMPTY_LIST = [];
+const normalizePlate = (value) =>
+  String(value ?? "").trim().toUpperCase();
+
 const DocumentsCards = () => {
+  const [searchParams] = useSearchParams();
+  const requestedVehiclePlate = searchParams.get("vehicle")?.trim() || null;
   const {
     overview,
     isLoading,
@@ -23,7 +33,8 @@ const DocumentsCards = () => {
   const { rentalEligibility, fetchRentalEligibility } = useRentContext();
   const [uploadSlot, setUploadSlot] = useState(null);
   const [viewingId, setViewingId] = useState(null);
-  const [expandedPlate, setExpandedPlate] = useState(null);
+  const [expandedPlate, setExpandedPlate] = useState(requestedVehiclePlate);
+  const handledVehicleLink = useRef(null);
 
   useEffect(() => {
     getMyDocuments();
@@ -41,8 +52,16 @@ const DocumentsCards = () => {
     [uploadDocument, fetchRentalEligibility],
   );
 
-  const identity = overview?.identity || [];
-  const vehicles = overview?.vehicles || [];
+  const identity = overview?.identity || EMPTY_LIST;
+  const vehicles = overview?.vehicles || EMPTY_LIST;
+  const requestedVehicle = useMemo(() => {
+    if (!requestedVehiclePlate) return null;
+
+    const normalizedPlate = normalizePlate(requestedVehiclePlate);
+    return vehicles.find(
+      (vehicle) => normalizePlate(vehicle.licensePlate) === normalizedPlate,
+    );
+  }, [requestedVehiclePlate, vehicles]);
   const renterEligibilityMessage = getPrimaryRenterEligibilityMessage(
     rentalEligibility?.reasons,
   );
@@ -75,6 +94,36 @@ const DocumentsCards = () => {
     return parts.join(" · ");
   }, [vehicles]);
 
+  useEffect(() => {
+    const plate = requestedVehicle?.licensePlate;
+    if (
+      isLoading ||
+      !plate ||
+      normalizePlate(expandedPlate) !== normalizePlate(plate) ||
+      handledVehicleLink.current === requestedVehiclePlate
+    ) {
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const accordion = document.getElementById(getVehicleDocumentsId(plate));
+      if (!accordion) return;
+
+      accordion.scrollIntoView({ behavior: "smooth", block: "start" });
+      accordion
+        .querySelector("button")
+        ?.focus({ preventScroll: true });
+      handledVehicleLink.current = requestedVehiclePlate;
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    expandedPlate,
+    isLoading,
+    requestedVehicle,
+    requestedVehiclePlate,
+  ]);
+
   const openUpload = (slot) => {
     setErrorMsg("");
     setUploadSlot(slot);
@@ -91,8 +140,9 @@ const DocumentsCards = () => {
   };
 
   const toggleVehicle = (licensePlate) => {
+    const nextPlate = String(licensePlate);
     setExpandedPlate((current) =>
-      current === licensePlate ? null : licensePlate,
+      normalizePlate(current) === normalizePlate(nextPlate) ? null : nextPlate,
     );
   };
 
@@ -150,7 +200,10 @@ const DocumentsCards = () => {
                   <VehicleDocumentsAccordion
                     key={vehicle.licensePlate}
                     vehicle={vehicle}
-                    isExpanded={expandedPlate === vehicle.licensePlate}
+                    isExpanded={
+                      normalizePlate(expandedPlate) ===
+                      normalizePlate(vehicle.licensePlate)
+                    }
                     onToggle={() => toggleVehicle(vehicle.licensePlate)}
                     onUpload={openUpload}
                     onView={handleView}

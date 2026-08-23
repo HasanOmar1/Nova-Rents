@@ -599,6 +599,64 @@ const buildEmailShell = (subtitle, bodyHtml, footerNote = null) => `
 const closingText = (footerNote = null) =>
   `Best regards,\nNova Rents Team${footerNote ? `\n\n${footerNote}` : ""}`;
 
+// --- User contact form → Nova Rents support ---
+const sendContactMessageEmail = async ({ sender, subject, message }) => {
+  const recipient =
+    String(process.env.CONTACT_EMAIL || "").trim() ||
+    "novarents9@gmail.com";
+  const senderEmail = String(sender?.email || "").trim();
+
+  if (!senderEmail) {
+    throw new Error("Contact message sender email is required");
+  }
+
+  const senderName = displayName(
+    sender?.firstName,
+    sender?.lastName,
+    senderEmail,
+  );
+  const cleanSubject = String(subject || "")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const cleanMessage = String(message || "").trim();
+  const safeMessage = escapeHtml(cleanMessage).replace(/\r?\n/g, "<br />");
+  const senderRows =
+    buildDetailRow("Name", escapeHtml(senderName)) +
+    buildDetailRow("Email", escapeHtml(senderEmail)) +
+    buildDetailRow("User ID", escapeHtml(sender?.userId ?? "Not available")) +
+    buildDetailRow("Subject", escapeHtml(cleanSubject));
+
+  const text = `New contact message received through Nova Rents.\n\nFrom: ${senderName}\nEmail: ${senderEmail}\nUser ID: ${sender?.userId ?? "Not available"}\nSubject: ${cleanSubject}\n\nMessage:\n${cleanMessage}`;
+
+  const info = await transporter.sendMail({
+    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
+    to: recipient,
+    replyTo: {
+      name: senderName,
+      address: senderEmail,
+    },
+    subject: `[Nova Rents Contact] ${cleanSubject}`,
+    text,
+    html: buildEmailShell(
+      "New contact message",
+      `
+        <p>A Nova Rents user sent a message to the support team.</p>
+        ${buildDetailBlock("Sender details", senderRows)}
+        <p style="margin: 0 0 8px; color: #6b7280;">Message</p>
+        <p style="margin: 0; color: #111827; word-break: break-word;">${safeMessage}</p>
+      `,
+      "Replying to this email will send your response directly to the user.",
+    ),
+  });
+
+  logEmailResult(
+    `contact message from user ${sender?.userId ?? "unknown"}`,
+    info,
+  );
+  return info;
+};
+
 // --- Vehicle report filed → vehicle owner (no reporter identity) ---
 const sendOwnerVehicleReportEmail = async ({
   to,
@@ -1816,6 +1874,7 @@ const sendInsuranceExpirationEmail = async ({
 module.exports = {
   sendOTPEmail,
   handleEmailVerification,
+  sendContactMessageEmail,
   sendComplaintResponseEmail,
   sendOwnerVehicleReportEmail,
   sendReportedOwnerReportEmail,

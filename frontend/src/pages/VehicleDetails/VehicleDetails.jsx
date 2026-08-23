@@ -39,6 +39,11 @@ const displayedSpecificationFields = [
   "color",
 ];
 
+const USER_VEHICLE_RETURN_PATHS = new Set([
+  "/myVehicles",
+  "/myVehicles/analytics",
+]);
+
 const hasAllDisplayedSpecifications = (vehicle) =>
   Boolean(vehicle) &&
   displayedSpecificationFields.every(
@@ -167,10 +172,15 @@ const VehicleDetails = () => {
     currentUser?.role === "admin" ? "/allVehicles" : "/vehicles";
   const canUseReturnPath =
     routeReturnTo === defaultVehicleListPath ||
-    (currentUser?.role === "user" && routeReturnTo === "/myVehicles");
+    (currentUser?.role === "user" &&
+      USER_VEHICLE_RETURN_PATHS.has(routeReturnTo));
   const vehicleListPath = canUseReturnPath
     ? routeReturnTo
     : defaultVehicleListPath;
+  const vehicleListLabel =
+    vehicleListPath === "/myVehicles/analytics"
+      ? "Back to performance"
+      : "Back to vehicles";
   const paidTripForVehicle = currentUser ? findPaidTripForVehicle(plate) : null;
   const canReportVehicle = Boolean(paidTripForVehicle);
 
@@ -298,7 +308,7 @@ const VehicleDetails = () => {
       <div className={`${styles.VehicleDetails} page`}>
         <p>{vehicleLoadError || "Vehicle not found."}</p>
         <Link to={vehicleListPath} className={styles.backBtn}>
-          Back to vehicles
+          {vehicleListLabel}
         </Link>
       </div>
     );
@@ -363,7 +373,7 @@ const VehicleDetails = () => {
         <h1>{vehicle.vehName}</h1>
         <div className={styles.btnsContainer}>
           <Link to={vehicleListPath} className={styles.backBtn}>
-            Back to vehicles
+            {vehicleListLabel}
           </Link>
           {!isOwnVehicle && (
             <div className={styles.reportAction}>

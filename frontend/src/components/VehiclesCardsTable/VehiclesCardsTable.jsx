@@ -79,6 +79,9 @@ const VehiclesCardsTable = ({
     : `, status ${formatVehicleStatus(displayedStatus)}`;
 
   const vehicleDetailsPath = `/vehicles/${encodeURIComponent(veh.licensePlate)}`;
+  const documentsSearch = new URLSearchParams({
+    vehicle: String(veh.licensePlate),
+  }).toString();
   const vehicleDetailsState = {
     vehicle: vehicleForDetails,
     returnTo: admin ? "/allVehicles" : "/myVehicles",
@@ -219,7 +222,11 @@ const VehiclesCardsTable = ({
                 </li>
               ))}
             </ul>
-            <Link to="/profile" className={styles.eligibilityAction}>
+            <Link
+              to={`/profile?${documentsSearch}#documents`}
+              className={styles.eligibilityAction}
+              aria-label={`Manage documents for ${fullName}, license plate ${veh.licensePlate}`}
+            >
               Manage Documents
             </Link>
           </div>

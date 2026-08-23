@@ -418,6 +418,18 @@ const VehicleAnalytics = () => {
 
               return (
                 <li key={vehicle.dataKey} className={styles.vehicleValueRow}>
+                  <Link
+                    className={styles.vehicleValueRowLink}
+                    to={`/vehicles/${encodeURIComponent(vehicle.licensePlate)}`}
+                    state={{
+                      vehicle: {
+                        licensePlate: vehicle.licensePlate,
+                        vehName: vehicleName,
+                      },
+                      returnTo: "/myVehicles/analytics",
+                    }}
+                    aria-label={`View details for ${vehicleName}, plate ${vehicle.licensePlate}`}
+                  />
                   <span className={styles.vehicleValueRank}>{index + 1}</span>
 
                   <div className={styles.vehicleValueDetails}>

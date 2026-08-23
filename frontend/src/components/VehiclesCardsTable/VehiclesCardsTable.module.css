@@ -610,6 +610,8 @@
 }
 
 .VehiclesCardsTable .eligibilityAction {
+  position: relative;
+  z-index: 2;
   color: #a7d2eb;
   font-size: 0.82rem;
   font-weight: 600;

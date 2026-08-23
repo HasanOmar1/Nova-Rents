@@ -1,3 +1,7 @@
+.AllVehicles {
+  container: all-vehicles-page / inline-size;
+}
+
 .AllVehicles h1 {
   font-size: 2.2rem;
   margin-bottom: 5px;
@@ -85,30 +89,42 @@
 .AllVehicles .topCardsContainer {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: clamp(10px, 1.2vw, 20px);
-  margin-top: 30px;
+  gap: 18px;
+  margin-top: 34px;
 }
 
 .AllVehicles .vehicleStatCard {
   min-width: 0;
-  padding-inline: 14px;
+  min-height: 140px;
+  padding: 18px;
+  justify-content: space-between;
 }
 
 .AllVehicles .vehicleStatCard > div:first-child {
   min-width: 0;
   align-items: flex-start;
-  gap: 8px;
+  gap: 14px;
 }
 
 .AllVehicles .vehicleStatCard > div:first-child > p {
+  flex: 1 1 auto;
   min-width: 0;
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+  text-wrap: balance;
 }
 
 .AllVehicles .vehicleStatCard > div:first-child > div {
   flex: 0 0 auto;
-  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 18px;
 }
 
 .AllVehicles .myVehiclesContainer {
@@ -167,10 +183,9 @@
 /* =========================================
    RESPONSIVE DESIGN
    ========================================= */
-@media (max-width: 1279px) {
+@container all-vehicles-page (max-width: 1450px) {
   .AllVehicles .topCardsContainer {
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 15px;
   }
 
   .AllVehicles .topCardsContainer > * {
@@ -182,20 +197,33 @@
   }
 }
 
-@media (max-width: 768px) {
+@container all-vehicles-page (max-width: 760px) {
   .AllVehicles .topCardsContainer {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 15px;
+  }
+
+  .AllVehicles .topCardsContainer > * {
+    grid-column: span 3;
+  }
+
+  .AllVehicles .topCardsContainer > :nth-child(n + 5) {
+    grid-column: span 2;
+  }
+}
+
+@container all-vehicles-page (max-width: 560px) {
+  .AllVehicles .topCardsContainer {
+    grid-template-columns: 1fr;
   }
 
   .AllVehicles .topCardsContainer > *,
   .AllVehicles .topCardsContainer > :nth-child(n + 5) {
     grid-column: auto;
   }
+}
 
-  .AllVehicles .topCardsContainer > :last-child {
-    grid-column: 1 / -1;
-  }
-
+@media (max-width: 768px) {
   .AllVehicles .myVehiclesContainer {
     margin: 20px 0;
   }
@@ -218,12 +246,7 @@
 
 @media (max-width: 480px) {
   .AllVehicles .topCardsContainer {
-    grid-template-columns: 1fr;
     margin-top: 20px;
-  }
-
-  .AllVehicles .topCardsContainer > :last-child {
-    grid-column: auto;
   }
 
   .AllVehicles h1 {

@@ -7,7 +7,10 @@ import {
 } from "../../utils/displayFormat";
 import CompactVehicleDocumentRow from "./CompactVehicleDocumentRow";
 import { GOV_CLASS } from "./DocumentsCards.constants";
-import { getVehicleDocSummary } from "./DocumentsCards.utils";
+import {
+  getVehicleDocSummary,
+  getVehicleDocumentsId,
+} from "./DocumentsCards.utils";
 import styles from "./DocumentsCards.module.css";
 
 const VehicleDocumentsAccordion = ({
@@ -21,11 +24,13 @@ const VehicleDocumentsAccordion = ({
   const govStatus = vehicle.governmentCheck?.status || "not_checked";
   const documents = vehicle.documents || [];
   const summary = getVehicleDocSummary(documents);
-  const panelId = `vehicle-docs-${vehicle.licensePlate}`;
+  const accordionId = getVehicleDocumentsId(vehicle.licensePlate);
+  const panelId = `${accordionId}-panel`;
   const govGuidance = getGovernmentCheckGuidance(govStatus);
 
   return (
     <div
+      id={accordionId}
       className={`${styles.vehicleAccordion} ${isExpanded ? styles.vehicleAccordionExpanded : ""}`}
     >
       <button

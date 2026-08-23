@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Cell,
   Pie,
@@ -9,6 +10,26 @@ import {
 import styles from "./VehicleRentalCountChart.module.css";
 
 const CHART_HEIGHT = 280;
+const VEHICLE_ANALYTICS_PATH = "/myVehicles/analytics";
+
+const getVehiclePath = (licensePlate) =>
+  `/vehicles/${encodeURIComponent(licensePlate)}`;
+
+const getVehicleRouteState = (vehicle) => ({
+  vehicle: {
+    licensePlate: vehicle.licensePlate,
+    vehName: vehicle.name,
+  },
+  returnTo: VEHICLE_ANALYTICS_PATH,
+});
+
+const formatPercentage = (count, total) => {
+  if (!total) return "0%";
+
+  return `${new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 1,
+  }).format((count / total) * 100)}%`;
+};
 
 const VehicleRentalCountChart = ({
   data,
@@ -17,6 +38,7 @@ const VehicleRentalCountChart = ({
   rangeLabel,
 }) => {
   const titleId = useId();
+  const navigate = useNavigate();
   const chartData = Array.isArray(data) ? data : [];
   const totalRentals = chartData.reduce(
     (total, vehicle) => total + (Number(vehicle.rentalCount) || 0),
@@ -24,6 +46,18 @@ const VehicleRentalCountChart = ({
   );
   const totalLabel = totalRentals.toLocaleString();
   const hasData = chartData.length > 0 && totalRentals > 0;
+  const openVehicle = (vehicle) => {
+    navigate(getVehiclePath(vehicle.licensePlate), {
+      state: getVehicleRouteState(vehicle),
+    });
+  };
+
+  const handleSliceKeyDown = (event, vehicle) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+    openVehicle(vehicle);
+  };
 
   return (
     <section
@@ -39,6 +73,11 @@ const VehicleRentalCountChart = ({
               ? `Share of completed rentals · ${rangeLabel}`
               : "Share of completed rentals across your vehicles"}
           </p>
+          {!isLoading && hasData && (
+            <p className={styles.interactionHint}>
+              Hover over a chart segment to see more details.
+            </p>
+          )}
         </div>
       </header>
 
@@ -55,7 +94,7 @@ const VehicleRentalCountChart = ({
           <div className={styles.chartPanel}>
             <div
               className={styles.chartCanvas}
-              role="img"
+              role="group"
               aria-label={`${totalLabel} completed ${totalRentals === 1 ? "rental" : "rentals"} across ${chartData.length} ${chartData.length === 1 ? "vehicle" : "vehicles"}. Details are listed with the chart.`}
             >
               <ResponsiveContainer
@@ -79,7 +118,18 @@ const VehicleRentalCountChart = ({
                     isAnimationActive={false}
                   >
                     {chartData.map((vehicle) => (
-                      <Cell key={vehicle.dataKey} fill={vehicle.color} />
+                      <Cell
+                        key={vehicle.dataKey}
+                        fill={vehicle.color}
+                        role="link"
+                        tabIndex={0}
+                        aria-label={`View details for ${vehicle.name}, plate ${vehicle.licensePlate}`}
+                        className={styles.chartSlice}
+                        onClick={() => openVehicle(vehicle)}
+                        onKeyDown={(event) =>
+                          handleSliceKeyDown(event, vehicle)
+                        }
+                      />
                     ))}
                   </Pie>
                   <Tooltip
@@ -91,9 +141,10 @@ const VehicleRentalCountChart = ({
                       const vehicle = payload[0]?.payload;
                       const rentalCount =
                         Number(vehicle?.rentalCount) || 0;
-                      const percentage = totalRentals
-                        ? Math.round((rentalCount / totalRentals) * 100)
-                        : 0;
+                      const percentage = formatPercentage(
+                        rentalCount,
+                        totalRentals,
+                      );
 
                       return (
                         <div className={styles.tooltip}>
@@ -112,7 +163,7 @@ const VehicleRentalCountChart = ({
                             <strong>{rentalCount.toLocaleString()}</strong>
                             <span>
                               {rentalCount === 1 ? "rental" : "rentals"} ·{" "}
-                              {percentage}% of total
+                              {percentage} of total
                             </span>
                           </div>
                         </div>
@@ -133,6 +184,7 @@ const VehicleRentalCountChart = ({
             <div className={styles.legendHeading} aria-hidden="true">
               <span>Vehicle</span>
               <span>Rentals</span>
+              <span>Share</span>
             </div>
             <ul
               className={styles.legendList}
@@ -140,24 +192,40 @@ const VehicleRentalCountChart = ({
             >
               {chartData.map((vehicle) => {
                 const rentalCount = Number(vehicle.rentalCount) || 0;
+                const percentage = formatPercentage(
+                  rentalCount,
+                  totalRentals,
+                );
 
                 return (
                   <li key={vehicle.dataKey} className={styles.legendItem}>
-                    <div className={styles.vehicleIdentity}>
-                      <span
-                        className={styles.legendDot}
-                        style={{ backgroundColor: vehicle.color }}
-                        aria-hidden="true"
-                      />
-                      <div className={styles.vehicleMeta}>
-                        <strong>{vehicle.name}</strong>
-                        <span>Plate {vehicle.licensePlate}</span>
+                    <Link
+                      className={styles.legendLink}
+                      to={getVehiclePath(vehicle.licensePlate)}
+                      state={getVehicleRouteState(vehicle)}
+                      aria-label={`${vehicle.name}, plate ${vehicle.licensePlate}: ${rentalCount.toLocaleString()} completed ${rentalCount === 1 ? "rental" : "rentals"}, ${percentage} of total. View vehicle details.`}
+                    >
+                      <div className={styles.vehicleIdentity}>
+                        <span
+                          className={styles.legendDot}
+                          style={{ backgroundColor: vehicle.color }}
+                          aria-hidden="true"
+                        />
+                        <div className={styles.vehicleMeta}>
+                          <strong>{vehicle.name}</strong>
+                          <span>Plate {vehicle.licensePlate}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.legendValue}>
-                      <strong>{rentalCount.toLocaleString()}</strong>
-                      <span>{rentalCount === 1 ? "rental" : "rentals"}</span>
-                    </div>
+                      <div className={styles.legendValue}>
+                        <strong>{rentalCount.toLocaleString()}</strong>
+                        <span>
+                          {rentalCount === 1 ? "rental" : "rentals"}
+                        </span>
+                      </div>
+                      <strong className={styles.legendPercentage}>
+                        {percentage}
+                      </strong>
+                    </Link>
                   </li>
                 );
               })}

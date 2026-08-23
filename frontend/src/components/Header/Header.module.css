@@ -129,21 +129,33 @@
 .Header .tabsContainer .moreTabsContainer {
   position: absolute;
   top: 48px;
+  right: 0;
   border: var(--cards-border);
   background-color: #191e32;
-  min-height: 100px;
-  width: 150px;
+  min-width: 205px;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   z-index: 999;
 }
 
-.Header .rentsButton {
+.Header .menuLink {
+  justify-content: flex-start;
   background-color: transparent;
   color: white;
   border-bottom: var(--cards-border);
-  text-align: center;
+}
+
+.Header .menuLink.activeMenuLink {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #ffffff;
+}
+
+.Header .menuLink:focus-visible,
+.Header .logoutButton:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: -3px;
 }
 
 .Header .logoutButton,
@@ -168,7 +180,7 @@
 }
 
 .Header .logoutButton:hover,
-.Header .rentsButton:hover,
+.Header .menuLink:hover,
 .Header .logoutButtonAdmin:hover {
   background-color: rgba(255, 255, 255, 0.08);
 }

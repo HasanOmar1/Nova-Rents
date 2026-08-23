@@ -25,3 +25,6 @@ export const getVehicleDocSummary = (documents = []) => {
       documents.every((slot) => slot.status === "verified"),
   };
 };
+
+export const getVehicleDocumentsId = (licensePlate) =>
+  `vehicle-documents-${encodeURIComponent(String(licensePlate))}`;

@@ -22,6 +22,8 @@ import Payment from "./pages/UserUI/Payment/Payment";
 import UserStats from "./pages/UserStats/UserStats";
 import ReportedUsers from "./pages/AdminUI/ReportedUsers/ReportedUsers";
 import ReportedUsersProvider from "./context/ReportedUsersContext";
+import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
+import Contact from "./pages/UserUI/Contact/Contact";
 
 function App() {
   const { currentUser, isLoading } = useUserContext();
@@ -38,6 +40,7 @@ function App() {
   }
   return (
     <>
+      <ScrollToTop />
       <Header />
       <Routes>
         {/* User */}
@@ -55,6 +58,7 @@ function App() {
             />
             <Route path="/profile" element={<Profile />} />
             <Route path="/complaints" element={<Complaints />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/rentalDashboard" element={<RentalDashboard />} />
             <Route path="/payments/:paymentToken" element={<Payment />} />
           </>

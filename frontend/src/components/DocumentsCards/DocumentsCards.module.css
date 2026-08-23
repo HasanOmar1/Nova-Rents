@@ -84,6 +84,7 @@
 }
 
 .DocumentsCards .vehicleAccordion {
+  scroll-margin-top: 24px;
   border: var(--cards-border);
   border-radius: 14px;
   background-color: rgba(42, 46, 53, 0.35);
@@ -109,6 +110,12 @@
 }
 
 .DocumentsCards .vehicleAccordionHeader:hover {
+  background-color: rgba(63, 68, 77, 0.25);
+}
+
+.DocumentsCards .vehicleAccordionHeader:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: -3px;
   background-color: rgba(63, 68, 77, 0.25);
 }
 

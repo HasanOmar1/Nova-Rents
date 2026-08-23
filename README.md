@@ -37,6 +37,7 @@ flowchart LR
 - **Notifications** — unread badge, read/unread filtering, mark-as-read behavior, pagination, and periodic refresh.
 - **Complaints and reports** — paid renters can report a vehicle or its owner, attach evidence, follow status updates, and read public admin responses.
 - **Report visibility** — users can review complaints they submitted, privacy-safe reports about their account, and reports filed against their vehicles across all statuses.
+- **Contact support** — signed-in users can send a validated message to the Nova Rents administrators and receive replies at their account email address.
 - **Responsive interface** — CSS Modules, reusable cards and dialogs, status badges, loading/error/empty states, keyboard focus styles, reduced-motion support, and responsive layouts.
 
 ### Admin console
@@ -64,6 +65,7 @@ flowchart LR
 - **Analytics** — user earnings and usage, admin booking totals and gross value, complaint trends, and system activity with automatic daily/weekly/monthly bucketing.
 - **File uploads** — Multer accepts image files only, with up to four files per relevant request and a 5 MB limit per file.
 - **Locality and map support** — Israeli localities are fetched from `data.gov.il` and cached in memory; directions use standard Google Maps URLs.
+- **Contact email delivery** — user messages are server-validated, rate-limited per session, sent through Gmail/Nodemailer, and configured so an administrator can reply directly to the user's account email.
 - **Central validation and error handling** — request validation, normalized status codes, stack-trace omission in production responses, and private pickup-field removal from public payloads.
 
 ## Technology stack
@@ -91,6 +93,7 @@ The development API runs at `http://localhost:3000`.
 | `/rentals`       | Availability, requests, decisions, cancellations, history, and dashboard metrics              | Authenticated       |
 | `/payments`      | Token-based simulated payment lookup and completion                                           | Authenticated       |
 | `/complaints`    | Complaint creation, personal histories, owner-visible reports, and admin moderation           | Authenticated/admin |
+| `/contact`       | Rate-limited support messages sent to the configured administrator email                      | User                |
 | `/notifications` | Notification feed, unread count, and mark-as-read                                             | Authenticated       |
 | `/activity`      | Personal activity history                                                                     | Authenticated       |
 | `/reports`       | User dashboard reporting and admin analytics                                                  | Authenticated/admin |
@@ -195,6 +198,7 @@ SESSION_SECRET=replace-with-a-long-random-secret
 # Optional locally, required to test email delivery
 EMAIL_USER=your-gmail-address@gmail.com
 EMAIL_PASS=your-gmail-app-password
+CONTACT_EMAIL=novarents9@gmail.com
 
 # Used by the current code when NODE_ENV=production
 DB_HOST=your-database-host
@@ -273,7 +277,7 @@ The backend also contains manual database, payment, pickup-snapshot, and email-f
 | NHTSA vPIC              | Admin make/model lookup                                 | Only for catalogue lookup      |
 | Google Maps             | Embeds, Places autocomplete, marker editing, directions | Optional API key               |
 | OpenStreetMap Nominatim | Address-search fallback when no Google key is present   | Fallback                       |
-| Gmail SMTP              | Rental, payment, and complaint email notifications      | Optional for local development |
+| Gmail SMTP              | Rental, payment, complaint, and contact emails           | Optional for local development |
 
 ## Important project notes
 
