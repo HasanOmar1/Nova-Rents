@@ -8,6 +8,8 @@ import {
   CalendarClock,
   Wrench,
   ShieldOff,
+  Search,
+  X,
 } from "lucide-react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import { useVehicleContext } from "../../../context/VehicleContext";
@@ -15,24 +17,43 @@ import VehiclesCardsTable from "../../../components/VehiclesCardsTable/VehiclesC
 import Pagination from "../../../components/Pagination/Pagination";
 import AddBrandVehicleMenu from "../../../components/AddBrandVehicleMenu/AddBrandVehicleMenu";
 import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
+
+const STATUS_LABELS = {
+  available: "Available",
+  not_validated: "Not validated",
+  unavailable: "Unavailable",
+  rented: "Rented",
+  maintenance: "Maintenance",
+  inactive: "Inactive",
+};
+
+const MAX_SEARCH_LENGTH = 100;
 
 const AllVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
   const { getAdminVehicles, allVehicles, allVehStats, allVehPagination } =
     useVehicleContext();
   const {
     currentPage,
     nextPage,
     previousPage,
+    resetPage,
     statusFilter,
     handleStatusChange,
   } = usePaginatedStatusFilter({
     totalPages: allVehPagination?.totalPages,
   });
+  const debouncedSearch = useDebouncedValue(searchInput, 300, resetPage);
+  const normalizedSearch = debouncedSearch.trim();
 
   useEffect(() => {
-    getAdminVehicles({ status: statusFilter }, currentPage);
-  }, [getAdminVehicles, statusFilter, currentPage]);
+    getAdminVehicles(
+      { status: statusFilter, search: normalizedSearch },
+      currentPage,
+    );
+  }, [getAdminVehicles, statusFilter, normalizedSearch, currentPage]);
 
   const totalVehicles = Number(allVehPagination?.totalVehicles) || 0;
   const pageLimit = Number(allVehPagination?.limit) || 6;
@@ -45,6 +66,22 @@ const AllVehicles = () => {
 
   const openAddBrandMenu = () => setIsOpen(true);
   const closeAddBrandMenu = () => setIsOpen(false);
+  const clearSearch = () => setSearchInput("");
+  const selectedStatusLabel = STATUS_LABELS[statusFilter];
+  const resultSummary = [
+    `${totalVehicles.toLocaleString()} ${totalVehicles === 1 ? "vehicle" : "vehicles"}`,
+    normalizedSearch ? `matching “${normalizedSearch}”` : "",
+    selectedStatusLabel ? `with status ${selectedStatusLabel}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const emptyMessage = normalizedSearch
+    ? `No vehicles match “${normalizedSearch}”${
+        selectedStatusLabel ? ` with status ${selectedStatusLabel}` : ""
+      }.`
+    : selectedStatusLabel
+      ? `No vehicles currently have status ${selectedStatusLabel}.`
+      : "No vehicles are currently listed in the system.";
 
   const topData = [
     {
@@ -111,6 +148,38 @@ const AllVehicles = () => {
         </div>
 
         <div className={styles.headerRight}>
+          <div className={styles.searchContainer}>
+            <Search
+              size={18}
+              className={styles.searchIcon}
+              aria-hidden="true"
+            />
+            <label className={styles.visuallyHidden} htmlFor="vehicle-search">
+              Search vehicles
+            </label>
+            <input
+              id="vehicle-search"
+              type="search"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Plate, owner, vehicle, or location"
+              maxLength={MAX_SEARCH_LENGTH}
+              autoComplete="off"
+              title="Search by license plate, owner name, email, phone, make, model, or location"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                className={styles.clearSearchBtn}
+                onClick={clearSearch}
+                aria-label="Clear vehicle search"
+                title="Clear search"
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+
           <div className={styles.filterContainer}>
             <label htmlFor="status">Filter:</label>
             <select
@@ -149,6 +218,10 @@ const AllVehicles = () => {
         ))}
       </div>
 
+      <p className={styles.resultsSummary} role="status" aria-live="polite">
+        {resultSummary}
+      </p>
+
       <div className={styles.myVehiclesContainer}>
         <div className={styles.titles}>
           <p className={styles.vehicleTitle}>Vehicle</p>
@@ -177,9 +250,7 @@ const AllVehicles = () => {
             />
           </>
         ) : (
-          <p className={styles.noVehicles}>
-            No vehicles found for this status.
-          </p>
+          <p className={styles.noVehicles}>{emptyMessage}</p>
         )}
       </div>
 

@@ -48,6 +48,7 @@ const ADMIN_VEHICLE_STATUS_FILTERS = new Set([
   "maintenance",
   "inactive",
 ]);
+const MAX_ADMIN_VEHICLE_SEARCH_LENGTH = 100;
 
 const UNKNOWN_VEHICLE_ELIGIBILITY = Object.freeze({
   eligible: false,
@@ -332,19 +333,20 @@ const getVehicleById = async (req, res, next) => {
     }
 
     const vehicle = result[0];
-    const [rentalEligibility, rentalMetricsRow] = await Promise.all([
-      getVehicleRentalEligibility(licensePlate, vehicle.ownerId),
-      getVehicleRentalMetricsByLicensePlate(licensePlate),
-    ]);
+    const [rentalEligibility, rentalMetricsRow, hasActiveRental] =
+      await Promise.all([
+        getVehicleRentalEligibility(licensePlate, vehicle.ownerId),
+        getVehicleRentalMetricsByLicensePlate(licensePlate),
+        hasActiveRentalNow(licensePlate),
+      ]);
     const effectiveStatus = deriveEffectiveVehicleStatus({
       status: vehicle.status,
       ownerStatus: vehicle.ownerStatus,
       rentalEligibility,
+      hasActiveRental,
     });
     const completedRentalCount =
       Number(rentalMetricsRow.completedRentalCount) || 0;
-    const concludedRentalCount =
-      Number(rentalMetricsRow.concludedRentalCount) || 0;
     const isVehicleOwner =
       req.session.user?.userId != null &&
       Number(req.session.user.userId) === Number(vehicle.ownerId);
@@ -355,12 +357,6 @@ const getVehicleById = async (req, res, next) => {
     if (isVehicleOwner) {
       rentalMetrics.completedRentalValue =
         Number(rentalMetricsRow.completedRentalValue) || 0;
-      rentalMetrics.concludedRentalCount = concludedRentalCount;
-      rentalMetrics.completionPercentage = concludedRentalCount
-        ? Number(
-            ((completedRentalCount / concludedRentalCount) * 100).toFixed(1),
-          )
-        : 0;
     }
 
     // Public detail endpoint: never return private exact pickup fields,
@@ -653,6 +649,7 @@ const listVehicles = async (
       seats,
       sort,
       status,
+      search,
       page = 1,
       limit = 5,
     } = req.query;
@@ -665,6 +662,9 @@ const listVehicles = async (
     );
     const offset = (parsedPage - 1) * parsedLimit;
     const normalizedStatus = String(status || "all").trim().toLowerCase();
+    const normalizedSearch = includeBlockedOwners
+      ? String(search || "").trim()
+      : "";
     const effectiveStatusSql = getEffectiveVehicleStatusSql({
       vehicleAlias: "v",
       ownerAlias: "u",
@@ -676,6 +676,12 @@ const listVehicles = async (
     ) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "Invalid vehicle status filter",
+      });
+    }
+
+    if (normalizedSearch.length > MAX_ADMIN_VEHICLE_SEARCH_LENGTH) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: `Vehicle search must be ${MAX_ADMIN_VEHICLE_SEARCH_LENGTH} characters or fewer`,
       });
     }
 
@@ -692,6 +698,32 @@ const listVehicles = async (
     } else if (normalizedStatus !== "all") {
       whereClause += ` AND (${effectiveStatusSql}) = ?`;
       values.push(normalizedStatus);
+    }
+
+    if (normalizedSearch) {
+      const compactSearch = normalizedSearch.replace(/[\s-]/g, "");
+      const plateSearch = compactSearch || normalizedSearch;
+
+      whereClause += ` AND (
+        LOCATE(?, CAST(v.licensePlate AS CHAR)) > 0
+        OR LOCATE(?, CONCAT_WS(' ', u.firstName, u.lastName)) > 0
+        OR LOCATE(?, COALESCE(u.email, '')) > 0
+        OR LOCATE(?, COALESCE(u.phone, '')) > 0
+        OR LOCATE(?, cb.brandName) > 0
+        OR LOCATE(?, cm.modelName) > 0
+        OR LOCATE(?, CONCAT_WS(' ', cb.brandName, cm.modelName)) > 0
+        OR LOCATE(?, COALESCE(v.address, '')) > 0
+      )`;
+      values.push(
+        plateSearch,
+        normalizedSearch,
+        normalizedSearch,
+        normalizedSearch,
+        normalizedSearch,
+        normalizedSearch,
+        normalizedSearch,
+        normalizedSearch,
+      );
     }
 
     if (brand) {
@@ -735,6 +767,7 @@ const listVehicles = async (
         cm.modelId, cm.modelName, cb.brandId, cb.brandName, ct.carTypeId, ct.carTypeName,
         u.firstName AS ownerFirstName, u.lastName AS ownerLastName,
         u.email AS ownerEmail, u.phone AS ownerPhone, u.status AS ownerStatus,
+        ${includeBlockedOwners ? `(${effectiveStatusSql}) AS effectiveStatus,` : ""}
         1 AS canRent
       FROM vehicles v
       JOIN carmodels cm ON v.modelId = cm.modelId
@@ -763,11 +796,7 @@ const listVehicles = async (
         const rentalEligibility =
           eligibilitySummaries.get(String(vehicle.licensePlate)) ||
           UNKNOWN_VEHICLE_ELIGIBILITY;
-        const effectiveStatus = deriveEffectiveVehicleStatus({
-          status: vehicle.status,
-          ownerStatus: vehicle.ownerStatus,
-          rentalEligibility,
-        });
+        const effectiveStatus = vehicle.effectiveStatus;
 
         return omitPrivatePickupFields({
           ...vehicle,

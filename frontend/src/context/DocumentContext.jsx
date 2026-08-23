@@ -238,15 +238,45 @@ const DocumentContextProvider = ({ children }) => {
   const runVehicleGovernmentCheck = async (licensePlate) => {
     try {
       const response = await axios.post(
-        `/documents/admin/vehicles/${licensePlate}/government-check`,
+        `/documents/admin/vehicles/${encodeURIComponent(licensePlate)}/government-check`,
         {},
       );
       setAdminErrorMsg("");
-      return { ok: true, governmentCheck: response.data.governmentCheck };
+      return {
+        ok: true,
+        message: response.data.message,
+        governmentCheck: response.data.governmentCheck,
+      };
     } catch (error) {
       const message = await messageFromAxiosError(
         error,
         "Failed to run government check",
+      );
+      setAdminErrorMsg(message);
+      return { ok: false, message };
+    }
+  };
+
+  const manuallyVerifyVehicleGovernmentCheck = async (
+    licensePlate,
+    reason,
+  ) => {
+    try {
+      const response = await axios.post(
+        `/documents/admin/vehicles/${encodeURIComponent(licensePlate)}/government-check/manual-override`,
+        { reason },
+      );
+      setAdminErrorMsg("");
+      await loadActivities();
+      return {
+        ok: true,
+        message: response.data.message,
+        governmentCheck: response.data.governmentCheck,
+      };
+    } catch (error) {
+      const message = await messageFromAxiosError(
+        error,
+        "Failed to manually verify this vehicle",
       );
       setAdminErrorMsg(message);
       return { ok: false, message };
@@ -276,6 +306,7 @@ const DocumentContextProvider = ({ children }) => {
         verifyAdminDocument,
         rejectAdminDocument,
         runVehicleGovernmentCheck,
+        manuallyVerifyVehicleGovernmentCheck,
       }}
     >
       {children}

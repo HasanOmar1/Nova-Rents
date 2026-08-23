@@ -21,6 +21,9 @@ const {
   absolutePrivatePath,
 } = require("../utils/documentFile");
 const {
+  validateDocumentMetadata,
+} = require("../utils/documentMetadata");
+const {
   getOwnedLicensePlates,
   getDocumentById,
   getUserScopedDocuments,
@@ -42,21 +45,6 @@ const {
 } = require("../database/queries/documentQueries");
 const doQuery = require("../database/query");
 const govApiService = require("../services/govApiService");
-
-function parseOptionalDate(value) {
-  if (value == null || value === "") return null;
-  const text = String(value).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return undefined;
-  return text;
-}
-
-function parseOptionalText(value, maxLength) {
-  if (value == null) return null;
-  const text = String(value).trim();
-  if (!text) return null;
-  if (text.length > maxLength) return undefined;
-  return text;
-}
 
 function toPublicDocument(row) {
   return {
@@ -131,22 +119,22 @@ async function uploadOrReplaceDocument_controller(req, res, next) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({ message: magic.message });
     }
 
-    const documentNumber = parseOptionalText(req.body.documentNumber, 64);
-    const insuranceCompany = parseOptionalText(req.body.insuranceCompany, 100);
-    const startDate = parseOptionalDate(req.body.startDate);
-    const expirationDate = parseOptionalDate(req.body.expirationDate);
-    if (
-      documentNumber === undefined ||
-      insuranceCompany === undefined ||
-      startDate === undefined ||
-      expirationDate === undefined
-    ) {
+    const metadataValidation = validateDocumentMetadata(documentType, req.body);
+    if (!metadataValidation.ok) {
       deletePrivateDocumentFile(storedFilename);
       storedFilename = null;
       return res.status(STATUS_CODE.BAD_REQUEST).json({
-        message: "Invalid document metadata.",
+        message: metadataValidation.message,
+        field: metadataValidation.field,
+        metadataErrors: metadataValidation.errors,
       });
     }
+    const {
+      documentNumber,
+      insuranceCompany,
+      startDate,
+      expirationDate,
+    } = metadataValidation.metadata;
 
     let licensePlate = null;
     if (isVehicleScopedDocumentType(documentType)) {
@@ -742,6 +730,15 @@ async function reviewDocument(req, res, decision) {
     if (existing.status !== "pending_review") {
       return { conflict: true, existing };
     }
+    if (decision === "verified") {
+      const metadataValidation = validateDocumentMetadata(
+        existing.documentType,
+        existing,
+      );
+      if (!metadataValidation.ok) {
+        return { invalidMetadata: metadataValidation };
+      }
+    }
     const updateResult = await applyAdminReviewOnConnection(connection, documentId, {
       status: decision,
       verificationMethod: decision === "verified" ? "admin" : null,
@@ -775,6 +772,13 @@ async function reviewDocument(req, res, decision) {
             email: latest.reviewerEmail,
           }
         : null,
+    });
+  }
+  if (result.invalidMetadata) {
+    return res.status(STATUS_CODE.BAD_REQUEST).json({
+      message: `This document cannot be verified. ${result.invalidMetadata.message}`,
+      field: result.invalidMetadata.field,
+      metadataErrors: result.invalidMetadata.errors,
     });
   }
 
@@ -953,6 +957,119 @@ async function runVehicleGovernmentCheck_controller(req, res, next) {
   }
 }
 
+const MANUAL_GOVERNMENT_SOURCE = "admin_manual_override";
+const MANUAL_OVERRIDE_REASON_MIN_LENGTH = 10;
+const MANUAL_OVERRIDE_REASON_MAX_LENGTH = 500;
+
+async function manuallyVerifyVehicleGovernmentCheck_controller(
+  req,
+  res,
+  next,
+) {
+  try {
+    if (!(await requireAdmin(req, res))) return;
+
+    const licensePlate = parseLicensePlateParam(req.params.licensePlate);
+    if (!licensePlate) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid license plate",
+      });
+    }
+
+    const reason =
+      typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+    if (
+      reason.length < MANUAL_OVERRIDE_REASON_MIN_LENGTH ||
+      reason.length > MANUAL_OVERRIDE_REASON_MAX_LENGTH
+    ) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: `Override reason must be between ${MANUAL_OVERRIDE_REASON_MIN_LENGTH} and ${MANUAL_OVERRIDE_REASON_MAX_LENGTH} characters.`,
+      });
+    }
+
+    const vehicle = await getVehicleForGovernmentCompare(licensePlate);
+    if (!vehicle) {
+      return res.status(STATUS_CODE.NOT_FOUND).json({
+        message: "Vehicle not found",
+      });
+    }
+
+    const previousCheck = await getVehicleGovernmentCheck(licensePlate);
+    if (previousCheck?.status === "verified") {
+      const alreadyManual =
+        previousCheck.governmentSource === MANUAL_GOVERNMENT_SOURCE;
+      return res.status(STATUS_CODE.CONFLICT).json({
+        message: alreadyManual
+          ? "This vehicle is already manually verified."
+          : "This vehicle is already verified by the official government lookup.",
+      });
+    }
+
+    const adminId = req.session.user.userId;
+    const overriddenAt = new Date().toISOString();
+    const previousCheckSummary = previousCheck
+      ? {
+          status: previousCheck.status || "not_checked",
+          checkedAt: previousCheck.checkedAt || null,
+          governmentSource: previousCheck.governmentSource || null,
+          errorMessage: previousCheck.errorMessage || null,
+        }
+      : null;
+
+    await upsertVehicleGovernmentCheck({
+      licensePlate,
+      status: "verified",
+      governmentSource: MANUAL_GOVERNMENT_SOURCE,
+      resourceId: null,
+      matchedFields: toJsonColumn([]),
+      mismatchedFields: toJsonColumn([]),
+      governmentDataSnapshot: toJsonColumn({
+        lookupStatus: "manual_override",
+        manualOverride: {
+          reason,
+          adminUserId: adminId,
+          overriddenAt,
+          previousCheck: previousCheckSummary,
+        },
+      }),
+      errorMessage: null,
+      requestedBy: adminId,
+    });
+
+    const historyReason = reason.replace(/\s+/g, " ");
+    await createSystemHistory(
+      adminId,
+      "admin",
+      "approve",
+      "vehicle_government_manual_override",
+      "vehicle",
+      String(licensePlate),
+      null,
+      licensePlate,
+      `Manual government verification for plate ${licensePlate}. Reason: ${historyReason}`.slice(
+        0,
+        255,
+      ),
+    );
+    await createActivity(
+      adminId,
+      "Manual Government Verification",
+      `Plate ${licensePlate}. Reason: ${historyReason}`.slice(0, 255),
+    );
+
+    const saved = await getVehicleGovernmentCheck(licensePlate);
+    return res.status(STATUS_CODE.OK).json({
+      message: "Vehicle government verification was manually approved.",
+      licensePlate: String(licensePlate),
+      governmentCheck: toGovernmentCheckPublic(saved, {
+        includeSnapshot: true,
+      }),
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   uploadOrReplaceDocument_controller,
   getMyDocuments_controller,
@@ -964,4 +1081,5 @@ module.exports = {
   rejectDocument_controller,
   getVehicleGovernmentCheck_controller,
   runVehicleGovernmentCheck_controller,
+  manuallyVerifyVehicleGovernmentCheck_controller,
 };

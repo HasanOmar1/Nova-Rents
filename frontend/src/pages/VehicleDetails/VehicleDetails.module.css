@@ -318,6 +318,10 @@
   font-weight: 700;
 }
 
+.VehicleDetails .validationReasonContent {
+  min-width: 0;
+}
+
 .VehicleDetails .cards {
   display: flex;
   gap: 30px;

@@ -41,6 +41,10 @@ const DocumentReviewModal = ({
   const accountName = `${document?.account?.firstName || ""} ${document?.account?.lastName || ""}`.trim();
   const mismatched = gov.mismatchedFields || [];
   const matched = gov.matchedFields || [];
+  const isManualGovernmentOverride =
+    gov.governmentSource === "admin_manual_override";
+  const manualOverrideReason =
+    gov.governmentDataSnapshot?.manualOverride?.reason;
 
   return (
     <dialog
@@ -140,7 +144,9 @@ const DocumentReviewModal = ({
             <div className={styles.govHeader}>
               <p className={styles.label}>Comparison result</p>
               <span className={styles.govBadge}>
-                {formatGovCheckStatus(gov.status, "admin")}
+                {isManualGovernmentOverride
+                  ? "Manually verified"
+                  : formatGovCheckStatus(gov.status, "admin")}
               </span>
             </div>
             <p className={styles.meta}>
@@ -148,6 +154,18 @@ const DocumentReviewModal = ({
               details. This does not verify the uploaded file, insurance, or
               identity.
             </p>
+            {isManualGovernmentOverride && (
+              <div className={styles.manualOverrideNotice}>
+                <strong>Admin manual override</strong>
+                <p>
+                  This vehicle was verified without a successful official
+                  comparison.
+                  {manualOverrideReason
+                    ? ` Reason: ${manualOverrideReason}`
+                    : ""}
+                </p>
+              </div>
+            )}
             {matched.length > 0 && (
               <p className={styles.meta}>
                 Matched stored fields: {matched.map((item) => item.field).join(", ")}
@@ -179,7 +197,9 @@ const DocumentReviewModal = ({
               loadingText="Checking..."
             >
               <RefreshCw size={16} />
-              Retry official government lookup
+              {isManualGovernmentOverride
+                ? "Replace override with official lookup"
+                : "Retry official government lookup"}
             </AsyncButton>
           </section>
         )}

@@ -39,6 +39,7 @@ const DocumentsAdmin = () => {
     handleStatusChange,
   } = usePaginatedStatusFilter({
     totalPages: adminPagination?.totalPages,
+    initialStatus: "pending_review",
   });
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const [detail, setDetail] = useState(null);
@@ -152,7 +153,8 @@ const DocumentsAdmin = () => {
       <h1>Document verification</h1>
       <p className={styles.intro}>
         Review identity and vehicle documents. Official government vehicle
-        lookup is separate and cannot be marked verified by hand.
+        lookup is separate; documented manual overrides are available to admins
+        from the vehicle details page when the official service cannot be used.
       </p>
 
       <DocumentReviewModal

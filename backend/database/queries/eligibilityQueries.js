@@ -150,9 +150,18 @@ function getEffectiveVehicleStatusSql({
   return `
     CASE
       WHEN ${ownerAlias}.status = 'blocked' THEN 'unavailable'
-      WHEN ${vehicleAlias}.status = 'available'
-        AND NOT (${verificationSql}) THEN 'not_validated'
-      ELSE ${vehicleAlias}.status
+      WHEN ${vehicleAlias}.status IN ('maintenance', 'inactive')
+        THEN ${vehicleAlias}.status
+      WHEN EXISTS (
+        SELECT 1
+        FROM rentals active_rental
+        WHERE active_rental.licensePlate = ${vehicleAlias}.licensePlate
+          AND active_rental.status = 'approved'
+          AND active_rental.startDate <= CURRENT_DATE()
+          AND active_rental.endDate >= CURRENT_DATE()
+      ) THEN 'rented'
+      WHEN NOT (${verificationSql}) THEN 'not_validated'
+      ELSE 'available'
     END
   `;
 }
@@ -161,16 +170,27 @@ function deriveEffectiveVehicleStatus({
   status,
   ownerStatus,
   rentalEligibility,
+  hasActiveRental = false,
 }) {
   if (String(ownerStatus || "").toLowerCase() === "blocked") {
     return "unavailable";
   }
 
-  if (status === "available" && !rentalEligibility?.eligible) {
+  const normalizedStatus = String(status || "").toLowerCase();
+
+  if (normalizedStatus === "maintenance" || normalizedStatus === "inactive") {
+    return normalizedStatus;
+  }
+
+  if (hasActiveRental) {
+    return "rented";
+  }
+
+  if (!rentalEligibility?.eligible) {
     return "not_validated";
   }
 
-  return status;
+  return "available";
 }
 
 async function getVehicleEligibilitySummariesForPlates(platesWithOwners) {

@@ -14,7 +14,6 @@ import {
   Hash,
   CalendarCheck2,
   CircleDollarSign,
-  Percent,
 } from "lucide-react";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
@@ -30,6 +29,7 @@ import {
   getPrimaryRenterEligibilityMessage,
   getVehicleDisplayStatus,
 } from "../../utils/displayFormat";
+import GovernmentVerificationControls from "../../components/GovernmentVerificationControls/GovernmentVerificationControls";
 
 const displayedSpecificationFields = [
   "seats",
@@ -82,11 +82,6 @@ const formatRevenue = (value) =>
     maximumFractionDigits: 2,
   }).format(toNonNegativeNumber(value));
 
-const formatPercentage = (value) =>
-  `${new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 1,
-  }).format(Math.min(toNonNegativeNumber(value), 100))}%`;
-
 const VehicleDetails = () => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { currentUser } = useUserContext();
@@ -132,20 +127,22 @@ const VehicleDetails = () => {
       maintenance: styles.maintenance,
       inactive: styles.inactive,
     }[vehicleDisplayStatus] || styles.maintenance;
-  const vehicleEligibilityReasons = Array.isArray(
+  const vehicleEligibilityReasonCodes = Array.isArray(
     vehicle?.rentalEligibility?.reasons,
   )
-    ? [
-        ...new Set(
-          vehicle.rentalEligibility.reasons
-            .map((reason) => formatEligibilityReason(reason))
-            .filter(Boolean),
-        ),
-      ]
+    ? [...new Set(vehicle.rentalEligibility.reasons.filter(Boolean))]
     : [];
-  const validationReasons = vehicleEligibilityReasons.length
-    ? vehicleEligibilityReasons
-    : ["Required documents or verification checks are incomplete."];
+  const validationReasons = vehicleEligibilityReasonCodes.length
+    ? vehicleEligibilityReasonCodes.map((code) => ({
+        code,
+        message: formatEligibilityReason(code),
+      }))
+    : [
+        {
+          code: "VEHICLE_ELIGIBILITY_UNKNOWN",
+          message: "Required documents or verification checks are incomplete.",
+        },
+      ];
   const showValidationDetails =
     canViewVehicleValidation && vehicleDisplayStatus === "not_validated";
   const canRentVehicle =
@@ -165,9 +162,6 @@ const VehicleDetails = () => {
   const plate = vehicle?.licensePlate || id;
   const rentalMetrics = vehicle?.rentalMetrics ?? null;
   const rentalCount = toNonNegativeNumber(rentalMetrics?.rentalCount);
-  const completionRate = toNonNegativeNumber(
-    rentalMetrics?.completionPercentage,
-  );
   const defaultVehicleListPath =
     currentUser?.role === "admin" ? "/allVehicles" : "/vehicles";
   const canUseReturnPath =
@@ -192,6 +186,21 @@ const VehicleDetails = () => {
       });
     }, 2500);
   }, [imageUrls.length]);
+
+  const refreshVehicleDetails = useCallback(async () => {
+    const refreshedVehicle = await getVehicleByLicensePlate(id, {
+      silent: true,
+    });
+    if (!refreshedVehicle) return false;
+
+    setVehicle((currentVehicle) =>
+      formatVehicleForDetails({
+        ...(currentVehicle || {}),
+        ...refreshedVehicle,
+      }),
+    );
+    return true;
+  }, [getVehicleByLicensePlate, id]);
 
   useEffect(() => {
     if (currentUser?.role === "user") {
@@ -469,8 +478,27 @@ const VehicleDetails = () => {
                   </div>
                   <ul className={styles.validationReasons}>
                     {validationReasons.map((reason) => (
-                      <li key={reason}>
-                        <strong>{reason}</strong>
+                      <li
+                        key={
+                          reason.code.startsWith("GOVERNMENT_CHECK_")
+                            ? "government-check"
+                            : reason.code
+                        }
+                      >
+                        <div className={styles.validationReasonContent}>
+                          <strong>{reason.message}</strong>
+                          {currentUser?.role === "admin" &&
+                            reason.code.startsWith("GOVERNMENT_CHECK_") && (
+                              <GovernmentVerificationControls
+                                licensePlate={plate}
+                                governmentStatus={
+                                  vehicle?.rentalEligibility?.statuses
+                                    ?.governmentCheck
+                                }
+                                onUpdated={refreshVehicleDetails}
+                              />
+                            )}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -544,49 +572,27 @@ const VehicleDetails = () => {
                 </article>
 
                 {isOwnVehicle && (
-                  <>
-                    <article
-                      className={styles.rentalMetricCard}
-                      title="Total value generated by this vehicle's completed rentals."
-                      aria-label={`Completed rental value: ${formatRevenue(
-                        rentalMetrics.completedRentalValue,
-                      )}`}
+                  <article
+                    className={styles.rentalMetricCard}
+                    title="Total value generated by this vehicle's completed rentals."
+                    aria-label={`Completed rental value: ${formatRevenue(
+                      rentalMetrics.completedRentalValue,
+                    )}`}
+                  >
+                    <span
+                      className={styles.rentalMetricIcon}
+                      aria-hidden="true"
                     >
-                      <span
-                        className={styles.rentalMetricIcon}
-                        aria-hidden="true"
-                      >
-                        <CircleDollarSign size={22} />
-                      </span>
-                      <div className={styles.rentalMetricContent}>
-                        <span>Completed rental value</span>
-                        <strong>
-                          {formatRevenue(rentalMetrics.completedRentalValue)}
-                        </strong>
-                        <small>Generated by completed rentals</small>
-                      </div>
-                    </article>
-
-                    <article
-                      className={styles.rentalMetricCard}
-                      title="Completed rentals divided by all concluded rental requests. Open requests are not included."
-                      aria-label={`Rental completion rate: ${formatPercentage(
-                        completionRate,
-                      )}`}
-                    >
-                      <span
-                        className={styles.rentalMetricIcon}
-                        aria-hidden="true"
-                      >
-                        <Percent size={22} />
-                      </span>
-                      <div className={styles.rentalMetricContent}>
-                        <span>Completion rate</span>
-                        <strong>{formatPercentage(completionRate)}</strong>
-                        <small>Completed out of concluded requests</small>
-                      </div>
-                    </article>
-                  </>
+                      <CircleDollarSign size={22} />
+                    </span>
+                    <div className={styles.rentalMetricContent}>
+                      <span>Completed rental value</span>
+                      <strong>
+                        {formatRevenue(rentalMetrics.completedRentalValue)}
+                      </strong>
+                      <small>Generated by completed rentals</small>
+                    </div>
+                  </article>
                 )}
               </div>
             </section>

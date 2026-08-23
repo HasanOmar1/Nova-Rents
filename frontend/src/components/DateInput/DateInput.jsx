@@ -13,6 +13,7 @@ const DateInput = ({
   value = "",
   onChange,
   disabled = false,
+  required = false,
   id,
   onValidityChange,
 }) => {
@@ -108,8 +109,10 @@ const DateInput = ({
           onBlur={handleBlur}
           onPaste={handlePaste}
           disabled={disabled}
+          required={required}
           className={styles.textInput}
           aria-invalid={Boolean(error)}
+          aria-required={required || undefined}
           aria-describedby={error ? `${name}-date-error` : undefined}
         />
         <button
