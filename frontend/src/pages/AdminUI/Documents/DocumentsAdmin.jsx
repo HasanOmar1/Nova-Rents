@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { BookCheck, Clock, FileWarning, ShieldAlert, ShieldOff } from "lucide-react";
+import {
+  BookCheck,
+  Clock,
+  FileWarning,
+  ShieldAlert,
+  ShieldOff,
+} from "lucide-react";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import DocumentsAdminCards from "../../../components/DocumentsAdminCards/DocumentsAdminCards";
 import DocumentReviewModal from "../../../components/DocumentReviewModal/DocumentReviewModal";
@@ -32,7 +38,6 @@ const DocumentsAdmin = () => {
     statusFilter,
     handleStatusChange,
   } = usePaginatedStatusFilter({
-    initialStatus: "pending_review",
     totalPages: adminPagination?.totalPages,
   });
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");

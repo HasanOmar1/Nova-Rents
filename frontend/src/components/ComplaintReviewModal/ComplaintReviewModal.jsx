@@ -4,7 +4,6 @@ import {
   AlertCircle,
   Car,
   Image as ImageIcon,
-  ImageOff,
   Mail,
   Send,
   User,
@@ -12,36 +11,7 @@ import {
 } from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
 import { useModalDialog } from "../../hooks/useModalDialog";
-
-const EvidenceImage = ({ src, alt, isThumbnail = false }) => {
-  const [hasError, setHasError] = useState(false);
-
-  if (hasError) {
-    return (
-      <span
-        className={
-          isThumbnail ? styles.thumbnailUnavailable : styles.evidenceUnavailable
-        }
-        role={isThumbnail ? undefined : "img"}
-        aria-label={isThumbnail ? undefined : alt}
-        aria-hidden={isThumbnail ? "true" : undefined}
-      >
-        <ImageOff size={isThumbnail ? 18 : 28} aria-hidden="true" />
-        {!isThumbnail && <span>Evidence image unavailable</span>}
-      </span>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      onError={() => setHasError(true)}
-    />
-  );
-};
+import EvidenceImage from "./EvidenceImage";
 
 const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const dialogRef = useModalDialog(isOpen && Boolean(complaint));
