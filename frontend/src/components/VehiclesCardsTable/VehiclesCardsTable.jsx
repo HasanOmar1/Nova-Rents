@@ -7,7 +7,11 @@ import AddEditVehicleMenu from "../AddEditVehicleMenu/AddEditVehicleMenu";
 import { Link } from "react-router-dom";
 import { parseImgs } from "../../utils/parseImgs";
 import { useUserContext } from "../../context/UserContext";
-import { buildVehicleEligibilitySummary } from "../../utils/displayFormat";
+import {
+  buildVehicleEligibilitySummary,
+  formatVehicleStatus,
+  getVehicleDisplayStatus,
+} from "../../utils/displayFormat";
 
 const VehiclesCardsTable = ({
   veh,
@@ -63,25 +67,34 @@ const VehiclesCardsTable = ({
     vehicleForDetails.ownerEmail || ownerFullName || "Unknown owner";
   const isOwnerBlocked =
     admin && String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
-  const displayedStatus = isOwnerBlocked ? "unavailable" : veh.status;
+  const displayedStatus = admin
+    ? getVehicleDisplayStatus(vehicleForDetails)
+    : veh.status || "unknown";
   const eligibilitySummary =
     !admin && veh.rentalEligibility
       ? buildVehicleEligibilitySummary(veh.rentalEligibility)
       : null;
+  const adminStatusDescription = isOwnerBlocked
+    ? ", unavailable because the owner account is blocked"
+    : `, status ${formatVehicleStatus(displayedStatus)}`;
 
   const vehicleDetailsPath = `/vehicles/${encodeURIComponent(veh.licensePlate)}`;
+  const documentsSearch = new URLSearchParams({
+    vehicle: String(veh.licensePlate),
+  }).toString();
   const vehicleDetailsState = {
     vehicle: vehicleForDetails,
     returnTo: admin ? "/allVehicles" : "/myVehicles",
   };
-  const statusClass = isOwnerBlocked
-    ? styles.unavailable
-    : {
-        available: styles.available,
-        rented: styles.rented,
-        maintenance: styles.maintenance,
-        inactive: styles.inactive,
-      }[veh.status] || styles.unknownStatus;
+  const statusClass =
+    {
+      available: styles.available,
+      unavailable: styles.unavailable,
+      not_validated: styles.notValidated,
+      rented: styles.rented,
+      maintenance: styles.maintenance,
+      inactive: styles.inactive,
+    }[displayedStatus] || styles.unknownStatus;
 
   const vehicleNameContent = (
     <>
@@ -154,7 +167,7 @@ const VehiclesCardsTable = ({
       <div className={styles.statusCell}>
         <span className={styles.cellLabel}>Status</span>
         <span className={`${styles.status} ${statusClass}`}>
-          {displayedStatus}
+          {formatVehicleStatus(displayedStatus)}
         </span>
       </div>
 
@@ -209,7 +222,11 @@ const VehiclesCardsTable = ({
                 </li>
               ))}
             </ul>
-            <Link to="/profile" className={styles.eligibilityAction}>
+            <Link
+              to={`/profile?${documentsSearch}#documents`}
+              className={styles.eligibilityAction}
+              aria-label={`Manage documents for ${fullName}, license plate ${veh.licensePlate}`}
+            >
               Manage Documents
             </Link>
           </div>
@@ -224,11 +241,7 @@ const VehiclesCardsTable = ({
         className={`${styles.VehiclesCardsTable} ${styles.adminRow}`}
         to={vehicleDetailsPath}
         state={vehicleDetailsState}
-        aria-label={`View details for ${fullName}, license plate ${veh.licensePlate}${
-          isOwnerBlocked
-            ? ", unavailable because the owner account is blocked"
-            : ""
-        }`}
+        aria-label={`View details for ${fullName}, license plate ${veh.licensePlate}${adminStatusDescription}`}
       >
         {rowContent}
       </Link>

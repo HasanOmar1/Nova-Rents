@@ -22,6 +22,7 @@ const reportRoute = require("./routes/reportRoute");
 const paymentsRoute = require("./routes/paymentsRoute");
 const reportedUsersRoute = require("./routes/reportedUsersRoute");
 const documentsRoute = require("./routes/documentsRoute");
+const contactRoute = require("./routes/contactRoute");
 
 const isProduction = process.env.NODE_ENV === "production";
 const app = express();
@@ -69,6 +70,7 @@ app.use("/reports", reportRoute);
 app.use("/payments", paymentsRoute);
 app.use("/reported-users", reportedUsersRoute);
 app.use("/documents", documentsRoute);
+app.use("/contact", contactRoute);
 app.use(errorHandler);
 
 startRentalReminderJob();

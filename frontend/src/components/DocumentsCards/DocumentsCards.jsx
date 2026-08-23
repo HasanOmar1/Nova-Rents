@@ -1,303 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Eye, Upload } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useDocumentContext } from "../../context/DocumentContext";
-import DocumentUploadModal from "../DocumentUploadModal/DocumentUploadModal";
-import {
-  formatDocumentStatus,
-  formatDocumentType,
-  formatGovCheckStatus,
-  formatRejectionCode,
-  maskSensitiveNumber,
-  getPrimaryRenterEligibilityMessage,
-  getDocumentDisplayConfig,
-  getDocumentActionLabel,
-  getDocumentGuidance,
-  GOVERNMENT_VEHICLE_TITLE,
-  GOVERNMENT_VEHICLE_EXPLANATION,
-  getGovernmentCheckGuidance,
-} from "../../utils/displayFormat";
-import styles from "./DocumentsCards.module.css";
 import { useRentContext } from "../../context/RentContext";
+import { getPrimaryRenterEligibilityMessage } from "../../utils/displayFormat";
+import DocumentUploadModal from "../DocumentUploadModal/DocumentUploadModal";
+import DocumentSlot from "./DocumentSlot";
+import VehicleDocumentsAccordion from "./VehicleDocumentsAccordion";
+import { GOV_ISSUE_STATUSES } from "./DocumentsCards.constants";
+import {
+  getVehicleDocSummary,
+  getVehicleDocumentsId,
+} from "./DocumentsCards.utils";
+import styles from "./DocumentsCards.module.css";
 
-const STATUS_CLASS = {
-  not_uploaded: styles.notUploaded,
-  pending_review: styles.pending,
-  verified: styles.verified,
-  rejected: styles.rejected,
-  expired: styles.expired,
-};
-
-const GOV_CLASS = {
-  not_checked: styles.notUploaded,
-  pending: styles.pending,
-  verified: styles.verified,
-  mismatch: styles.mismatch,
-  not_found: styles.mismatch,
-  unavailable: styles.unavailable,
-  error: styles.unavailable,
-};
-
-const GOV_ISSUE_STATUSES = new Set([
-  "mismatch",
-  "not_found",
-  "unavailable",
-  "error",
-]);
-
-const isPastDate = (value) => {
-  if (!value) return false;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  date.setHours(0, 0, 0, 0);
-  return date < today;
-};
-
-const getVehicleDocSummary = (documents = []) => {
-  const verifiedCount = documents.filter(
-    (slot) => slot.status === "verified",
-  ).length;
-  return {
-    verifiedCount,
-    total: documents.length || 2,
-    hasPending: documents.some((slot) => slot.status === "pending_review"),
-    needsDocuments: documents.some(
-      (slot) => !slot.status || slot.status === "not_uploaded",
-    ),
-    fullyVerified:
-      documents.length >= 2 &&
-      documents.every((slot) => slot.status === "verified"),
-  };
-};
-
-const DocumentSlot = ({ slot, onUpload, onView, viewingId }) => {
-  const status = slot.status || "not_uploaded";
-  const canView = Boolean(slot.documentId);
-  const maskedNumber = maskSensitiveNumber(slot.documentNumber);
-  const expirationPassed = isPastDate(slot.expirationDate);
-  const fieldLabels = getDocumentDisplayConfig(slot.documentType);
-  const actionLabel = getDocumentActionLabel(slot.documentType, status);
-  const guidance = getDocumentGuidance(slot.documentType, status);
-
-  return (
-    <div className={styles.dataContainer}>
-      <div className={styles.data}>
-        <div className={styles.slotInfo}>
-          <div className={styles.slotTitleRow}>
-            <p>{formatDocumentType(slot.documentType)}</p>
-            <span
-              className={`${styles.statusBadge} ${STATUS_CLASS[status] || ""}`}
-            >
-              {formatDocumentStatus(status)}
-            </span>
-          </div>
-          {maskedNumber && (
-            <small className={styles.meta}>
-              {fieldLabels.documentNumberLabel} {maskedNumber}
-            </small>
-          )}
-          {slot.expirationDate && (
-            <small className={styles.meta}>
-              {fieldLabels.expirationDateLabel}{" "}
-              {String(slot.expirationDate).slice(0, 10)}
-              {expirationPassed ? " · date has passed" : ""}
-            </small>
-          )}
-          {status === "rejected" && (
-            <small className={styles.rejection}>
-              {formatRejectionCode(slot.rejectionCode)}
-              {slot.rejectionReasonText ? ` — ${slot.rejectionReasonText}` : ""}
-            </small>
-          )}
-          {guidance && <small className={styles.guidance}>{guidance}</small>}
-        </div>
-        <div className={styles.slotActions}>
-          {canView && (
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={() => onView(slot.documentId)}
-              disabled={viewingId === slot.documentId}
-              aria-label={`View ${formatDocumentType(slot.documentType)}`}
-            >
-              <Eye size={20} />
-            </button>
-          )}
-          <button
-            type="button"
-            className={styles.iconBtn}
-            onClick={() => onUpload(slot)}
-            aria-label={actionLabel}
-          >
-            <Upload size={20} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const CompactVehicleDocumentRow = ({ slot, onUpload, onView, viewingId }) => {
-  const status = slot.status || "not_uploaded";
-  const canView = Boolean(slot.documentId);
-  const maskedNumber = maskSensitiveNumber(slot.documentNumber);
-  const expirationPassed = isPastDate(slot.expirationDate);
-  const fieldLabels = getDocumentDisplayConfig(slot.documentType);
-  const actionLabel = getDocumentActionLabel(slot.documentType, status);
-  const guidance = getDocumentGuidance(slot.documentType, status);
-
-  return (
-    <div className={styles.compactDocRow}>
-      <div className={styles.compactDocMain}>
-        <div className={styles.compactDocTitleRow}>
-          <p className={styles.compactDocTitle}>
-            {formatDocumentType(slot.documentType)}
-          </p>
-          <span
-            className={`${styles.statusBadge} ${STATUS_CLASS[status] || ""}`}
-          >
-            {formatDocumentStatus(status)}
-          </span>
-        </div>
-        {(maskedNumber ||
-          slot.expirationDate ||
-          status === "rejected" ||
-          guidance) && (
-          <div className={styles.compactDocMeta}>
-            {maskedNumber && (
-              <small>
-                {fieldLabels.documentNumberLabel} {maskedNumber}
-              </small>
-            )}
-            {slot.expirationDate && (
-              <small>
-                {fieldLabels.expirationDateLabel}{" "}
-                {String(slot.expirationDate).slice(0, 10)}
-                {expirationPassed ? " · passed" : ""}
-              </small>
-            )}
-            {status === "rejected" && (
-              <small className={styles.rejection}>
-                {formatRejectionCode(slot.rejectionCode)}
-                {slot.rejectionReasonText
-                  ? ` — ${slot.rejectionReasonText}`
-                  : ""}
-              </small>
-            )}
-            {guidance && <small className={styles.guidance}>{guidance}</small>}
-          </div>
-        )}
-      </div>
-      <div className={styles.compactDocActions}>
-        {canView && (
-          <button
-            type="button"
-            className={styles.compactIconBtn}
-            onClick={() => onView(slot.documentId)}
-            disabled={viewingId === slot.documentId}
-            aria-label={`View ${formatDocumentType(slot.documentType)}`}
-          >
-            <Eye size={16} />
-          </button>
-        )}
-        <button
-          type="button"
-          className={styles.compactUploadBtn}
-          onClick={() => onUpload(slot)}
-        >
-          <Upload size={14} />
-          {actionLabel}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const VehicleDocumentsAccordion = ({
-  vehicle,
-  isExpanded,
-  onToggle,
-  onUpload,
-  onView,
-  viewingId,
-}) => {
-  const govStatus = vehicle.governmentCheck?.status || "not_checked";
-  const documents = vehicle.documents || [];
-  const summary = getVehicleDocSummary(documents);
-  const panelId = `vehicle-docs-${vehicle.licensePlate}`;
-  const govGuidance = getGovernmentCheckGuidance(govStatus);
-
-  return (
-    <div
-      className={`${styles.vehicleAccordion} ${isExpanded ? styles.vehicleAccordionExpanded : ""}`}
-    >
-      <button
-        type="button"
-        className={styles.vehicleAccordionHeader}
-        onClick={onToggle}
-        aria-expanded={isExpanded}
-        aria-controls={panelId}
-      >
-        <span className={styles.vehicleChevron} aria-hidden="true">
-          {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-        </span>
-        <span className={styles.vehicleHeaderMain}>
-          <span className={styles.vehiclePlate}>
-            Plate {vehicle.licensePlate}
-          </span>
-          {!isExpanded && (
-            <span className={styles.vehicleDocCount}>
-              Verified documents: {summary.verifiedCount}/{summary.total}
-            </span>
-          )}
-        </span>
-        <span
-          className={`${styles.statusBadge} ${styles.vehicleGovBadge} ${GOV_CLASS[govStatus] || ""}`}
-        >
-          {formatGovCheckStatus(govStatus)}
-        </span>
-      </button>
-
-      {isExpanded && (
-        <div id={panelId} className={styles.vehicleAccordionBody}>
-          <div className={styles.vehicleExpandedMeta}>
-            <div className={styles.govCopy}>
-              <span className={styles.vehiclePlateInline}>
-                {GOVERNMENT_VEHICLE_TITLE}
-              </span>
-              <small className={styles.govExplanation}>
-                {GOVERNMENT_VEHICLE_EXPLANATION}
-              </small>
-              {govGuidance && (
-                <small className={styles.guidance}>{govGuidance}</small>
-              )}
-            </div>
-            <span
-              className={`${styles.statusBadge} ${GOV_CLASS[govStatus] || ""}`}
-            >
-              {formatGovCheckStatus(govStatus)}
-            </span>
-          </div>
-          {documents.map((slot) => (
-            <CompactVehicleDocumentRow
-              key={`${vehicle.licensePlate}-${slot.documentType}`}
-              slot={{
-                ...slot,
-                licensePlate: slot.licensePlate ?? vehicle.licensePlate,
-              }}
-              onUpload={onUpload}
-              onView={onView}
-              viewingId={viewingId}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+const EMPTY_LIST = [];
+const normalizePlate = (value) =>
+  String(value ?? "").trim().toUpperCase();
 
 const DocumentsCards = () => {
+  const [searchParams] = useSearchParams();
+  const requestedVehiclePlate = searchParams.get("vehicle")?.trim() || null;
   const {
     overview,
     isLoading,
@@ -311,7 +33,8 @@ const DocumentsCards = () => {
   const { rentalEligibility, fetchRentalEligibility } = useRentContext();
   const [uploadSlot, setUploadSlot] = useState(null);
   const [viewingId, setViewingId] = useState(null);
-  const [expandedPlate, setExpandedPlate] = useState(null);
+  const [expandedPlate, setExpandedPlate] = useState(requestedVehiclePlate);
+  const handledVehicleLink = useRef(null);
 
   useEffect(() => {
     getMyDocuments();
@@ -329,8 +52,16 @@ const DocumentsCards = () => {
     [uploadDocument, fetchRentalEligibility],
   );
 
-  const identity = overview?.identity || [];
-  const vehicles = overview?.vehicles || [];
+  const identity = overview?.identity || EMPTY_LIST;
+  const vehicles = overview?.vehicles || EMPTY_LIST;
+  const requestedVehicle = useMemo(() => {
+    if (!requestedVehiclePlate) return null;
+
+    const normalizedPlate = normalizePlate(requestedVehiclePlate);
+    return vehicles.find(
+      (vehicle) => normalizePlate(vehicle.licensePlate) === normalizedPlate,
+    );
+  }, [requestedVehiclePlate, vehicles]);
   const renterEligibilityMessage = getPrimaryRenterEligibilityMessage(
     rentalEligibility?.reasons,
   );
@@ -363,6 +94,36 @@ const DocumentsCards = () => {
     return parts.join(" · ");
   }, [vehicles]);
 
+  useEffect(() => {
+    const plate = requestedVehicle?.licensePlate;
+    if (
+      isLoading ||
+      !plate ||
+      normalizePlate(expandedPlate) !== normalizePlate(plate) ||
+      handledVehicleLink.current === requestedVehiclePlate
+    ) {
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const accordion = document.getElementById(getVehicleDocumentsId(plate));
+      if (!accordion) return;
+
+      accordion.scrollIntoView({ behavior: "smooth", block: "start" });
+      accordion
+        .querySelector("button")
+        ?.focus({ preventScroll: true });
+      handledVehicleLink.current = requestedVehiclePlate;
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    expandedPlate,
+    isLoading,
+    requestedVehicle,
+    requestedVehiclePlate,
+  ]);
+
   const openUpload = (slot) => {
     setErrorMsg("");
     setUploadSlot(slot);
@@ -379,8 +140,9 @@ const DocumentsCards = () => {
   };
 
   const toggleVehicle = (licensePlate) => {
+    const nextPlate = String(licensePlate);
     setExpandedPlate((current) =>
-      current === licensePlate ? null : licensePlate,
+      normalizePlate(current) === normalizePlate(nextPlate) ? null : nextPlate,
     );
   };
 
@@ -438,7 +200,10 @@ const DocumentsCards = () => {
                   <VehicleDocumentsAccordion
                     key={vehicle.licensePlate}
                     vehicle={vehicle}
-                    isExpanded={expandedPlate === vehicle.licensePlate}
+                    isExpanded={
+                      normalizePlate(expandedPlate) ===
+                      normalizePlate(vehicle.licensePlate)
+                    }
                     onToggle={() => toggleVehicle(vehicle.licensePlate)}
                     onUpload={openUpload}
                     onView={handleView}

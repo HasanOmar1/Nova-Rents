@@ -137,7 +137,6 @@ module.exports = {
   ensurePrivateDocumentsDir,
   isUserScopedDocumentType,
   isVehicleScopedDocumentType,
-  extensionOf,
   isAllowedDeclaredType,
   validateStoredDocumentFile,
   absolutePrivatePath,

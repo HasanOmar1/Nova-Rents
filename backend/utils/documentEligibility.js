@@ -1,5 +1,3 @@
-const USER_IDENTITY_TYPES = ["identity_card", "passport"];
-
 function startOfToday() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -291,16 +289,7 @@ function evaluateVehicleRentalEligibility({
 }
 
 module.exports = {
-  USER_IDENTITY_TYPES,
-  slotStatus,
-  isExpirationDatePast,
-  evaluateIdentityRequirement,
-  evaluateDriverLicenseRequirement,
-  evaluateVehicleDocumentRequirement,
-  evaluateGovernmentRequirement,
-  documentsByType,
   evaluateUserRentalEligibility,
   evaluateVehicleRentalEligibility,
   evaluateInsuranceCoversRentalPeriod,
-  normalizeDateOnly,
 };

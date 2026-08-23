@@ -12,6 +12,8 @@ import {
   Palette,
   Settings,
   Hash,
+  CalendarCheck2,
+  CircleDollarSign,
 } from "lucide-react";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
@@ -22,8 +24,12 @@ import { useRentContext } from "../../context/RentContext";
 import BookingModal from "../../components/BookingModal/BookingModal";
 import { useVehicleContext } from "../../context/VehicleContext";
 import {
+  formatEligibilityReason,
+  formatVehicleStatus,
   getPrimaryRenterEligibilityMessage,
+  getVehicleDisplayStatus,
 } from "../../utils/displayFormat";
+import GovernmentVerificationControls from "../../components/GovernmentVerificationControls/GovernmentVerificationControls";
 
 const displayedSpecificationFields = [
   "seats",
@@ -32,6 +38,11 @@ const displayedSpecificationFields = [
   "km",
   "color",
 ];
+
+const USER_VEHICLE_RETURN_PATHS = new Set([
+  "/myVehicles",
+  "/myVehicles/analytics",
+]);
 
 const hasAllDisplayedSpecifications = (vehicle) =>
   Boolean(vehicle) &&
@@ -54,6 +65,22 @@ const formatVehicleForDetails = (vehicle) => {
     vehName: derivedName || vehicle.vehName || "Vehicle",
   };
 };
+
+const toNonNegativeNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : 0;
+};
+
+const formatRentalCount = (value) =>
+  Math.floor(toNonNegativeNumber(value)).toLocaleString();
+
+const formatRevenue = (value) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(toNonNegativeNumber(value));
 
 const VehicleDetails = () => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -83,17 +110,45 @@ const VehicleDetails = () => {
   } = useRentContext();
   const intervalRef = useRef(null);
   const imageUrls = vehicle?.image ? parseImgs(vehicle.image, true) : [];
-  const hasOwnerIds =
-    currentUser?.userId != null && vehicle?.ownerId != null;
+  const hasOwnerIds = currentUser?.userId != null && vehicle?.ownerId != null;
   const isOwnVehicle = hasOwnerIds
     ? Number(currentUser.userId) === Number(vehicle.ownerId)
     : Boolean(currentUser?.email && vehicle?.ownerEmail) &&
       currentUser.email.toLowerCase() === vehicle.ownerEmail.toLowerCase();
+  const canViewVehicleValidation =
+    currentUser?.role === "admin" || isOwnVehicle;
+  const vehicleDisplayStatus = getVehicleDisplayStatus(vehicle);
+  const vehicleStatusClass =
+    {
+      available: styles.available,
+      unavailable: styles.unavailable,
+      not_validated: styles.notValidated,
+      rented: styles.rented,
+      maintenance: styles.maintenance,
+      inactive: styles.inactive,
+    }[vehicleDisplayStatus] || styles.maintenance;
+  const vehicleEligibilityReasonCodes = Array.isArray(
+    vehicle?.rentalEligibility?.reasons,
+  )
+    ? [...new Set(vehicle.rentalEligibility.reasons.filter(Boolean))]
+    : [];
+  const validationReasons = vehicleEligibilityReasonCodes.length
+    ? vehicleEligibilityReasonCodes.map((code) => ({
+        code,
+        message: formatEligibilityReason(code),
+      }))
+    : [
+        {
+          code: "VEHICLE_ELIGIBILITY_UNKNOWN",
+          message: "Required documents or verification checks are incomplete.",
+        },
+      ];
+  const showValidationDetails =
+    canViewVehicleValidation && vehicleDisplayStatus === "not_validated";
   const canRentVehicle =
     currentUser?.role === "user" &&
     !isOwnVehicle &&
-    vehicle?.status === "available" &&
-    vehicle?.ownerStatus !== "blocked" &&
+    vehicleDisplayStatus === "available" &&
     rentalEligibility?.eligible !== false &&
     vehicle?.rentalEligible !== false;
   const renterEligibilityMessage =
@@ -103,18 +158,23 @@ const VehicleDetails = () => {
   const vehicleUnavailableForRentals =
     currentUser?.role === "user" &&
     !isOwnVehicle &&
-    vehicle?.status === "available" &&
-    vehicle?.ownerStatus !== "blocked" &&
-    vehicle?.rentalEligible === false;
+    vehicleDisplayStatus === "not_validated";
   const plate = vehicle?.licensePlate || id;
+  const rentalMetrics = vehicle?.rentalMetrics ?? null;
+  const rentalCount = toNonNegativeNumber(rentalMetrics?.rentalCount);
   const defaultVehicleListPath =
     currentUser?.role === "admin" ? "/allVehicles" : "/vehicles";
   const canUseReturnPath =
     routeReturnTo === defaultVehicleListPath ||
-    (currentUser?.role === "user" && routeReturnTo === "/myVehicles");
+    (currentUser?.role === "user" &&
+      USER_VEHICLE_RETURN_PATHS.has(routeReturnTo));
   const vehicleListPath = canUseReturnPath
     ? routeReturnTo
     : defaultVehicleListPath;
+  const vehicleListLabel =
+    vehicleListPath === "/myVehicles/analytics"
+      ? "Back to performance"
+      : "Back to vehicles";
   const paidTripForVehicle = currentUser ? findPaidTripForVehicle(plate) : null;
   const canReportVehicle = Boolean(paidTripForVehicle);
 
@@ -126,6 +186,21 @@ const VehicleDetails = () => {
       });
     }, 2500);
   }, [imageUrls.length]);
+
+  const refreshVehicleDetails = useCallback(async () => {
+    const refreshedVehicle = await getVehicleByLicensePlate(id, {
+      silent: true,
+    });
+    if (!refreshedVehicle) return false;
+
+    setVehicle((currentVehicle) =>
+      formatVehicleForDetails({
+        ...(currentVehicle || {}),
+        ...refreshedVehicle,
+      }),
+    );
+    return true;
+  }, [getVehicleByLicensePlate, id]);
 
   useEffect(() => {
     if (currentUser?.role === "user") {
@@ -242,7 +317,7 @@ const VehicleDetails = () => {
       <div className={`${styles.VehicleDetails} page`}>
         <p>{vehicleLoadError || "Vehicle not found."}</p>
         <Link to={vehicleListPath} className={styles.backBtn}>
-          Back to vehicles
+          {vehicleListLabel}
         </Link>
       </div>
     );
@@ -307,7 +382,7 @@ const VehicleDetails = () => {
         <h1>{vehicle.vehName}</h1>
         <div className={styles.btnsContainer}>
           <Link to={vehicleListPath} className={styles.backBtn}>
-            Back to vehicles
+            {vehicleListLabel}
           </Link>
           {!isOwnVehicle && (
             <div className={styles.reportAction}>
@@ -366,12 +441,8 @@ const VehicleDetails = () => {
               <div className={styles.typeStatusContainer}>
                 <div className={styles.typeAndStatusContainer}>
                   <p className={styles.vehType}>{vehicle.carTypeName}</p>
-                  <p
-                    className={`${styles.status} ${vehicle.status === "available" ? styles.available : vehicle.status === "rented" ? styles.rented : styles.maintenance} ${vehicle.ownerStatus === "blocked" && styles.maintenance}`}
-                  >
-                    {vehicle.ownerStatus !== "blocked"
-                      ? vehicle.status
-                      : "Unavailable"}
+                  <p className={`${styles.status} ${vehicleStatusClass}`}>
+                    {formatVehicleStatus(vehicleDisplayStatus)}
                   </p>
                 </div>
 
@@ -385,6 +456,54 @@ const VehicleDetails = () => {
                   </button>
                 )}
               </div>
+
+              {showValidationDetails && (
+                <section
+                  className={styles.validationPanel}
+                  aria-labelledby="vehicle-validation-title"
+                >
+                  <div className={styles.validationPanelHeader}>
+                    <span className={styles.validationIcon} aria-hidden="true">
+                      <AlertTriangle size={20} />
+                    </span>
+                    <div>
+                      <h3 id="vehicle-validation-title">
+                        Why this vehicle is not validated
+                      </h3>
+                      <p>
+                        Every item below must be resolved before this vehicle
+                        can be shown to renters.
+                      </p>
+                    </div>
+                  </div>
+                  <ul className={styles.validationReasons}>
+                    {validationReasons.map((reason) => (
+                      <li
+                        key={
+                          reason.code.startsWith("GOVERNMENT_CHECK_")
+                            ? "government-check"
+                            : reason.code
+                        }
+                      >
+                        <div className={styles.validationReasonContent}>
+                          <strong>{reason.message}</strong>
+                          {currentUser?.role === "admin" &&
+                            reason.code.startsWith("GOVERNMENT_CHECK_") && (
+                              <GovernmentVerificationControls
+                                licensePlate={plate}
+                                governmentStatus={
+                                  vehicle?.rentalEligibility?.statuses
+                                    ?.governmentCheck
+                                }
+                                onUpdated={refreshVehicleDetails}
+                              />
+                            )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               {(renterEligibilityMessage || vehicleUnavailableForRentals) && (
                 <div className={styles.eligibilityNotice}>
@@ -415,6 +534,69 @@ const VehicleDetails = () => {
               </div>
             </div>
           </div>
+
+          {rentalMetrics && (
+            <section
+              className={`${styles.rentalActivityContainer} ${styles.container}`}
+              aria-labelledby="rental-activity-title"
+            >
+              <div className={styles.rentalActivityHeader}>
+                <div>
+                  <h4 id="rental-activity-title">Rental activity</h4>
+                  <p>
+                    {isOwnVehicle
+                      ? "A lifetime snapshot of this vehicle's rental performance."
+                      : "This vehicle's lifetime rental history."}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className={`${styles.rentalStatsGrid} ${
+                  isOwnVehicle ? "" : styles.rentalStatsGridPublic
+                }`}
+              >
+                <article
+                  className={styles.rentalMetricCard}
+                  title="Total number of completed rentals for this vehicle."
+                  aria-label={`Times rented: ${formatRentalCount(rentalCount)}`}
+                >
+                  <span className={styles.rentalMetricIcon} aria-hidden="true">
+                    <CalendarCheck2 size={22} />
+                  </span>
+                  <div className={styles.rentalMetricContent}>
+                    <span>Times rented</span>
+                    <strong>{formatRentalCount(rentalCount)}</strong>
+                    <small>Completed rentals</small>
+                  </div>
+                </article>
+
+                {isOwnVehicle && (
+                  <article
+                    className={styles.rentalMetricCard}
+                    title="Total value generated by this vehicle's completed rentals."
+                    aria-label={`Completed rental value: ${formatRevenue(
+                      rentalMetrics.completedRentalValue,
+                    )}`}
+                  >
+                    <span
+                      className={styles.rentalMetricIcon}
+                      aria-hidden="true"
+                    >
+                      <CircleDollarSign size={22} />
+                    </span>
+                    <div className={styles.rentalMetricContent}>
+                      <span>Completed rental value</span>
+                      <strong>
+                        {formatRevenue(rentalMetrics.completedRentalValue)}
+                      </strong>
+                      <small>Generated by completed rentals</small>
+                    </div>
+                  </article>
+                )}
+              </div>
+            </section>
+          )}
 
           <div className={`${styles.specsContainer} ${styles.container}`}>
             <h4>Specifications</h4>

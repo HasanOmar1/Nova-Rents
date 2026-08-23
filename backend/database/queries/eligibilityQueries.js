@@ -128,6 +128,7 @@ function getPublicVerificationEligibilitySql({ vehicleAlias = "v" } = {}) {
       WHERE d.licensePlate = ${v}.licensePlate
         AND d.documentType = 'vehicle_registration'
         AND d.status = 'verified'
+        AND (d.expirationDate IS NULL OR d.expirationDate >= CURDATE())
     )
     AND EXISTS (
       SELECT 1
@@ -136,6 +137,60 @@ function getPublicVerificationEligibilitySql({ vehicleAlias = "v" } = {}) {
         AND vgc.status = 'verified'
     )
   `;
+}
+
+function getEffectiveVehicleStatusSql({
+  vehicleAlias = "v",
+  ownerAlias = "u",
+} = {}) {
+  const verificationSql = getPublicVerificationEligibilitySql({
+    vehicleAlias,
+  });
+
+  return `
+    CASE
+      WHEN ${ownerAlias}.status = 'blocked' THEN 'unavailable'
+      WHEN ${vehicleAlias}.status IN ('maintenance', 'inactive')
+        THEN ${vehicleAlias}.status
+      WHEN EXISTS (
+        SELECT 1
+        FROM rentals active_rental
+        WHERE active_rental.licensePlate = ${vehicleAlias}.licensePlate
+          AND active_rental.status = 'approved'
+          AND active_rental.startDate <= CURRENT_DATE()
+          AND active_rental.endDate >= CURRENT_DATE()
+      ) THEN 'rented'
+      WHEN NOT (${verificationSql}) THEN 'not_validated'
+      ELSE 'available'
+    END
+  `;
+}
+
+function deriveEffectiveVehicleStatus({
+  status,
+  ownerStatus,
+  rentalEligibility,
+  hasActiveRental = false,
+}) {
+  if (String(ownerStatus || "").toLowerCase() === "blocked") {
+    return "unavailable";
+  }
+
+  const normalizedStatus = String(status || "").toLowerCase();
+
+  if (normalizedStatus === "maintenance" || normalizedStatus === "inactive") {
+    return normalizedStatus;
+  }
+
+  if (hasActiveRental) {
+    return "rented";
+  }
+
+  if (!rentalEligibility?.eligible) {
+    return "not_validated";
+  }
+
+  return "available";
 }
 
 async function getVehicleEligibilitySummariesForPlates(platesWithOwners) {
@@ -211,12 +266,11 @@ async function getVehicleEligibilitySummariesForPlates(platesWithOwners) {
 }
 
 module.exports = {
-  getUserScopedDocumentsForEligibility,
-  getVehicleScopedDocumentsForEligibility,
-  getGovernmentCheckStatus,
   getUserRentalEligibility,
   getVehicleRentalEligibility,
   getVehicleRentalEligibilityForNewRental,
   getPublicVerificationEligibilitySql,
+  getEffectiveVehicleStatusSql,
+  deriveEffectiveVehicleStatus,
   getVehicleEligibilitySummariesForPlates,
 };

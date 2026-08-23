@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import axios from "axios";
 import { useActivityContext } from "./ActivityContext";
 
@@ -11,8 +11,6 @@ const ComplaintContextProvider = ({ children }) => {
   const [pagination, setPagination] = useState({});
   const [complaintStats, setComplaintStats] = useState({});
   const [complaintTrendsData, setComplaintTrendsData] = useState([]);
-  const [complaintTrendsGranularity, setComplaintTrendsGranularity] =
-    useState("month");
   const [isComplaintTrendsLoading, setIsComplaintTrendsLoading] =
     useState(false);
   const [complaintTrendsErrorMsg, setComplaintTrendsErrorMsg] = useState("");
@@ -26,9 +24,6 @@ const ComplaintContextProvider = ({ children }) => {
 
   // Active vehicle reports against the logged-in owner's listings (My Vehicles).
   const [ownerVehicleReports, setOwnerVehicleReports] = useState([]);
-  const [isOwnerVehicleReportsLoading, setIsOwnerVehicleReportsLoading] =
-    useState(false);
-  const [ownerVehicleReportsError, setOwnerVehicleReportsError] = useState("");
 
   // Owner-type complaints where the session user is the reported target.
   const [reportsAboutMe, setReportsAboutMe] = useState([]);
@@ -131,7 +126,6 @@ const ComplaintContextProvider = ({ children }) => {
         `/complaints/trends?startDate=${startDate}&endDate=${endDate}&status=${status}`,
       );
       setComplaintTrendsData(response.data.chartData);
-      setComplaintTrendsGranularity(response.data.granularity);
       setComplaintTrendsErrorMsg("");
     } catch (error) {
       setComplaintTrendsErrorMsg(
@@ -144,19 +138,12 @@ const ComplaintContextProvider = ({ children }) => {
 
   const getOwnerVehicleReports = async () => {
     try {
-      setIsOwnerVehicleReportsLoading(true);
       const response = await axios.get("/complaints/owner-vehicle-reports");
       setOwnerVehicleReports(response.data.reports || []);
-      setOwnerVehicleReportsError("");
       return response.data.reports || [];
-    } catch (error) {
+    } catch {
       setOwnerVehicleReports([]);
-      setOwnerVehicleReportsError(
-        error?.response?.data?.message || "Failed to load vehicle reports",
-      );
       return [];
-    } finally {
-      setIsOwnerVehicleReportsLoading(false);
     }
   };
 
@@ -238,13 +225,10 @@ const ComplaintContextProvider = ({ children }) => {
         pagination,
         complaintStats,
         complaintTrendsData,
-        complaintTrendsGranularity,
         isComplaintTrendsLoading,
         complaintTrendsErrorMsg,
         getComplaintTrends,
         ownerVehicleReports,
-        isOwnerVehicleReportsLoading,
-        ownerVehicleReportsError,
         getOwnerVehicleReports,
         getOwnerVehicleReportHistory,
         reportsAboutMe,

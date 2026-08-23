@@ -7,9 +7,7 @@ const HomeMidCardsData = ({ title, data, date }) => {
         <p className={styles.dataTitle}>
           {title} • <span className={styles.date}>{date}</span>
         </p>
-        <p className={styles.description}>
-          {data} <span className={styles.dateText}></span>
-        </p>
+        <p className={styles.description}>{data}</p>
       </div>
     </div>
   );

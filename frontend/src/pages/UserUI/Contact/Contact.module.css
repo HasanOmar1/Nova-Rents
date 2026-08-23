@@ -1,0 +1,373 @@
+.Contact {
+  padding-bottom: 64px;
+}
+
+.Contact .pageHeader {
+  max-width: 760px;
+  margin-bottom: 30px;
+}
+
+.Contact .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #8dbaff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.Contact .pageHeader h1 {
+  margin-bottom: 10px;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.1;
+}
+
+.Contact .pageHeader p {
+  color: #a7aab4;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.Contact .layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.75fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.Contact .formCard,
+.Contact .infoCard,
+.Contact .privacyCard {
+  border: var(--cards-border);
+  background-color: var(--bg-gray);
+  border-radius: 20px;
+}
+
+.Contact .formCard {
+  padding: 28px;
+}
+
+.Contact .cardHeading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.Contact .iconBox,
+.Contact .infoIcon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  color: #a7d2eb;
+  background: linear-gradient(
+    145deg,
+    rgba(59, 130, 246, 0.2),
+    rgba(16, 185, 129, 0.12)
+  );
+  border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.Contact .cardHeading h2,
+.Contact .infoCard h2,
+.Contact .privacyCard h2 {
+  font-size: 1.05rem;
+}
+
+.Contact .cardHeading p,
+.Contact .infoCard p,
+.Contact .privacyCard p {
+  color: #9296a1;
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.Contact .cardHeading p {
+  margin-top: 4px;
+}
+
+.Contact .senderCard {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  border-radius: 14px;
+  background-color: rgba(15, 21, 35, 0.72);
+  color: #8dbaff;
+}
+
+.Contact .senderCard div {
+  display: grid;
+  min-width: 0;
+}
+
+.Contact .senderCard span {
+  color: #7f8490;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.Contact .senderCard strong {
+  margin-top: 2px;
+  color: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.Contact .senderCard small {
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+  color: #a7aab4;
+  font-size: 0.78rem;
+}
+
+.Contact form,
+.Contact .fieldGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.Contact form {
+  gap: 20px;
+}
+
+.Contact .fieldGroup {
+  gap: 8px;
+}
+
+.Contact .fieldHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.Contact .fieldHeading label {
+  color: #e5e7eb;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.Contact .characterCounter {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border: 1px solid rgba(84, 148, 255, 0.2);
+  border-radius: 999px;
+  background-color: rgba(59, 130, 246, 0.08);
+  color: #8f94a0;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.Contact input,
+.Contact textarea {
+  width: 100%;
+  border: var(--cards-border);
+  border-radius: 14px;
+  background-color: var(--input-bg);
+  padding: 14px 15px;
+  color: #ffffff;
+  font: inherit;
+  line-height: 1.5;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.Contact textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+.Contact input::placeholder,
+.Contact textarea::placeholder {
+  color: #686e7a;
+}
+
+.Contact input:focus-visible,
+.Contact textarea:focus-visible {
+  outline: none;
+  border-color: var(--input-focus-border-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.Contact input:disabled,
+.Contact textarea:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.Contact .fieldHelp {
+  color: #7f8490;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.Contact .formFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding-top: 2px;
+}
+
+.Contact .statusArea {
+  flex: 1;
+  min-width: 0;
+}
+
+.Contact .errorMsg,
+.Contact .successMsg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.Contact .errorMsg svg,
+.Contact .successMsg svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.Contact .errorMsg {
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background-color: rgba(153, 27, 27, 0.2);
+  color: #fecaca;
+}
+
+.Contact .successMsg {
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background-color: rgba(4, 120, 87, 0.18);
+  color: #d1fae5;
+}
+
+.Contact .submitButton {
+  flex: 0 0 auto;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 13px;
+  background: linear-gradient(135deg, #2563eb, #047857);
+  padding: 12px 18px;
+  color: #ffffff;
+  box-shadow: 0 10px 22px -12px rgba(37, 99, 235, 0.8);
+}
+
+.Contact .submitButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 13px 25px -12px rgba(37, 99, 235, 0.95);
+}
+
+.Contact .submitButton:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.Contact .sideColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.Contact .infoCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px;
+}
+
+.Contact .infoCard h2 {
+  margin: 18px 0 8px;
+}
+
+.Contact .emailLink {
+  justify-content: flex-start;
+  max-width: 100%;
+  margin-top: 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  border-radius: 11px;
+  background-color: rgba(59, 130, 246, 0.08);
+  color: #93c5fd;
+  overflow-wrap: anywhere;
+}
+
+.Contact .emailLink:hover {
+  border-color: rgba(96, 165, 250, 0.5);
+  background-color: rgba(59, 130, 246, 0.14);
+}
+
+.Contact .emailLink:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.Contact .privacyCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 20px;
+}
+
+.Contact .privacyCard > svg {
+  flex: 0 0 auto;
+  color: #6ee7b7;
+}
+
+.Contact .privacyCard h2 {
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .Contact .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .Contact .sideColumn {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .Contact {
+    padding-bottom: 36px;
+  }
+
+  .Contact .formCard {
+    padding: 20px;
+  }
+
+  .Contact .sideColumn {
+    grid-template-columns: 1fr;
+  }
+
+  .Contact .formFooter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .Contact .submitButton {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .Contact .submitButton {
+    transition: none;
+  }
+}

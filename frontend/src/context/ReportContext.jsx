@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
@@ -12,15 +12,12 @@ const ReportContext = createContext();
 const ReportContextProvider = ({ children }) => {
   const [systemActivityData, setSystemActivityData] = useState([]);
   const [systemActivitySeries, setSystemActivitySeries] = useState([]);
-  const [systemActivityGranularity, setSystemActivityGranularity] =
-    useState("month");
   const [isSystemActivityLoading, setIsSystemActivityLoading] = useState(false);
   const [statisticsData, setStatisticsData] = useState({
     bookingValue: 0,
     bookings: 0,
     bookingsChartData: [],
   });
-  const [statisticsGranularity, setStatisticsGranularity] = useState("month");
   const [isStatisticsLoading, setIsStatisticsLoading] = useState(false);
   const [statisticsErrorMsg, setStatisticsErrorMsg] = useState("");
   const [userDashboardData, setUserDashboardData] = useState({
@@ -29,8 +26,6 @@ const ReportContextProvider = ({ children }) => {
     usageSeries: [],
     usageChartData: [],
   });
-  const [userDashboardGranularity, setUserDashboardGranularity] =
-    useState("month");
   const [isUserDashboardLoading, setIsUserDashboardLoading] = useState(false);
   const [userDashboardErrorMsg, setUserDashboardErrorMsg] = useState("");
   const [vehicleComparisonData, setVehicleComparisonData] = useState({
@@ -59,7 +54,6 @@ const ReportContextProvider = ({ children }) => {
         bookings: Number(response.data.bookings) || 0,
         bookingsChartData: response.data.bookingsChartData || [],
       });
-      setStatisticsGranularity(response.data.granularity);
       setStatisticsErrorMsg("");
     } catch (error) {
       setStatisticsErrorMsg(
@@ -73,7 +67,7 @@ const ReportContextProvider = ({ children }) => {
   // One request feeds both user dashboard charts (Earnings Overview and
   // Platform Usage) so they always describe the same range and granularity.
   // The backend scopes everything to the session user.
-  const getUserDashboardReport = async (startDate, endDate) => {
+  const getUserDashboardReport = useCallback(async (startDate, endDate) => {
     try {
       setIsUserDashboardLoading(true);
       const response = await axios.get(
@@ -85,7 +79,6 @@ const ReportContextProvider = ({ children }) => {
         usageSeries: response.data.usageSeries || [],
         usageChartData: response.data.usageChartData || [],
       });
-      setUserDashboardGranularity(response.data.granularity);
       setUserDashboardErrorMsg("");
     } catch (error) {
       setUserDashboardErrorMsg(
@@ -94,9 +87,9 @@ const ReportContextProvider = ({ children }) => {
     } finally {
       setIsUserDashboardLoading(false);
     }
-  };
+  }, []);
 
-  // Completed-rental value for every vehicle owned by the session user.
+  // Completed-rental value and count for every vehicle owned by the session user.
   // This is intentionally separate from the paginated My Vehicles request so
   // the comparison always includes the owner's complete vehicle inventory.
   const getVehicleComparison = useCallback(async (options = {}) => {
@@ -158,7 +151,6 @@ const ReportContextProvider = ({ children }) => {
       );
       setSystemActivityData(response.data.chartData);
       setSystemActivitySeries(response.data.series);
-      setSystemActivityGranularity(response.data.granularity);
       setErrorMsg("");
     } catch (error) {
       setErrorMsg(error?.response?.data?.message);
@@ -172,15 +164,12 @@ const ReportContextProvider = ({ children }) => {
       value={{
         systemActivityData,
         systemActivitySeries,
-        systemActivityGranularity,
         isSystemActivityLoading,
         statisticsData,
-        statisticsGranularity,
         isStatisticsLoading,
         statisticsErrorMsg,
         getStatistics,
         userDashboardData,
-        userDashboardGranularity,
         isUserDashboardLoading,
         userDashboardErrorMsg,
         getUserDashboardReport,

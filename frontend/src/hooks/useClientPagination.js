@@ -23,7 +23,6 @@ export const useClientPagination = ({
   return {
     ...pagination,
     paginatedItems: safeItems.slice(startIndex, startIndex + safePageSize),
-    totalItems: safeItems.length,
     totalPages,
     pageSize: safePageSize,
   };

@@ -18,7 +18,7 @@ export default function GoogleMapEmbed({
     <iframe
       title={title}
       src={src}
-      className="googleMapFrame"
+      className={["googleMapFrame", className].filter(Boolean).join(" ")}
       loading="lazy"
       allowFullScreen
       referrerPolicy="no-referrer-when-downgrade"

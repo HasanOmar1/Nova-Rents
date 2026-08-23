@@ -3,7 +3,6 @@ const {
 } = require("../database/queries/activityQueries");
 const STATUS_CODE = require("../constants/statusCodes");
 const { validateAuthenticatedUser } = require("../utils/validsController");
-const doQuery = require("../database/query");
 
 async function getActivitiesByUserId_controller(req, res, next) {
   try {
