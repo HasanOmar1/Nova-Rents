@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, CalendarDays, Flag } from "lucide-react";
+import { ArrowLeft, CalendarCheck2, CalendarDays, Flag } from "lucide-react";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import OwnerVehicleReportsModal from "../../../components/OwnerVehicleReportsModal/OwnerVehicleReportsModal";
 import { useComplaintContext } from "../../../context/ComplaintContext";
@@ -12,6 +12,7 @@ import {
 } from "../../../utils/periodFormat";
 import { formatCurrency } from "../../../utils/displayFormat";
 import { useDateRange } from "../../../hooks/useDateRange";
+import VehicleRentalCountChart from "./VehicleRentalCountChart";
 import styles from "./VehicleAnalytics.module.css";
 
 const getVehicleChartColor = (index) => {
@@ -28,6 +29,13 @@ const formatComparisonDate = (value) => {
     day: "numeric",
     year: "numeric",
   });
+};
+
+const getVehicleDisplayName = (name, licensePlate) => {
+  const plateSuffix = ` (${licensePlate})`;
+  return name.endsWith(plateSuffix)
+    ? name.slice(0, -plateSuffix.length)
+    : name;
 };
 
 const VehicleAnalytics = () => {
@@ -74,6 +82,7 @@ const VehicleAnalytics = () => {
         licensePlate: String(serie.licensePlate),
         name: serie.name || String(serie.licensePlate),
         reportCount: Number(serie.reportCount) || 0,
+        rentalCount: Number(serie.rentalCount) || 0,
         color: getVehicleChartColor(index),
       })),
     [vehicleComparisonData.series],
@@ -113,6 +122,26 @@ const VehicleAnalytics = () => {
     [comparisonChartData, comparisonSeries],
   );
 
+  const vehicleRentalCountData = useMemo(
+    () =>
+      comparisonSeries
+        .filter((vehicle) => vehicle.rentalCount > 0)
+        .sort(
+          (firstVehicle, secondVehicle) =>
+            secondVehicle.rentalCount - firstVehicle.rentalCount ||
+            firstVehicle.name.localeCompare(secondVehicle.name) ||
+            firstVehicle.licensePlate.localeCompare(secondVehicle.licensePlate),
+        )
+        .map(({ dataKey, name, licensePlate, rentalCount, color }) => ({
+          dataKey,
+          name: getVehicleDisplayName(name, licensePlate),
+          licensePlate,
+          rentalCount,
+          color,
+        })),
+    [comparisonSeries],
+  );
+
   const fleetTotalValue = vehicleValueRanking.reduce(
     (total, vehicle) => total + vehicle.totalValue,
     0,
@@ -134,6 +163,14 @@ const VehicleAnalytics = () => {
     : comparisonSeries.length
       ? "No completed rental value was found for your vehicles in this period."
       : "Add a vehicle to start comparing completed rental value.";
+
+  const rentalCountEmptyMessage = vehicleComparisonErrorMsg
+    ? "The completed rental breakdown is unavailable right now."
+    : comparisonSeries.length
+      ? appliedFilter.range === "all"
+        ? "No completed rentals have been recorded for your vehicles yet."
+        : `No rentals ending between ${appliedRangeLabel} were completed.`
+      : "Add a vehicle to start comparing completed rentals.";
 
   const applyAllTime = () => {
     setRangeMode("all");
@@ -210,6 +247,10 @@ const VehicleAnalytics = () => {
     appliedFilter.range === "all"
       ? "Gross value across all recorded completed rentals, ranked highest to lowest."
       : `Gross value of completed rentals ending between ${appliedRangeLabel}, ranked highest to lowest.`;
+  const rentalCountScopeDescription =
+    appliedFilter.range === "all"
+      ? "Rental counts cover all recorded completed rentals."
+      : `Rental counts include rentals ending between ${appliedRangeLabel}.`;
 
   return (
     <main className={`${styles.VehicleAnalytics} page`}>
@@ -224,8 +265,8 @@ const VehicleAnalytics = () => {
         <p className={styles.eyebrow}>Owner analytics</p>
         <h1>Vehicle Performance</h1>
         <p>
-          Compare gross completed rental value across your full vehicle
-          inventory and see which vehicles perform best.
+          Compare completed rental value and rental frequency across your full
+          vehicle inventory and see which vehicles perform best.
         </p>
       </header>
 
@@ -331,8 +372,8 @@ const VehicleAnalytics = () => {
               Total Value by Vehicle
             </h2>
             <p>
-              {valueSummaryDescription} Vehicle report counts are all time and
-              do not change with this period.
+              {valueSummaryDescription} {rentalCountScopeDescription} Vehicle
+              report counts are all time and do not change with this period.
             </p>
           </div>
 
@@ -361,15 +402,18 @@ const VehicleAnalytics = () => {
         ) : (
           <ol className={styles.vehicleValueList}>
             {vehicleValueRanking.map((vehicle, index) => {
-              const plateSuffix = ` (${vehicle.licensePlate})`;
-              const vehicleName = vehicle.name.endsWith(plateSuffix)
-                ? vehicle.name.slice(0, -plateSuffix.length)
-                : vehicle.name;
+              const vehicleName = getVehicleDisplayName(
+                vehicle.name,
+                vehicle.licensePlate,
+              );
               const relativeValue = highestVehicleValue
                 ? (vehicle.totalValue / highestVehicleValue) * 100
                 : 0;
               const reportCountLabel = `${vehicle.reportCount} ${
                 vehicle.reportCount === 1 ? "report" : "reports"
+              }`;
+              const rentalCountLabel = `${vehicle.rentalCount} ${
+                vehicle.rentalCount === 1 ? "rental" : "rentals"
               }`;
 
               return (
@@ -386,6 +430,17 @@ const VehicleAnalytics = () => {
                       <div className={styles.vehicleValueMeta}>
                         <div className={styles.vehicleValueNameRow}>
                           <strong>{vehicleName}</strong>
+                          <span
+                            className={styles.rentalCountBadge}
+                            title={
+                              appliedFilter.range === "all"
+                                ? `${rentalCountLabel} across all time`
+                                : `${rentalCountLabel} ending between ${appliedRangeLabel}`
+                            }
+                          >
+                            <CalendarCheck2 size={12} aria-hidden="true" />
+                            {rentalCountLabel}
+                          </span>
                           {vehicle.reportCount > 0 ? (
                             <button
                               type="button"
@@ -466,6 +521,12 @@ const VehicleAnalytics = () => {
           emptyMessage={comparisonEmptyMessage}
           fullWidth
           chartHeight={360}
+        />
+        <VehicleRentalCountChart
+          data={vehicleRentalCountData}
+          isLoading={isVehicleComparisonLoading}
+          emptyMessage={rentalCountEmptyMessage}
+          rangeLabel={appliedRangeLabel}
         />
       </div>
 

@@ -96,7 +96,7 @@ const ReportContextProvider = ({ children }) => {
     }
   };
 
-  // Completed-rental value for every vehicle owned by the session user.
+  // Completed-rental value and count for every vehicle owned by the session user.
   // This is intentionally separate from the paginated My Vehicles request so
   // the comparison always includes the owner's complete vehicle inventory.
   const getVehicleComparison = useCallback(async (options = {}) => {

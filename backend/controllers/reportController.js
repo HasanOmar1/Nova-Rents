@@ -270,8 +270,8 @@ async function getUserDashboardReport_controller(req, res, next) {
   }
 }
 
-// Compares completed-rental value across every vehicle owned by the
-// authenticated user. Value uses rental endDate, matching the personal
+// Compares completed-rental value and count across every vehicle owned by the
+// authenticated user. Both metrics use rental endDate, matching the personal
 // dashboard's definition of when a rental is earned.
 async function getVehicleComparison_controller(req, res, next) {
   try {
@@ -394,8 +394,11 @@ async function getVehicleComparison_controller(req, res, next) {
           licensePlate,
           name: `${row.brandName} ${row.modelName} (${licensePlate})`,
           reportCount: reportCountByPlate.get(licensePlate) || 0,
+          rentalCount: 0,
         });
       }
+
+      seriesMap.get(dataKey).rentalCount += Number(row.rentalCount) || 0;
 
       if (row.periodKey) {
         if (!earningsByPeriod.has(row.periodKey)) {

@@ -401,6 +401,22 @@
   color: var(--gray);
 }
 
+.VehicleAnalytics .vehicleValueIdentity .rentalCountBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 999px;
+  background-color: rgba(59, 130, 246, 0.11);
+  color: #93c5fd;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .VehicleAnalytics .vehicleValueDot {
   flex-shrink: 0;
   width: 9px;
@@ -458,7 +474,22 @@
 }
 
 .VehicleAnalytics .chartSection {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+  align-items: stretch;
+  gap: 20px;
   min-width: 0;
+}
+
+.VehicleAnalytics .chartSection > * {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1280px) {
+  .VehicleAnalytics .chartSection {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 768px) {

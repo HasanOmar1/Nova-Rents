@@ -263,11 +263,12 @@ async function getOwnerVehicleEarningsComparisonBounds(ownerId) {
   return doQuery(query, [ownerId]);
 }
 
-// Completed-rental value for every vehicle an owner currently has. Expired
-// approved rows are treated as lifecycle-complete too, so the report remains
-// accurate even before the rental status synchronizer next runs. Date filters
-// stay in the LEFT JOIN so zero-value vehicles are still returned. Omitting
-// both dates is reserved for the server-resolved all-time/no-history case.
+// Completed-rental value and count for every vehicle an owner currently has.
+// Expired approved rows are treated as lifecycle-complete too, so the report
+// remains accurate even before the rental status synchronizer next runs. Date
+// filters stay in the LEFT JOIN so zero-activity vehicles are still returned.
+// Omitting both dates is reserved for the server-resolved all-time/no-history
+// case.
 async function getOwnerVehicleEarningsComparisonByRange(
   ownerId,
   startDate,
@@ -287,7 +288,8 @@ async function getOwnerVehicleEarningsComparisonByRange(
       cb.brandName,
       cm.modelName,
       DATE_FORMAT(r.endDate, ?) AS periodKey,
-      COALESCE(SUM(r.totalPrice), 0) AS earnings
+      COALESCE(SUM(r.totalPrice), 0) AS earnings,
+      COUNT(r.rentalId) AS rentalCount
     FROM vehicles v
     JOIN carmodels cm ON v.modelId = cm.modelId
     JOIN carbrands cb ON cm.brandId = cb.brandId
