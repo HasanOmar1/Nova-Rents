@@ -1,7 +1,6 @@
 import {
   Car,
   MapPin,
-  X,
   Home,
   User,
   AlertTriangle,

@@ -67,16 +67,6 @@ async function updateRentalStatus(rentalId, status) {
   return result;
 }
 
-async function getRenterEmailByRentalId(rentalId) {
-  const getEmailByRentalId = `select u.email from rentals r join users u on r.renterId = u.userId where rentalId = ?`;
-  const valuesOfgetEmailByRentalId = [rentalId];
-  const renterEmail = await doQuery(
-    getEmailByRentalId,
-    valuesOfgetEmailByRentalId,
-  );
-  return renterEmail[0];
-}
-
 async function getRentalsStartingTomorrow() {
   const query = `
     SELECT 
@@ -123,6 +113,40 @@ async function getBookedDatesByPlate(licensePlate) {
   const bookedDates = await doQuery(query, [licensePlate]);
 
   return bookedDates;
+}
+
+// Keep vehicle-detail performance aligned with the Vehicle Performance report:
+// an approved rental whose end date has passed is lifecycle-complete even if
+// the status synchronizer has not run yet. Pending and future/current approved
+// rows remain open and are excluded from completed totals.
+async function getVehicleRentalMetricsByLicensePlate(licensePlate) {
+  const query = `
+    SELECT
+      SUM(
+        CASE
+          WHEN status = 'completed'
+            OR (status = 'approved' AND endDate < CURRENT_DATE())
+          THEN 1
+          ELSE 0
+        END
+      ) AS completedRentalCount,
+      COALESCE(
+        SUM(
+          CASE
+            WHEN status = 'completed'
+              OR (status = 'approved' AND endDate < CURRENT_DATE())
+            THEN totalPrice
+            ELSE 0
+          END
+        ),
+        0
+      ) AS completedRentalValue
+    FROM rentals
+    WHERE licensePlate = ?
+  `;
+
+  const rows = await doQuery(query, [licensePlate]);
+  return rows[0] || {};
 }
 
 async function getRentalsToComplete() {
@@ -172,9 +196,9 @@ async function getMonthlyEarningsByOwnerId(ownerId) {
     FROM rentals r
     JOIN vehicles v ON r.licensePlate = v.licensePlate
     WHERE v.ownerId = ?
-    AND r.status = 'approved'
-    AND MONTH(r.startDate) = MONTH(CURRENT_DATE())
-    AND YEAR(r.startDate) = YEAR(CURRENT_DATE())
+    AND r.status = 'completed'
+    AND MONTH(r.endDate) = MONTH(CURRENT_DATE())
+    AND YEAR(r.endDate) = YEAR(CURRENT_DATE())
   `;
   return doQuery(query, [ownerId]);
 }
@@ -263,11 +287,12 @@ async function getOwnerVehicleEarningsComparisonBounds(ownerId) {
   return doQuery(query, [ownerId]);
 }
 
-// Completed-rental value for every vehicle an owner currently has. Expired
-// approved rows are treated as lifecycle-complete too, so the report remains
-// accurate even before the rental status synchronizer next runs. Date filters
-// stay in the LEFT JOIN so zero-value vehicles are still returned. Omitting
-// both dates is reserved for the server-resolved all-time/no-history case.
+// Completed-rental value and count for every vehicle an owner currently has.
+// Expired approved rows are treated as lifecycle-complete too, so the report
+// remains accurate even before the rental status synchronizer next runs. Date
+// filters stay in the LEFT JOIN so zero-activity vehicles are still returned.
+// Omitting both dates is reserved for the server-resolved all-time/no-history
+// case.
 async function getOwnerVehicleEarningsComparisonByRange(
   ownerId,
   startDate,
@@ -287,7 +312,8 @@ async function getOwnerVehicleEarningsComparisonByRange(
       cb.brandName,
       cm.modelName,
       DATE_FORMAT(r.endDate, ?) AS periodKey,
-      COALESCE(SUM(r.totalPrice), 0) AS earnings
+      COALESCE(SUM(r.totalPrice), 0) AS earnings,
+      COUNT(r.rentalId) AS rentalCount
     FROM vehicles v
     JOIN carmodels cm ON v.modelId = cm.modelId
     JOIN carbrands cb ON cm.brandId = cb.brandId
@@ -327,44 +353,28 @@ async function getPendingRequestsCountByOwnerId(ownerId) {
   return doQuery(query, [ownerId]);
 }
 
-async function getUpcomingTripsCountByUserId(userId) {
-  const query = `
-    SELECT COUNT(*) AS count
-    FROM rentals r
-    JOIN vehicles v ON r.licensePlate = v.licensePlate
-    WHERE (v.ownerId = ? OR r.renterId = ?)
-    AND r.status = 'approved'
-    AND r.startDate >= CURRENT_DATE()
-  `;
-  return doQuery(query, [userId, userId]);
-}
-
-async function getPastTripsCountByRenterId(renterId) {
-  const query = `
-    SELECT COUNT(*) AS count
-    FROM rentals
-    WHERE renterId = ?
-    AND status IN ('completed', 'approved')
-    AND endDate < CURRENT_DATE()
-  `;
-  return doQuery(query, [renterId]);
-}
-
-async function getDashboardChartDataByUserId(userId) {
+async function getRenterDashboardActionCounts(renterId) {
   const query = `
     SELECT
-      MONTH(r.startDate) AS monthIndex,
-      YEAR(r.startDate) AS year,
-      SUM(CASE WHEN v.ownerId = ? THEN r.totalPrice ELSE 0 END) AS totalEarnings,
-      COUNT(*) AS totalTrips
+      COUNT(DISTINCT CASE
+        WHEN r.status = 'approved'
+          AND p.status = 'pending'
+          AND p.paymentToken IS NOT NULL
+          AND p.paymentToken <> ''
+        THEN r.rentalId
+      END) AS paymentRequired,
+      COUNT(DISTINCT CASE
+        WHEN r.status = 'pending' THEN r.rentalId
+      END) AS waitingForOwnerApproval
     FROM rentals r
-    JOIN vehicles v ON r.licensePlate = v.licensePlate
-    WHERE (v.ownerId = ? OR r.renterId = ?)
-    AND r.status IN ('approved', 'completed')
-    AND r.startDate >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
-    GROUP BY YEAR(r.startDate), MONTH(r.startDate)
+    LEFT JOIN rental_payments p ON p.rentalId = r.rentalId
+    WHERE r.renterId = ?
   `;
-  return doQuery(query, [userId, userId, userId]);
+  const rows = await doQuery(query, [renterId]);
+  return rows[0] || {
+    paymentRequired: 0,
+    waitingForOwnerApproval: 0,
+  };
 }
 
 async function getPendingRentalRequestsForOwner(ownerId) {
@@ -521,7 +531,8 @@ async function hasActiveRentalNow(licensePlate) {
     WHERE licensePlate = ?
     AND status = 'approved'
     AND startDate <= CURRENT_DATE()
-    AND endDate > CURRENT_DATE()
+    AND endDate >= CURRENT_DATE()
+    LIMIT 1
   `;
 
   const rentals = await doQuery(query, [licensePlate]);
@@ -535,10 +546,10 @@ module.exports = {
   getRequestsForMyVehiclesByOwnerId,
   getRentalById,
   updateRentalStatus,
-  getRenterEmailByRentalId,
   getRentalsStartingTomorrow,
   getRentalsEndingTomorrow,
   getBookedDatesByPlate,
+  getVehicleRentalMetricsByLicensePlate,
   getRentalsToComplete,
   getRentalsToExpire,
   completeExpiredRentals,
@@ -550,9 +561,7 @@ module.exports = {
   getOwnerVehicleEarningsComparisonBounds,
   getOwnerVehicleEarningsComparisonByRange,
   getPendingRequestsCountByOwnerId,
-  getUpcomingTripsCountByUserId,
-  getPastTripsCountByRenterId,
-  getDashboardChartDataByUserId,
+  getRenterDashboardActionCounts,
   getPendingRentalRequestsForOwner,
   getMyTripsHistoryByRenterId,
   getRentalEmailDataByRentalId,

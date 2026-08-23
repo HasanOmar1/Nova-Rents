@@ -1,6 +1,5 @@
 import { useState } from "react";
 import styles from "./LoginRegister.module.css";
-import { ArrowRight, Car, Shield, UserPlus } from "lucide-react";
 import SignInForm from "./SignInForm";
 import RegisterForm from "./RegisterForm";
 import FormOption from "./FormOption";

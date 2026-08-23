@@ -19,6 +19,10 @@ import Pagination from "../../components/Pagination/Pagination";
 import { useUserContext } from "../../context/UserContext";
 import { useRentContext } from "../../context/RentContext";
 import { usePagination } from "../../hooks/usePagination";
+import {
+  formatVehicleStatus,
+  getVehicleDisplayStatus,
+} from "../../utils/displayFormat";
 
 const UserStats = () => {
   const { email } = useParams();
@@ -193,31 +197,47 @@ const UserStats = () => {
       ) : (
         <>
           <div className={styles.vehiclesList}>
-            {vehicles.map((veh) => (
-              <div
-                key={veh.licensePlate}
-                className={styles.vehCard}
-                onClick={() => handleVehicleClick(veh)}
-              >
-                <img
-                  src={parseImgs(veh.image)}
-                  alt={veh.modelName}
-                  className={styles.vehImg}
-                />
-                <div className={styles.vehInfo}>
-                  <h4>
-                    {veh.brandName} {veh.modelName}
-                  </h4>
-                  <p className={styles.vehPlate}>Plate: {veh.licensePlate}</p>
-                  <p className={styles.vehDetails}>
-                    Year: {veh.year} • ${veh.price}/day
-                  </p>
-                  <span className={`${styles.vehStatus} ${styles[veh.status]}`}>
-                    {veh.status}
-                  </span>
+            {vehicles.map((veh) => {
+              const vehicleWithOwnerStatus = {
+                ...veh,
+                ownerStatus: veh.ownerStatus ?? user.status,
+              };
+              const displayStatus = getVehicleDisplayStatus(
+                vehicleWithOwnerStatus,
+              );
+              const statusClass =
+                displayStatus === "not_validated"
+                  ? styles.notValidated
+                  : styles[displayStatus] || styles.unknownStatus;
+
+              return (
+                <div
+                  key={veh.licensePlate}
+                  className={styles.vehCard}
+                  onClick={() => handleVehicleClick(veh)}
+                >
+                  <img
+                    src={parseImgs(veh.image)}
+                    alt={veh.modelName}
+                    className={styles.vehImg}
+                  />
+                  <div className={styles.vehInfo}>
+                    <h4>
+                      {veh.brandName} {veh.modelName}
+                    </h4>
+                    <p className={styles.vehPlate}>
+                      Plate: {veh.licensePlate}
+                    </p>
+                    <p className={styles.vehDetails}>
+                      Year: {veh.year} • ${veh.price}/day
+                    </p>
+                    <span className={`${styles.vehStatus} ${statusClass}`}>
+                      {formatVehicleStatus(displayStatus)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className={styles.paginationContainer}>

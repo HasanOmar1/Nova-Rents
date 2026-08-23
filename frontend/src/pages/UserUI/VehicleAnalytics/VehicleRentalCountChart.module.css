@@ -1,0 +1,386 @@
+.card {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 390px;
+  padding: 24px;
+  box-sizing: border-box;
+  border: var(--cards-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(84, 148, 255, 0.08), transparent 34%),
+    var(--bg-gray);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.header h2 {
+  margin: 0 0 5px;
+  color: #fff;
+  font-size: 1.15rem;
+}
+
+.header p {
+  margin: 0;
+  color: var(--gray);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.header .interactionHint {
+  margin-top: 6px;
+  color: var(--icons-color);
+  font-size: 0.7rem;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.9fr) minmax(260px, 1.1fr);
+  align-items: center;
+  flex: 1;
+  gap: clamp(20px, 3vw, 38px);
+  min-width: 0;
+  min-height: 0;
+}
+
+.chartPanel,
+.chartCanvas,
+.legendPanel {
+  min-width: 0;
+}
+
+.chartPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chartCanvas {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  min-height: 280px;
+}
+
+.chartSlice {
+  cursor: pointer;
+  outline: none;
+}
+
+.chartSlice:focus-visible {
+  filter: brightness(1.18);
+  stroke: #fff;
+  stroke-width: 3px;
+}
+
+.centerLabel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.centerLabel strong {
+  color: #fff;
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.centerLabel span {
+  margin-top: 6px;
+  color: var(--gray);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+}
+
+.legendPanel {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-height: 0;
+  padding-left: clamp(18px, 2.4vw, 30px);
+  border-left: var(--cards-border);
+}
+
+.legendHeading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(52px, auto) 52px;
+  gap: 12px;
+  padding: 0 8px 9px;
+  color: var(--gray);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+}
+
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 280px;
+  margin: 0;
+  padding: 0 5px 0 0;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-color: rgba(167, 210, 235, 0.35) transparent;
+  scrollbar-width: thin;
+}
+
+.legendItem {
+  border: var(--cards-border);
+  border-radius: 12px;
+  background-color: var(--input-bg);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.legendItem:hover {
+  border-color: rgba(96, 165, 250, 0.42);
+  background-color: rgba(59, 130, 246, 0.09);
+  transform: translateY(-1px);
+}
+
+.legendLink {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(52px, auto) 52px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 11px;
+  border-radius: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.legendLink:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.55);
+  outline-offset: 2px;
+}
+
+.vehicleIdentity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.legendDot,
+.tooltipDot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.035);
+}
+
+.vehicleMeta {
+  min-width: 0;
+}
+
+.vehicleMeta strong,
+.vehicleMeta span,
+.legendValue strong,
+.legendValue span {
+  display: block;
+}
+
+.vehicleMeta strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vehicleMeta span {
+  margin-top: 2px;
+  color: var(--gray);
+  font-size: 0.68rem;
+}
+
+.legendValue {
+  min-width: 52px;
+  text-align: right;
+}
+
+.legendValue strong {
+  color: #fff;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.legendValue span {
+  margin-top: 2px;
+  color: var(--gray);
+  font-size: 0.62rem;
+}
+
+.legendPercentage {
+  color: #93c5fd;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tooltip {
+  min-width: 175px;
+  max-width: 260px;
+  padding: 10px 12px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  background-color: #1e1e1e;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.38);
+}
+
+.tooltipHeading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.tooltipHeading strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltipPlate {
+  display: block;
+  margin: 4px 0 10px 16px;
+  color: var(--gray);
+  font-size: 0.68rem;
+}
+
+.tooltipValue {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #333;
+}
+
+.tooltipValue strong {
+  color: #fff;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipValue span {
+  color: var(--gray);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 280px;
+  padding: 24px;
+  box-sizing: border-box;
+  border: var(--cards-border);
+  border-radius: 14px;
+  color: var(--gray);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@container (max-width: 620px) {
+  .content {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .legendPanel {
+    padding-top: 18px;
+    padding-left: 0;
+    border-top: var(--cards-border);
+    border-left: 0;
+  }
+
+  .legendList {
+    max-height: 170px;
+  }
+}
+
+@media (max-width: 760px) {
+  .content {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .legendPanel {
+    padding-top: 18px;
+    padding-left: 0;
+    border-top: var(--cards-border);
+    border-left: 0;
+  }
+
+  .legendList {
+    max-height: 230px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    min-height: 0;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .header {
+    margin-bottom: 12px;
+  }
+
+  .header h2 {
+    font-size: 1.05rem;
+  }
+
+  .legendItem {
+    border-radius: 10px;
+  }
+
+  .legendHeading,
+  .legendLink {
+    grid-template-columns: minmax(0, 1fr) minmax(48px, auto) 46px;
+    gap: 8px;
+  }
+
+  .legendLink {
+    padding: 9px;
+  }
+
+  .vehicleMeta strong {
+    white-space: normal;
+  }
+}

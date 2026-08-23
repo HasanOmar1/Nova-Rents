@@ -5,8 +5,10 @@ import { useUserContext } from "../../../context/UserContext";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { formattedMaxDate, formattedMinDate } from "../../../utils/minMaxDate";
 import AsyncButton from "../../../components/AsyncButton/AsyncButton";
+import { useLocation } from "react-router-dom";
 
 const Profile = () => {
+  const { search } = useLocation();
   const [editProfileClicked, setEditProfileClicked] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -226,8 +228,8 @@ const Profile = () => {
         </form>
       </div>
 
-      <div className={styles.documentsContainer}>
-        <DocumentsCards />
+      <div id="documents" className={styles.documentsContainer}>
+        <DocumentsCards key={search} />
       </div>
     </div>
   );

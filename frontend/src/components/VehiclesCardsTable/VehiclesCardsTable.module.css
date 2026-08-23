@@ -154,7 +154,10 @@
 .VehiclesCardsTable .statusCell {
   display: flex;
   min-width: 0;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 7px;
 }
 
 .VehiclesCardsTable .status {
@@ -193,6 +196,12 @@
   border: 1px solid rgba(248, 113, 113, 0.28);
   background-color: rgba(127, 29, 29, 0.22);
   color: #fecaca;
+}
+
+.VehiclesCardsTable .notValidated {
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  background-color: rgba(133, 77, 14, 0.2);
+  color: #fde68a;
 }
 
 .VehiclesCardsTable .blockedOwnerIndicator {
@@ -307,7 +316,7 @@
 }
 
 .VehiclesCardsTable.adminRow .statusCell {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .VehiclesCardsTable.ownerRow .vehicleIdentity,
@@ -327,7 +336,7 @@
 }
 
 .VehiclesCardsTable.ownerRow .statusCell {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .VehiclesCardsTable .actionsContainer {
@@ -601,6 +610,8 @@
 }
 
 .VehiclesCardsTable .eligibilityAction {
+  position: relative;
+  z-index: 2;
   color: #a7d2eb;
   font-size: 0.82rem;
   font-weight: 600;

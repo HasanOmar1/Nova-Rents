@@ -71,6 +71,16 @@ const DocumentUploadModal = ({
   );
   const showInsuranceDates = Boolean(fieldLabels.showStartDate);
   const showDocumentNumber = slot?.documentType !== "vehicle_registration";
+  const documentNumberRequired = Boolean(
+    fieldLabels.documentNumberRequired,
+  );
+  const insuranceCompanyRequired = Boolean(
+    fieldLabels.insuranceCompanyRequired,
+  );
+  const startDateRequired = Boolean(fieldLabels.startDateRequired);
+  const expirationDateRequired = Boolean(
+    fieldLabels.expirationDateRequired,
+  );
 
   const handleChange = (event) => {
     const { name, value, files } = event.target;
@@ -128,12 +138,21 @@ const DocumentUploadModal = ({
       <form className={styles.content} onSubmit={handleSubmit}>
         {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
 
+        <p className={styles.requiredHint}>
+          <span aria-hidden="true">*</span> Required fields
+        </p>
+
         {slot.status === "verified" && (
           <p className={styles.warning}>{uploadCopy.verifiedWarning}</p>
         )}
 
         <label className={styles.field}>
-          <span>File (JPG, PNG, or PDF · max 5MB)</span>
+          <span>
+            File (JPG, PNG, or PDF · max 5MB)
+            <span className={styles.requiredMark} aria-hidden="true">
+              {" "}*
+            </span>
+          </span>
           <input
             type="file"
             name="file"
@@ -146,7 +165,14 @@ const DocumentUploadModal = ({
 
         {showDocumentNumber && (
           <label className={styles.field}>
-            <span>{fieldLabels.documentNumberLabel}</span>
+            <span>
+              {fieldLabels.documentNumberLabel}
+              {documentNumberRequired && (
+                <span className={styles.requiredMark} aria-hidden="true">
+                  {" "}*
+                </span>
+              )}
+            </span>
             <input
               type="text"
               name="documentNumber"
@@ -155,6 +181,7 @@ const DocumentUploadModal = ({
               onChange={handleChange}
               placeholder={fieldLabels.documentNumberPlaceholder}
               autoComplete="off"
+              required={documentNumberRequired}
             />
             {fieldLabels.documentNumberHelp && (
               <small className={styles.helpText}>
@@ -166,7 +193,14 @@ const DocumentUploadModal = ({
 
         {showInsuranceDates && (
           <label className={styles.field}>
-            <span>{fieldLabels.insuranceCompanyLabel}</span>
+            <span>
+              {fieldLabels.insuranceCompanyLabel}
+              {insuranceCompanyRequired && (
+                <span className={styles.requiredMark} aria-hidden="true">
+                  {" "}*
+                </span>
+              )}
+            </span>
             <input
               type="text"
               name="insuranceCompany"
@@ -174,6 +208,7 @@ const DocumentUploadModal = ({
               value={form.insuranceCompany}
               onChange={handleChange}
               placeholder="Enter insurance company name"
+              required={insuranceCompanyRequired}
             />
           </label>
         )}
@@ -181,7 +216,14 @@ const DocumentUploadModal = ({
         {showInsuranceDates ? (
           <div className={styles.dates}>
             <label className={styles.field}>
-              <span>{fieldLabels.startDateLabel}</span>
+              <span>
+                {fieldLabels.startDateLabel}
+                {startDateRequired && (
+                  <span className={styles.requiredMark} aria-hidden="true">
+                    {" "}*
+                  </span>
+                )}
+              </span>
               <DateInput
                 key={`${slotKey}-startDate`}
                 name="startDate"
@@ -193,6 +235,7 @@ const DocumentUploadModal = ({
                   )
                 }
                 disabled={isUploading}
+                required={startDateRequired}
               />
               {fieldLabels.startDateHelp && (
                 <small className={styles.helpText}>
@@ -201,7 +244,14 @@ const DocumentUploadModal = ({
               )}
             </label>
             <label className={styles.field}>
-              <span>{fieldLabels.expirationDateLabel}</span>
+              <span>
+                {fieldLabels.expirationDateLabel}
+                {expirationDateRequired && (
+                  <span className={styles.requiredMark} aria-hidden="true">
+                    {" "}*
+                  </span>
+                )}
+              </span>
               <DateInput
                 key={`${slotKey}-expirationDate`}
                 name="expirationDate"
@@ -213,6 +263,7 @@ const DocumentUploadModal = ({
                   )
                 }
                 disabled={isUploading}
+                required={expirationDateRequired}
               />
               {fieldLabels.expirationDateHelp && (
                 <small className={styles.helpText}>
@@ -223,7 +274,14 @@ const DocumentUploadModal = ({
           </div>
         ) : (
           <label className={styles.field}>
-            <span>{fieldLabels.expirationDateLabel}</span>
+            <span>
+              {fieldLabels.expirationDateLabel}
+              {expirationDateRequired && (
+                <span className={styles.requiredMark} aria-hidden="true">
+                  {" "}*
+                </span>
+              )}
+            </span>
             <DateInput
               key={`${slotKey}-expirationDate`}
               name="expirationDate"
@@ -235,6 +293,7 @@ const DocumentUploadModal = ({
                 )
               }
               disabled={isUploading}
+              required={expirationDateRequired}
             />
           </label>
         )}

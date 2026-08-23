@@ -84,6 +84,7 @@
 }
 
 .DocumentsCards .vehicleAccordion {
+  scroll-margin-top: 24px;
   border: var(--cards-border);
   border-radius: 14px;
   background-color: rgba(42, 46, 53, 0.35);
@@ -109,6 +110,12 @@
 }
 
 .DocumentsCards .vehicleAccordionHeader:hover {
+  background-color: rgba(63, 68, 77, 0.25);
+}
+
+.DocumentsCards .vehicleAccordionHeader:focus-visible {
+  outline: 2px solid var(--input-focus-border-color);
+  outline-offset: -3px;
   background-color: rgba(63, 68, 77, 0.25);
 }
 
@@ -218,7 +225,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
   height: 32px;
   border: var(--cards-border);
   border-radius: 8px;
@@ -343,8 +349,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
   background-color: #2a2e35;
   border-radius: 10px;
   cursor: pointer;

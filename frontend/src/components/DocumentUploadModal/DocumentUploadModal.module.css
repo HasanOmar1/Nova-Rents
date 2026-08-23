@@ -67,6 +67,18 @@
   line-height: 1.4;
 }
 
+.DocumentUploadModal .requiredHint {
+  color: var(--gray);
+  font-size: 0.75rem;
+  margin: -4px 0 0;
+}
+
+.DocumentUploadModal .requiredHint span,
+.DocumentUploadModal .requiredMark {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
 .DocumentUploadModal .field {
   display: flex;
   flex-direction: column;

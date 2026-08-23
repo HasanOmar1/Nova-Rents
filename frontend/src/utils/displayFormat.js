@@ -22,12 +22,65 @@ const COMPLAINT_STATUS_LABELS = {
 export const formatComplaintStatus = (status, fallback = "Unknown") =>
   COMPLAINT_STATUS_LABELS[status] || status || fallback;
 
+const VEHICLE_STATUS_LABELS = {
+  available: "Available",
+  unavailable: "Unavailable",
+  not_validated: "Not validated",
+  rented: "Rented",
+  maintenance: "Maintenance",
+  inactive: "Inactive",
+};
+
+const normalizeVehicleStatus = (status) =>
+  String(status || "")
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[\s-]+/g, "_")
+    .toLowerCase();
+
+const isExplicitlyFalse = (value) =>
+  value === false || value === 0 || value === "false" || value === "0";
+
+/**
+ * Returns the status people can actually act on while preserving the raw
+ * operational status in `vehicle.status` for editing and rental workflows.
+ */
+export const getVehicleDisplayStatus = (vehicle) => {
+  const effectiveStatus = normalizeVehicleStatus(vehicle?.effectiveStatus);
+  if (effectiveStatus) return effectiveStatus;
+
+  if (normalizeVehicleStatus(vehicle?.ownerStatus) === "blocked") {
+    return "unavailable";
+  }
+
+  const rawStatus = normalizeVehicleStatus(vehicle?.status);
+  const rentalEligible =
+    vehicle?.rentalEligibility?.eligible ?? vehicle?.rentalEligible;
+
+  if (rawStatus === "available" && isExplicitlyFalse(rentalEligible)) {
+    return "not_validated";
+  }
+
+  return rawStatus || "unknown";
+};
+
+export const formatVehicleStatus = (status, fallback = "Unknown") => {
+  const normalizedStatus = normalizeVehicleStatus(status);
+  return (
+    VEHICLE_STATUS_LABELS[normalizedStatus] ||
+    formatEventLabel(normalizedStatus) ||
+    fallback
+  );
+};
+
 const DOCUMENT_DISPLAY_CONFIG = {
   identity_card: {
     title: "Identity Card",
     documentNumberLabel: "ID Number",
     documentNumberPlaceholder: "Enter the number shown on your ID",
+    documentNumberRequired: true,
     expirationDateLabel: "ID Expiration Date",
+    expirationDateRequired: true,
     showStartDate: false,
     firstUploadButton: "Upload Document",
     nextStepByStatus: {
@@ -50,7 +103,9 @@ const DOCUMENT_DISPLAY_CONFIG = {
     title: "Passport",
     documentNumberLabel: "Passport Number",
     documentNumberPlaceholder: "Enter your passport number",
+    documentNumberRequired: true,
     expirationDateLabel: "Passport Expiration Date",
+    expirationDateRequired: true,
     showStartDate: false,
     firstUploadButton: "Upload Document",
     nextStepByStatus: {
@@ -74,7 +129,9 @@ const DOCUMENT_DISPLAY_CONFIG = {
     documentNumberLabel: "Driver License Number",
     documentNumberPlaceholder: "Enter the number shown on your driver license",
     documentNumberHelp: "Enter the number shown on your driver license.",
+    documentNumberRequired: true,
     expirationDateLabel: "Driver License Expiration Date",
+    expirationDateRequired: true,
     showStartDate: false,
     firstUploadButton: "Upload Document",
     nextStepByStatus: {
@@ -99,11 +156,15 @@ const DOCUMENT_DISPLAY_CONFIG = {
     documentNumberLabel: "Policy Number",
     documentNumberPlaceholder: "Enter insurance policy number",
     documentNumberHelp: "Found on your insurance policy.",
+    documentNumberRequired: true,
     insuranceCompanyLabel: "Insurance Company",
+    insuranceCompanyRequired: true,
     startDateLabel: "Coverage Start Date",
     startDateHelp: "The date your insurance coverage begins.",
+    startDateRequired: true,
     expirationDateLabel: "Coverage End Date",
     expirationDateHelp: "The date your insurance coverage expires.",
+    expirationDateRequired: true,
     adminStartDateLabel: "Insurance Coverage Start",
     adminExpirationDateLabel: "Insurance Coverage End",
     showStartDate: true,
@@ -129,7 +190,9 @@ const DOCUMENT_DISPLAY_CONFIG = {
     title: "Vehicle Registration",
     documentNumberLabel: "Vehicle Registration Number",
     documentNumberPlaceholder: "Enter vehicle registration number",
+    documentNumberRequired: false,
     expirationDateLabel: "Vehicle Registration Valid Until",
+    expirationDateRequired: true,
     showStartDate: false,
     firstUploadButton: "Upload Document",
     nextStepByStatus: {
@@ -155,9 +218,13 @@ const FALLBACK_DOCUMENT_DISPLAY = {
   title: "Document",
   documentNumberLabel: "Document Number",
   documentNumberPlaceholder: "Enter document number",
+  documentNumberRequired: false,
   expirationDateLabel: "Expiration Date",
+  expirationDateRequired: false,
   startDateLabel: "Start date",
+  startDateRequired: false,
   insuranceCompanyLabel: "Insurance Company",
+  insuranceCompanyRequired: false,
   showStartDate: false,
   firstUploadButton: "Upload Document",
   nextStepByStatus: {},
@@ -215,14 +282,14 @@ export const GOVERNMENT_VEHICLE_EXPLANATION =
   "We compare your vehicle details with official government vehicle records. This does not verify the uploaded file, insurance, or your identity.";
 
 const USER_GOV_STATUS_GUIDANCE = {
-  not_checked: "This vehicle has not been compared with government records yet.",
+  not_checked:
+    "This vehicle has not been compared with government records yet.",
   mismatch:
     "The vehicle details in our system do not match official government records.",
   not_found: "This vehicle was not found in official government records.",
   unavailable:
     "We couldn't verify the vehicle right now because the government service is unavailable. Please try again later.",
-  error:
-    "Vehicle verification could not be completed. Please try again later.",
+  error: "Vehicle verification could not be completed. Please try again later.",
 };
 
 export const getGovernmentCheckGuidance = (status) =>
@@ -275,7 +342,8 @@ const REJECTION_CODE_LABELS = {
 };
 
 export const formatDocumentType = (documentType) =>
-  DOCUMENT_DISPLAY_CONFIG[documentType]?.title || formatEventLabel(documentType);
+  DOCUMENT_DISPLAY_CONFIG[documentType]?.title ||
+  formatEventLabel(documentType);
 
 export const formatDocumentStatus = (status, audience = "user") => {
   const labels =
@@ -315,8 +383,7 @@ const RENTER_ELIGIBILITY_MESSAGES = {
     "Your identity document needs attention. Upload a corrected document before renting.",
   IDENTITY_EXPIRED:
     "Your identity document has expired. Upload a valid identity card or passport before renting.",
-  DRIVER_LICENSE_NOT_UPLOADED:
-    "Upload a driver license before renting.",
+  DRIVER_LICENSE_NOT_UPLOADED: "Upload a driver license before renting.",
   DRIVER_LICENSE_PENDING_REVIEW:
     "Your driver license is waiting for review. You can rent after it is verified.",
   DRIVER_LICENSE_REJECTED:
@@ -327,7 +394,8 @@ const RENTER_ELIGIBILITY_MESSAGES = {
 
 const VEHICLE_ELIGIBILITY_MESSAGES = {
   OWNER_IDENTITY_NOT_UPLOADED: "The owner's identity document is not uploaded.",
-  OWNER_IDENTITY_PENDING_REVIEW: "The owner's identity document is waiting for review.",
+  OWNER_IDENTITY_PENDING_REVIEW:
+    "The owner's identity document is waiting for review.",
   OWNER_IDENTITY_REJECTED: "The owner's identity document needs attention.",
   OWNER_IDENTITY_EXPIRED: "The owner's identity document has expired.",
   INSURANCE_NOT_UPLOADED: "Vehicle insurance is not uploaded.",
@@ -391,11 +459,10 @@ export const buildVehicleEligibilitySummary = (rentalEligibility) => {
   return {
     eligible: Boolean(rentalEligibility.eligible),
     checks,
-    message:
-      rentalEligibility.eligible
-        ? null
-        : (rentalEligibility.reasons || [])
-            .map((reason) => formatEligibilityReason(reason))
-            .join(" "),
+    message: rentalEligibility.eligible
+      ? null
+      : (rentalEligibility.reasons || [])
+          .map((reason) => formatEligibilityReason(reason))
+          .join(" "),
   };
 };

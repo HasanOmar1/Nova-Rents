@@ -17,8 +17,6 @@ export const useAppliedDateRange = (createInitialRange) => {
     ...dateRange,
     appliedFromDate: appliedRange.from,
     appliedToDate: appliedRange.to,
-    isRangeDirty:
-      appliedRange.from !== fromDate || appliedRange.to !== toDate,
     applyDateRange,
   };
 };

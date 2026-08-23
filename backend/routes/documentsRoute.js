@@ -46,6 +46,13 @@ router.post(
   documentsController.runVehicleGovernmentCheck_controller,
 );
 
+router.post(
+  "/admin/vehicles/:licensePlate/government-check/manual-override",
+  isAuthenticated,
+  isAdmin,
+  documentsController.manuallyVerifyVehicleGovernmentCheck_controller,
+);
+
 router.get(
   "/admin/:documentId",
   isAuthenticated,

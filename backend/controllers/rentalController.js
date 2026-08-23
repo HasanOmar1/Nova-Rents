@@ -24,9 +24,7 @@ const {
   cancelExpiredRentals,
   getMonthlyEarningsByOwnerId,
   getPendingRequestsCountByOwnerId,
-  getUpcomingTripsCountByUserId,
-  getPastTripsCountByRenterId,
-  getDashboardChartDataByUserId,
+  getRenterDashboardActionCounts,
   getPendingRentalRequestsForOwner,
   getMyTripsHistoryByRenterId,
   getRentalEmailDataByRentalId,
@@ -611,67 +609,21 @@ async function getDashboardMetrics(req, res, next) {
 
     await autoUpdateRentalStatuses();
 
-    // 1. Monthly Earnings (As a Host: SUM of your cars' approved rentals this month)
-    const earnings = await getMonthlyEarningsByOwnerId(userId);
-
-    // 2. Pending Requests (As a Host: Count of pending requests on your cars)
-    const pending = await getPendingRequestsCountByOwnerId(userId);
-
-    // 3. Upcoming Trips (As Host OR Renter: Approved trips starting today or later)
-    const upcoming = await getUpcomingTripsCountByUserId(userId);
-
-    // 4. Trips Taken (As a Renter: Completed or past approved trips you took)
-    const pastTrips = await getPastTripsCountByRenterId(userId);
-
-    const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    const chartData = [];
-    const today = new Date();
-
-    //  empty array of the last 6 months
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      chartData.push({
-        month: monthNames[d.getMonth()],
-        monthIndex: d.getMonth() + 1,
-        year: d.getFullYear(),
-        earnings: 0, // Default to $0
-        trips: 0, // Default to 0 trips
-      });
-    }
-
-    // Fetch Earnings & Trips Grouped by Month for the last 6 months
-    const chartDbData = await getDashboardChartDataByUserId(userId);
-
-    // Merge database results into our 6-month array
-    chartDbData.forEach((row) => {
-      const monthObj = chartData.find(
-        (m) => m.monthIndex === row.monthIndex && m.year === row.year,
-      );
-      if (monthObj) {
-        monthObj.earnings = Number(row.totalEarnings) || 0;
-        monthObj.trips = Number(row.totalTrips) || 0;
-      }
-    });
+    const [earnings, pending, renterActions] = await Promise.all([
+      // Host metrics.
+      getMonthlyEarningsByOwnerId(userId),
+      getPendingRequestsCountByOwnerId(userId),
+      // Renter actions that need attention.
+      getRenterDashboardActionCounts(userId),
+    ]);
 
     res.status(200).json({
       monthlyEarnings: Number(earnings[0].total),
       pendingRequests: Number(pending[0].count),
-      upcomingTrips: Number(upcoming[0].count),
-      tripsTaken: Number(pastTrips[0].count),
-      chartData: chartData,
+      paymentRequired: Number(renterActions.paymentRequired),
+      waitingForOwnerApproval: Number(
+        renterActions.waitingForOwnerApproval,
+      ),
     });
   } catch (error) {
     next(error);

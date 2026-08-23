@@ -81,6 +81,22 @@
   color: #cbd5e1;
 }
 
+.DocumentReviewModal .manualOverrideNotice {
+  margin: 5px 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 10px;
+  background-color: rgba(146, 64, 14, 0.14);
+  color: #fde68a;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.DocumentReviewModal .manualOverrideNotice p {
+  margin-top: 4px;
+  color: #e7d7ad;
+}
+
 .DocumentReviewModal .mismatchList {
   margin: 0;
   padding-left: 18px;

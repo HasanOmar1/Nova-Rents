@@ -84,23 +84,8 @@
   color: var(--icons-color);
 }
 
-.HomeMidCards .dateText {
-  color: #6b7280;
-  margin-left: 6px;
-  font-weight: 400;
-}
-
 .HomeMidCards .activityItemWrapper .data {
   border-left: 3px solid rgba(255, 255, 255, 0.15);
-}
-
-.HomeMidCards .complaintActivity .description {
-  display: -webkit-box;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
 }
 
 .HomeMidCards .notificationWrapper {

@@ -12,9 +12,8 @@ const RentContextProvider = ({ children }) => {
   const [metrics, setMetrics] = useState({
     monthlyEarnings: 0,
     pendingRequests: 0,
-    upcomingTrips: 0,
-    tripsTaken: 0,
-    chartData: [],
+    paymentRequired: 0,
+    waitingForOwnerApproval: 0,
   });
 
   const [rentalHistory, setRentalHistory] = useState({
@@ -81,14 +80,14 @@ const RentContextProvider = ({ children }) => {
     }
   };
 
-  const fetchDashboardMetrics = async () => {
+  const fetchDashboardMetrics = useCallback(async () => {
     try {
       const res = await axios.get("/rentals/dashboard-metrics");
       setMetrics(res.data);
     } catch (error) {
       console.log("Failed to fetch dashboard metrics", error);
     }
-  };
+  }, []);
 
   const fetchRentalHistory = async () => {
     try {

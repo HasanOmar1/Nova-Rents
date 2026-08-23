@@ -7,7 +7,11 @@ import AddEditVehicleMenu from "../AddEditVehicleMenu/AddEditVehicleMenu";
 import { Link } from "react-router-dom";
 import { parseImgs } from "../../utils/parseImgs";
 import { useUserContext } from "../../context/UserContext";
-import { buildVehicleEligibilitySummary } from "../../utils/displayFormat";
+import {
+  buildVehicleEligibilitySummary,
+  formatVehicleStatus,
+  getVehicleDisplayStatus,
+} from "../../utils/displayFormat";
 
 const VehiclesCardsTable = ({
   veh,
@@ -62,27 +66,35 @@ const VehiclesCardsTable = ({
   const ownerLabel =
     vehicleForDetails.ownerEmail || ownerFullName || "Unknown owner";
   const isOwnerBlocked =
-    admin &&
-    String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
-  const displayedStatus = isOwnerBlocked ? "unavailable" : veh.status;
+    admin && String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
+  const displayedStatus = admin
+    ? getVehicleDisplayStatus(vehicleForDetails)
+    : veh.status || "unknown";
   const eligibilitySummary =
     !admin && veh.rentalEligibility
       ? buildVehicleEligibilitySummary(veh.rentalEligibility)
       : null;
+  const adminStatusDescription = isOwnerBlocked
+    ? ", unavailable because the owner account is blocked"
+    : `, status ${formatVehicleStatus(displayedStatus)}`;
 
   const vehicleDetailsPath = `/vehicles/${encodeURIComponent(veh.licensePlate)}`;
+  const documentsSearch = new URLSearchParams({
+    vehicle: String(veh.licensePlate),
+  }).toString();
   const vehicleDetailsState = {
     vehicle: vehicleForDetails,
     returnTo: admin ? "/allVehicles" : "/myVehicles",
   };
-  const statusClass = isOwnerBlocked
-    ? styles.unavailable
-    : {
-        available: styles.available,
-        rented: styles.rented,
-        maintenance: styles.maintenance,
-        inactive: styles.inactive,
-      }[veh.status] || styles.unknownStatus;
+  const statusClass =
+    {
+      available: styles.available,
+      unavailable: styles.unavailable,
+      not_validated: styles.notValidated,
+      rented: styles.rented,
+      maintenance: styles.maintenance,
+      inactive: styles.inactive,
+    }[displayedStatus] || styles.unknownStatus;
 
   const vehicleNameContent = (
     <>
@@ -124,7 +136,9 @@ const VehiclesCardsTable = ({
         <span className={styles.cellValue}>{veh.carTypeName}</span>
       </p>
       <p className={styles.address}>
-        <span className={styles.cellLabel}>{admin ? "Location" : "Address"}</span>
+        <span className={styles.cellLabel}>
+          {admin ? "Location" : "Address"}
+        </span>
         <span className={styles.cellValue}>{veh.address}</span>
       </p>
       <p className={styles.price}>
@@ -153,28 +167,9 @@ const VehiclesCardsTable = ({
       <div className={styles.statusCell}>
         <span className={styles.cellLabel}>Status</span>
         <span className={`${styles.status} ${statusClass}`}>
-          {displayedStatus}
+          {formatVehicleStatus(displayedStatus)}
         </span>
       </div>
-
-      {!admin && eligibilitySummary && !eligibilitySummary.eligible && (
-        <div className={styles.eligibilityCell}>
-          <span className={styles.cellLabel}>Verification</span>
-          <div className={styles.eligibilitySummary}>
-            <p className={styles.eligibilityTitle}>Verification incomplete</p>
-            <ul className={styles.eligibilityChecks}>
-              {eligibilitySummary.checks.map((check) => (
-                <li key={check.key}>
-                  {check.ok ? "✓" : "✗"} {check.label}
-                </li>
-              ))}
-            </ul>
-            <Link to="/profile" className={styles.eligibilityAction}>
-              Manage Documents
-            </Link>
-          </div>
-        </div>
-      )}
 
       {!admin && (
         <div className={styles.actionsContainer}>
@@ -214,6 +209,29 @@ const VehiclesCardsTable = ({
           </div>
         </div>
       )}
+
+      {!admin && eligibilitySummary && !eligibilitySummary.eligible && (
+        <div className={styles.eligibilityCell}>
+          <span className={styles.cellLabel}>Verification</span>
+          <div className={styles.eligibilitySummary}>
+            <p className={styles.eligibilityTitle}>Verification incomplete</p>
+            <ul className={styles.eligibilityChecks}>
+              {eligibilitySummary.checks.map((check) => (
+                <li key={check.key}>
+                  {check.ok ? "✓" : "✗"} {check.label}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to={`/profile?${documentsSearch}#documents`}
+              className={styles.eligibilityAction}
+              aria-label={`Manage documents for ${fullName}, license plate ${veh.licensePlate}`}
+            >
+              Manage Documents
+            </Link>
+          </div>
+        </div>
+      )}
     </>
   );
 
@@ -223,11 +241,7 @@ const VehiclesCardsTable = ({
         className={`${styles.VehiclesCardsTable} ${styles.adminRow}`}
         to={vehicleDetailsPath}
         state={vehicleDetailsState}
-        aria-label={`View details for ${fullName}, license plate ${veh.licensePlate}${
-          isOwnerBlocked
-            ? ", unavailable because the owner account is blocked"
-            : ""
-        }`}
+        aria-label={`View details for ${fullName}, license plate ${veh.licensePlate}${adminStatusDescription}`}
       >
         {rowContent}
       </Link>

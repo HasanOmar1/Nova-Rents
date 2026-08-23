@@ -40,7 +40,6 @@ const DocumentContextProvider = ({ children }) => {
   });
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [adminErrorMsg, setAdminErrorMsg] = useState("");
-  const [selectedAdminDocument, setSelectedAdminDocument] = useState(null);
 
   const getMyDocuments = useCallback(async ({ silent = false } = {}) => {
     try {
@@ -176,7 +175,6 @@ const DocumentContextProvider = ({ children }) => {
   const getAdminDocumentById = async (documentId) => {
     try {
       const response = await axios.get(`/documents/admin/${documentId}`);
-      setSelectedAdminDocument(response.data);
       setAdminErrorMsg("");
       return response.data;
     } catch (error) {
@@ -238,15 +236,45 @@ const DocumentContextProvider = ({ children }) => {
   const runVehicleGovernmentCheck = async (licensePlate) => {
     try {
       const response = await axios.post(
-        `/documents/admin/vehicles/${licensePlate}/government-check`,
+        `/documents/admin/vehicles/${encodeURIComponent(licensePlate)}/government-check`,
         {},
       );
       setAdminErrorMsg("");
-      return { ok: true, governmentCheck: response.data.governmentCheck };
+      return {
+        ok: true,
+        message: response.data.message,
+        governmentCheck: response.data.governmentCheck,
+      };
     } catch (error) {
       const message = await messageFromAxiosError(
         error,
         "Failed to run government check",
+      );
+      setAdminErrorMsg(message);
+      return { ok: false, message };
+    }
+  };
+
+  const manuallyVerifyVehicleGovernmentCheck = async (
+    licensePlate,
+    reason,
+  ) => {
+    try {
+      const response = await axios.post(
+        `/documents/admin/vehicles/${encodeURIComponent(licensePlate)}/government-check/manual-override`,
+        { reason },
+      );
+      setAdminErrorMsg("");
+      await loadActivities();
+      return {
+        ok: true,
+        message: response.data.message,
+        governmentCheck: response.data.governmentCheck,
+      };
+    } catch (error) {
+      const message = await messageFromAxiosError(
+        error,
+        "Failed to manually verify this vehicle",
       );
       setAdminErrorMsg(message);
       return { ok: false, message };
@@ -270,12 +298,12 @@ const DocumentContextProvider = ({ children }) => {
         isAdminLoading,
         adminErrorMsg,
         setAdminErrorMsg,
-        selectedAdminDocument,
         getAdminDocuments,
         getAdminDocumentById,
         verifyAdminDocument,
         rejectAdminDocument,
         runVehicleGovernmentCheck,
+        manuallyVerifyVehicleGovernmentCheck,
       }}
     >
       {children}

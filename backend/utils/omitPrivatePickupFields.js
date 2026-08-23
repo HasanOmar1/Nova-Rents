@@ -18,13 +18,6 @@ function omitPrivatePickupFields(vehicle) {
   return sanitized;
 }
 
-function omitPrivatePickupFieldsFromList(vehicles) {
-  if (!Array.isArray(vehicles)) return vehicles;
-  return vehicles.map(omitPrivatePickupFields);
-}
-
 module.exports = {
-  PRIVATE_PICKUP_FIELDS,
   omitPrivatePickupFields,
-  omitPrivatePickupFieldsFromList,
 };

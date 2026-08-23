@@ -150,7 +150,6 @@ const NotificationContextProvider = ({ children }) => {
         loading,
         markAsRead,
         errorMsg,
-        loadNotifications,
       }}
     >
       {children}
