@@ -128,6 +128,7 @@ function getPublicVerificationEligibilitySql({ vehicleAlias = "v" } = {}) {
       WHERE d.licensePlate = ${v}.licensePlate
         AND d.documentType = 'vehicle_registration'
         AND d.status = 'verified'
+        AND (d.expirationDate IS NULL OR d.expirationDate >= CURDATE())
     )
     AND EXISTS (
       SELECT 1
@@ -136,6 +137,40 @@ function getPublicVerificationEligibilitySql({ vehicleAlias = "v" } = {}) {
         AND vgc.status = 'verified'
     )
   `;
+}
+
+function getEffectiveVehicleStatusSql({
+  vehicleAlias = "v",
+  ownerAlias = "u",
+} = {}) {
+  const verificationSql = getPublicVerificationEligibilitySql({
+    vehicleAlias,
+  });
+
+  return `
+    CASE
+      WHEN ${ownerAlias}.status = 'blocked' THEN 'unavailable'
+      WHEN ${vehicleAlias}.status = 'available'
+        AND NOT (${verificationSql}) THEN 'not_validated'
+      ELSE ${vehicleAlias}.status
+    END
+  `;
+}
+
+function deriveEffectiveVehicleStatus({
+  status,
+  ownerStatus,
+  rentalEligibility,
+}) {
+  if (String(ownerStatus || "").toLowerCase() === "blocked") {
+    return "unavailable";
+  }
+
+  if (status === "available" && !rentalEligibility?.eligible) {
+    return "not_validated";
+  }
+
+  return status;
 }
 
 async function getVehicleEligibilitySummariesForPlates(platesWithOwners) {
@@ -218,5 +253,7 @@ module.exports = {
   getVehicleRentalEligibility,
   getVehicleRentalEligibilityForNewRental,
   getPublicVerificationEligibilitySql,
+  getEffectiveVehicleStatusSql,
+  deriveEffectiveVehicleStatus,
   getVehicleEligibilitySummariesForPlates,
 };

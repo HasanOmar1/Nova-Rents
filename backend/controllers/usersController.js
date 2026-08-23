@@ -28,6 +28,10 @@ const {
 } = require("../database/queries/systemHistoryQueries");
 const { formatDateForInput } = require("../utils/formatDate");
 const {
+  deriveEffectiveVehicleStatus,
+  getVehicleEligibilitySummariesForPlates,
+} = require("../database/queries/eligibilityQueries");
+const {
   sendAccountBlockedEmail,
   sendAccountUnblockedEmail,
 } = require("../services/emailService");
@@ -973,6 +977,35 @@ const getUserStatsByEmail = async (req, res, next) => {
       limit,
       offset,
     ]);
+    const eligibilitySummaries =
+      await getVehicleEligibilitySummariesForPlates(
+        vehicles.map((vehicle) => ({
+          licensePlate: vehicle.licensePlate,
+          ownerId: targetUser.userId,
+        })),
+      );
+    const vehiclesWithAvailability = vehicles.map((vehicle) => {
+      const rentalEligibility =
+        eligibilitySummaries.get(String(vehicle.licensePlate)) || {
+          eligible: false,
+          reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
+          statuses: {},
+        };
+      const effectiveStatus = deriveEffectiveVehicleStatus({
+        status: vehicle.status,
+        ownerStatus: targetUser.status,
+        rentalEligibility,
+      });
+
+      return {
+        ...vehicle,
+        ownerStatus: targetUser.status,
+        effectiveStatus,
+        rentalEligible: rentalEligibility.eligible,
+        rentalEligibility,
+        canRent: effectiveStatus === "available",
+      };
+    });
 
     const countVehiclesQuery = `SELECT COUNT(*) as total FROM vehicles WHERE ownerId = ?`;
     const countResult = await doQuery(countVehiclesQuery, [targetUser.userId]);
@@ -985,7 +1018,7 @@ const getUserStatsByEmail = async (req, res, next) => {
         trips: tripsResult[0],
         totalVehicles,
       },
-      vehicles,
+      vehicles: vehiclesWithAvailability,
       pagination: {
         currentPage: page,
         totalPages,

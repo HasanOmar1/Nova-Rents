@@ -240,12 +240,17 @@
 }
 
 .UserStats .vehCard {
+  position: relative;
   display: flex;
   background-color: var(--bg-gray);
   border: var(--cards-border);
   border-radius: 12px;
   overflow: hidden;
   height: 120px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .UserStats .vehImg {
@@ -256,7 +261,7 @@
 }
 
 .UserStats .vehInfo {
-  padding: 15px 20px;
+  padding: 15px 175px 15px 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -285,13 +290,18 @@
 
 .UserStats .vehStatus {
   position: absolute;
-  align-self: flex-end;
-  margin-right: 20px;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: bold;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .UserStats .vehStatus.available {
@@ -307,22 +317,31 @@
   color: #f97316;
 }
 
+.UserStats .vehStatus.inactive {
+  background-color: rgba(100, 116, 139, 0.16);
+  color: #cbd5e1;
+}
+
+.UserStats .vehStatus.notValidated {
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  background-color: rgba(245, 158, 11, 0.14);
+  color: #fbbf24;
+}
+
+.UserStats .vehStatus.unavailable {
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  background-color: rgba(127, 29, 29, 0.22);
+  color: #fecaca;
+}
+
+.UserStats .vehStatus.unknownStatus {
+  background-color: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
 .UserStats .paginationWrapper {
   margin-top: 20px;
   width: 100%;
-}
-
-.UserStats .vehCard {
-  display: flex;
-  background-color: var(--bg-gray);
-  border: var(--cards-border);
-  border-radius: 12px;
-  overflow: hidden;
-  height: 120px;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
 }
 
 .UserStats .vehCard:hover {
@@ -355,11 +374,17 @@
     border-bottom: var(--cards-border);
   }
 
+  .UserStats .vehInfo {
+    padding: 15px 20px;
+  }
+
   .UserStats .vehStatus {
     position: relative;
-    align-self: flex-start;
-    margin-right: 0;
+    top: auto;
+    right: auto;
+    width: fit-content;
     margin-top: 10px;
+    transform: none;
   }
 }
 

@@ -12,6 +12,9 @@ import {
   Palette,
   Settings,
   Hash,
+  CalendarCheck2,
+  CircleDollarSign,
+  Percent,
 } from "lucide-react";
 import HomeTopCards from "../../components/HomeCards/HomeTopCards/HomeTopCards";
 import GoogleMapEmbed from "../../components/GoogleMapEmbed/GoogleMapEmbed";
@@ -22,7 +25,10 @@ import { useRentContext } from "../../context/RentContext";
 import BookingModal from "../../components/BookingModal/BookingModal";
 import { useVehicleContext } from "../../context/VehicleContext";
 import {
+  formatEligibilityReason,
+  formatVehicleStatus,
   getPrimaryRenterEligibilityMessage,
+  getVehicleDisplayStatus,
 } from "../../utils/displayFormat";
 
 const displayedSpecificationFields = [
@@ -55,6 +61,27 @@ const formatVehicleForDetails = (vehicle) => {
   };
 };
 
+const toNonNegativeNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : 0;
+};
+
+const formatRentalCount = (value) =>
+  Math.floor(toNonNegativeNumber(value)).toLocaleString();
+
+const formatRevenue = (value) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(toNonNegativeNumber(value));
+
+const formatPercentage = (value) =>
+  `${new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 1,
+  }).format(Math.min(toNonNegativeNumber(value), 100))}%`;
+
 const VehicleDetails = () => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { currentUser } = useUserContext();
@@ -83,17 +110,43 @@ const VehicleDetails = () => {
   } = useRentContext();
   const intervalRef = useRef(null);
   const imageUrls = vehicle?.image ? parseImgs(vehicle.image, true) : [];
-  const hasOwnerIds =
-    currentUser?.userId != null && vehicle?.ownerId != null;
+  const hasOwnerIds = currentUser?.userId != null && vehicle?.ownerId != null;
   const isOwnVehicle = hasOwnerIds
     ? Number(currentUser.userId) === Number(vehicle.ownerId)
     : Boolean(currentUser?.email && vehicle?.ownerEmail) &&
       currentUser.email.toLowerCase() === vehicle.ownerEmail.toLowerCase();
+  const canViewVehicleValidation =
+    currentUser?.role === "admin" || isOwnVehicle;
+  const vehicleDisplayStatus = getVehicleDisplayStatus(vehicle);
+  const vehicleStatusClass =
+    {
+      available: styles.available,
+      unavailable: styles.unavailable,
+      not_validated: styles.notValidated,
+      rented: styles.rented,
+      maintenance: styles.maintenance,
+      inactive: styles.inactive,
+    }[vehicleDisplayStatus] || styles.maintenance;
+  const vehicleEligibilityReasons = Array.isArray(
+    vehicle?.rentalEligibility?.reasons,
+  )
+    ? [
+        ...new Set(
+          vehicle.rentalEligibility.reasons
+            .map((reason) => formatEligibilityReason(reason))
+            .filter(Boolean),
+        ),
+      ]
+    : [];
+  const validationReasons = vehicleEligibilityReasons.length
+    ? vehicleEligibilityReasons
+    : ["Required documents or verification checks are incomplete."];
+  const showValidationDetails =
+    canViewVehicleValidation && vehicleDisplayStatus === "not_validated";
   const canRentVehicle =
     currentUser?.role === "user" &&
     !isOwnVehicle &&
-    vehicle?.status === "available" &&
-    vehicle?.ownerStatus !== "blocked" &&
+    vehicleDisplayStatus === "available" &&
     rentalEligibility?.eligible !== false &&
     vehicle?.rentalEligible !== false;
   const renterEligibilityMessage =
@@ -103,10 +156,13 @@ const VehicleDetails = () => {
   const vehicleUnavailableForRentals =
     currentUser?.role === "user" &&
     !isOwnVehicle &&
-    vehicle?.status === "available" &&
-    vehicle?.ownerStatus !== "blocked" &&
-    vehicle?.rentalEligible === false;
+    vehicleDisplayStatus === "not_validated";
   const plate = vehicle?.licensePlate || id;
+  const rentalMetrics = vehicle?.rentalMetrics ?? null;
+  const rentalCount = toNonNegativeNumber(rentalMetrics?.rentalCount);
+  const completionRate = toNonNegativeNumber(
+    rentalMetrics?.completionPercentage,
+  );
   const defaultVehicleListPath =
     currentUser?.role === "admin" ? "/allVehicles" : "/vehicles";
   const canUseReturnPath =
@@ -366,12 +422,8 @@ const VehicleDetails = () => {
               <div className={styles.typeStatusContainer}>
                 <div className={styles.typeAndStatusContainer}>
                   <p className={styles.vehType}>{vehicle.carTypeName}</p>
-                  <p
-                    className={`${styles.status} ${vehicle.status === "available" ? styles.available : vehicle.status === "rented" ? styles.rented : styles.maintenance} ${vehicle.ownerStatus === "blocked" && styles.maintenance}`}
-                  >
-                    {vehicle.ownerStatus !== "blocked"
-                      ? vehicle.status
-                      : "Unavailable"}
+                  <p className={`${styles.status} ${vehicleStatusClass}`}>
+                    {formatVehicleStatus(vehicleDisplayStatus)}
                   </p>
                 </div>
 
@@ -385,6 +437,35 @@ const VehicleDetails = () => {
                   </button>
                 )}
               </div>
+
+              {showValidationDetails && (
+                <section
+                  className={styles.validationPanel}
+                  aria-labelledby="vehicle-validation-title"
+                >
+                  <div className={styles.validationPanelHeader}>
+                    <span className={styles.validationIcon} aria-hidden="true">
+                      <AlertTriangle size={20} />
+                    </span>
+                    <div>
+                      <h3 id="vehicle-validation-title">
+                        Why this vehicle is not validated
+                      </h3>
+                      <p>
+                        Every item below must be resolved before this vehicle
+                        can be shown to renters.
+                      </p>
+                    </div>
+                  </div>
+                  <ul className={styles.validationReasons}>
+                    {validationReasons.map((reason) => (
+                      <li key={reason}>
+                        <strong>{reason}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               {(renterEligibilityMessage || vehicleUnavailableForRentals) && (
                 <div className={styles.eligibilityNotice}>
@@ -415,6 +496,91 @@ const VehicleDetails = () => {
               </div>
             </div>
           </div>
+
+          {rentalMetrics && (
+            <section
+              className={`${styles.rentalActivityContainer} ${styles.container}`}
+              aria-labelledby="rental-activity-title"
+            >
+              <div className={styles.rentalActivityHeader}>
+                <div>
+                  <h4 id="rental-activity-title">Rental activity</h4>
+                  <p>
+                    {isOwnVehicle
+                      ? "A lifetime snapshot of this vehicle's rental performance."
+                      : "This vehicle's lifetime rental history."}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className={`${styles.rentalStatsGrid} ${
+                  isOwnVehicle ? "" : styles.rentalStatsGridPublic
+                }`}
+              >
+                <article
+                  className={styles.rentalMetricCard}
+                  title="Total number of completed rentals for this vehicle."
+                  aria-label={`Times rented: ${formatRentalCount(rentalCount)}`}
+                >
+                  <span className={styles.rentalMetricIcon} aria-hidden="true">
+                    <CalendarCheck2 size={22} />
+                  </span>
+                  <div className={styles.rentalMetricContent}>
+                    <span>Times rented</span>
+                    <strong>{formatRentalCount(rentalCount)}</strong>
+                    <small>Completed rentals</small>
+                  </div>
+                </article>
+
+                {isOwnVehicle && (
+                  <>
+                    <article
+                      className={styles.rentalMetricCard}
+                      title="Total value generated by this vehicle's completed rentals."
+                      aria-label={`Completed rental value: ${formatRevenue(
+                        rentalMetrics.completedRentalValue,
+                      )}`}
+                    >
+                      <span
+                        className={styles.rentalMetricIcon}
+                        aria-hidden="true"
+                      >
+                        <CircleDollarSign size={22} />
+                      </span>
+                      <div className={styles.rentalMetricContent}>
+                        <span>Completed rental value</span>
+                        <strong>
+                          {formatRevenue(rentalMetrics.completedRentalValue)}
+                        </strong>
+                        <small>Generated by completed rentals</small>
+                      </div>
+                    </article>
+
+                    <article
+                      className={styles.rentalMetricCard}
+                      title="Completed rentals divided by all concluded rental requests. Open requests are not included."
+                      aria-label={`Rental completion rate: ${formatPercentage(
+                        completionRate,
+                      )}`}
+                    >
+                      <span
+                        className={styles.rentalMetricIcon}
+                        aria-hidden="true"
+                      >
+                        <Percent size={22} />
+                      </span>
+                      <div className={styles.rentalMetricContent}>
+                        <span>Completion rate</span>
+                        <strong>{formatPercentage(completionRate)}</strong>
+                        <small>Completed out of concluded requests</small>
+                      </div>
+                    </article>
+                  </>
+                )}
+              </div>
+            </section>
+          )}
 
           <div className={`${styles.specsContainer} ${styles.container}`}>
             <h4>Specifications</h4>

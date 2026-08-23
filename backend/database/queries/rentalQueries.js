@@ -125,6 +125,48 @@ async function getBookedDatesByPlate(licensePlate) {
   return bookedDates;
 }
 
+// Keep vehicle-detail performance aligned with the Vehicle Performance report:
+// an approved rental whose end date has passed is lifecycle-complete even if
+// the status synchronizer has not run yet. Pending and future/current approved
+// rows remain open and are excluded from the completion-rate denominator.
+async function getVehicleRentalMetricsByLicensePlate(licensePlate) {
+  const query = `
+    SELECT
+      SUM(
+        CASE
+          WHEN status = 'completed'
+            OR (status = 'approved' AND endDate < CURRENT_DATE())
+          THEN 1
+          ELSE 0
+        END
+      ) AS completedRentalCount,
+      COALESCE(
+        SUM(
+          CASE
+            WHEN status = 'completed'
+              OR (status = 'approved' AND endDate < CURRENT_DATE())
+            THEN totalPrice
+            ELSE 0
+          END
+        ),
+        0
+      ) AS completedRentalValue,
+      SUM(
+        CASE
+          WHEN status IN ('completed', 'rejected', 'declined', 'cancelled')
+            OR (status = 'approved' AND endDate < CURRENT_DATE())
+          THEN 1
+          ELSE 0
+        END
+      ) AS concludedRentalCount
+    FROM rentals
+    WHERE licensePlate = ?
+  `;
+
+  const rows = await doQuery(query, [licensePlate]);
+  return rows[0] || {};
+}
+
 async function getRentalsToComplete() {
   const query = `
     SELECT rentalId, licensePlate 
@@ -541,6 +583,7 @@ module.exports = {
   getRentalsStartingTomorrow,
   getRentalsEndingTomorrow,
   getBookedDatesByPlate,
+  getVehicleRentalMetricsByLicensePlate,
   getRentalsToComplete,
   getRentalsToExpire,
   completeExpiredRentals,

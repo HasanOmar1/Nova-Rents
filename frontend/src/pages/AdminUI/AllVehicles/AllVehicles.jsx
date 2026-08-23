@@ -3,6 +3,8 @@ import styles from "./AllVehicles.module.css";
 import {
   Car,
   CheckCircle2,
+  AlertTriangle,
+  Ban,
   CalendarClock,
   Wrench,
   ShieldOff,
@@ -60,6 +62,20 @@ const AllVehicles = () => {
       isAction: true,
     },
     {
+      title: "Not validated",
+      value: allVehStats?.notValidated ?? allVehStats?.not_validated ?? 0,
+      icon: <AlertTriangle size={28} color="#f9e081" />,
+      onClick: () => handleStatusChange("not_validated"),
+      isAction: true,
+    },
+    {
+      title: "Unavailable",
+      value: allVehStats?.unavailable || 0,
+      icon: <Ban size={28} color="#fb7185" />,
+      onClick: () => handleStatusChange("unavailable"),
+      isAction: true,
+    },
+    {
       title: "Rented",
       value: allVehStats?.rented || 0,
       icon: <CalendarClock size={28} color="#a7d2eb" />,
@@ -105,6 +121,8 @@ const AllVehicles = () => {
             >
               <option value="all">All Vehicles</option>
               <option value="available">Available</option>
+              <option value="not_validated">Not validated</option>
+              <option value="unavailable">Unavailable</option>
               <option value="rented">Rented</option>
               <option value="maintenance">Maintenance</option>
               <option value="inactive">Inactive</option>
@@ -120,7 +138,8 @@ const AllVehicles = () => {
       <div className={styles.topCardsContainer}>
         {topData.map((item) => (
           <HomeTopCards
-            key={crypto.randomUUID()}
+            key={item.title}
+            className={styles.vehicleStatCard}
             title={item.title}
             value={item.value}
             icon={item.icon}

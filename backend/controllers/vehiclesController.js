@@ -8,6 +8,8 @@ const {
 } = require("../database/queries/vehicleQueries");
 const {
   getPublicVerificationEligibilitySql,
+  getEffectiveVehicleStatusSql,
+  deriveEffectiveVehicleStatus,
   getVehicleEligibilitySummariesForPlates,
   getVehicleRentalEligibility,
 } = require("../database/queries/eligibilityQueries");
@@ -31,10 +33,27 @@ const {
   cancelApprovedRentalsByLicensePlate,
   getAffectedRentersByLicensePlate,
   hasActiveRentalNow,
+  getVehicleRentalMetricsByLicensePlate,
 } = require("../database/queries/rentalQueries");
 const {
   createNotification,
 } = require("../database/queries/notificationQueries");
+
+const ADMIN_VEHICLE_STATUS_FILTERS = new Set([
+  "all",
+  "available",
+  "not_validated",
+  "unavailable",
+  "rented",
+  "maintenance",
+  "inactive",
+]);
+
+const UNKNOWN_VEHICLE_ELIGIBILITY = Object.freeze({
+  eligible: false,
+  reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
+  statuses: {},
+});
 
 const getUserVehicles = async (req, res, next) => {
   try {
@@ -313,10 +332,36 @@ const getVehicleById = async (req, res, next) => {
     }
 
     const vehicle = result[0];
-    const rentalEligibility = await getVehicleRentalEligibility(
-      licensePlate,
-      vehicle.ownerId,
-    );
+    const [rentalEligibility, rentalMetricsRow] = await Promise.all([
+      getVehicleRentalEligibility(licensePlate, vehicle.ownerId),
+      getVehicleRentalMetricsByLicensePlate(licensePlate),
+    ]);
+    const effectiveStatus = deriveEffectiveVehicleStatus({
+      status: vehicle.status,
+      ownerStatus: vehicle.ownerStatus,
+      rentalEligibility,
+    });
+    const completedRentalCount =
+      Number(rentalMetricsRow.completedRentalCount) || 0;
+    const concludedRentalCount =
+      Number(rentalMetricsRow.concludedRentalCount) || 0;
+    const isVehicleOwner =
+      req.session.user?.userId != null &&
+      Number(req.session.user.userId) === Number(vehicle.ownerId);
+    const rentalMetrics = { rentalCount: completedRentalCount };
+
+    // Earnings and completion rate are commercially sensitive owner data.
+    // Admins do not receive them unless the admin account is also the owner.
+    if (isVehicleOwner) {
+      rentalMetrics.completedRentalValue =
+        Number(rentalMetricsRow.completedRentalValue) || 0;
+      rentalMetrics.concludedRentalCount = concludedRentalCount;
+      rentalMetrics.completionPercentage = concludedRentalCount
+        ? Number(
+            ((completedRentalCount / concludedRentalCount) * 100).toFixed(1),
+          )
+        : 0;
+    }
 
     // Public detail endpoint: never return private exact pickup fields,
     // even when the session user owns the vehicle (owners use /myVehicles).
@@ -324,8 +369,11 @@ const getVehicleById = async (req, res, next) => {
       message: "Vehicle fetched successfully",
       vehicle: {
         ...omitPrivatePickupFields(vehicle),
+        effectiveStatus,
         rentalEligible: rentalEligibility.eligible,
         rentalEligibility,
+        canRent: effectiveStatus === "available",
+        rentalMetrics,
       },
     });
   } catch (error) {
@@ -616,6 +664,20 @@ const listVehicles = async (
       100,
     );
     const offset = (parsedPage - 1) * parsedLimit;
+    const normalizedStatus = String(status || "all").trim().toLowerCase();
+    const effectiveStatusSql = getEffectiveVehicleStatusSql({
+      vehicleAlias: "v",
+      ownerAlias: "u",
+    });
+
+    if (
+      includeBlockedOwners &&
+      !ADMIN_VEHICLE_STATUS_FILTERS.has(normalizedStatus)
+    ) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid vehicle status filter",
+      });
+    }
 
     // 1. DYNAMIC STATUS FILTERING
     let whereClause = `WHERE 1=1`;
@@ -627,9 +689,9 @@ const listVehicles = async (
       whereClause += ` AND u.status != 'blocked'`;
       whereClause += ` AND v.status = 'available'`;
       whereClause += ` AND (${getPublicVerificationEligibilitySql({ vehicleAlias: "v" })})`;
-    } else if (status && status !== "all") {
-      whereClause += ` AND v.status = ?`;
-      values.push(status);
+    } else if (normalizedStatus !== "all") {
+      whereClause += ` AND (${effectiveStatusSql}) = ?`;
+      values.push(normalizedStatus);
     }
 
     if (brand) {
@@ -686,7 +748,38 @@ const listVehicles = async (
 
     const queryValues = [...values, parsedLimit, offset];
     const vehicles = await doQuery(query, queryValues);
-    const publicVehicles = vehicles.map(omitPrivatePickupFields);
+    let responseVehicles;
+
+    if (includeBlockedOwners) {
+      const eligibilitySummaries =
+        await getVehicleEligibilitySummariesForPlates(
+          vehicles.map((vehicle) => ({
+            licensePlate: vehicle.licensePlate,
+            ownerId: vehicle.ownerId,
+          })),
+        );
+
+      responseVehicles = vehicles.map((vehicle) => {
+        const rentalEligibility =
+          eligibilitySummaries.get(String(vehicle.licensePlate)) ||
+          UNKNOWN_VEHICLE_ELIGIBILITY;
+        const effectiveStatus = deriveEffectiveVehicleStatus({
+          status: vehicle.status,
+          ownerStatus: vehicle.ownerStatus,
+          rentalEligibility,
+        });
+
+        return omitPrivatePickupFields({
+          ...vehicle,
+          effectiveStatus,
+          rentalEligible: rentalEligibility.eligible,
+          rentalEligibility,
+          canRent: effectiveStatus === "available",
+        });
+      });
+    } else {
+      responseVehicles = vehicles.map(omitPrivatePickupFields);
+    }
 
     // 3. PAGINATION TOTAL (Added JOIN users)
     const countQuery = `
@@ -703,20 +796,33 @@ const listVehicles = async (
     const totalPages = Math.ceil(totalVehicles / parsedLimit);
 
     // 4. GLOBAL STATS (For Top Cards)
-    const ownerVisibilityClause = includeBlockedOwners
-      ? ""
-      : "WHERE u.status != 'blocked'";
-    const statsQuery = `
-      SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN v.status = 'available' THEN 1 ELSE 0 END) as available,
-        SUM(CASE WHEN v.status = 'rented' THEN 1 ELSE 0 END) as rented,
-        SUM(CASE WHEN v.status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
-        SUM(CASE WHEN v.status = 'inactive' THEN 1 ELSE 0 END) as inactive
-      FROM vehicles v
-      JOIN users u ON v.ownerId = u.userId
-      ${ownerVisibilityClause}
-    `;
+    const statsQuery = includeBlockedOwners
+      ? `
+          SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN effectiveStatus = 'available' THEN 1 ELSE 0 END) AS available,
+            SUM(CASE WHEN effectiveStatus = 'not_validated' THEN 1 ELSE 0 END) AS notValidated,
+            SUM(CASE WHEN effectiveStatus = 'unavailable' THEN 1 ELSE 0 END) AS unavailable,
+            SUM(CASE WHEN effectiveStatus = 'rented' THEN 1 ELSE 0 END) AS rented,
+            SUM(CASE WHEN effectiveStatus = 'maintenance' THEN 1 ELSE 0 END) AS maintenance,
+            SUM(CASE WHEN effectiveStatus = 'inactive' THEN 1 ELSE 0 END) AS inactive
+          FROM (
+            SELECT (${effectiveStatusSql}) AS effectiveStatus
+            FROM vehicles v
+            JOIN users u ON v.ownerId = u.userId
+          ) effectiveVehicles
+        `
+      : `
+          SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN v.status = 'available' THEN 1 ELSE 0 END) AS available,
+            SUM(CASE WHEN v.status = 'rented' THEN 1 ELSE 0 END) AS rented,
+            SUM(CASE WHEN v.status = 'maintenance' THEN 1 ELSE 0 END) AS maintenance,
+            SUM(CASE WHEN v.status = 'inactive' THEN 1 ELSE 0 END) AS inactive
+          FROM vehicles v
+          JOIN users u ON v.ownerId = u.userId
+          WHERE u.status != 'blocked'
+        `;
     const statsResult = await doQuery(statsQuery, []);
 
     // 5. EXTRACT AVAILABLE DROPDOWN OPTIONS (Added JOIN users)
@@ -728,14 +834,14 @@ const listVehicles = async (
       JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
       JOIN users u ON v.ownerId = u.userId
       ${
-        includeBlockedOwners && (!status || status === "all")
+        includeBlockedOwners && normalizedStatus === "all"
           ? "WHERE 1=1"
           : whereClause
       }
     `;
     const optionsData = await doQuery(
       optionsQuery,
-      includeBlockedOwners && (!status || status === "all") ? [] : values,
+      includeBlockedOwners && normalizedStatus === "all" ? [] : values,
     );
 
     const modelsWithBrands = [];
@@ -757,7 +863,7 @@ const listVehicles = async (
 
     res.status(200).json({
       message: "Vehicles fetched successfully",
-      vehicles: publicVehicles,
+      vehicles: responseVehicles,
       availableFilters,
       allVehStats: statsResult[0],
       pagination: {

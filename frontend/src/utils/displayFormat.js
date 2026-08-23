@@ -22,6 +22,57 @@ const COMPLAINT_STATUS_LABELS = {
 export const formatComplaintStatus = (status, fallback = "Unknown") =>
   COMPLAINT_STATUS_LABELS[status] || status || fallback;
 
+const VEHICLE_STATUS_LABELS = {
+  available: "Available",
+  unavailable: "Unavailable",
+  not_validated: "Not validated",
+  rented: "Rented",
+  maintenance: "Maintenance",
+  inactive: "Inactive",
+};
+
+const normalizeVehicleStatus = (status) =>
+  String(status || "")
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[\s-]+/g, "_")
+    .toLowerCase();
+
+const isExplicitlyFalse = (value) =>
+  value === false || value === 0 || value === "false" || value === "0";
+
+/**
+ * Returns the status people can actually act on while preserving the raw
+ * operational status in `vehicle.status` for editing and rental workflows.
+ */
+export const getVehicleDisplayStatus = (vehicle) => {
+  const effectiveStatus = normalizeVehicleStatus(vehicle?.effectiveStatus);
+  if (effectiveStatus) return effectiveStatus;
+
+  if (normalizeVehicleStatus(vehicle?.ownerStatus) === "blocked") {
+    return "unavailable";
+  }
+
+  const rawStatus = normalizeVehicleStatus(vehicle?.status);
+  const rentalEligible =
+    vehicle?.rentalEligibility?.eligible ?? vehicle?.rentalEligible;
+
+  if (rawStatus === "available" && isExplicitlyFalse(rentalEligible)) {
+    return "not_validated";
+  }
+
+  return rawStatus || "unknown";
+};
+
+export const formatVehicleStatus = (status, fallback = "Unknown") => {
+  const normalizedStatus = normalizeVehicleStatus(status);
+  return (
+    VEHICLE_STATUS_LABELS[normalizedStatus] ||
+    formatEventLabel(normalizedStatus) ||
+    fallback
+  );
+};
+
 const DOCUMENT_DISPLAY_CONFIG = {
   identity_card: {
     title: "Identity Card",
