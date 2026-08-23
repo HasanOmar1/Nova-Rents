@@ -1,5 +1,4 @@
 const nodemailer = require("nodemailer");
-const generateOTP = require("../utils/generateOTP");
 const { buildMapsDirectionsUrl } = require("../utils/mapsDirections");
 const { buildInsuranceReminderCopy } = require("../utils/insuranceReminder");
 
@@ -10,23 +9,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-
-const sendOTPEmail = async (email, otp) => {
-  return transporter.sendMail({
-    from: `"Nova Rents" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: "Verification Code",
-    html: `<h1>${otp}</h1>`,
-  });
-};
-
-const handleEmailVerification = async (email) => {
-  const otp = generateOTP();
-
-  await sendOTPEmail(email, otp);
-
-  return otp;
-};
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -680,7 +662,6 @@ const sendOwnerVehicleReportEmail = async ({
   const detailsText = String(description || "").trim() || "Not provided";
   const submittedLabel = formatEmailDateTime(submittedAt);
   const safeGreeting = escapeHtml(greeting);
-  const safeVehicle = escapeHtml(vehicleName);
   const safeIssue = escapeHtml(issueText);
   const safeDetails = escapeHtml(detailsText).replace(/\r?\n/g, "<br />");
   const safeComplaintId = escapeHtml(complaintId ?? "—");
@@ -1872,8 +1853,6 @@ const sendInsuranceExpirationEmail = async ({
 };
 
 module.exports = {
-  sendOTPEmail,
-  handleEmailVerification,
   sendContactMessageEmail,
   sendComplaintResponseEmail,
   sendOwnerVehicleReportEmail,

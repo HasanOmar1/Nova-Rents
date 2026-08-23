@@ -475,7 +475,7 @@ function parseJsonField(value, fallback) {
   if (typeof value === "object") return value;
   try {
     return JSON.parse(value);
-  } catch (error) {
+  } catch {
     return fallback;
   }
 }

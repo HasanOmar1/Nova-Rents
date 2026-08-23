@@ -180,11 +180,6 @@ async function lookupVehicleInGovIL(licensePlate) {
   }
 }
 
-async function checkVehicleNumberInGovIL(licensePlate) {
-  const result = await lookupVehicleInGovIL(licensePlate);
-  return result.lookupStatus === "found";
-}
-
 function emptyComparison(status, errorMessage = null, snapshot = null) {
   return {
     status,
@@ -234,8 +229,6 @@ function buildGovernmentCheckPayload(vehicle, lookup) {
 module.exports = {
   GOV_VEHICLE_RESOURCE_ID,
   GOV_SOURCE,
-  checkVehicleNumberInGovIL,
   lookupVehicleInGovIL,
-  compareVehicleToGovernmentRecord,
   buildGovernmentCheckPayload,
 };

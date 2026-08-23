@@ -76,11 +76,8 @@ export const usePagination = ({
 
   return {
     currentPage,
-    setPage,
     nextPage,
     previousPage,
     resetPage,
-    canGoNext: currentPage < safeTotalPages,
-    canGoPrevious: currentPage > 1,
   };
 };

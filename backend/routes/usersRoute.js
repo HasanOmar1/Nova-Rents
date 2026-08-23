@@ -16,5 +16,4 @@ router.post("/logout", isAuthenticated, userQueries.logout);
 router.post("/block/:email", isAdmin, userQueries.blockUserByEmail);
 router.post("/unblock/:email", isAdmin, userQueries.unblockUserByEmail);
 router.put("/profile", isAuthenticated, userQueries.updateUserProfile);
-// router.post("/verify-code", isAuthenticated, userQueries.verifyCode);
 module.exports = router;

@@ -3,7 +3,7 @@ import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeB
 import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import styles from "./Home.module.css";
-import { CalendarDays, Wallet, ClipboardList, Key } from "lucide-react";
+import { Clock, CreditCard, Wallet, ClipboardList } from "lucide-react";
 import { useRentContext } from "../../../context/RentContext";
 import { useEffect, useState } from "react";
 import { useReportContext } from "../../../context/ReportContext";
@@ -61,11 +61,11 @@ const Home = () => {
 
   useEffect(() => {
     fetchDashboardMetrics();
-  }, []);
+  }, [fetchDashboardMetrics]);
 
   useEffect(() => {
     getUserDashboardReport(appliedFromDate, appliedToDate);
-  }, [appliedFromDate, appliedToDate]);
+  }, [appliedFromDate, appliedToDate, getUserDashboardReport]);
 
   const handleApplyDates = () => {
     if (isRangeValid && !isUserDashboardLoading) {
@@ -117,16 +117,16 @@ const Home = () => {
       icon: <ClipboardList size={28} color="#a7d2eb" />,
     },
     {
-      title: "Upcoming Trips",
+      title: "Payment Required",
       isAction: true,
-      value: metrics.upcomingTrips,
-      icon: <CalendarDays size={28} color="#a7d2eb" />,
+      value: metrics.paymentRequired,
+      icon: <CreditCard size={28} color="#f6c445" />,
     },
     {
-      title: "Trips Taken",
+      title: "Waiting for Owner Approval",
       isAction: true,
-      value: metrics.tripsTaken,
-      icon: <Key size={28} color="#a7d2eb" />,
+      value: metrics.waitingForOwnerApproval,
+      icon: <Clock size={28} color="#a7d2eb" />,
     },
   ];
 
@@ -148,7 +148,7 @@ const Home = () => {
             <HomeTopCards
               isAction={item.isAction}
               to={`/rentalDashboard`}
-              key={crypto.randomUUID()}
+              key={item.title}
               title={item.title}
               value={item.value}
               icon={item.icon}

@@ -205,7 +205,5 @@ function validateDocumentMetadata(documentType, input = {}) {
 }
 
 module.exports = {
-  DOCUMENT_METADATA_RULES,
-  isRealIsoCalendarDate,
   validateDocumentMetadata,
 };

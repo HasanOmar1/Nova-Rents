@@ -6,7 +6,7 @@ export const parseImgs = (image, returnAll = false) => {
   let parsedImages = [];
   try {
     parsedImages = JSON.parse(image);
-  } catch (error) {
+  } catch {
     parsedImages = [image];
   }
 

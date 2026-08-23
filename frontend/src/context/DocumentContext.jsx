@@ -40,7 +40,6 @@ const DocumentContextProvider = ({ children }) => {
   });
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [adminErrorMsg, setAdminErrorMsg] = useState("");
-  const [selectedAdminDocument, setSelectedAdminDocument] = useState(null);
 
   const getMyDocuments = useCallback(async ({ silent = false } = {}) => {
     try {
@@ -176,7 +175,6 @@ const DocumentContextProvider = ({ children }) => {
   const getAdminDocumentById = async (documentId) => {
     try {
       const response = await axios.get(`/documents/admin/${documentId}`);
-      setSelectedAdminDocument(response.data);
       setAdminErrorMsg("");
       return response.data;
     } catch (error) {
@@ -300,7 +298,6 @@ const DocumentContextProvider = ({ children }) => {
         isAdminLoading,
         adminErrorMsg,
         setAdminErrorMsg,
-        selectedAdminDocument,
         getAdminDocuments,
         getAdminDocumentById,
         verifyAdminDocument,

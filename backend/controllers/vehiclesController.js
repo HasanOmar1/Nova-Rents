@@ -1,6 +1,5 @@
 // Handlers for vehicle-related database actions (list, add, update, delete)
 const doQuery = require("../database/query");
-const { checkVehicleNumberInGovIL } = require("../services/govApiService");
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   getVehicleByLicensePlate,
@@ -201,14 +200,6 @@ const addVehicle = async (req, res, next) => {
       pickupInstructions,
       googlePlaceId,
     } = vehicle;
-
-    // const isVehicleNumberInGovIL =
-    //   await checkVehicleNumberInGovIL(licensePlate);
-    // if (!isVehicleNumberInGovIL) {
-    //   return res.status(STATUS_CODE.BAD_REQUEST).json({
-    //     message: "Vehicle number is not in the government database",
-    //   });
-    // }
 
     const checkIfVehicleAlreadyExists =
       await getVehicleByLicensePlate(licensePlate);

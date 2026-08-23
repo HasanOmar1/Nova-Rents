@@ -2,11 +2,6 @@
 const bcrypt = require("bcrypt");
 const doQuery = require("../database/query");
 const hashPassword = require("../utils/hashPassword");
-// const generateOTP = require("../utils/generateOTP");
-// const {
-//   sendOTPEmail,
-//   handleEmailVerification,
-// } = require("../services/emailService");
 const {
   getUserByEmail,
   getUserByPhone,
@@ -35,57 +30,6 @@ const {
   sendAccountBlockedEmail,
   sendAccountUnblockedEmail,
 } = require("../services/emailService");
-
-const sendVerificationCode = async (req, res) => {
-  const { email } = req.body;
-
-  const otp = generateOTP(); // utils
-  await sendOTPEmail(email, otp); // service
-
-  req.session.otp = otp;
-
-  res.json({ message: "sent" });
-};
-
-// Verify the OTP for a pending email change and apply it
-// const verifyCode = async (req, res, next) => {
-//   try {
-//     const { code } = req.body;
-//     const { pendingEmail, emailOtp } = req.session;
-
-//     if (!pendingEmail || !emailOtp) {
-//       return res
-//         .status(STATUS_CODE.BAD_REQUEST)
-//         .json({ message: "No pending email verification" });
-//     }
-
-//     if (!code || String(code) !== String(emailOtp)) {
-//       return res
-//         .status(STATUS_CODE.BAD_REQUEST)
-//         .json({ message: "Invalid verification code" });
-//     }
-
-//     const updateQuery = "UPDATE users SET email = ? WHERE email = ?";
-//     const result = await doQuery(updateQuery, [
-//       pendingEmail,
-//       req.session.user.email,
-//     ]);
-
-//     if (result.affectedRows === 0) {
-//       return res
-//         .status(STATUS_CODE.NOT_FOUND)
-//         .json({ message: "User not found" });
-//     }
-
-//     req.session.user.email = pendingEmail;
-//     delete req.session.pendingEmail;
-//     delete req.session.emailOtp;
-
-//     res.status(STATUS_CODE.OK).json({ message: "Email verified and updated" });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 
 // Get a list of all users in the system
 const getAllUsers = async (req, res, next) => {
@@ -815,35 +759,6 @@ const updateUserProfile = async (req, res, next) => {
       values.push(hashedPassword);
       updatedFields.push("password");
     }
-
-    // we dont use this
-    //     -------------------------
-    // EMAIL CHANGE (2-STEP FLOW)
-    // -------------------------
-    // if (newEmail) {
-    //   const normalizedEmail = newEmail.trim().toLowerCase();
-
-    //   if (normalizedEmail !== currentEmail) {
-    //     const emailExist = await getUserByEmail(normalizedEmail);
-
-    //     if (emailExist) {
-    //       return res
-    //         .status(STATUS_CODE.CONFLICT)
-    //         .json({ message: "Email already exists" });
-    //     }
-    //   }
-    // }
-    //   if (normalizedEmail !== currentEmail) {
-    //     const otp = await handleEmailVerification(normalizedEmail);
-
-    //     req.session.pendingEmail = normalizedEmail;
-    //     req.session.emailOtp = otp;
-
-    //     return res.json({
-    //       message: "Verify new email first",
-    //     });
-    //   }
-    // }
 
     // -------------------------
     // SAFETY CHECK (IMPORTANT)

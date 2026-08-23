@@ -67,16 +67,6 @@ async function updateRentalStatus(rentalId, status) {
   return result;
 }
 
-async function getRenterEmailByRentalId(rentalId) {
-  const getEmailByRentalId = `select u.email from rentals r join users u on r.renterId = u.userId where rentalId = ?`;
-  const valuesOfgetEmailByRentalId = [rentalId];
-  const renterEmail = await doQuery(
-    getEmailByRentalId,
-    valuesOfgetEmailByRentalId,
-  );
-  return renterEmail[0];
-}
-
 async function getRentalsStartingTomorrow() {
   const query = `
     SELECT 
@@ -206,9 +196,9 @@ async function getMonthlyEarningsByOwnerId(ownerId) {
     FROM rentals r
     JOIN vehicles v ON r.licensePlate = v.licensePlate
     WHERE v.ownerId = ?
-    AND r.status = 'approved'
-    AND MONTH(r.startDate) = MONTH(CURRENT_DATE())
-    AND YEAR(r.startDate) = YEAR(CURRENT_DATE())
+    AND r.status = 'completed'
+    AND MONTH(r.endDate) = MONTH(CURRENT_DATE())
+    AND YEAR(r.endDate) = YEAR(CURRENT_DATE())
   `;
   return doQuery(query, [ownerId]);
 }
@@ -363,44 +353,28 @@ async function getPendingRequestsCountByOwnerId(ownerId) {
   return doQuery(query, [ownerId]);
 }
 
-async function getUpcomingTripsCountByUserId(userId) {
-  const query = `
-    SELECT COUNT(*) AS count
-    FROM rentals r
-    JOIN vehicles v ON r.licensePlate = v.licensePlate
-    WHERE (v.ownerId = ? OR r.renterId = ?)
-    AND r.status = 'approved'
-    AND r.startDate >= CURRENT_DATE()
-  `;
-  return doQuery(query, [userId, userId]);
-}
-
-async function getPastTripsCountByRenterId(renterId) {
-  const query = `
-    SELECT COUNT(*) AS count
-    FROM rentals
-    WHERE renterId = ?
-    AND status IN ('completed', 'approved')
-    AND endDate < CURRENT_DATE()
-  `;
-  return doQuery(query, [renterId]);
-}
-
-async function getDashboardChartDataByUserId(userId) {
+async function getRenterDashboardActionCounts(renterId) {
   const query = `
     SELECT
-      MONTH(r.startDate) AS monthIndex,
-      YEAR(r.startDate) AS year,
-      SUM(CASE WHEN v.ownerId = ? THEN r.totalPrice ELSE 0 END) AS totalEarnings,
-      COUNT(*) AS totalTrips
+      COUNT(DISTINCT CASE
+        WHEN r.status = 'approved'
+          AND p.status = 'pending'
+          AND p.paymentToken IS NOT NULL
+          AND p.paymentToken <> ''
+        THEN r.rentalId
+      END) AS paymentRequired,
+      COUNT(DISTINCT CASE
+        WHEN r.status = 'pending' THEN r.rentalId
+      END) AS waitingForOwnerApproval
     FROM rentals r
-    JOIN vehicles v ON r.licensePlate = v.licensePlate
-    WHERE (v.ownerId = ? OR r.renterId = ?)
-    AND r.status IN ('approved', 'completed')
-    AND r.startDate >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
-    GROUP BY YEAR(r.startDate), MONTH(r.startDate)
+    LEFT JOIN rental_payments p ON p.rentalId = r.rentalId
+    WHERE r.renterId = ?
   `;
-  return doQuery(query, [userId, userId, userId]);
+  const rows = await doQuery(query, [renterId]);
+  return rows[0] || {
+    paymentRequired: 0,
+    waitingForOwnerApproval: 0,
+  };
 }
 
 async function getPendingRentalRequestsForOwner(ownerId) {
@@ -572,7 +546,6 @@ module.exports = {
   getRequestsForMyVehiclesByOwnerId,
   getRentalById,
   updateRentalStatus,
-  getRenterEmailByRentalId,
   getRentalsStartingTomorrow,
   getRentalsEndingTomorrow,
   getBookedDatesByPlate,
@@ -588,9 +561,7 @@ module.exports = {
   getOwnerVehicleEarningsComparisonBounds,
   getOwnerVehicleEarningsComparisonByRange,
   getPendingRequestsCountByOwnerId,
-  getUpcomingTripsCountByUserId,
-  getPastTripsCountByRenterId,
-  getDashboardChartDataByUserId,
+  getRenterDashboardActionCounts,
   getPendingRentalRequestsForOwner,
   getMyTripsHistoryByRenterId,
   getRentalEmailDataByRentalId,

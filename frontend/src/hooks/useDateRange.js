@@ -24,10 +24,6 @@ export const useDateRange = (createInitialRange = createRecentMonthRange) => {
     setRange((currentRange) => ({ ...currentRange, to }));
   }, []);
 
-  const resetRange = useCallback(() => {
-    setRange(initialRange);
-  }, [initialRange]);
-
   return {
     fromDate: range.from,
     toDate: range.to,
@@ -35,6 +31,5 @@ export const useDateRange = (createInitialRange = createRecentMonthRange) => {
     setToDate,
     isRangeValid: Boolean(range.from && range.to && range.from <= range.to),
     initialRange,
-    resetRange,
   };
 };

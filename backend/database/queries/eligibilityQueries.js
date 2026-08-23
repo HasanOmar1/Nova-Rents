@@ -266,9 +266,6 @@ async function getVehicleEligibilitySummariesForPlates(platesWithOwners) {
 }
 
 module.exports = {
-  getUserScopedDocumentsForEligibility,
-  getVehicleScopedDocumentsForEligibility,
-  getGovernmentCheckStatus,
   getUserRentalEligibility,
   getVehicleRentalEligibility,
   getVehicleRentalEligibilityForNewRental,
