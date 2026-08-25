@@ -1,5 +1,6 @@
 import styles from "./ComplaintsHistoryCards.module.css";
 import { formatComplaintStatus } from "../../utils/displayFormat";
+import ComplaintEvidenceGallery from "../ComplaintEvidenceGallery/ComplaintEvidenceGallery";
 
 const statusClassName = (status) => {
   if (status === "open") return styles.open;
@@ -18,6 +19,7 @@ const ComplaintsHistoryCards = ({
   listedOwner,
   submittedDate,
   description,
+  images,
   adminResponse,
 }) => {
   return (
@@ -50,6 +52,8 @@ const ComplaintsHistoryCards = ({
       </p>
 
       <p className={styles.description}>Description: {description}</p>
+
+      <ComplaintEvidenceGallery images={images} complaintTitle={title} />
 
       {adminResponse && (
         <div className={styles.responseBlock}>

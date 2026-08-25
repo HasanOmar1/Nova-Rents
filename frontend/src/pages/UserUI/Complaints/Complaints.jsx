@@ -965,6 +965,7 @@ const Complaints = () => {
                       listedOwner={listedOwner}
                       submittedDate={formatSubmittedDate(comp.createdAt)}
                       description={comp.description}
+                      images={comp.images}
                       adminResponse={comp.resolutionMessage?.trim() || null}
                     />
                   );
