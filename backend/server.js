@@ -3,6 +3,10 @@ const session = require("express-session");
 const cors = require("cors");
 const errorHandler = require("./middleWare/errorMiddleware");
 const path = require("path");
+const {
+  isSafePublicImagePath,
+  safeMimeForStoredFile,
+} = require("./utils/imageFile");
 require("dotenv").config({
   path: path.join(__dirname, ".env"),
   quiet: true,
@@ -44,7 +48,26 @@ if (isProduction) {
 }
 
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    if (!isSafePublicImagePath(req.path)) {
+      return res.sendStatus(404);
+    }
+    return next();
+  },
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res, filePath) => {
+      const safeMime = safeMimeForStoredFile(filePath);
+      if (safeMime) res.setHeader("Content-Type", safeMime);
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
+      );
+    },
+  }),
+);
 
 app.use(
   session({

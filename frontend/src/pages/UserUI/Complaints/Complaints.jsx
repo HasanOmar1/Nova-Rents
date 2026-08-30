@@ -752,7 +752,7 @@ const Complaints = () => {
             <input
               type="file"
               multiple
-              accept="image/*"
+              accept=".jpg,.jpeg,.jfif,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
               onChange={handleImageChange}
               disabled={isSubmitting}
             />

@@ -3,7 +3,10 @@ const express = require("express");
 const router = express.Router();
 const { isAuthenticated, isAdmin } = require("../middleWare/authMiddleware");
 const vehicleQueries = require("../controllers/vehiclesController");
-const upload = require("../middleWare/uploadMiddleware");
+const {
+  upload,
+  validateUploadedImages,
+} = require("../middleWare/uploadMiddleware");
 
 router.get("/", isAuthenticated, vehicleQueries.getAllVehicles);
 router.get("/admin", isAdmin, vehicleQueries.getAdminVehicles);
@@ -18,6 +21,7 @@ router.put(
   "/:licensePlate",
   isAuthenticated,
   upload.array("images", 4),
+  validateUploadedImages,
   vehicleQueries.updateVehicle,
 );
 // accept max 4 images
@@ -25,6 +29,7 @@ router.post(
   "/add",
   isAuthenticated,
   upload.array("images", 4),
+  validateUploadedImages,
   vehicleQueries.addVehicle,
 );
 
