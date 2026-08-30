@@ -74,6 +74,29 @@ const {
 } = require("../services/emailService");
 const { clearFailedUploads } = require("../utils/handleUploads");
 
+const COMPLAINT_STATUSES = new Set([
+  "open",
+  "in_review",
+  "resolved",
+  "closed",
+]);
+const COMPLAINT_FILTER_STATUSES = new Set(["all", ...COMPLAINT_STATUSES]);
+const DEFAULT_COMPLAINT_PAGE_SIZE = 5;
+const MAX_COMPLAINT_PAGE_SIZE = 50;
+
+function parseComplaintPagination(query) {
+  const parsedPage = Number.parseInt(query.page, 10);
+  const parsedLimit = Number.parseInt(query.limit, 10);
+
+  return {
+    requestedPage: parsedPage > 0 ? parsedPage : 1,
+    limit:
+      parsedLimit > 0
+        ? Math.min(parsedLimit, MAX_COMPLAINT_PAGE_SIZE)
+        : DEFAULT_COMPLAINT_PAGE_SIZE,
+  };
+}
+
 async function getVehicleLabelForOwnerNotice(licensePlate) {
   // Owner email/name from users join — never reporter identity.
   const rows = await doQuery(
@@ -604,15 +627,13 @@ async function updateComplaintStatus_controller(req, res, next) {
     const complaintId = Number(req.params.complaintId);
     const { status, responseToUser, resolutionMessage, adminNotes } = req.body;
 
-    const allowedStatuses = ["open", "in_review", "resolved", "closed"];
-
     if (!Number.isInteger(complaintId) || complaintId <= 0) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "Invalid complaint ID",
       });
     }
 
-    if (!allowedStatuses.includes(status)) {
+    if (!COMPLAINT_STATUSES.has(status)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "Invalid complaint status",
       });
@@ -947,12 +968,9 @@ async function getMyComplaints_controller(req, res, next) {
     const userId = req.session.user.userId;
     const { startDate, endDate } = req.query;
     const status = req.query.status || "all";
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 5;
-    const offset = (page - 1) * limit;
+    const { requestedPage, limit } = parseComplaintPagination(req.query);
 
-    const allowedStatuses = ["all", "open", "in_review", "resolved", "closed"];
-    if (!allowedStatuses.includes(status)) {
+    if (!COMPLAINT_FILTER_STATUSES.has(status)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "Invalid complaint status",
       });
@@ -979,20 +997,23 @@ async function getMyComplaints_controller(req, res, next) {
       });
     }
 
-    const filters = { status, startDate, endDate, limit, offset };
-    const complaints = await getComplaintsByUserId(userId, filters);
     const totalComplaints = await countComplaintsByUserId(userId, {
       status,
       startDate,
       endDate,
     });
+    const totalPages = Math.max(Math.ceil(totalComplaints / limit), 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+    const offset = (currentPage - 1) * limit;
+    const filters = { status, startDate, endDate, limit, offset };
+    const complaints = await getComplaintsByUserId(userId, filters);
 
     return res.status(STATUS_CODE.OK).json({
       message: "Complaints fetched successfully",
       complaints,
       pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalComplaints / limit) || 1,
+        currentPage,
+        totalPages,
         totalComplaints,
         limit,
       },
@@ -1013,13 +1034,20 @@ async function getAllComplaints_controller(req, res, next) {
       });
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const offset = (page - 1) * limit;
+    const { requestedPage, limit } = parseComplaintPagination(req.query);
     const status = req.query.status || "all";
 
-    const complaints = await getAllComplaints(status, limit, offset);
+    if (!COMPLAINT_FILTER_STATUSES.has(status)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid complaint status",
+      });
+    }
+
     const totalComplaints = await countAllComplaints(status);
+    const totalPages = Math.max(Math.ceil(totalComplaints / limit), 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+    const offset = (currentPage - 1) * limit;
+    const complaints = await getAllComplaints(status, limit, offset);
     const stats = await getComplaintStats();
 
     return res.status(STATUS_CODE.OK).json({
@@ -1027,8 +1055,8 @@ async function getAllComplaints_controller(req, res, next) {
       complaints,
       stats,
       pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalComplaints / limit),
+        currentPage,
+        totalPages,
         totalComplaints,
         limit,
       },
@@ -1054,6 +1082,12 @@ async function getComplaintTrends_controller(req, res, next) {
 
     const { startDate, endDate } = req.query;
     const status = req.query.status || "all";
+
+    if (!COMPLAINT_FILTER_STATUSES.has(status)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid complaint status",
+      });
+    }
 
     if (!startDate || !endDate) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
