@@ -39,7 +39,6 @@ const UserContextProvider = ({ children }) => {
   const login = async (userData) => {
     try {
       const response = await axios.post("/users/login", userData);
-      console.log("logged in successfully", response.data);
       setCurrentUser(response.data);
 
       if (response.data.role === "user") {
@@ -137,11 +136,7 @@ const UserContextProvider = ({ children }) => {
         `/users/block/${encodeURIComponent(email)}`,
       );
       setErrorMsg("");
-      await getUsers(
-        pagination.currentPage || 1,
-        currentStatus,
-        currentSearch,
-      );
+      await getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
       if (response.data.emailSent === false) {
         setErrorMsg(response.data.message);
       }
@@ -161,11 +156,7 @@ const UserContextProvider = ({ children }) => {
         `/users/unblock/${encodeURIComponent(email)}`,
       );
       setErrorMsg("");
-      await getUsers(
-        pagination.currentPage || 1,
-        currentStatus,
-        currentSearch,
-      );
+      await getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
       if (response.data.emailSent === false) {
         setErrorMsg(response.data.message);
       }
@@ -182,10 +173,9 @@ const UserContextProvider = ({ children }) => {
   const fetchUserStats = async (email, currentPage) => {
     try {
       setIsStatsLoading(true);
-      const res = await axios.get(
-        `/users/stats/${encodeURIComponent(email)}`,
-        { params: { page: currentPage, limit: 3 } },
-      );
+      const res = await axios.get(`/users/stats/${encodeURIComponent(email)}`, {
+        params: { page: currentPage, limit: 3 },
+      });
       setUserStatsPerEmail(res.data);
       setErrorMsg("");
     } catch (err) {
