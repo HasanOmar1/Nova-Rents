@@ -7,6 +7,13 @@ require("dotenv").config({
   path: path.join(__dirname, ".env"),
   quiet: true,
 });
+const {
+  isSafeStoredImageName,
+  safeMimeForStoredFile,
+} = require("./utils/imageFile");
+const {
+  isComplaintEvidenceFilename,
+} = require("./database/queries/complaintQueries");
 
 // routes
 const usersRoute = require("./routes/usersRoute");
@@ -44,7 +51,35 @@ if (isProduction) {
 }
 
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  async (req, res, next) => {
+    const filename = String(req.path || "").replace(/^\/+/, "");
+    if (!isSafeStoredImageName(filename)) {
+      return res.sendStatus(404);
+    }
+
+    try {
+      if (await isComplaintEvidenceFilename(filename)) {
+        return res.sendStatus(404);
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  },
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res, filePath) => {
+      const safeMime = safeMimeForStoredFile(filePath);
+      if (safeMime) res.setHeader("Content-Type", safeMime);
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
+      );
+    },
+  }),
+);
 
 app.use(
   session({

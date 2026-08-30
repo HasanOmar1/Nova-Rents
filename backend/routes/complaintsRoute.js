@@ -3,11 +3,15 @@ const router = express.Router();
 
 const complaintsController = require("../controllers/complaintsController");
 const { isAuthenticated } = require("../middleWare/authMiddleware");
-const upload = require("../middleWare/uploadMiddleware");
+const {
+  upload,
+  validateComplaintEvidence,
+} = require("../middleWare/uploadMiddleware");
 router.post(
   "/",
   isAuthenticated,
   upload.array("images", 4),
+  validateComplaintEvidence,
   complaintsController.createComplaint_controller,
 );
 
@@ -45,6 +49,12 @@ router.get(
   "/trends",
   isAuthenticated,
   complaintsController.getComplaintTrends_controller,
+);
+
+router.get(
+  "/:complaintId/evidence/:filename",
+  isAuthenticated,
+  complaintsController.getComplaintEvidence_controller,
 );
 
 router.get(

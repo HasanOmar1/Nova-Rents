@@ -20,6 +20,7 @@ const ComplaintsHistoryCards = ({
   submittedDate,
   description,
   images,
+  complaintId,
   adminResponse,
 }) => {
   return (
@@ -53,7 +54,11 @@ const ComplaintsHistoryCards = ({
 
       <p className={styles.description}>Description: {description}</p>
 
-      <ComplaintEvidenceGallery images={images} complaintTitle={title} />
+      <ComplaintEvidenceGallery
+        images={images}
+        complaintId={complaintId}
+        complaintTitle={title}
+      />
 
       {adminResponse && (
         <div className={styles.responseBlock}>

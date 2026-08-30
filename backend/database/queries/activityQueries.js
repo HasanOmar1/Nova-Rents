@@ -1,13 +1,34 @@
 const doQuery = require("../query");
+const { queryOnConnection } = require("../withTransaction");
+
+const CREATE_ACTIVITY_SQL = `
+  INSERT INTO activity_logs
+  (userId, action, description, relatedId)
+  VALUES (?, ?, ?, ?)
+`;
 
 async function createActivity(userId, action, description, relatedId = null) {
-  const query = `
-    INSERT INTO activity_logs
-    (userId, action, description, relatedId)
-    VALUES (?, ?, ?, ?)
-  `;
+  return doQuery(CREATE_ACTIVITY_SQL, [
+    userId,
+    action,
+    description,
+    relatedId,
+  ]);
+}
 
-  return await doQuery(query, [userId, action, description, relatedId]);
+async function createActivityOnConnection(
+  connection,
+  userId,
+  action,
+  description,
+  relatedId = null,
+) {
+  return queryOnConnection(connection, CREATE_ACTIVITY_SQL, [
+    userId,
+    action,
+    description,
+    relatedId,
+  ]);
 }
 
 async function getActivitiesByUserId(userId) {
@@ -30,5 +51,6 @@ async function getActivitiesByUserId(userId) {
 
 module.exports = {
   createActivity,
+  createActivityOnConnection,
   getActivitiesByUserId,
 };

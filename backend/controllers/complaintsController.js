@@ -1,5 +1,7 @@
 const STATUS_CODE = require("../constants/statusCodes");
 const doQuery = require("../database/query");
+const fs = require("fs");
+const path = require("path");
 
 const {
   getVehicleByLicensePlate,
@@ -13,6 +15,7 @@ const {
   lockRentalRowForUpdate,
   findActiveComplaintForRentalTypeOnConnection,
   createComplaintOnConnection,
+  getComplaintEvidenceById,
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
   countComplaintsAboutOwner,
@@ -24,10 +27,18 @@ const {
   getAllComplaints,
   countAllComplaints,
   getComplaintStats,
-  updateComplaintStatus,
-  getComplaintReporterById,
+  updateComplaintStatusOnConnection,
+  getComplaintReporterByIdForUpdateOnConnection,
+  getComplaintRespondedAtOnConnection,
   getComplaintTrendsByRange,
 } = require("../database/queries/complaintQueries");
+const {
+  COMPLAINT_EVIDENCE_DIR,
+  UPLOADS_DIR,
+  isSafeStoredImageName,
+  parseStoredImageNames,
+  safeMimeForStoredFile,
+} = require("../utils/imageFile");
 const { withTransaction } = require("../database/withTransaction");
 const {
   parseLocalDate,
@@ -35,9 +46,11 @@ const {
   buildPeriodKeys,
 } = require("../utils/periodBuckets");
 
-const { createActivity } = require("../database/queries/activityQueries");
 const {
-  createSystemHistory,
+  createActivityOnConnection,
+} = require("../database/queries/activityQueries");
+const {
+  createSystemHistoryOnConnection,
 } = require("../database/queries/systemHistoryQueries");
 
 const {
@@ -59,6 +72,7 @@ const {
   sendReportedOwnerReportStatusEmail,
   sendOwnerVehicleReportStatusEmail,
 } = require("../services/emailService");
+const { clearFailedUploads } = require("../utils/handleUploads");
 
 async function getVehicleLabelForOwnerNotice(licensePlate) {
   // Owner email/name from users join — never reporter identity.
@@ -88,9 +102,86 @@ function formatComplaintStatusLabel(status) {
   if (!status) return "Unknown";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
-async function createComplaint_controller(req, res, next) {
+
+async function findStoredComplaintEvidence(filename) {
+  for (const directory of [COMPLAINT_EVIDENCE_DIR, UPLOADS_DIR]) {
+    const filePath = path.join(directory, filename);
+    try {
+      const stats = await fs.promises.stat(filePath);
+      if (stats.isFile()) return filePath;
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  }
+  return null;
+}
+
+async function getComplaintEvidence_controller(req, res, next) {
   try {
-    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+    const complaintId = Number(req.params.complaintId);
+    const filename = String(req.params.filename || "").trim();
+
+    if (
+      !Number.isInteger(complaintId) ||
+      complaintId <= 0 ||
+      !isSafeStoredImageName(filename)
+    ) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    const complaint = await getComplaintEvidenceById(complaintId);
+    const sessionUser = req.session.user;
+    const canViewEvidence =
+      complaint &&
+      (sessionUser.role === "admin" ||
+        Number(complaint.userId) === Number(sessionUser.userId));
+
+    const storedFilename = complaint
+      ? parseStoredImageNames(complaint.images).find(
+          (candidate) => candidate.toLowerCase() === filename.toLowerCase(),
+        )
+      : null;
+
+    if (!canViewEvidence || !storedFilename) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    const filePath = await findStoredComplaintEvidence(storedFilename);
+    const safeMime = filePath ? safeMimeForStoredFile(filePath) : null;
+    if (!filePath || !safeMime) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    res.set({
+      "Cache-Control": "private, no-store",
+      "Content-Security-Policy":
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
+      "Content-Type": safeMime,
+      "Cross-Origin-Resource-Policy": "same-origin",
+      "X-Content-Type-Options": "nosniff",
+    });
+
+    return res.sendFile(
+      filePath,
+      { acceptRanges: false, cacheControl: false, dotfiles: "deny" },
+      (error) => {
+        if (error) next(error);
+      },
+    );
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function createComplaint_controller(req, res, next) {
+  let complaintCommitted = false;
+  let insertResult = null;
+
+  try {
+    if (
+      validateAuthenticatedUser(req, res, "Unauthorized, Login first!") !==
+      true
+    ) {
       return;
     }
 
@@ -112,7 +203,7 @@ async function createComplaint_controller(req, res, next) {
         ? JSON.stringify(req.files.map((file) => file.filename))
         : null;
 
-    if (!validateComplaintFields(req.body, res)) {
+    if (validateComplaintFields(req.body, res) !== true) {
       return;
     }
 
@@ -197,7 +288,28 @@ async function createComplaint_controller(req, res, next) {
       complaintType === "vehicle" ? eligibleRental.licensePlate : null;
     const ownerForInsert = complaintType === "owner" ? resolvedOwnerId : null;
 
-    let insertResult;
+    // Build the audit descriptions before the transaction so the complaint
+    // and both required audit rows can be committed as one unit.
+    const fullName = `${req.session.user.firstName || ""} ${
+      req.session.user.lastName || ""
+    }`.trim();
+
+    const actorName = fullName
+      ? `${fullName} (${req.session.user.email})`
+      : req.session.user.email || "A user";
+
+    const typeArticle = /^[aeiou]/i.test(complaintType) ? "an" : "a";
+    const userActivityDescription =
+      `You filed ${typeArticle} ${complaintType} complaint: ${title}`.slice(
+        0,
+        255,
+      );
+    const adminHistoryDescription =
+      `${actorName} filed ${typeArticle} ${complaintType} complaint: ${title}`.slice(
+        0,
+        255,
+      );
+
     try {
       insertResult = await withTransaction(async (connection) => {
         const lockedRental = await lockRentalRowForUpdate(
@@ -267,6 +379,27 @@ async function createComplaint_controller(req, res, next) {
           throw err;
         }
 
+        await createActivityOnConnection(
+          connection,
+          userId,
+          "Created a Complaint",
+          userActivityDescription,
+          result.insertId,
+        );
+
+        await createSystemHistoryOnConnection(
+          connection,
+          userId,
+          "complaint",
+          "create",
+          "Created a Complaint",
+          "complaint",
+          String(result.insertId),
+          parsedRentalId,
+          complaintType === "vehicle" ? plateForInsert : null,
+          adminHistoryDescription,
+        );
+
         return result;
       });
     } catch (txError) {
@@ -287,45 +420,11 @@ async function createComplaint_controller(req, res, next) {
       throw txError;
     }
 
-    // Build readable user name
-    const fullName = `${req.session.user.firstName || ""} ${
-      req.session.user.lastName || ""
-    }`.trim();
+    // From this point onward the complaint owns its evidence. Later activity,
+    // notification, or email failures must never delete committed attachments.
+    complaintCommitted = true;
 
-    const actorName = fullName
-      ? `${fullName} (${req.session.user.email})`
-      : req.session.user.email || "A user";
-
-    // Choose "a" or "an"
-    // vehicle -> a vehicle complaint
-    // owner   -> an owner complaint
-    const typeArticle = /^[aeiou]/i.test(complaintType) ? "an" : "a";
-
-    const userActivityDescription = `You filed ${typeArticle} ${complaintType} complaint: ${title}`;
-
-    const adminHistoryDescription = `${actorName} filed ${typeArticle} ${complaintType} complaint: ${title}`;
-
-    // Side effects only after successful COMMIT.
-    await createActivity(
-      userId,
-      "Created a Complaint",
-      userActivityDescription,
-      insertResult.insertId,
-    );
-
-    await createSystemHistory(
-      userId,
-      "complaint",
-      "create",
-      "Created a Complaint",
-      "complaint",
-      String(insertResult.insertId),
-      parsedRentalId,
-      complaintType === "vehicle" ? plateForInsert : null,
-      adminHistoryDescription,
-    );
-
-    // Notify all admins (existing behavior)
+    // Optional post-commit notifications and emails are best effort.
     try {
       const admins = await doQuery(
         "SELECT userId FROM users WHERE role = 'admin'",
@@ -469,12 +568,33 @@ async function createComplaint_controller(req, res, next) {
       complaintId: insertResult.insertId,
     });
   } catch (error) {
-    next(error);
+    if (complaintCommitted && !res.headersSent) {
+      console.error(
+        "Complaint follow-up failed after commit:",
+        error.message,
+      );
+      return res.status(STATUS_CODE.CREATED).json({
+        message:
+          "Complaint submitted successfully, but some notifications could not be completed.",
+        complaintId: insertResult.insertId,
+      });
+    }
+    return next(error);
+  } finally {
+    if (!complaintCommitted) {
+      clearFailedUploads(req.files);
+    }
   }
 }
 async function updateComplaintStatus_controller(req, res, next) {
+  let statusUpdateCommitted = false;
+  let committedStatusChanged = false;
+
   try {
-    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+    if (
+      validateAuthenticatedUser(req, res, "Unauthorized, Login first!") !==
+      true
+    )
       return;
     if (req.session.user.role !== "admin") {
       return res
@@ -519,29 +639,6 @@ async function updateComplaintStatus_controller(req, res, next) {
     const trimmedAdminNotes =
       typeof adminNotes === "string" ? adminNotes.trim() : "";
 
-    const complaint = await getComplaintReporterById(complaintId);
-    if (!complaint) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "Complaint not found",
-      });
-    }
-
-    const previousStatus = complaint.status;
-    const statusChanged = previousStatus !== status;
-
-    const result = await updateComplaintStatus(
-      complaintId,
-      status,
-      trimmedResolution || null,
-      trimmedAdminNotes || null,
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "Complaint not found",
-      });
-    }
-
     let statusEventName = "complaint_status_updated";
     let statusOperation = "update";
     if (status === "in_review") {
@@ -553,17 +650,69 @@ async function updateComplaintStatus_controller(req, res, next) {
       statusEventName = "complaint_closed";
     }
 
-    await createSystemHistory(
-      req.session.user.userId,
-      "admin",
-      statusOperation,
-      statusEventName,
-      "complaint",
-      String(complaintId),
-      null,
-      null,
-      `Complaint #${complaintId} status updated to ${status}`,
-    );
+    let mutation;
+    try {
+      mutation = await withTransaction(async (connection) => {
+        const complaint = await getComplaintReporterByIdForUpdateOnConnection(
+          connection,
+          complaintId,
+        );
+        if (!complaint) {
+          const error = new Error("Complaint not found");
+          error.code = "COMPLAINT_NOT_FOUND";
+          throw error;
+        }
+
+        const statusChanged = complaint.status !== status;
+        const result = await updateComplaintStatusOnConnection(
+          connection,
+          complaintId,
+          status,
+          trimmedResolution || null,
+          trimmedAdminNotes || null,
+        );
+
+        if (!result || result.affectedRows !== 1) {
+          const error = new Error("Complaint not found");
+          error.code = "COMPLAINT_NOT_FOUND";
+          throw error;
+        }
+
+        await createSystemHistoryOnConnection(
+          connection,
+          req.session.user.userId,
+          "admin",
+          statusOperation,
+          statusEventName,
+          "complaint",
+          String(complaintId),
+          null,
+          null,
+          `Complaint #${complaintId} status updated to ${status}`.slice(
+            0,
+            255,
+          ),
+        );
+
+        const respondedAt = await getComplaintRespondedAtOnConnection(
+          connection,
+          complaintId,
+        );
+
+        return { complaint, respondedAt, statusChanged };
+      });
+    } catch (transactionError) {
+      if (transactionError.code === "COMPLAINT_NOT_FOUND") {
+        return res.status(STATUS_CODE.NOT_FOUND).json({
+          message: "Complaint not found",
+        });
+      }
+      throw transactionError;
+    }
+
+    statusUpdateCommitted = true;
+    committedStatusChanged = mutation.statusChanged;
+    const { complaint, respondedAt, statusChanged } = mutation;
 
     // Lifecycle side effects only on an actual status transition.
     // Same-status resubmit may still update adminNotes/respondedAt above,
@@ -669,13 +818,6 @@ async function updateComplaintStatus_controller(req, res, next) {
       );
     }
 
-    // DB-authoritative respondedAt written by UPDATE … respondedAt = NOW().
-    const respondedRows = await doQuery(
-      `SELECT respondedAt FROM complaints WHERE complaintId = ? LIMIT 1`,
-      [complaintId],
-    );
-    const respondedAt = respondedRows[0]?.respondedAt ?? null;
-
     let emailSent = false;
     try {
       await sendComplaintResponseEmail({
@@ -780,7 +922,19 @@ async function updateComplaintStatus_controller(req, res, next) {
       statusChanged: true,
     });
   } catch (error) {
-    next(error);
+    if (statusUpdateCommitted && !res.headersSent) {
+      console.error(
+        "Complaint status follow-up failed after commit:",
+        error.message,
+      );
+      return res.status(STATUS_CODE.OK).json({
+        message:
+          "Complaint updated, but some follow-up actions could not be completed.",
+        emailSent: false,
+        statusChanged: committedStatusChanged,
+      });
+    }
+    return next(error);
   }
 }
 
@@ -1077,6 +1231,7 @@ async function getComplaintsAboutMyVehicles_controller(req, res, next) {
 
 module.exports = {
   createComplaint_controller,
+  getComplaintEvidence_controller,
   updateComplaintStatus_controller,
   getMyComplaints_controller,
   getAllComplaints_controller,

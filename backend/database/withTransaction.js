@@ -23,7 +23,16 @@ async function withTransaction(work) {
     }
     throw error;
   } finally {
-    connection.release();
+    try {
+      connection.release();
+    } catch (releaseError) {
+      // A pool bookkeeping failure must not turn an acknowledged COMMIT into
+      // an apparent mutation failure or replace the original transaction error.
+      console.error(
+        "Transaction connection release failed:",
+        releaseError.message,
+      );
+    }
   }
 }
 

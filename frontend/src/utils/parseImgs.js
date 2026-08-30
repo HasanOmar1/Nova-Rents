@@ -2,8 +2,10 @@ const imgPath = import.meta.env.PROD
   ? import.meta.env.VITE_API_URL
   : "http://localhost:3000";
 
-export const parseImgs = (image, returnAll = false) => {
-  if (!image) return returnAll ? [] : "";
+const baseUrl = (imgPath || "").replace(/\/$/, "");
+
+const parseImageFilenames = (image) => {
+  if (!image) return [];
 
   let parsedImages = image;
 
@@ -15,13 +17,11 @@ export const parseImgs = (image, returnAll = false) => {
     }
   }
 
-  const filenames = (Array.isArray(parsedImages)
+  return (Array.isArray(parsedImages)
     ? parsedImages
     : [parsedImages]
-  ).filter((filename) => typeof filename === "string" && filename.trim());
-
-  const baseUrl = (imgPath || "").replace(/\/$/, "");
-  const imageUrls = filenames
+  )
+    .filter((filename) => typeof filename === "string" && filename.trim())
     .map((filename) => {
       const value = filename.trim().replace(/^\/?uploads\//, "");
 
@@ -34,15 +34,34 @@ export const parseImgs = (image, returnAll = false) => {
         return null;
       }
 
-      return `${baseUrl}/uploads/${value}`;
+      return value;
     })
     .filter(Boolean);
+};
 
-  // if returnAll is true, return an array of all full image URLs
-  if (returnAll) {
-    return imageUrls;
-  }
+const firstOrAll = (values, returnAll) =>
+  returnAll ? values : values[0] || "";
 
-  // if returnAll is false then Just return the very first image as a string
-  return imageUrls[0] || "";
+export const parseImgs = (image, returnAll = false) => {
+  const imageUrls = parseImageFilenames(image).map(
+    (filename) => `${baseUrl}/uploads/${encodeURIComponent(filename)}`,
+  );
+
+  return firstOrAll(imageUrls, returnAll);
+};
+
+export const parseComplaintImgs = (
+  image,
+  complaintId,
+  returnAll = false,
+) => {
+  const id = String(complaintId ?? "").trim();
+  if (!/^[1-9]\d*$/.test(id)) return returnAll ? [] : "";
+
+  const imageUrls = parseImageFilenames(image).map(
+    (filename) =>
+      `${baseUrl}/complaints/${id}/evidence/${encodeURIComponent(filename)}`,
+  );
+
+  return firstOrAll(imageUrls, returnAll);
 };

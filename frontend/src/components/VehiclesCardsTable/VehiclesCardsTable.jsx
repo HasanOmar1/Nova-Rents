@@ -67,9 +67,7 @@ const VehiclesCardsTable = ({
     vehicleForDetails.ownerEmail || ownerFullName || "Unknown owner";
   const isOwnerBlocked =
     admin && String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
-  const displayedStatus = admin
-    ? getVehicleDisplayStatus(vehicleForDetails)
-    : veh.status || "unknown";
+  const displayedStatus = getVehicleDisplayStatus(vehicleForDetails);
   const eligibilitySummary =
     !admin && veh.rentalEligibility
       ? buildVehicleEligibilitySummary(veh.rentalEligibility)

@@ -39,7 +39,6 @@ const UserContextProvider = ({ children }) => {
   const login = async (userData) => {
     try {
       const response = await axios.post("/users/login", userData);
-      console.log("logged in successfully", response.data);
       setCurrentUser(response.data);
 
       if (response.data.role === "user") {
@@ -51,8 +50,11 @@ const UserContextProvider = ({ children }) => {
       setErrorMsg("");
       localStorage.setItem("session", "true");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to sign in. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
@@ -64,8 +66,11 @@ const UserContextProvider = ({ children }) => {
       navigate("/home");
       localStorage.setItem("session", "true");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to create your account. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
@@ -73,13 +78,16 @@ const UserContextProvider = ({ children }) => {
     setIsLoading(true);
     try {
       await axios.post("/users/logout", null, {});
-      localStorage.clear();
+      localStorage.removeItem("session");
       setCurrentUser(null);
       navigate("/");
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to sign out. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
@@ -137,11 +145,7 @@ const UserContextProvider = ({ children }) => {
         `/users/block/${encodeURIComponent(email)}`,
       );
       setErrorMsg("");
-      await getUsers(
-        pagination.currentPage || 1,
-        currentStatus,
-        currentSearch,
-      );
+      await getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
       if (response.data.emailSent === false) {
         setErrorMsg(response.data.message);
       }
@@ -161,11 +165,7 @@ const UserContextProvider = ({ children }) => {
         `/users/unblock/${encodeURIComponent(email)}`,
       );
       setErrorMsg("");
-      await getUsers(
-        pagination.currentPage || 1,
-        currentStatus,
-        currentSearch,
-      );
+      await getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
       if (response.data.emailSent === false) {
         setErrorMsg(response.data.message);
       }
@@ -182,10 +182,9 @@ const UserContextProvider = ({ children }) => {
   const fetchUserStats = async (email, currentPage) => {
     try {
       setIsStatsLoading(true);
-      const res = await axios.get(
-        `/users/stats/${encodeURIComponent(email)}`,
-        { params: { page: currentPage, limit: 3 } },
-      );
+      const res = await axios.get(`/users/stats/${encodeURIComponent(email)}`, {
+        params: { page: currentPage, limit: 3 },
+      });
       setUserStatsPerEmail(res.data);
       setErrorMsg("");
     } catch (err) {

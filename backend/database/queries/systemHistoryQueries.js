@@ -1,4 +1,35 @@
 const doQuery = require("../query");
+const { queryOnConnection } = require("../withTransaction");
+
+const CREATE_SYSTEM_HISTORY_SQL = `
+  INSERT INTO system_history
+  (actorUserId, category, operation, eventName, entityType, entityId, rentalId, vehicleLicensePlate, description)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`;
+
+function systemHistoryValues(
+  actorUserId,
+  category,
+  operation,
+  eventName,
+  entityType,
+  entityId,
+  rentalId,
+  vehicleLicensePlate,
+  description,
+) {
+  return [
+    actorUserId,
+    category,
+    operation,
+    eventName,
+    entityType,
+    entityId,
+    rentalId,
+    vehicleLicensePlate,
+    description,
+  ];
+}
 
 async function createSystemHistory(
   actorUserId,
@@ -11,23 +42,49 @@ async function createSystemHistory(
   vehicleLicensePlate = null,
   description = null,
 ) {
-  const query = `
-    INSERT INTO system_history
-    (actorUserId, category, operation, eventName, entityType, entityId, rentalId, vehicleLicensePlate, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+  return doQuery(
+    CREATE_SYSTEM_HISTORY_SQL,
+    systemHistoryValues(
+      actorUserId,
+      category,
+      operation,
+      eventName,
+      entityType,
+      entityId,
+      rentalId,
+      vehicleLicensePlate,
+      description,
+    ),
+  );
+}
 
-  return doQuery(query, [
-    actorUserId,
-    category,
-    operation,
-    eventName,
-    entityType,
-    entityId,
-    rentalId,
-    vehicleLicensePlate,
-    description,
-  ]);
+async function createSystemHistoryOnConnection(
+  connection,
+  actorUserId,
+  category,
+  operation,
+  eventName,
+  entityType,
+  entityId = null,
+  rentalId = null,
+  vehicleLicensePlate = null,
+  description = null,
+) {
+  return queryOnConnection(
+    connection,
+    CREATE_SYSTEM_HISTORY_SQL,
+    systemHistoryValues(
+      actorUserId,
+      category,
+      operation,
+      eventName,
+      entityType,
+      entityId,
+      rentalId,
+      vehicleLicensePlate,
+      description,
+    ),
+  );
 }
 
 async function getSystemActivityChartData(startDate, endDate, dateFormat) {
@@ -74,6 +131,7 @@ async function getUserActivityChartData(
 
 module.exports = {
   createSystemHistory,
+  createSystemHistoryOnConnection,
   getSystemActivityChartData,
   getUserActivityChartData,
 };

@@ -576,7 +576,7 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
                 <input
                   id={uniqueInputId}
                   type="file"
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.jfif,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
                   multiple
                   onChange={handleImageChange}
                   style={{ display: "none" }}
