@@ -4,6 +4,7 @@ const router = express.Router();
 const { isAuthenticated, isAdmin } = require("../middleWare/authMiddleware");
 const vehicleQueries = require("../controllers/vehiclesController");
 const {
+  handleImageUploadError,
   upload,
   validateUploadedImages,
 } = require("../middleWare/uploadMiddleware");
@@ -21,6 +22,7 @@ router.put(
   "/:licensePlate",
   isAuthenticated,
   upload.array("images", 4),
+  handleImageUploadError,
   validateUploadedImages,
   vehicleQueries.updateVehicle,
 );
@@ -29,6 +31,7 @@ router.post(
   "/add",
   isAuthenticated,
   upload.array("images", 4),
+  handleImageUploadError,
   validateUploadedImages,
   vehicleQueries.addVehicle,
 );
