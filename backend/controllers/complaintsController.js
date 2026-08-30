@@ -69,6 +69,7 @@ const {
   sendReportedOwnerReportStatusEmail,
   sendOwnerVehicleReportStatusEmail,
 } = require("../services/emailService");
+const { clearFailedUploads } = require("../utils/handleUploads");
 
 async function getVehicleLabelForOwnerNotice(licensePlate) {
   // Owner email/name from users join — never reporter identity.
@@ -170,8 +171,13 @@ async function getComplaintEvidence_controller(req, res, next) {
 }
 
 async function createComplaint_controller(req, res, next) {
+  let complaintCommitted = false;
+
   try {
-    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+    if (
+      validateAuthenticatedUser(req, res, "Unauthorized, Login first!") !==
+      true
+    ) {
       return;
     }
 
@@ -193,7 +199,7 @@ async function createComplaint_controller(req, res, next) {
         ? JSON.stringify(req.files.map((file) => file.filename))
         : null;
 
-    if (!validateComplaintFields(req.body, res)) {
+    if (validateComplaintFields(req.body, res) !== true) {
       return;
     }
 
@@ -367,6 +373,10 @@ async function createComplaint_controller(req, res, next) {
       }
       throw txError;
     }
+
+    // From this point onward the complaint owns its evidence. Later activity,
+    // notification, or email failures must never delete committed attachments.
+    complaintCommitted = true;
 
     // Build readable user name
     const fullName = `${req.session.user.firstName || ""} ${
@@ -550,7 +560,11 @@ async function createComplaint_controller(req, res, next) {
       complaintId: insertResult.insertId,
     });
   } catch (error) {
-    next(error);
+    return next(error);
+  } finally {
+    if (!complaintCommitted) {
+      clearFailedUploads(req.files);
+    }
   }
 }
 async function updateComplaintStatus_controller(req, res, next) {
