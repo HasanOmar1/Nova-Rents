@@ -62,7 +62,11 @@ const Map = () => {
     <div className={`${styles.Map} page`}>
       <h1>Map View</h1>
       <div className={styles.btnsContainer}>
-        <p>There are {allVehicles?.length || 0} total vehicles.</p>
+        <p>
+          There are{" "}
+          {allVehPagination?.totalVehicles ?? allVehicles?.length ?? 0} total
+          vehicles.
+        </p>
 
         <Link to={"/vehicles"} className={styles.vehiclesListBtn}>
           Vehicles List
