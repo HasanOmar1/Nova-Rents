@@ -94,8 +94,11 @@ const VehicleContextProvider = ({ children }) => {
       setVehiclesBrands(response.data.carBrands);
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to load vehicle brands. Please try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
@@ -105,8 +108,11 @@ const VehicleContextProvider = ({ children }) => {
       setVehicleModel(response.data.carModels);
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to load vehicle models. Please try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
@@ -116,8 +122,11 @@ const VehicleContextProvider = ({ children }) => {
       setVehiclesType(response.data.carTypes);
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to load vehicle types. Please try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
@@ -130,8 +139,11 @@ const VehicleContextProvider = ({ children }) => {
       setVehicleInventoryVersion((version) => version + 1);
       return true;
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to add the vehicle. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
       return false;
     }
   };

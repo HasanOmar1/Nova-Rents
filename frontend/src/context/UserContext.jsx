@@ -50,8 +50,11 @@ const UserContextProvider = ({ children }) => {
       setErrorMsg("");
       localStorage.setItem("session", "true");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to sign in. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
@@ -63,8 +66,11 @@ const UserContextProvider = ({ children }) => {
       navigate("/home");
       localStorage.setItem("session", "true");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to create your account. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
@@ -77,8 +83,11 @@ const UserContextProvider = ({ children }) => {
       navigate("/");
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to sign out. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
