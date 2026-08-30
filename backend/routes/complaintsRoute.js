@@ -4,6 +4,7 @@ const router = express.Router();
 const complaintsController = require("../controllers/complaintsController");
 const { isAuthenticated } = require("../middleWare/authMiddleware");
 const {
+  handleImageUploadError,
   upload,
   validateComplaintEvidence,
 } = require("../middleWare/uploadMiddleware");
@@ -11,6 +12,7 @@ router.post(
   "/",
   isAuthenticated,
   upload.array("images", 4),
+  handleImageUploadError,
   validateComplaintEvidence,
   complaintsController.createComplaint_controller,
 );

@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const multer = require("multer");
+const STATUS_CODE = require("../constants/statusCodes");
 const { clearFailedUploads } = require("../utils/handleUploads");
 const {
   UPLOADS_DIR,
@@ -20,7 +21,9 @@ ensureComplaintEvidenceDir();
 const fileFilter = (req, file, cb) => {
   if (!isAllowedDeclaredImage(file.originalname, file.mimetype)) {
     return cb(
-      new Error("Invalid image type. Upload a JPG, PNG, WebP, or AVIF file."),
+      new ImageValidationError(
+        "Invalid image type. Upload a JPG, PNG, WebP, or AVIF file.",
+      ),
       false,
     );
   }
@@ -33,6 +36,43 @@ const upload = multer({
   fileFilter,
   limits: { fileSize: MAX_IMAGE_BYTES },
 });
+
+function handleImageUploadError(error, _req, res, next) {
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res.status(STATUS_CODE.PAYLOAD_TOO_LARGE).json({
+        message: "Image is too large. Maximum size is 5MB.",
+      });
+    }
+
+    if (
+      error.code === "LIMIT_FILE_COUNT" ||
+      (error.code === "LIMIT_UNEXPECTED_FILE" && error.field === "images")
+    ) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Upload up to 4 images.",
+      });
+    }
+
+    if (error.code === "LIMIT_UNEXPECTED_FILE") {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Unexpected image upload field.",
+      });
+    }
+
+    return res.status(STATUS_CODE.BAD_REQUEST).json({
+      message: "Image upload failed.",
+    });
+  }
+
+  if (error instanceof ImageValidationError) {
+    return res.status(STATUS_CODE.BAD_REQUEST).json({
+      message: error.message,
+    });
+  }
+
+  return next(error);
+}
 
 function storedFileRecord(file, normalized, filename, destination) {
   const storedFile = {
@@ -97,6 +137,7 @@ const validateComplaintEvidence = persistUploadedImages(
 
 module.exports = {
   upload,
+  handleImageUploadError,
   validateUploadedImages,
   validateComplaintEvidence,
 };
