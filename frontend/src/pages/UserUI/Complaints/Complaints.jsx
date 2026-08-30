@@ -966,6 +966,7 @@ const Complaints = () => {
                       submittedDate={formatSubmittedDate(comp.createdAt)}
                       description={comp.description}
                       images={comp.images}
+                      complaintId={comp.complaintId}
                       adminResponse={comp.resolutionMessage?.trim() || null}
                     />
                   );

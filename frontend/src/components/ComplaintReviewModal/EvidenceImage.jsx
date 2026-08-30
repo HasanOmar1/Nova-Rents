@@ -25,6 +25,7 @@ const EvidenceImage = ({ src, alt, isThumbnail = false }) => {
     <img
       src={src}
       alt={alt}
+      crossOrigin="use-credentials"
       loading="lazy"
       decoding="async"
       onError={() => setHasError(true)}

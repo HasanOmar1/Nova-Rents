@@ -1,6 +1,43 @@
 const fs = require("fs");
 const path = require("path");
 
+const uploadsDir = path.resolve(__dirname, "../uploads");
+const complaintEvidenceDir = path.resolve(
+  __dirname,
+  "../complaint-evidence",
+);
+
+function isInsideDirectory(directory, filePath) {
+  const relativePath = path.relative(directory, filePath);
+  return Boolean(
+    relativePath &&
+      relativePath !== ".." &&
+      !relativePath.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relativePath),
+  );
+}
+
+function failedUploadPath(file) {
+  if (!file) return null;
+
+  const candidate = file.path
+    ? path.resolve(file.path)
+    : typeof file.filename === "string"
+      ? path.resolve(uploadsDir, file.filename)
+      : null;
+
+  if (
+    !candidate ||
+    ![uploadsDir, complaintEvidenceDir].some((directory) =>
+      isInsideDirectory(directory, candidate),
+    )
+  ) {
+    return null;
+  }
+
+  return candidate;
+}
+
 // Helper function to safely delete images from the disk
 const deleteImagesFromDisk = (imageJsonString) => {
   if (!imageJsonString) return;
@@ -26,7 +63,9 @@ const clearFailedUploads = (files) => {
   if (!files || files.length === 0) return;
 
   files.forEach((file) => {
-    const filePath = path.join(__dirname, "../uploads", file.filename);
+    const filePath = failedUploadPath(file);
+    if (!filePath) return;
+
     try {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);

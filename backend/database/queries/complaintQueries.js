@@ -1,5 +1,6 @@
 const doQuery = require("../query");
 const { queryOnConnection } = require("../withTransaction");
+const { parseStoredImageNames } = require("../../utils/imageFile");
 
 const ELIGIBLE_VEHICLE_REPORT_SQL = `
   SELECT
@@ -174,6 +175,38 @@ async function createComplaintOnConnection(
       description,
       images,
     ],
+  );
+}
+
+async function getComplaintEvidenceById(complaintId) {
+  const rows = await doQuery(
+    `
+      SELECT complaintId, userId, images
+      FROM complaints
+      WHERE complaintId = ?
+      LIMIT 1
+    `,
+    [complaintId],
+  );
+  return rows[0] || null;
+}
+
+async function isComplaintEvidenceFilename(filename) {
+  const normalizedFilename = filename.toLowerCase();
+  const rows = await doQuery(
+    `
+      SELECT images
+      FROM complaints
+      WHERE images IS NOT NULL
+        AND INSTR(LOWER(CAST(images AS CHAR)), ?) > 0
+    `,
+    [normalizedFilename],
+  );
+
+  return rows.some((row) =>
+    parseStoredImageNames(row.images).some(
+      (storedFilename) => storedFilename.toLowerCase() === normalizedFilename,
+    ),
   );
 }
 
@@ -604,6 +637,8 @@ module.exports = {
   lockRentalRowForUpdate,
   findActiveComplaintForRentalTypeOnConnection,
   createComplaintOnConnection,
+  getComplaintEvidenceById,
+  isComplaintEvidenceFilename,
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
   countComplaintsAboutOwner,

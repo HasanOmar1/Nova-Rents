@@ -9,7 +9,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { parseImgs } from "../../utils/parseImgs";
+import { parseComplaintImgs } from "../../utils/parseImgs";
 import { useModalDialog } from "../../hooks/useModalDialog";
 import EvidenceImage from "./EvidenceImage";
 
@@ -32,7 +32,9 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
 
   if (!complaint) return null;
 
-  const images = complaint.images ? parseImgs(complaint.images, true) : [];
+  const images = complaint.images
+    ? parseComplaintImgs(complaint.images, complaint.complaintId, true)
+    : [];
   const activeImage = images[activeImageIndex] || images[0];
   const isVehicleComplaint = complaint.complaintType === "vehicle";
   const reportedUserEmail = isVehicleComplaint

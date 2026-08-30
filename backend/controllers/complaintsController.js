@@ -1,5 +1,7 @@
 const STATUS_CODE = require("../constants/statusCodes");
 const doQuery = require("../database/query");
+const fs = require("fs");
+const path = require("path");
 
 const {
   getVehicleByLicensePlate,
@@ -13,6 +15,7 @@ const {
   lockRentalRowForUpdate,
   findActiveComplaintForRentalTypeOnConnection,
   createComplaintOnConnection,
+  getComplaintEvidenceById,
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
   countComplaintsAboutOwner,
@@ -28,6 +31,13 @@ const {
   getComplaintReporterById,
   getComplaintTrendsByRange,
 } = require("../database/queries/complaintQueries");
+const {
+  COMPLAINT_EVIDENCE_DIR,
+  UPLOADS_DIR,
+  isSafeStoredImageName,
+  parseStoredImageNames,
+  safeMimeForStoredFile,
+} = require("../utils/imageFile");
 const { withTransaction } = require("../database/withTransaction");
 const {
   parseLocalDate,
@@ -88,6 +98,77 @@ function formatComplaintStatusLabel(status) {
   if (!status) return "Unknown";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
+
+async function findStoredComplaintEvidence(filename) {
+  for (const directory of [COMPLAINT_EVIDENCE_DIR, UPLOADS_DIR]) {
+    const filePath = path.join(directory, filename);
+    try {
+      const stats = await fs.promises.stat(filePath);
+      if (stats.isFile()) return filePath;
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  }
+  return null;
+}
+
+async function getComplaintEvidence_controller(req, res, next) {
+  try {
+    const complaintId = Number(req.params.complaintId);
+    const filename = String(req.params.filename || "").trim();
+
+    if (
+      !Number.isInteger(complaintId) ||
+      complaintId <= 0 ||
+      !isSafeStoredImageName(filename)
+    ) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    const complaint = await getComplaintEvidenceById(complaintId);
+    const sessionUser = req.session.user;
+    const canViewEvidence =
+      complaint &&
+      (sessionUser.role === "admin" ||
+        Number(complaint.userId) === Number(sessionUser.userId));
+
+    const storedFilename = complaint
+      ? parseStoredImageNames(complaint.images).find(
+          (candidate) => candidate.toLowerCase() === filename.toLowerCase(),
+        )
+      : null;
+
+    if (!canViewEvidence || !storedFilename) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    const filePath = await findStoredComplaintEvidence(storedFilename);
+    const safeMime = filePath ? safeMimeForStoredFile(filePath) : null;
+    if (!filePath || !safeMime) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    res.set({
+      "Cache-Control": "private, no-store",
+      "Content-Security-Policy":
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
+      "Content-Type": safeMime,
+      "Cross-Origin-Resource-Policy": "same-origin",
+      "X-Content-Type-Options": "nosniff",
+    });
+
+    return res.sendFile(
+      filePath,
+      { acceptRanges: false, cacheControl: false, dotfiles: "deny" },
+      (error) => {
+        if (error) next(error);
+      },
+    );
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function createComplaint_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -1077,6 +1158,7 @@ async function getComplaintsAboutMyVehicles_controller(req, res, next) {
 
 module.exports = {
   createComplaint_controller,
+  getComplaintEvidence_controller,
   updateComplaintStatus_controller,
   getMyComplaints_controller,
   getAllComplaints_controller,

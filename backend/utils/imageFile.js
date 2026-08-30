@@ -3,6 +3,7 @@ const path = require("path");
 const sharp = require("sharp");
 
 const UPLOADS_DIR = path.join(__dirname, "../uploads");
+const COMPLAINT_EVIDENCE_DIR = path.join(__dirname, "../complaint-evidence");
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_PIXELS = 40_000_000;
 
@@ -33,6 +34,10 @@ function ensureUploadsDir() {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
+function ensureComplaintEvidenceDir() {
+  fs.mkdirSync(COMPLAINT_EVIDENCE_DIR, { recursive: true });
+}
+
 function extensionOf(filename) {
   return path.extname(String(filename || "")).toLowerCase();
 }
@@ -48,6 +53,43 @@ function isAllowedDeclaredImage(originalname, mimetype) {
 
 function isSafePublicImagePath(filename) {
   return Boolean(EXTENSION_TO_MIME[extensionOf(filename)]);
+}
+
+function isSafeStoredImageName(filename) {
+  const value = String(filename || "").trim();
+  return Boolean(
+    value &&
+      value === path.basename(value) &&
+      /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value) &&
+      isSafePublicImagePath(value),
+  );
+}
+
+function parseStoredImageNames(images) {
+  if (images == null) return [];
+
+  let parsed = Buffer.isBuffer(images) ? images.toString("utf8") : images;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      parsed = [parsed];
+    }
+  }
+
+  const values = Array.isArray(parsed)
+    ? parsed
+    : parsed && typeof parsed === "object"
+      ? Object.values(parsed)
+      : [parsed];
+  return [
+    ...new Set(
+      values
+        .filter((value) => typeof value === "string")
+        .map((value) => value.trim().replace(/^\/?uploads\//i, ""))
+        .filter(isSafeStoredImageName),
+    ),
+  ];
 }
 
 function storedExtensionForMime(mimetype) {
@@ -215,13 +257,17 @@ async function normalizeUploadedImage(file) {
 
 module.exports = {
   UPLOADS_DIR,
+  COMPLAINT_EVIDENCE_DIR,
   MAX_IMAGE_BYTES,
   MAX_IMAGE_PIXELS,
   EXTENSION_TO_MIME,
   ImageValidationError,
   ensureUploadsDir,
+  ensureComplaintEvidenceDir,
   isAllowedDeclaredImage,
   isSafePublicImagePath,
+  isSafeStoredImageName,
+  parseStoredImageNames,
   storedExtensionForMime,
   detectImageMime,
   safeMimeForStoredFile,

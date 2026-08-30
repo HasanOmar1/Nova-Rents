@@ -8,12 +8,15 @@ import {
   X,
 } from "lucide-react";
 import { useModalDialog } from "../../hooks/useModalDialog";
-import { parseImgs } from "../../utils/parseImgs";
+import { parseComplaintImgs } from "../../utils/parseImgs";
 import styles from "./ComplaintEvidenceGallery.module.css";
 import GalleryImage from "./GalleryImage";
 
-const ComplaintEvidenceGallery = ({ images, complaintTitle }) => {
-  const imageUrls = useMemo(() => parseImgs(images, true), [images]);
+const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
+  const imageUrls = useMemo(
+    () => parseComplaintImgs(images, complaintId, true),
+    [complaintId, images],
+  );
   const [activeImageIndex, setActiveImageIndex] = useState(null);
   const [unavailableImages, setUnavailableImages] = useState(() => new Set());
   const galleryTitleId = useId();

@@ -25,6 +25,7 @@ const GalleryImage = ({ src, alt, compact = false, onUnavailable }) => {
     <img
       src={src}
       alt={alt}
+      crossOrigin="use-credentials"
       loading="lazy"
       decoding="async"
       onError={() => {
