@@ -72,7 +72,7 @@ const UserContextProvider = ({ children }) => {
     setIsLoading(true);
     try {
       await axios.post("/users/logout", null, {});
-      localStorage.clear();
+      localStorage.removeItem("session");
       setCurrentUser(null);
       navigate("/");
       setErrorMsg("");
