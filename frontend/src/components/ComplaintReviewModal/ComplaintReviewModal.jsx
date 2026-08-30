@@ -25,9 +25,7 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
     if (!isOpen || !complaint) return;
 
     setStatus(complaint.status || "open");
-    setResolutionMessage(
-      complaint.resolutionMessage || complaint.adminNotes || "",
-    );
+    setResolutionMessage(complaint.resolutionMessage ?? "");
     setAdminNotes(complaint.adminNotes || "");
     setActiveImageIndex(0);
   }, [isOpen, complaint]);
