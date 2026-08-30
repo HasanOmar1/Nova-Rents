@@ -555,45 +555,91 @@ async function getComplaintStats() {
   return result[0];
 }
 
+const UPDATE_COMPLAINT_STATUS_SQL = `
+  UPDATE complaints
+  SET status = ?,
+      resolutionMessage = ?,
+      adminNotes = ?,
+      respondedAt = NOW()
+  WHERE complaintId = ?
+`;
+
 async function updateComplaintStatus(
   complaintId,
   status,
   resolutionMessage,
   adminNotes,
 ) {
-  const query = `
-    UPDATE complaints
-    SET status = ?,
-        resolutionMessage = ?,
-        adminNotes = ?,
-        respondedAt = NOW()
-    WHERE complaintId = ?
-  `;
-
-  return doQuery(query, [status, resolutionMessage, adminNotes, complaintId]);
+  return doQuery(UPDATE_COMPLAINT_STATUS_SQL, [
+    status,
+    resolutionMessage,
+    adminNotes,
+    complaintId,
+  ]);
 }
 
-async function getComplaintReporterById(complaintId) {
-  const query = `
-    SELECT
-      c.complaintId,
-      c.complaintType,
-      c.title,
-      c.status,
-      c.respondedAt,
-      c.rentalId,
-      c.vehicleLicensePlate,
-      c.ownerId,
-      c.userId AS reporterId,
-      u.email AS reporterEmail,
-      u.firstName AS reporterFirstName
-    FROM complaints c
-    INNER JOIN users u ON c.userId = u.userId
-    WHERE c.complaintId = ?
-  `;
+async function updateComplaintStatusOnConnection(
+  connection,
+  complaintId,
+  status,
+  resolutionMessage,
+  adminNotes,
+) {
+  return queryOnConnection(connection, UPDATE_COMPLAINT_STATUS_SQL, [
+    status,
+    resolutionMessage,
+    adminNotes,
+    complaintId,
+  ]);
+}
 
-  const result = await doQuery(query, [complaintId]);
+const COMPLAINT_REPORTER_BY_ID_SQL = `
+  SELECT
+    c.complaintId,
+    c.complaintType,
+    c.title,
+    c.status,
+    c.respondedAt,
+    c.rentalId,
+    c.vehicleLicensePlate,
+    c.ownerId,
+    c.userId AS reporterId,
+    u.email AS reporterEmail,
+    u.firstName AS reporterFirstName
+  FROM complaints c
+  INNER JOIN users u ON c.userId = u.userId
+  WHERE c.complaintId = ?
+`;
+
+async function getComplaintReporterById(complaintId) {
+  const result = await doQuery(COMPLAINT_REPORTER_BY_ID_SQL, [complaintId]);
   return result[0];
+}
+
+async function getComplaintReporterByIdForUpdateOnConnection(
+  connection,
+  complaintId,
+) {
+  const result = await queryOnConnection(
+    connection,
+    `${COMPLAINT_REPORTER_BY_ID_SQL} FOR UPDATE`,
+    [complaintId],
+  );
+  return result[0];
+}
+
+async function getComplaintRespondedAtOnConnection(connection, complaintId) {
+  const result = await queryOnConnection(
+    connection,
+    `
+      SELECT respondedAt
+      FROM complaints
+      WHERE complaintId = ?
+      LIMIT 1
+    `,
+    [complaintId],
+  );
+  return result[0]?.respondedAt ?? null;
 }
 
 // Complaints counted by submission time (createdAt), bucketed with the
@@ -652,6 +698,9 @@ module.exports = {
   countAllComplaints,
   getComplaintStats,
   updateComplaintStatus,
+  updateComplaintStatusOnConnection,
   getComplaintReporterById,
+  getComplaintReporterByIdForUpdateOnConnection,
+  getComplaintRespondedAtOnConnection,
   getComplaintTrendsByRange,
 };

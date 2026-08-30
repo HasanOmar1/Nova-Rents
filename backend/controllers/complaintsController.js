@@ -27,8 +27,9 @@ const {
   getAllComplaints,
   countAllComplaints,
   getComplaintStats,
-  updateComplaintStatus,
-  getComplaintReporterById,
+  updateComplaintStatusOnConnection,
+  getComplaintReporterByIdForUpdateOnConnection,
+  getComplaintRespondedAtOnConnection,
   getComplaintTrendsByRange,
 } = require("../database/queries/complaintQueries");
 const {
@@ -45,9 +46,11 @@ const {
   buildPeriodKeys,
 } = require("../utils/periodBuckets");
 
-const { createActivity } = require("../database/queries/activityQueries");
 const {
-  createSystemHistory,
+  createActivityOnConnection,
+} = require("../database/queries/activityQueries");
+const {
+  createSystemHistoryOnConnection,
 } = require("../database/queries/systemHistoryQueries");
 
 const {
@@ -172,6 +175,7 @@ async function getComplaintEvidence_controller(req, res, next) {
 
 async function createComplaint_controller(req, res, next) {
   let complaintCommitted = false;
+  let insertResult = null;
 
   try {
     if (
@@ -284,7 +288,28 @@ async function createComplaint_controller(req, res, next) {
       complaintType === "vehicle" ? eligibleRental.licensePlate : null;
     const ownerForInsert = complaintType === "owner" ? resolvedOwnerId : null;
 
-    let insertResult;
+    // Build the audit descriptions before the transaction so the complaint
+    // and both required audit rows can be committed as one unit.
+    const fullName = `${req.session.user.firstName || ""} ${
+      req.session.user.lastName || ""
+    }`.trim();
+
+    const actorName = fullName
+      ? `${fullName} (${req.session.user.email})`
+      : req.session.user.email || "A user";
+
+    const typeArticle = /^[aeiou]/i.test(complaintType) ? "an" : "a";
+    const userActivityDescription =
+      `You filed ${typeArticle} ${complaintType} complaint: ${title}`.slice(
+        0,
+        255,
+      );
+    const adminHistoryDescription =
+      `${actorName} filed ${typeArticle} ${complaintType} complaint: ${title}`.slice(
+        0,
+        255,
+      );
+
     try {
       insertResult = await withTransaction(async (connection) => {
         const lockedRental = await lockRentalRowForUpdate(
@@ -354,6 +379,27 @@ async function createComplaint_controller(req, res, next) {
           throw err;
         }
 
+        await createActivityOnConnection(
+          connection,
+          userId,
+          "Created a Complaint",
+          userActivityDescription,
+          result.insertId,
+        );
+
+        await createSystemHistoryOnConnection(
+          connection,
+          userId,
+          "complaint",
+          "create",
+          "Created a Complaint",
+          "complaint",
+          String(result.insertId),
+          parsedRentalId,
+          complaintType === "vehicle" ? plateForInsert : null,
+          adminHistoryDescription,
+        );
+
         return result;
       });
     } catch (txError) {
@@ -378,45 +424,7 @@ async function createComplaint_controller(req, res, next) {
     // notification, or email failures must never delete committed attachments.
     complaintCommitted = true;
 
-    // Build readable user name
-    const fullName = `${req.session.user.firstName || ""} ${
-      req.session.user.lastName || ""
-    }`.trim();
-
-    const actorName = fullName
-      ? `${fullName} (${req.session.user.email})`
-      : req.session.user.email || "A user";
-
-    // Choose "a" or "an"
-    // vehicle -> a vehicle complaint
-    // owner   -> an owner complaint
-    const typeArticle = /^[aeiou]/i.test(complaintType) ? "an" : "a";
-
-    const userActivityDescription = `You filed ${typeArticle} ${complaintType} complaint: ${title}`;
-
-    const adminHistoryDescription = `${actorName} filed ${typeArticle} ${complaintType} complaint: ${title}`;
-
-    // Side effects only after successful COMMIT.
-    await createActivity(
-      userId,
-      "Created a Complaint",
-      userActivityDescription,
-      insertResult.insertId,
-    );
-
-    await createSystemHistory(
-      userId,
-      "complaint",
-      "create",
-      "Created a Complaint",
-      "complaint",
-      String(insertResult.insertId),
-      parsedRentalId,
-      complaintType === "vehicle" ? plateForInsert : null,
-      adminHistoryDescription,
-    );
-
-    // Notify all admins (existing behavior)
+    // Optional post-commit notifications and emails are best effort.
     try {
       const admins = await doQuery(
         "SELECT userId FROM users WHERE role = 'admin'",
@@ -560,6 +568,17 @@ async function createComplaint_controller(req, res, next) {
       complaintId: insertResult.insertId,
     });
   } catch (error) {
+    if (complaintCommitted && !res.headersSent) {
+      console.error(
+        "Complaint follow-up failed after commit:",
+        error.message,
+      );
+      return res.status(STATUS_CODE.CREATED).json({
+        message:
+          "Complaint submitted successfully, but some notifications could not be completed.",
+        complaintId: insertResult.insertId,
+      });
+    }
     return next(error);
   } finally {
     if (!complaintCommitted) {
@@ -568,8 +587,14 @@ async function createComplaint_controller(req, res, next) {
   }
 }
 async function updateComplaintStatus_controller(req, res, next) {
+  let statusUpdateCommitted = false;
+  let committedStatusChanged = false;
+
   try {
-    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+    if (
+      validateAuthenticatedUser(req, res, "Unauthorized, Login first!") !==
+      true
+    )
       return;
     if (req.session.user.role !== "admin") {
       return res
@@ -614,29 +639,6 @@ async function updateComplaintStatus_controller(req, res, next) {
     const trimmedAdminNotes =
       typeof adminNotes === "string" ? adminNotes.trim() : "";
 
-    const complaint = await getComplaintReporterById(complaintId);
-    if (!complaint) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "Complaint not found",
-      });
-    }
-
-    const previousStatus = complaint.status;
-    const statusChanged = previousStatus !== status;
-
-    const result = await updateComplaintStatus(
-      complaintId,
-      status,
-      trimmedResolution || null,
-      trimmedAdminNotes || null,
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "Complaint not found",
-      });
-    }
-
     let statusEventName = "complaint_status_updated";
     let statusOperation = "update";
     if (status === "in_review") {
@@ -648,17 +650,69 @@ async function updateComplaintStatus_controller(req, res, next) {
       statusEventName = "complaint_closed";
     }
 
-    await createSystemHistory(
-      req.session.user.userId,
-      "admin",
-      statusOperation,
-      statusEventName,
-      "complaint",
-      String(complaintId),
-      null,
-      null,
-      `Complaint #${complaintId} status updated to ${status}`,
-    );
+    let mutation;
+    try {
+      mutation = await withTransaction(async (connection) => {
+        const complaint = await getComplaintReporterByIdForUpdateOnConnection(
+          connection,
+          complaintId,
+        );
+        if (!complaint) {
+          const error = new Error("Complaint not found");
+          error.code = "COMPLAINT_NOT_FOUND";
+          throw error;
+        }
+
+        const statusChanged = complaint.status !== status;
+        const result = await updateComplaintStatusOnConnection(
+          connection,
+          complaintId,
+          status,
+          trimmedResolution || null,
+          trimmedAdminNotes || null,
+        );
+
+        if (!result || result.affectedRows !== 1) {
+          const error = new Error("Complaint not found");
+          error.code = "COMPLAINT_NOT_FOUND";
+          throw error;
+        }
+
+        await createSystemHistoryOnConnection(
+          connection,
+          req.session.user.userId,
+          "admin",
+          statusOperation,
+          statusEventName,
+          "complaint",
+          String(complaintId),
+          null,
+          null,
+          `Complaint #${complaintId} status updated to ${status}`.slice(
+            0,
+            255,
+          ),
+        );
+
+        const respondedAt = await getComplaintRespondedAtOnConnection(
+          connection,
+          complaintId,
+        );
+
+        return { complaint, respondedAt, statusChanged };
+      });
+    } catch (transactionError) {
+      if (transactionError.code === "COMPLAINT_NOT_FOUND") {
+        return res.status(STATUS_CODE.NOT_FOUND).json({
+          message: "Complaint not found",
+        });
+      }
+      throw transactionError;
+    }
+
+    statusUpdateCommitted = true;
+    committedStatusChanged = mutation.statusChanged;
+    const { complaint, respondedAt, statusChanged } = mutation;
 
     // Lifecycle side effects only on an actual status transition.
     // Same-status resubmit may still update adminNotes/respondedAt above,
@@ -764,13 +818,6 @@ async function updateComplaintStatus_controller(req, res, next) {
       );
     }
 
-    // DB-authoritative respondedAt written by UPDATE … respondedAt = NOW().
-    const respondedRows = await doQuery(
-      `SELECT respondedAt FROM complaints WHERE complaintId = ? LIMIT 1`,
-      [complaintId],
-    );
-    const respondedAt = respondedRows[0]?.respondedAt ?? null;
-
     let emailSent = false;
     try {
       await sendComplaintResponseEmail({
@@ -875,7 +922,19 @@ async function updateComplaintStatus_controller(req, res, next) {
       statusChanged: true,
     });
   } catch (error) {
-    next(error);
+    if (statusUpdateCommitted && !res.headersSent) {
+      console.error(
+        "Complaint status follow-up failed after commit:",
+        error.message,
+      );
+      return res.status(STATUS_CODE.OK).json({
+        message:
+          "Complaint updated, but some follow-up actions could not be completed.",
+        emailSent: false,
+        statusChanged: committedStatusChanged,
+      });
+    }
+    return next(error);
   }
 }
 
