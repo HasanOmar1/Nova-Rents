@@ -1,3 +1,5 @@
+// Provides shared report state and API operations through React context.
+// It exports a provider component and a hook for consuming the managed data.
 import {
   createContext,
   useCallback,
@@ -9,6 +11,8 @@ import axios from "axios";
 
 const ReportContext = createContext();
 
+// Supplies report datasets and reporting requests to descendant components.
+// Accepts children and returns a report-context provider tree.
 const ReportContextProvider = ({ children }) => {
   const [systemActivityData, setSystemActivityData] = useState([]);
   const [systemActivitySeries, setSystemActivitySeries] = useState([]);
@@ -43,6 +47,9 @@ const ReportContextProvider = ({ children }) => {
 
   // One request feeds every card and chart on the Statistics page so all
   // metrics always describe exactly the same date range.
+
+  // Retrieves statistics for the current workflow.
+  // Accepts start date and end date and returns a promise for the operation result.
   const getStatistics = async (startDate, endDate) => {
     try {
       setIsStatisticsLoading(true);
@@ -67,6 +74,9 @@ const ReportContextProvider = ({ children }) => {
   // One request feeds both user dashboard charts (Earnings Overview and
   // Platform Usage) so they always describe the same range and granularity.
   // The backend scopes everything to the session user.
+
+  // Retrieves user dashboard report for the current workflow.
+  // Accepts start date and end date and returns a promise for the operation result.
   const getUserDashboardReport = useCallback(async (startDate, endDate) => {
     try {
       setIsUserDashboardLoading(true);
@@ -92,6 +102,9 @@ const ReportContextProvider = ({ children }) => {
   // Completed-rental value and count for every vehicle owned by the session user.
   // This is intentionally separate from the paginated My Vehicles request so
   // the comparison always includes the owner's complete vehicle inventory.
+
+  // Retrieves vehicle comparison for the current workflow.
+  // Accepts options and returns a promise for the operation result.
   const getVehicleComparison = useCallback(async (options = {}) => {
     const { range = "custom", startDate, endDate } = options;
     const requestId = vehicleComparisonRequestId.current + 1;
@@ -143,6 +156,8 @@ const ReportContextProvider = ({ children }) => {
     }
   }, []);
 
+  // Retrieves system activity chart for the current workflow.
+  // Accepts start date and end date and returns a promise for the operation result.
   const getSystemActivityChart = async (startDate, endDate) => {
     try {
       setIsSystemActivityLoading(true);
@@ -186,5 +201,7 @@ const ReportContextProvider = ({ children }) => {
   );
 };
 
+// Reads report datasets and query actions exposed by the nearest provider.
+// Takes no arguments and returns the current report context value.
 export const useReportContext = () => useContext(ReportContext);
 export default ReportContextProvider;

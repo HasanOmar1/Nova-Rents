@@ -1,3 +1,5 @@
+// Defines the Document Upload Modal React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useModalDialog } from "../../hooks/useModalDialog";
@@ -14,12 +16,16 @@ const emptyForm = {
   expirationDate: "",
 };
 
+// Converts a date-like value into the ISO date used by the upload form.
+// Accepts a date value and returns YYYY-MM-DD or an empty string.
 const dateValue = (value) => {
   if (!value) return "";
   const text = String(value);
   return text.slice(0, 10);
 };
 
+// Creates initial upload-form fields from the selected document slot.
+// Accepts a slot record and returns a normalized form-state object.
 const formFromSlot = (slot) => {
   if (!slot) return emptyForm;
   return {
@@ -31,6 +37,8 @@ const formFromSlot = (slot) => {
   };
 };
 
+// Builds a stable reset key from the active slot whenever the modal opens.
+// Accepts a slot and open flag and returns a key string.
 const slotKeyOf = (slot, isOpen) => {
   if (!isOpen || !slot) return "closed";
   return [
@@ -40,6 +48,8 @@ const slotKeyOf = (slot, isOpen) => {
   ].join(":");
 };
 
+// Renders the Document Upload Modal interface.
+// Accepts an options object and returns rendered JSX.
 const DocumentUploadModal = ({
   isOpen,
   slot,
@@ -51,7 +61,10 @@ const DocumentUploadModal = ({
   const dialogRef = useModalDialog(isOpen && Boolean(slot));
   const slotKey = slotKeyOf(slot, isOpen);
   const [trackedKey, setTrackedKey] = useState(slotKey);
-  const [form, setForm] = useState(() => formFromSlot(slot));
+  const [form, setForm] = useState(
+    // Runs the callback required by the surrounding operation.
+    // Takes no arguments and returns the callback result.
+    () => formFromSlot(slot));
   const [datesValid, setDatesValid] = useState({
     startDate: true,
     expirationDate: true,
@@ -82,15 +95,25 @@ const DocumentUploadModal = ({
     fieldLabels.expirationDateRequired,
   );
 
+  // Handles change for the surrounding interface.
+  // Accepts event and returns nothing.
   const handleChange = (event) => {
     const { name, value, files } = event.target;
     if (name === "file") {
-      setForm((prev) => ({ ...prev, file: files?.[0] || null }));
+      setForm(
+        // Derives the next state value from the current state.
+        // Accepts prev and returns the updated state value.
+        (prev) => ({ ...prev, file: files?.[0] || null }));
       return;
     }
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(
+      // Derives the next state value from the current state.
+      // Accepts prev and returns the updated state value.
+      (prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handles submit for the surrounding interface.
+  // Accepts event and returns a promise for the operation result.
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!slot) return;
@@ -229,8 +252,14 @@ const DocumentUploadModal = ({
                 name="startDate"
                 value={form.startDate}
                 onChange={handleChange}
-                onValidityChange={(ok) =>
-                  setDatesValid((prev) =>
+                onValidityChange={
+                  // Handles the component's validity change event.
+                  // Accepts ok and returns the handler result.
+                  (ok) =>
+                  setDatesValid(
+                    // Handles the component's validity change event.
+                    // Accepts prev and returns the handler result.
+                    (prev) =>
                     prev.startDate === ok ? prev : { ...prev, startDate: ok },
                   )
                 }
@@ -257,8 +286,14 @@ const DocumentUploadModal = ({
                 name="expirationDate"
                 value={form.expirationDate}
                 onChange={handleChange}
-                onValidityChange={(ok) =>
-                  setDatesValid((prev) =>
+                onValidityChange={
+                  // Handles the component's validity change event.
+                  // Accepts ok and returns the handler result.
+                  (ok) =>
+                  setDatesValid(
+                    // Handles the component's validity change event.
+                    // Accepts prev and returns the handler result.
+                    (prev) =>
                     prev.expirationDate === ok ? prev : { ...prev, expirationDate: ok },
                   )
                 }
@@ -287,8 +322,14 @@ const DocumentUploadModal = ({
               name="expirationDate"
               value={form.expirationDate}
               onChange={handleChange}
-              onValidityChange={(ok) =>
-                setDatesValid((prev) =>
+              onValidityChange={
+                // Handles the component's validity change event.
+                // Accepts ok and returns the handler result.
+                (ok) =>
+                setDatesValid(
+                  // Handles the component's validity change event.
+                  // Accepts prev and returns the handler result.
+                  (prev) =>
                   prev.expirationDate === ok ? prev : { ...prev, expirationDate: ok },
                 )
               }

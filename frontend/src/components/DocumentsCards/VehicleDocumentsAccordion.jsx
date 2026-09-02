@@ -1,3 +1,5 @@
+// Defines the Vehicle Documents Accordion React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   formatGovCheckStatus,
@@ -13,6 +15,8 @@ import {
 } from "./DocumentsCards.utils";
 import styles from "./DocumentsCards.module.css";
 
+// Renders the Vehicle Documents Accordion interface.
+// Accepts an options object and returns rendered JSX.
 const VehicleDocumentsAccordion = ({
   vehicle,
   isExpanded,
@@ -80,7 +84,10 @@ const VehicleDocumentsAccordion = ({
               {formatGovCheckStatus(govStatus)}
             </span>
           </div>
-          {documents.map((slot) => (
+          {documents.map(
+            // Transforms one collection entry for the resulting list.
+            // Accepts slot and returns the mapped entry.
+            (slot) => (
             <CompactVehicleDocumentRow
               key={`${vehicle.licensePlate}-${slot.documentType}`}
               slot={{

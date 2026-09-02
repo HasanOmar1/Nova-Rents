@@ -1,7 +1,13 @@
+// Defines the Google Map Embed React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
+
 /**
  * Google Maps embed. Set VITE_GOOGLE_MAPS_API_KEY in .env for Embed API (recommended).
  * Without a key, uses maps.google.com ... &output=embed (works for many demos; Google may restrict hotlinking in some cases).
  */
+
+// Renders the Google Map Embed interface.
+// Accepts an options object and returns rendered JSX.
 export default function GoogleMapEmbed({
   query,
   title = "Map",

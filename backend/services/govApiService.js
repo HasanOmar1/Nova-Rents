@@ -1,3 +1,5 @@
+/** Backend service logic for gov api operations.
+ * Integrates domain workflows with external or shared infrastructure. */
 const GOV_VEHICLE_RESOURCE_ID = "053cea08-09bc-40ec-8f7a-156f0677aff3";
 const GOV_DATASTORE_URL = "https://data.gov.il/api/3/action/datastore_search";
 const GOV_SOURCE = "data.gov.il";
@@ -10,6 +12,8 @@ const FUEL_ALIASES = {
   hybrid: ["hybrid", "היברידי"],
 };
 
+/** Normalizes text.
+ * Accepts value; returns the derived value. */
 function normalizeText(value) {
   return String(value ?? "")
     .trim()
@@ -17,23 +21,32 @@ function normalizeText(value) {
     .replace(/\s+/g, " ");
 }
 
+/** Maps a fuel label to its normalized comparison family.
+ * Accepts value; returns the normalized family or original label. */
 function fuelFamily(value) {
   const normalized = normalizeText(value);
   if (!normalized) return "";
   for (const [family, aliases] of Object.entries(FUEL_ALIASES)) {
-    if (aliases.some((alias) => normalized === alias || normalized.includes(alias))) {
+    if (aliases.some(
+      /** Tests whether one collection item satisfies the surrounding condition.
+       * Accepts alias; returns a boolean used by the collection operation. */
+      (alias) => normalized === alias || normalized.includes(alias))) {
       return family;
     }
   }
   return normalized;
 }
 
+/** Compares local and government values with optional numeric or fuel normalization.
+ * Accepts ours, government, and an options object; returns a boolean comparison result. */
 function valuesEqual(ours, government, { numeric = false, fuel = false } = {}) {
   if (fuel) return fuelFamily(ours) === fuelFamily(government);
   if (numeric) return Number(ours) === Number(government);
   return normalizeText(ours) === normalizeText(government);
 }
 
+/** Checks whether blank.
+ * Accepts value; returns the validation or boolean result. */
 function isBlank(value) {
   return value == null || String(value).trim() === "";
 }
@@ -46,6 +59,8 @@ function isBlank(value) {
  * Does not compare VIN/chassis against our DB (we have no such column).
  * Does not compare tokef_dt to vehicles.expirationDate (that field is listing expiry).
  */
+/** Compares vehicle to government record.
+ * Accepts vehicle and record; returns the derived value. */
 function compareVehicleToGovernmentRecord(vehicle, record) {
   const comparisons = [
     {
@@ -113,11 +128,16 @@ function compareVehicleToGovernmentRecord(vehicle, record) {
   return { status, matchedFields, mismatchedFields, displayOnly };
 }
 
+/** Looks up vehicle in gov il.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function lookupVehicleInGovIL(licensePlate) {
   const plate = String(licensePlate ?? "").trim();
   const numericPlate = Number(plate);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), GOV_TIMEOUT_MS);
+  const timer = setTimeout(
+    /** Handles expiration of the configured timeout.
+     * Accepts no arguments; returns no meaningful value. */
+    () => controller.abort(), GOV_TIMEOUT_MS);
 
   try {
     const filters = Number.isFinite(numericPlate)
@@ -180,6 +200,8 @@ async function lookupVehicleInGovIL(licensePlate) {
   }
 }
 
+/** Builds a blank government-comparison result for a lookup status.
+ * Accepts status, errorMessage, and snapshot; returns the initialized comparison object. */
 function emptyComparison(status, errorMessage = null, snapshot = null) {
   return {
     status,
@@ -196,6 +218,8 @@ function emptyComparison(status, errorMessage = null, snapshot = null) {
  * Never accepts a client-supplied status. verified only if the API found a record
  * and comparable fields matched.
  */
+/** Builds government check payload.
+ * Accepts vehicle and lookup; returns the derived value. */
 function buildGovernmentCheckPayload(vehicle, lookup) {
   if (!lookup || lookup.lookupStatus === "unavailable") {
     return emptyComparison("unavailable", lookup?.errorMessage || "Government API unavailable");

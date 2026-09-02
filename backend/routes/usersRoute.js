@@ -1,3 +1,5 @@
+/** Express route definitions for users endpoints.
+ * Maps HTTP requests and access checks to the corresponding controllers. */
 // Express routes for user-related actions: register, login, profile, logout
 const express = require("express");
 const router = express.Router();

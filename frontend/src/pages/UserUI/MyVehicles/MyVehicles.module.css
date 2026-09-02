@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the MyVehicles interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .MyVehicles .addVehicleBtn,
 .MyVehicles .analyticsBtn {
   display: inline-flex;

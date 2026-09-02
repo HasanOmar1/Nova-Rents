@@ -1,3 +1,5 @@
+/** Shared backend utility for image file operations.
+ * Normalizes, validates, or transforms values for the surrounding domain. */
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
@@ -24,37 +26,53 @@ const MIME_TO_STORED_EXTENSION = Object.freeze({
 });
 
 class ImageValidationError extends Error {
+  /** Creates an error for rejected image files or validation failures.
+   * Accepts a message; returns a named ImageValidationError instance. */
   constructor(message) {
     super(message);
     this.name = "ImageValidationError";
   }
 }
 
+/** Ensures uploads dir.
+ * Accepts no arguments; returns no meaningful value after completing the side effect. */
 function ensureUploadsDir() {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
+/** Ensures complaint evidence dir.
+ * Accepts no arguments; returns no meaningful value after completing the side effect. */
 function ensureComplaintEvidenceDir() {
   fs.mkdirSync(COMPLAINT_EVIDENCE_DIR, { recursive: true });
 }
 
+/** Extracts and lowercases a filename extension.
+ * Accepts filename; returns the lowercase extension. */
 function extensionOf(filename) {
   return path.extname(String(filename || "")).toLowerCase();
 }
 
+/** Normalizes mime.
+ * Accepts mimetype; returns the derived value. */
 function normalizeMime(mimetype) {
   return String(mimetype || "").trim().toLowerCase();
 }
 
+/** Checks whether allowed declared image.
+ * Accepts originalname and mimetype; returns the validation or boolean result. */
 function isAllowedDeclaredImage(originalname, mimetype) {
   const expectedMime = EXTENSION_TO_MIME[extensionOf(originalname)];
   return Boolean(expectedMime && expectedMime === normalizeMime(mimetype));
 }
 
+/** Checks whether safe public image path.
+ * Accepts filename; returns the validation or boolean result. */
 function isSafePublicImagePath(filename) {
   return Boolean(EXTENSION_TO_MIME[extensionOf(filename)]);
 }
 
+/** Checks whether safe stored image name.
+ * Accepts filename; returns the validation or boolean result. */
 function isSafeStoredImageName(filename) {
   const value = String(filename || "").trim();
   return Boolean(
@@ -65,6 +83,8 @@ function isSafeStoredImageName(filename) {
   );
 }
 
+/** Parses stored image names.
+ * Accepts images; returns the derived value. */
 function parseStoredImageNames(images) {
   if (images == null) return [];
 
@@ -85,17 +105,27 @@ function parseStoredImageNames(images) {
   return [
     ...new Set(
       values
-        .filter((value) => typeof value === "string")
-        .map((value) => value.trim().replace(/^\/?uploads\//i, ""))
+        .filter(
+          /** Tests whether one collection item should remain in the filtered result.
+           * Accepts value; returns a boolean used by the collection operation. */
+          (value) => typeof value === "string")
+        .map(
+          /** Transforms one collection item for the surrounding mapping operation.
+           * Accepts value; returns the transformed collection value. */
+          (value) => value.trim().replace(/^\/?uploads\//i, ""))
         .filter(isSafeStoredImageName),
     ),
   ];
 }
 
+/** Maps an accepted image MIME type to its storage extension.
+ * Accepts mimetype; returns the storage extension. */
 function storedExtensionForMime(mimetype) {
   return MIME_TO_STORED_EXTENSION[normalizeMime(mimetype)] || null;
 }
 
+/** Checks whether avif header.
+ * Accepts buffer; returns the validation or boolean result. */
 function isAvifHeader(buffer) {
   if (buffer.length < 12 || buffer.toString("ascii", 4, 8) !== "ftyp") {
     return false;
@@ -117,6 +147,8 @@ function isAvifHeader(buffer) {
 
 // This is used only to choose a safe Content-Type for legacy stored files.
 // Upload acceptance always uses Sharp's full decoder below.
+/** Detects image mime.
+ * Accepts buffer; returns the derived value. */
 function detectImageMime(buffer) {
   if (!Buffer.isBuffer(buffer)) return null;
 
@@ -156,6 +188,8 @@ function detectImageMime(buffer) {
   return null;
 }
 
+/** Detects a safe response MIME type from a stored image file.
+ * Accepts fullPath; returns the detected MIME type or null. */
 function safeMimeForStoredFile(fullPath) {
   const extensionMime = EXTENSION_TO_MIME[extensionOf(fullPath)] || null;
 
@@ -173,6 +207,8 @@ function safeMimeForStoredFile(fullPath) {
   }
 }
 
+/** Checks whether decoded image metadata matches the declared MIME type.
+ * Accepts metadata and mimetype; returns a boolean match result. */
 function metadataMatchesDeclaredMime(metadata, mimetype) {
   if (mimetype === "image/jpeg") return metadata.format === "jpeg";
   if (mimetype === "image/png") return metadata.format === "png";
@@ -183,6 +219,8 @@ function metadataMatchesDeclaredMime(metadata, mimetype) {
   return false;
 }
 
+/** Normalizes uploaded image.
+ * Accepts file; returns the derived value. */
 async function normalizeUploadedImage(file) {
   if (
     !file ||

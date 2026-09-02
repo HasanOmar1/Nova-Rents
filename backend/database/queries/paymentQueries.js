@@ -1,3 +1,5 @@
+/** Database query helpers for payment records.
+ * Encapsulates the domain's SQL reads, writes, and result shaping. */
 const doQuery = require("../query");
 
 // Shared projection for the test-payment flow. Aliases follow the project
@@ -43,6 +45,8 @@ const PAYMENT_SELECT = `
 
 // amount is a snapshot of rentals.totalPrice at approval time.
 // currency and status use the table defaults ('USD', 'pending').
+/** Creates rental payment.
+ * Accepts rentalId, paymentToken, and amount; returns a promise for the operation result. */
 async function createRentalPayment(rentalId, paymentToken, amount) {
   const query = `
     INSERT INTO rental_payments (rentalId, paymentToken, amount)
@@ -51,12 +55,16 @@ async function createRentalPayment(rentalId, paymentToken, amount) {
   return doQuery(query, [rentalId, paymentToken, amount]);
 }
 
+/** Fetches payment by token.
+ * Accepts paymentToken; returns a promise for the requested data. */
 async function getPaymentByToken(paymentToken) {
   const query = `${PAYMENT_SELECT} WHERE p.paymentToken = ?`;
   const result = await doQuery(query, [paymentToken]);
   return result[0];
 }
 
+/** Fetches payment by rental id.
+ * Accepts rentalId; returns a promise for the requested data. */
 async function getPaymentByRentalId(rentalId) {
   const query = `${PAYMENT_SELECT} WHERE p.rentalId = ?`;
   const result = await doQuery(query, [rentalId]);
@@ -65,6 +73,8 @@ async function getPaymentByRentalId(rentalId) {
 
 // status guard makes the update idempotent: a second pay attempt matches
 // zero rows instead of overwriting paidAt.
+/** Marks payment paid by token.
+ * Accepts paymentToken; returns a promise for the operation result. */
 async function markPaymentPaidByToken(paymentToken) {
   const query = `
     UPDATE rental_payments
@@ -74,6 +84,8 @@ async function markPaymentPaidByToken(paymentToken) {
   return doQuery(query, [paymentToken]);
 }
 
+/** Marks payment link email sent.
+ * Accepts paymentId; returns a promise for the operation result. */
 async function markPaymentLinkEmailSent(paymentId) {
   const query = `
     UPDATE rental_payments
@@ -83,6 +95,8 @@ async function markPaymentLinkEmailSent(paymentId) {
   return doQuery(query, [paymentId]);
 }
 
+/** Marks renter confirmation email sent.
+ * Accepts paymentId; returns a promise for the operation result. */
 async function markRenterConfirmationEmailSent(paymentId) {
   const query = `
     UPDATE rental_payments
@@ -92,6 +106,8 @@ async function markRenterConfirmationEmailSent(paymentId) {
   return doQuery(query, [paymentId]);
 }
 
+/** Marks owner confirmation email sent.
+ * Accepts paymentId; returns a promise for the operation result. */
 async function markOwnerConfirmationEmailSent(paymentId) {
   const query = `
     UPDATE rental_payments

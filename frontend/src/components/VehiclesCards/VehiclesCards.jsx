@@ -1,8 +1,12 @@
+// Defines the Vehicles Cards React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { Link } from "react-router-dom";
 import styles from "./VehiclesCards.module.css";
 import { MapPin, User, Users } from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
 
+// Renders the Vehicles Cards interface.
+// Accepts an options object and returns rendered JSX.
 const VehiclesCards = ({ veh }) => {
   const imageUrl = parseImgs(veh.image);
 

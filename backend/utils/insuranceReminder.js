@@ -1,3 +1,7 @@
+/** Shared backend utility for insurance reminder operations.
+ * Normalizes, validates, or transforms values for the surrounding domain. */
+/** Formats license plate display.
+ * Accepts licensePlate; returns the derived value. */
 function formatLicensePlateDisplay(licensePlate) {
   const digits = String(licensePlate ?? "").replace(/\D/g, "");
   if (digits.length === 8) {
@@ -9,6 +13,8 @@ function formatLicensePlateDisplay(licensePlate) {
   return digits || String(licensePlate ?? "");
 }
 
+/** Builds vehicle label.
+ * Accepts row; returns the derived value. */
 function buildVehicleLabel(row) {
   const plate = formatLicensePlateDisplay(row.licensePlate);
   const name = [row.brandName, row.modelName].filter(Boolean).join(" ").trim();
@@ -17,6 +23,8 @@ function buildVehicleLabel(row) {
   return `vehicle ${plate}`;
 }
 
+/** Builds insurance reminder copy.
+ * Accepts stage and vehicleLabel; returns the derived value. */
 function buildInsuranceReminderCopy(stage, vehicleLabel) {
   if (stage === "7d") {
     return {

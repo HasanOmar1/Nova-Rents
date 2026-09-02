@@ -1,5 +1,9 @@
+/** Database query helpers for rental records.
+ * Encapsulates the domain's SQL reads, writes, and result shaping. */
 const doQuery = require("../query");
 
+/** Checks if vehicle is available.
+ * Accepts licensePlate, startDate, and endDate; returns the validation or boolean result. */
 async function checkIfVehicleIsAvailable(licensePlate, startDate, endDate) {
   const checkIfVehicleIsAvailable = `select rentalId from rentals where licensePlate =? AND status IN ('pending', 'approved') and startDate <= ? and endDate >= ?`;
   const valuesOfcheckIfVehicleIsAvailable = [licensePlate, endDate, startDate];
@@ -9,6 +13,8 @@ async function checkIfVehicleIsAvailable(licensePlate, startDate, endDate) {
   );
   return rentalIsAvailable.length > 0;
 }
+/** Fetches my rentals by renter id.
+ * Accepts renterId; returns a promise for the requested data. */
 async function getMyRentalsByRenterId(renterId) {
   const getMyRentalsByRenterId = `select * from rentals where renterId = ? `;
   const valuesOfgetMyRentalsByRenterId = [renterId];
@@ -18,6 +24,8 @@ async function getMyRentalsByRenterId(renterId) {
   );
   return myRentals;
 }
+/** Fetches requests for my vehicles by owner id.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function getRequestsForMyVehiclesByOwnerId(ownerId) {
   const getRequestsForMyVehiclesByOwnerId = ` SELECT
   r.rentalId,
@@ -52,6 +60,8 @@ async function getRequestsForMyVehiclesByOwnerId(ownerId) {
   );
   return requests;
 }
+/** Fetches rental by id.
+ * Accepts rentalId; returns a promise for the requested data. */
 async function getRentalById(rentalId) {
   const getRentalById = `select r.*, v.ownerId from rentals r 
   join vehicles v
@@ -60,6 +70,8 @@ async function getRentalById(rentalId) {
   const rental = await doQuery(getRentalById, valuesOfgetRentalById);
   return rental[0];
 }
+/** Updates rental status.
+ * Accepts rentalId and status; returns a promise for the operation result. */
 async function updateRentalStatus(rentalId, status) {
   const updateRentalStatus = `update rentals set status = ? where rentalId = ?`;
   const valuesOfupdateRentalStatus = [status, rentalId];
@@ -67,6 +79,8 @@ async function updateRentalStatus(rentalId, status) {
   return result;
 }
 
+/** Fetches rentals starting tomorrow.
+ * Accepts no arguments; returns a promise for the requested data. */
 async function getRentalsStartingTomorrow() {
   const query = `
     SELECT 
@@ -84,6 +98,8 @@ async function getRentalsStartingTomorrow() {
   return await doQuery(query);
 }
 
+/** Fetches rentals ending tomorrow.
+ * Accepts no arguments; returns a promise for the requested data. */
 async function getRentalsEndingTomorrow() {
   const query = `
     SELECT 
@@ -101,6 +117,8 @@ async function getRentalsEndingTomorrow() {
   return await doQuery(query);
 }
 
+/** Fetches booked dates by plate.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getBookedDatesByPlate(licensePlate) {
   const query = `
       SELECT startDate, endDate 
@@ -119,6 +137,8 @@ async function getBookedDatesByPlate(licensePlate) {
 // an approved rental whose end date has passed is lifecycle-complete even if
 // the status synchronizer has not run yet. Pending and future/current approved
 // rows remain open and are excluded from completed totals.
+/** Fetches vehicle rental metrics by license plate.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getVehicleRentalMetricsByLicensePlate(licensePlate) {
   const query = `
     SELECT
@@ -149,6 +169,8 @@ async function getVehicleRentalMetricsByLicensePlate(licensePlate) {
   return rows[0] || {};
 }
 
+/** Fetches rentals to complete.
+ * Accepts no arguments; returns a promise for the requested data. */
 async function getRentalsToComplete() {
   const query = `
     SELECT rentalId, licensePlate 
@@ -159,6 +181,8 @@ async function getRentalsToComplete() {
   return doQuery(query);
 }
 
+/** Fetches rentals to expire.
+ * Accepts no arguments; returns a promise for the requested data. */
 async function getRentalsToExpire() {
   const query = `
     SELECT rentalId, licensePlate 
@@ -169,6 +193,8 @@ async function getRentalsToExpire() {
   return doQuery(query);
 }
 
+/** Completes expired rentals.
+ * Accepts no arguments; returns a promise for the operation result. */
 async function completeExpiredRentals() {
   const query = `
     UPDATE rentals 
@@ -179,6 +205,8 @@ async function completeExpiredRentals() {
   const result = await doQuery(query);
   return result;
 }
+/** Cancels expired rentals.
+ * Accepts no arguments; returns the validation or boolean result. */
 async function cancelExpiredRentals() {
   const query = `
     UPDATE rentals 
@@ -190,6 +218,8 @@ async function cancelExpiredRentals() {
   return result;
 }
 
+/** Fetches monthly earnings by owner id.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function getMonthlyEarningsByOwnerId(ownerId) {
   const query = `
     SELECT COALESCE(SUM(r.totalPrice), 0) AS total
@@ -208,6 +238,8 @@ async function getMonthlyEarningsByOwnerId(ownerId) {
 // getBookingsChartByRange so the Booking Value card always describes the same
 // rental rows as the Bookings card and chart. createdAt is a TIMESTAMP, so the
 // end bound uses < DATE_ADD(end, 1 DAY) to include the whole final day.
+/** Fetches booking value by range.
+ * Accepts startDate and endDate; returns a promise for the requested data. */
 async function getBookingValueByRange(startDate, endDate) {
   const query = `
     SELECT COALESCE(SUM(totalPrice), 0) AS total
@@ -222,6 +254,8 @@ async function getBookingValueByRange(startDate, endDate) {
 // Approved + completed booking requests bucketed by creation time.
 // Must keep the same WHERE conditions as getBookingValueByRange.
 // dateFormat is a DATE_FORMAT pattern chosen by the caller.
+/** Fetches bookings chart by range.
+ * Accepts startDate, endDate, and dateFormat; returns a promise for the requested data. */
 async function getBookingsChartByRange(startDate, endDate, dateFormat) {
   const query = `
     SELECT
@@ -241,6 +275,8 @@ async function getBookingsChartByRange(startDate, endDate, dateFormat) {
 // endDate (the schema has no completion timestamp; a rental is auto-completed
 // once endDate passes, so endDate is when the owner earned the amount).
 // rentals→vehicles on licensePlate is one-to-one, so SUM sees no duplicates.
+/** Fetches owner earnings chart by range.
+ * Accepts ownerId, startDate, endDate, and dateFormat; returns a promise for the requested data. */
 async function getOwnerEarningsChartByRange(
   ownerId,
   startDate,
@@ -266,6 +302,8 @@ async function getOwnerEarningsChartByRange(
 // Owner-scoped bounds for the same lifecycle-complete rows used by the vehicle
 // comparison. The end bound extends through today so an all-time trend also
 // shows any quiet periods since the owner's latest completed rental.
+/** Fetches owner vehicle earnings comparison bounds.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function getOwnerVehicleEarningsComparisonBounds(ownerId) {
   const query = `
     SELECT
@@ -293,6 +331,8 @@ async function getOwnerVehicleEarningsComparisonBounds(ownerId) {
 // filters stay in the LEFT JOIN so zero-activity vehicles are still returned.
 // Omitting both dates is reserved for the server-resolved all-time/no-history
 // case.
+/** Fetches owner vehicle earnings comparison by range.
+ * Accepts ownerId, startDate, endDate, and dateFormat; returns a promise for the requested data. */
 async function getOwnerVehicleEarningsComparisonByRange(
   ownerId,
   startDate,
@@ -342,6 +382,8 @@ async function getOwnerVehicleEarningsComparisonByRange(
   return doQuery(query, params);
 }
 
+/** Fetches pending requests count by owner id.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function getPendingRequestsCountByOwnerId(ownerId) {
   const query = `
     SELECT COUNT(*) AS count
@@ -353,6 +395,8 @@ async function getPendingRequestsCountByOwnerId(ownerId) {
   return doQuery(query, [ownerId]);
 }
 
+/** Fetches renter dashboard action counts.
+ * Accepts renterId; returns a promise for the requested data. */
 async function getRenterDashboardActionCounts(renterId) {
   const query = `
     SELECT
@@ -377,6 +421,8 @@ async function getRenterDashboardActionCounts(renterId) {
   };
 }
 
+/** Fetches pending rental requests for owner.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function getPendingRentalRequestsForOwner(ownerId) {
   const query = `
     SELECT
@@ -410,6 +456,8 @@ async function getPendingRentalRequestsForOwner(ownerId) {
   return doQuery(query, [ownerId]);
 }
 
+/** Fetches my trips history by renter id.
+ * Accepts renterId; returns a promise for the requested data. */
 async function getMyTripsHistoryByRenterId(renterId) {
   const query = `
     SELECT
@@ -454,6 +502,8 @@ async function getMyTripsHistoryByRenterId(renterId) {
 // strictly through rentals.licensePlate -> vehicles.licensePlate ->
 // vehicles.ownerId -> users.userId (never from client input), and the
 // renter/owner aliases keep the two users impossible to confuse.
+/** Fetches rental email data by rental id.
+ * Accepts rentalId; returns a promise for the requested data. */
 async function getRentalEmailDataByRentalId(rentalId) {
   const query = `
     SELECT
@@ -487,6 +537,8 @@ async function getRentalEmailDataByRentalId(rentalId) {
   return result[0];
 }
 
+/** Rejects pending rentals by license plate.
+ * Accepts licensePlate; returns a promise for the operation result. */
 async function rejectPendingRentalsByLicensePlate(licensePlate) {
   const query = `
     UPDATE rentals
@@ -498,6 +550,8 @@ async function rejectPendingRentalsByLicensePlate(licensePlate) {
   return doQuery(query, [licensePlate]);
 }
 
+/** Cancels approved rentals by license plate.
+ * Accepts licensePlate; returns the validation or boolean result. */
 async function cancelApprovedRentalsByLicensePlate(licensePlate) {
   const query = `
     UPDATE rentals
@@ -510,6 +564,8 @@ async function cancelApprovedRentalsByLicensePlate(licensePlate) {
   return doQuery(query, [licensePlate]);
 }
 
+/** Fetches affected renters by license plate.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getAffectedRentersByLicensePlate(licensePlate) {
   const query = `
     SELECT rentalId, renterId, status
@@ -524,6 +580,8 @@ async function getAffectedRentersByLicensePlate(licensePlate) {
 
   return doQuery(query, [licensePlate]);
 }
+/** Checks whether there is active rental now.
+ * Accepts licensePlate; returns the validation or boolean result. */
 async function hasActiveRentalNow(licensePlate) {
   const query = `
     SELECT rentalId

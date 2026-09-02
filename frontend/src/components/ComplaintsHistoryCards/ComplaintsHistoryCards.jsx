@@ -1,7 +1,11 @@
+// Defines the Complaints History Cards React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import styles from "./ComplaintsHistoryCards.module.css";
 import { formatComplaintStatus } from "../../utils/displayFormat";
 import ComplaintEvidenceGallery from "../ComplaintEvidenceGallery/ComplaintEvidenceGallery";
 
+// Maps a complaint status to the matching visual badge class.
+// Accepts a status code and returns a CSS-module class name.
 const statusClassName = (status) => {
   if (status === "open") return styles.open;
   if (status === "in_review") return styles.inReview;
@@ -10,6 +14,8 @@ const statusClassName = (status) => {
   return "";
 };
 
+// Renders the Complaints History Cards interface.
+// Accepts an options object and returns rendered JSX.
 const ComplaintsHistoryCards = ({
   title,
   status,

@@ -1,3 +1,5 @@
+// Provides shared notification state and API operations through React context.
+// It exports a provider component and a hook for consuming the managed data.
 import {
   createContext,
   useCallback,
@@ -12,6 +14,8 @@ import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 
 const NotificationContext = createContext();
 
+// Supplies notification state and read actions to descendant components.
+// Accepts children and returns a notification-context provider tree.
 const NotificationContextProvider = ({ children }) => {
   const { currentUser } = useUserContext();
   const activeUserId = currentUser?.userId ?? null;
@@ -22,6 +26,8 @@ const NotificationContextProvider = ({ children }) => {
   const activeUserIdRef = useRef(activeUserId);
   const requestControllerRef = useRef(null);
 
+  // Loads notifications into the relevant application state.
+  // Takes no arguments and returns a promise for the operation result.
   const loadNotifications = useCallback(async () => {
     const requestedUserId = activeUserIdRef.current;
     if (!requestedUserId) return false;
@@ -72,25 +78,30 @@ const NotificationContextProvider = ({ children }) => {
     }
   }, []);
 
-  useEffect(() => {
-    activeUserIdRef.current = activeUserId;
-    requestControllerRef.current?.abort();
-    requestControllerRef.current = null;
-
-    if (!activeUserId) {
-      setNotifications([]);
-      setUnreadCount(0);
-      setErrorMsg("");
-      setLoading(false);
-      return undefined;
-    }
-
-    setLoading(true);
-
-    return () => {
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      activeUserIdRef.current = activeUserId;
       requestControllerRef.current?.abort();
-    };
-  }, [activeUserId]);
+      requestControllerRef.current = null;
+
+      if (!activeUserId) {
+        setNotifications([]);
+        setUnreadCount(0);
+        setErrorMsg("");
+        setLoading(false);
+        return undefined;
+      }
+
+      setLoading(true);
+
+      // Synchronizes the component with an external effect after rendering.
+      // Takes no arguments and returns an optional cleanup function.
+      return () => {
+        requestControllerRef.current?.abort();
+      };
+    }, [activeUserId]);
 
   useVisibilityPolling(loadNotifications, {
     enabled: Boolean(activeUserId),
@@ -98,8 +109,12 @@ const NotificationContextProvider = ({ children }) => {
     refreshKey: activeUserId,
   });
 
+  // Marks as read in the managed state.
+  // Accepts notification id and returns a promise for the operation result.
   const markAsRead = async (notificationId) => {
     const target = notifications.find(
+      // Tests whether one collection entry is the requested match.
+      // Accepts notification and returns a Boolean match result.
       (notification) => notification.notificationId === notificationId,
     );
     if (!target || Number(target.isRead) === 1) return true;
@@ -110,14 +125,23 @@ const NotificationContextProvider = ({ children }) => {
 
     // Update immediately so clicking a notification visibly clears its unread
     // state and badge before navigation changes the page.
-    setNotifications((prev) =>
-      prev.map((notification) =>
+    setNotifications(
+      // Derives the next state value from the current state.
+      // Accepts prev and returns the updated state value.
+      (prev) =>
+      prev.map(
+        // Transforms one collection entry for the resulting list.
+        // Accepts notification and returns the mapped entry.
+        (notification) =>
         notification.notificationId === notificationId
           ? { ...notification, isRead: 1 }
           : notification,
       ),
     );
-    setUnreadCount((prev) => Math.max(prev - 1, 0));
+    setUnreadCount(
+      // Derives the next state value from the current state.
+      // Accepts prev and returns the updated state value.
+      (prev) => Math.max(prev - 1, 0));
 
     try {
       setErrorMsg("");
@@ -126,14 +150,23 @@ const NotificationContextProvider = ({ children }) => {
       return true;
     } catch (error) {
       // Restore the unread state when persistence fails.
-      setNotifications((prev) =>
-        prev.map((notification) =>
+      setNotifications(
+        // Derives the next state value from the current state.
+        // Accepts prev and returns the updated state value.
+        (prev) =>
+        prev.map(
+          // Transforms one collection entry for the resulting list.
+          // Accepts notification and returns the mapped entry.
+          (notification) =>
           notification.notificationId === notificationId
             ? { ...notification, isRead: 0 }
             : notification,
         ),
       );
-      setUnreadCount((prev) => prev + 1);
+      setUnreadCount(
+        // Derives the next state value from the current state.
+        // Accepts prev and returns the updated state value.
+        (prev) => prev + 1);
       console.log(error?.response?.data?.message);
       setErrorMsg(
         error?.response?.data?.message || "Failed to update notification",
@@ -157,6 +190,8 @@ const NotificationContextProvider = ({ children }) => {
   );
 };
 
+// Reads notification state and actions exposed by the nearest provider.
+// Takes no arguments and returns the current notification context value.
 export const useNotificationContext = () => useContext(NotificationContext);
 
 export default NotificationContextProvider;

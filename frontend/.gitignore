@@ -1,3 +1,5 @@
+# Excludes frontend dependencies, logs, generated builds, and local settings.
+# Keeps repository history limited to source and shared configuration files.
 # Logs
 logs
 *.log

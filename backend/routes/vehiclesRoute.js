@@ -1,3 +1,5 @@
+/** Express route definitions for vehicles endpoints.
+ * Maps HTTP requests and access checks to the corresponding controllers. */
 // Express routes for vehicle actions: list, my vehicles, add, update, delete
 const express = require("express");
 const router = express.Router();

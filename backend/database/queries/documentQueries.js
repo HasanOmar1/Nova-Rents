@@ -1,14 +1,23 @@
+/** Database query helpers for document records.
+ * Encapsulates the domain's SQL reads, writes, and result shaping. */
 const doQuery = require("../query");
 const { queryOnConnection } = require("../withTransaction");
 
+/** Fetches owned license plates.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function getOwnedLicensePlates(ownerId) {
   const rows = await doQuery(
     `SELECT licensePlate FROM vehicles WHERE ownerId = ? ORDER BY createdAt DESC`,
     [ownerId],
   );
-  return rows.map((row) => row.licensePlate);
+  return rows.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts row; returns the transformed collection value. */
+    (row) => row.licensePlate);
 }
 
+/** Fetches document by id.
+ * Accepts documentId; returns a promise for the requested data. */
 async function getDocumentById(documentId) {
   const rows = await doQuery(
     `SELECT * FROM documents WHERE documentId = ? LIMIT 1`,
@@ -17,6 +26,8 @@ async function getDocumentById(documentId) {
   return rows[0];
 }
 
+/** Fetches user scoped documents.
+ * Accepts userId; returns a promise for the requested data. */
 async function getUserScopedDocuments(userId) {
   return doQuery(
     `
@@ -30,9 +41,14 @@ async function getUserScopedDocuments(userId) {
   );
 }
 
+/** Fetches vehicle scoped documents for plates.
+ * Accepts licensePlates; returns a promise for the requested data. */
 async function getVehicleScopedDocumentsForPlates(licensePlates) {
   if (!licensePlates.length) return [];
-  const placeholders = licensePlates.map(() => "?").join(", ");
+  const placeholders = licensePlates.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts no arguments; returns the transformed collection value. */
+    () => "?").join(", ");
   return doQuery(
     `
       SELECT *
@@ -44,6 +60,8 @@ async function getVehicleScopedDocumentsForPlates(licensePlates) {
   );
 }
 
+/** Finds user scoped document on connection.
+ * Accepts connection, userId, and documentType; returns a promise for the requested data. */
 async function findUserScopedDocumentOnConnection(
   connection,
   userId,
@@ -65,6 +83,8 @@ async function findUserScopedDocumentOnConnection(
   return rows[0];
 }
 
+/** Finds vehicle scoped document on connection.
+ * Accepts connection, licensePlate, and documentType; returns a promise for the requested data. */
 async function findVehicleScopedDocumentOnConnection(
   connection,
   licensePlate,
@@ -85,6 +105,8 @@ async function findVehicleScopedDocumentOnConnection(
   return rows[0];
 }
 
+/** Inserts document on connection.
+ * Accepts connection and an options object; returns a promise for the operation result. */
 async function insertDocumentOnConnection(
   connection,
   {
@@ -136,6 +158,8 @@ async function insertDocumentOnConnection(
   );
 }
 
+/** Replaces document file on connection.
+ * Accepts connection, documentId, and an options object; returns a promise for the operation result. */
 async function replaceDocumentFileOnConnection(
   connection,
   documentId,
@@ -231,6 +255,8 @@ const ADMIN_DOCUMENT_SELECT = `
   gov.checkedAt AS governmentCheckedAt
 `;
 
+/** Fetches admin documents.
+ * Accepts an options object; returns a promise for the requested data. */
 async function getAdminDocuments({
   status = "all",
   documentType = null,
@@ -284,6 +310,8 @@ async function getAdminDocuments({
   return { rows, total: countRows[0].total };
 }
 
+/** Fetches admin document by id.
+ * Accepts documentId; returns a promise for the requested data. */
 async function getAdminDocumentById(documentId) {
   const rows = await doQuery(
     `
@@ -303,6 +331,8 @@ async function getAdminDocumentById(documentId) {
   return rows[0];
 }
 
+/** Fetches user document status summary.
+ * Accepts userId; returns a promise for the requested data. */
 async function getUserDocumentStatusSummary(userId) {
   return doQuery(
     `
@@ -315,6 +345,8 @@ async function getUserDocumentStatusSummary(userId) {
   );
 }
 
+/** Locks and returns a document row for transactional review.
+ * Accepts connection and documentId; returns a promise for the operation result. */
 async function lockDocumentByIdOnConnection(connection, documentId) {
   const rows = await queryOnConnection(
     connection,
@@ -330,6 +362,8 @@ async function lockDocumentByIdOnConnection(connection, documentId) {
   return rows[0];
 }
 
+/** Stores an administrator's document review decision on the transaction connection.
+ * Accepts connection, documentId, and an options object; returns a promise for the operation result. */
 async function applyAdminReviewOnConnection(
   connection,
   documentId,
@@ -365,6 +399,8 @@ async function applyAdminReviewOnConnection(
   );
 }
 
+/** Fetches vehicle for government compare.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getVehicleForGovernmentCompare(licensePlate) {
   const rows = await doQuery(
     `
@@ -387,6 +423,8 @@ async function getVehicleForGovernmentCompare(licensePlate) {
   return rows[0];
 }
 
+/** Fetches vehicle government check.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getVehicleGovernmentCheck(licensePlate) {
   const rows = await doQuery(
     `SELECT * FROM vehicle_government_checks WHERE licensePlate = ? LIMIT 1`,
@@ -395,15 +433,22 @@ async function getVehicleGovernmentCheck(licensePlate) {
   return rows[0];
 }
 
+/** Fetches vehicle government checks for plates.
+ * Accepts licensePlates; returns a promise for the requested data. */
 async function getVehicleGovernmentChecksForPlates(licensePlates) {
   if (!licensePlates.length) return [];
-  const placeholders = licensePlates.map(() => "?").join(", ");
+  const placeholders = licensePlates.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts no arguments; returns the transformed collection value. */
+    () => "?").join(", ");
   return doQuery(
     `SELECT * FROM vehicle_government_checks WHERE licensePlate IN (${placeholders})`,
     licensePlates,
   );
 }
 
+/** Fetches admin document stats.
+ * Accepts no arguments; returns a promise for the requested data. */
 async function getAdminDocumentStats() {
   const rows = await doQuery(
     `
@@ -429,6 +474,8 @@ async function getAdminDocumentStats() {
   return stats;
 }
 
+/** Finds documents due for expiration.
+ * Accepts no arguments; returns a promise for the requested data. */
 async function findDocumentsDueForExpiration() {
   return doQuery(
     `
@@ -457,6 +504,8 @@ async function findDocumentsDueForExpiration() {
   );
 }
 
+/** Marks document expired.
+ * Accepts documentId; returns a promise for the operation result. */
 async function markDocumentExpired(documentId) {
   return doQuery(
     `
@@ -476,6 +525,8 @@ const INSURANCE_REMINDER_CLAIM_COLUMN = {
   1: "insuranceReminder1SentAt",
 };
 
+/** Finds verified insurance due for reminder.
+ * Accepts daysBeforeExpiration; returns a promise for the requested data. */
 async function findVerifiedInsuranceDueForReminder(daysBeforeExpiration) {
   return doQuery(
     `
@@ -504,6 +555,8 @@ async function findVerifiedInsuranceDueForReminder(daysBeforeExpiration) {
   );
 }
 
+/** Atomically claims an insurance reminder so the stage is sent only once.
+ * Accepts documentId and daysBeforeExpiration; returns a promise for the claim result. */
 async function claimInsuranceReminder(documentId, daysBeforeExpiration) {
   const column = INSURANCE_REMINDER_CLAIM_COLUMN[daysBeforeExpiration];
   if (!column) return false;
@@ -523,6 +576,8 @@ async function claimInsuranceReminder(documentId, daysBeforeExpiration) {
   return result.affectedRows > 0;
 }
 
+/** Creates or updates vehicle government check.
+ * Accepts an options object; returns a promise for the operation result. */
 async function upsertVehicleGovernmentCheck({
   licensePlate,
   status,

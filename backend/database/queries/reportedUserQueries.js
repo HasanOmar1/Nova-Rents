@@ -1,6 +1,10 @@
+/** Database query helpers for reported user records.
+ * Encapsulates the domain's SQL reads, writes, and result shaping. */
 const doQuery = require("../query");
 const { queryOnConnection } = require("../withTransaction");
 
+/** Builds complaint filter.
+ * Accepts status, startDate, endDate, and alias; returns the derived value. */
 function buildComplaintFilter(status, startDate, endDate, alias = "c") {
   const conditions = [];
   const values = [];
@@ -22,6 +26,8 @@ function buildComplaintFilter(status, startDate, endDate, alias = "c") {
   };
 }
 
+/** Fetches reported users.
+ * Accepts an options object; returns a promise for the requested data. */
 async function getReportedUsers({ page, limit, search, accountStatus, complaintStatus, startDate, endDate, sortBy }) {
   const offset = (page - 1) * limit;
   const direct = buildComplaintFilter(complaintStatus, startDate, endDate, "c");
@@ -91,6 +97,8 @@ async function getReportedUsers({ page, limit, search, accountStatus, complaintS
   return { rows, total: Number(count[0]?.total) || 0 };
 }
 
+/** Fetches reports for user.
+ * Accepts userId; returns a promise for the requested data. */
 async function getReportsForUser(userId) {
   return doQuery(`
     SELECT c.complaintId, c.complaintType, c.title, c.description, c.status,
@@ -102,6 +110,8 @@ async function getReportsForUser(userId) {
     ORDER BY c.createdAt DESC, c.complaintId DESC`, [userId, userId]);
 }
 
+/** Fetches warning history.
+ * Accepts userId; returns a promise for the requested data. */
 async function getWarningHistory(userId) {
   return doQuery(`
     SELECT w.warningId, w.reason, w.createdAt,
@@ -111,27 +121,37 @@ async function getWarningHistory(userId) {
     ORDER BY w.createdAt ASC, w.warningId ASC`, [userId]);
 }
 
+/** Locks and returns the target user for an account-action transaction.
+ * Accepts connection and userId; returns a promise for the operation result. */
 async function lockTargetUser(connection, userId) {
   const rows = await queryOnConnection(connection,
     "SELECT userId, firstName, email, role, status FROM users WHERE userId = ? FOR UPDATE", [userId]);
   return rows[0];
 }
 
+/** Counts warnings on connection.
+ * Accepts connection and userId; returns a promise for the requested data. */
 async function countWarningsOnConnection(connection, userId) {
   const rows = await queryOnConnection(connection,
     "SELECT COUNT(*) AS count FROM user_warnings WHERE userId = ? AND removedAt IS NULL", [userId]);
   return Number(rows[0]?.count) || 0;
 }
 
+/** Inserts warning on connection.
+ * Accepts connection, userId, adminId, and reason; returns a promise for the operation result. */
 async function insertWarningOnConnection(connection, userId, adminId, reason) {
   return queryOnConnection(connection,
     "INSERT INTO user_warnings (userId, adminId, reason) VALUES (?, ?, ?)", [userId, adminId, reason]);
 }
 
+/** Blocks user on connection.
+ * Accepts connection and userId; returns a promise for the operation result. */
 async function blockUserOnConnection(connection, userId) {
   return queryOnConnection(connection, "UPDATE users SET status = 'blocked' WHERE userId = ?", [userId]);
 }
 
+/** Removes latest warning on connection.
+ * Accepts connection, userId, and adminId; returns a promise for the operation result. */
 async function removeLatestWarningOnConnection(connection, userId, adminId) {
   const warnings = await queryOnConnection(connection, `
     SELECT warningId, reason

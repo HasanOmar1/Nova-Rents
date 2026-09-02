@@ -1,3 +1,5 @@
+/** Express controller handlers for complaints operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const STATUS_CODE = require("../constants/statusCodes");
 const doQuery = require("../database/query");
 const fs = require("fs");
@@ -84,6 +86,8 @@ const COMPLAINT_FILTER_STATUSES = new Set(["all", ...COMPLAINT_STATUSES]);
 const DEFAULT_COMPLAINT_PAGE_SIZE = 5;
 const MAX_COMPLAINT_PAGE_SIZE = 50;
 
+/** Parses complaint pagination.
+ * Accepts query; returns the derived value. */
 function parseComplaintPagination(query) {
   const parsedPage = Number.parseInt(query.page, 10);
   const parsedLimit = Number.parseInt(query.limit, 10);
@@ -97,6 +101,8 @@ function parseComplaintPagination(query) {
   };
 }
 
+/** Fetches vehicle label for owner notice.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getVehicleLabelForOwnerNotice(licensePlate) {
   // Owner email/name from users join — never reporter identity.
   const rows = await doQuery(
@@ -120,12 +126,16 @@ async function getVehicleLabelForOwnerNotice(licensePlate) {
   return rows[0] || null;
 }
 
+/** Formats complaint status label.
+ * Accepts status; returns the derived value. */
 function formatComplaintStatusLabel(status) {
   if (status === "in_review") return "In Review";
   if (!status) return "Unknown";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+/** Finds stored complaint evidence.
+ * Accepts filename; returns a promise for the requested data. */
 async function findStoredComplaintEvidence(filename) {
   for (const directory of [COMPLAINT_EVIDENCE_DIR, UPLOADS_DIR]) {
     const filePath = path.join(directory, filename);
@@ -139,6 +149,8 @@ async function findStoredComplaintEvidence(filename) {
   return null;
 }
 
+/** Fetches complaint evidence.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getComplaintEvidence_controller(req, res, next) {
   try {
     const complaintId = Number(req.params.complaintId);
@@ -161,7 +173,9 @@ async function getComplaintEvidence_controller(req, res, next) {
 
     const storedFilename = complaint
       ? parseStoredImageNames(complaint.images).find(
-          (candidate) => candidate.toLowerCase() === filename.toLowerCase(),
+        /** Tests whether one collection item is the requested match.
+         * Accepts candidate; returns a boolean used by the collection operation. */
+        (candidate) => candidate.toLowerCase() === filename.toLowerCase(),
         )
       : null;
 
@@ -187,6 +201,8 @@ async function getComplaintEvidence_controller(req, res, next) {
     return res.sendFile(
       filePath,
       { acceptRanges: false, cacheControl: false, dotfiles: "deny" },
+      /** Handles completion or failure of the file response.
+       * Accepts error; returns no meaningful value after handling completion. */
       (error) => {
         if (error) next(error);
       },
@@ -196,6 +212,8 @@ async function getComplaintEvidence_controller(req, res, next) {
   }
 }
 
+/** Creates complaint.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function createComplaint_controller(req, res, next) {
   let complaintCommitted = false;
   let insertResult = null;
@@ -223,7 +241,10 @@ async function createComplaint_controller(req, res, next) {
 
     const images =
       req.files && req.files.length > 0
-        ? JSON.stringify(req.files.map((file) => file.filename))
+        ? JSON.stringify(req.files.map(
+          /** Transforms one collection item for the surrounding mapping operation.
+           * Accepts file; returns the transformed collection value. */
+          (file) => file.filename))
         : null;
 
     if (validateComplaintFields(req.body, res) !== true) {
@@ -334,96 +355,99 @@ async function createComplaint_controller(req, res, next) {
       );
 
     try {
-      insertResult = await withTransaction(async (connection) => {
-        const lockedRental = await lockRentalRowForUpdate(
-          connection,
-          parsedRentalId,
-        );
-        if (!lockedRental) {
-          const err = new Error("Rental not found");
-          err.code = "RENTAL_NOT_FOUND";
-          throw err;
-        }
+      insertResult = await withTransaction(
+        /** Executes the database work within the surrounding transaction.
+         * Accepts connection; returns a promise for the transactional result. */
+        async (connection) => {
+          const lockedRental = await lockRentalRowForUpdate(
+            connection,
+            parsedRentalId,
+          );
+          if (!lockedRental) {
+            const err = new Error("Rental not found");
+            err.code = "RENTAL_NOT_FOUND";
+            throw err;
+          }
 
-        // Re-validate paid relationship on the same connection after the lock.
-        let stillEligible = null;
-        if (complaintType === "vehicle") {
-          stillEligible = await findEligibleRentalForVehicleReportOnConnection(
+          // Re-validate paid relationship on the same connection after the lock.
+          let stillEligible = null;
+          if (complaintType === "vehicle") {
+            stillEligible = await findEligibleRentalForVehicleReportOnConnection(
+              connection,
+              userId,
+              parsedRentalId,
+              plateForInsert,
+            );
+          } else {
+            stillEligible = await findEligibleRentalForOwnerReportOnConnection(
+              connection,
+              userId,
+              parsedRentalId,
+              ownerForInsert,
+            );
+          }
+
+          if (!stillEligible) {
+            const err = new Error("Rental is no longer eligible for reporting");
+            err.code = "RENTAL_NOT_ELIGIBLE";
+            throw err;
+          }
+
+          const activeComplaint =
+            await findActiveComplaintForRentalTypeOnConnection(
+              connection,
+              parsedRentalId,
+              complaintType,
+            );
+
+          if (activeComplaint) {
+            const err = new Error(
+              "You already have an active report for this rental.",
+            );
+            err.code = "ACTIVE_COMPLAINT_EXISTS";
+            throw err;
+          }
+
+          const result = await createComplaintOnConnection(
             connection,
             userId,
-            parsedRentalId,
-            plateForInsert,
-          );
-        } else {
-          stillEligible = await findEligibleRentalForOwnerReportOnConnection(
-            connection,
-            userId,
-            parsedRentalId,
-            ownerForInsert,
-          );
-        }
-
-        if (!stillEligible) {
-          const err = new Error("Rental is no longer eligible for reporting");
-          err.code = "RENTAL_NOT_ELIGIBLE";
-          throw err;
-        }
-
-        const activeComplaint =
-          await findActiveComplaintForRentalTypeOnConnection(
-            connection,
             parsedRentalId,
             complaintType,
+            plateForInsert,
+            ownerForInsert,
+            title,
+            description,
+            images,
           );
 
-        if (activeComplaint) {
-          const err = new Error(
-            "You already have an active report for this rental.",
+          if (!result || result.affectedRows !== 1) {
+            const err = new Error("Failed to create complaint");
+            err.code = "COMPLAINT_INSERT_FAILED";
+            throw err;
+          }
+
+          await createActivityOnConnection(
+            connection,
+            userId,
+            "Created a Complaint",
+            userActivityDescription,
+            result.insertId,
           );
-          err.code = "ACTIVE_COMPLAINT_EXISTS";
-          throw err;
-        }
 
-        const result = await createComplaintOnConnection(
-          connection,
-          userId,
-          parsedRentalId,
-          complaintType,
-          plateForInsert,
-          ownerForInsert,
-          title,
-          description,
-          images,
-        );
+          await createSystemHistoryOnConnection(
+            connection,
+            userId,
+            "complaint",
+            "create",
+            "Created a Complaint",
+            "complaint",
+            String(result.insertId),
+            parsedRentalId,
+            complaintType === "vehicle" ? plateForInsert : null,
+            adminHistoryDescription,
+          );
 
-        if (!result || result.affectedRows !== 1) {
-          const err = new Error("Failed to create complaint");
-          err.code = "COMPLAINT_INSERT_FAILED";
-          throw err;
-        }
-
-        await createActivityOnConnection(
-          connection,
-          userId,
-          "Created a Complaint",
-          userActivityDescription,
-          result.insertId,
-        );
-
-        await createSystemHistoryOnConnection(
-          connection,
-          userId,
-          "complaint",
-          "create",
-          "Created a Complaint",
-          "complaint",
-          String(result.insertId),
-          parsedRentalId,
-          complaintType === "vehicle" ? plateForInsert : null,
-          adminHistoryDescription,
-        );
-
-        return result;
+          return result;
       });
     } catch (txError) {
       if (txError.code === "ACTIVE_COMPLAINT_EXISTS") {
@@ -609,6 +633,8 @@ async function createComplaint_controller(req, res, next) {
     }
   }
 }
+/** Updates complaint status.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function updateComplaintStatus_controller(req, res, next) {
   let statusUpdateCommitted = false;
   let committedStatusChanged = false;
@@ -673,54 +699,57 @@ async function updateComplaintStatus_controller(req, res, next) {
 
     let mutation;
     try {
-      mutation = await withTransaction(async (connection) => {
-        const complaint = await getComplaintReporterByIdForUpdateOnConnection(
-          connection,
-          complaintId,
-        );
-        if (!complaint) {
-          const error = new Error("Complaint not found");
-          error.code = "COMPLAINT_NOT_FOUND";
-          throw error;
-        }
+      mutation = await withTransaction(
+        /** Executes the database work within the surrounding transaction.
+         * Accepts connection; returns a promise for the transactional result. */
+        async (connection) => {
+          const complaint = await getComplaintReporterByIdForUpdateOnConnection(
+            connection,
+            complaintId,
+          );
+          if (!complaint) {
+            const error = new Error("Complaint not found");
+            error.code = "COMPLAINT_NOT_FOUND";
+            throw error;
+          }
 
-        const statusChanged = complaint.status !== status;
-        const result = await updateComplaintStatusOnConnection(
-          connection,
-          complaintId,
-          status,
-          trimmedResolution || null,
-          trimmedAdminNotes || null,
-        );
+          const statusChanged = complaint.status !== status;
+          const result = await updateComplaintStatusOnConnection(
+            connection,
+            complaintId,
+            status,
+            trimmedResolution || null,
+            trimmedAdminNotes || null,
+          );
 
-        if (!result || result.affectedRows !== 1) {
-          const error = new Error("Complaint not found");
-          error.code = "COMPLAINT_NOT_FOUND";
-          throw error;
-        }
+          if (!result || result.affectedRows !== 1) {
+            const error = new Error("Complaint not found");
+            error.code = "COMPLAINT_NOT_FOUND";
+            throw error;
+          }
 
-        await createSystemHistoryOnConnection(
-          connection,
-          req.session.user.userId,
-          "admin",
-          statusOperation,
-          statusEventName,
-          "complaint",
-          String(complaintId),
-          null,
-          null,
-          `Complaint #${complaintId} status updated to ${status}`.slice(
-            0,
-            255,
-          ),
-        );
+          await createSystemHistoryOnConnection(
+            connection,
+            req.session.user.userId,
+            "admin",
+            statusOperation,
+            statusEventName,
+            "complaint",
+            String(complaintId),
+            null,
+            null,
+            `Complaint #${complaintId} status updated to ${status}`.slice(
+              0,
+              255,
+            ),
+          );
 
-        const respondedAt = await getComplaintRespondedAtOnConnection(
-          connection,
-          complaintId,
-        );
+          const respondedAt = await getComplaintRespondedAtOnConnection(
+            connection,
+            complaintId,
+          );
 
-        return { complaint, respondedAt, statusChanged };
+          return { complaint, respondedAt, statusChanged };
       });
     } catch (transactionError) {
       if (transactionError.code === "COMPLAINT_NOT_FOUND") {
@@ -959,6 +988,8 @@ async function updateComplaintStatus_controller(req, res, next) {
   }
 }
 
+/** Fetches my complaints.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getMyComplaints_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -1023,6 +1054,8 @@ async function getMyComplaints_controller(req, res, next) {
   }
 }
 
+/** Fetches all complaints.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getAllComplaints_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -1069,6 +1102,8 @@ async function getAllComplaints_controller(req, res, next) {
 // Complaints submitted over time (by createdAt), zero-filled per period,
 // for the admin Complaint Trends chart. Uses the same bucketing policy as
 // the other report charts. Not affected by pagination.
+/** Fetches complaint trends.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getComplaintTrends_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -1120,9 +1155,14 @@ async function getComplaintTrends_controller(req, res, next) {
     );
 
     const countsByPeriod = new Map(
-      rows.map((row) => [row.periodKey, Number(row.complaints)]),
+      rows.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts row; returns the transformed collection value. */
+        (row) => [row.periodKey, Number(row.complaints)]),
     );
     const chartData = buildPeriodKeys(start, end, granularity).map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts period; returns the transformed collection value. */
       (period) => ({
         period,
         complaints: countsByPeriod.get(period) || 0,
@@ -1139,6 +1179,8 @@ async function getComplaintTrends_controller(req, res, next) {
   }
 }
 
+/** Fetches owner vehicle reports.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getOwnerVehicleReports_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -1159,6 +1201,8 @@ async function getOwnerVehicleReports_controller(req, res, next) {
   }
 }
 
+/** Fetches owner vehicle report history.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getOwnerVehicleReportHistory_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -1189,6 +1233,8 @@ async function getOwnerVehicleReportHistory_controller(req, res, next) {
   }
 }
 
+/** Fetches complaints about me.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getComplaintsAboutMe_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -1224,6 +1270,8 @@ async function getComplaintsAboutMe_controller(req, res, next) {
   }
 }
 
+/** Fetches complaints about my vehicles.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getComplaintsAboutMyVehicles_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {

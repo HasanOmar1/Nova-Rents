@@ -1,3 +1,5 @@
+/** Executable backend script for the e2e email flow test workflow.
+ * Runs its checks or maintenance steps and reports the resulting outcome. */
 // End-to-end email verification through the real HTTP API.
 // User A (requester) and User B (vehicle owner) are Gmail plus-aliases of the
 // project's own EMAIL_USER mailbox, so every email lands in a real inbox that
@@ -16,11 +18,15 @@ const [gmailLocal, gmailDomain] = process.env.EMAIL_USER.split("@");
 const EMAIL_A = `${gmailLocal}+${TAG}renter@${gmailDomain}`;
 const EMAIL_B = `${gmailLocal}+${TAG}owner@${gmailDomain}`;
 
+/** Asserts that a verification condition is true.
+ * Accepts cond and label; returns no value and throws when the condition fails. */
 const assert = (cond, label) => {
   console.log(`${cond ? "PASS" : "FAIL"} - ${label}`);
   if (!cond) process.exitCode = 1;
 };
 
+/** Authenticates credentials and establishes an API session.
+ * Accepts email; returns a promise for the operation result. */
 const login = async (email) => {
   const res = await fetch(`${API}/users/login`, {
     method: "POST",
@@ -32,6 +38,8 @@ const login = async (email) => {
   return res.headers.get("set-cookie").split(";")[0];
 };
 
+/** Sends an authenticated request to the local API and parses its response.
+ * Accepts cookie, method, path, and body; returns a promise for status and response data. */
 const api = async (cookie, method, path, body) => {
   const res = await fetch(`${API}${path}`, {
     method,
@@ -47,7 +55,10 @@ const api = async (cookie, method, path, body) => {
   return { status: res.status, data };
 };
 
-(async () => {
+(
+ /** Runs the script's main asynchronous workflow.
+  * Accepts no arguments; returns a promise for the operation result. */
+ async () => {
   // ---------- Setup: two users + one vehicle owned by B ----------
   const hash = await bcrypt.hash(PASSWORD, 10);
   const suffix = String(Date.now()).slice(-7);
@@ -269,7 +280,10 @@ const api = async (cookie, method, path, body) => {
   );
   console.log("Check the server terminal for [email] provider results.");
   process.exit();
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
+})().catch(
+  /** Handles a rejected promise from the surrounding workflow.
+   * Accepts err; returns the error-handling result. */
+  (err) => {
+    console.error(err);
+    process.exit(1);
 });

@@ -1,3 +1,5 @@
+// Presents the document review queue and vehicle verification controls.
+// It takes no props and returns filters, review rows, and detail actions.
 import { useEffect, useState } from "react";
 import {
   BookCheck,
@@ -15,6 +17,8 @@ import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilte
 import { formatDocumentType } from "../../../utils/displayFormat";
 import styles from "./DocumentsAdmin.module.css";
 
+/* Renders the documents admin view and coordinates its page state.
+ * It accepts no arguments and returns the rendered page JSX. */
 const DocumentsAdmin = () => {
   const {
     adminDocuments,
@@ -45,14 +49,19 @@ const DocumentsAdmin = () => {
   const [detail, setDetail] = useState(null);
   const [isBusy, setIsBusy] = useState(false);
 
-  useEffect(() => {
-    getAdminDocuments({
-      page: currentPage,
-      status: statusFilter,
-      documentType: documentTypeFilter,
-    });
-  }, [currentPage, statusFilter, documentTypeFilter, getAdminDocuments]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getAdminDocuments({
+        page: currentPage,
+        status: statusFilter,
+        documentType: documentTypeFilter,
+      });
+    }, [currentPage, statusFilter, documentTypeFilter, getAdminDocuments]);
 
+  /* Reloads the document queue with the active page and filters.
+   * It accepts no arguments and returns the queue request result. */
   const refreshQueue = () =>
     getAdminDocuments({
       page: currentPage,
@@ -60,17 +69,23 @@ const DocumentsAdmin = () => {
       documentType: documentTypeFilter,
     });
 
+  /* Handles open review for this view.
+   * It accepts documentId and returns a promise that resolves when the operation finishes. */
   const openReview = async (documentId) => {
     setAdminErrorMsg("");
     const loaded = await getAdminDocumentById(documentId);
     if (loaded) setDetail(loaded);
   };
 
+  /* Closes the document review panel and clears its selected detail.
+   * It accepts no arguments and returns undefined. */
   const closeReview = () => {
     setDetail(null);
     setAdminErrorMsg("");
   };
 
+  /* Handles verify for this view.
+   * It accepts documentId and returns a promise that resolves when the operation finishes. */
   const handleVerify = async (documentId) => {
     setIsBusy(true);
     const result = await verifyAdminDocument(documentId);
@@ -83,6 +98,8 @@ const DocumentsAdmin = () => {
     if (result.conflict) refreshQueue();
   };
 
+  /* Handles reject for this view.
+   * It accepts documentId and payload and returns a promise that resolves when the operation finishes. */
   const handleReject = async (documentId, payload) => {
     setIsBusy(true);
     const result = await rejectAdminDocument(documentId, payload);
@@ -95,21 +112,26 @@ const DocumentsAdmin = () => {
     if (result.conflict) refreshQueue();
   };
 
+  /* Handles retry gov for this view.
+   * It accepts licensePlate and returns a promise that resolves when the operation finishes. */
   const handleRetryGov = async (licensePlate) => {
     if (!detail?.document) return;
     setIsBusy(true);
     const result = await runVehicleGovernmentCheck(licensePlate);
     if (result.ok) {
-      setDetail((prev) =>
-        prev
-          ? {
-              ...prev,
-              document: {
-                ...prev.document,
-                governmentCheck: result.governmentCheck,
-              },
-            }
-          : prev,
+      setDetail(
+        /* Derives the next detail state value.
+         * It accepts prev and returns the replacement state. */
+        (prev) =>
+          prev
+            ? {
+                ...prev,
+                document: {
+                  ...prev.document,
+                  governmentCheck: result.governmentCheck,
+                },
+              }
+            : prev,
       );
     }
     setIsBusy(false);
@@ -170,15 +192,21 @@ const DocumentsAdmin = () => {
       />
 
       <div className={styles.topCardsContainer}>
-        {topData.map((item) => (
-          <HomeTopCards
-            key={item.title}
-            title={item.title}
-            value={item.value}
-            icon={item.icon}
-            onClick={() => handleStatusChange(item.status)}
-            isAction
-          />
+        {topData.map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts item and returns the mapped value. */
+          (item) => (
+            <HomeTopCards
+              key={item.title}
+              title={item.title}
+              value={item.value}
+              icon={item.icon}
+              onClick={
+                /* Handles the click callback for this rendered control.
+                 * It accepts no arguments and returns the delegated result. */
+                () => handleStatusChange(item.status)}
+              isAction
+            />
         ))}
       </div>
 
@@ -202,10 +230,13 @@ const DocumentsAdmin = () => {
           <select
             id="documentType"
             value={documentTypeFilter}
-            onChange={(event) => {
-              setDocumentTypeFilter(event.target.value);
-              resetPage();
-            }}
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts event and returns the delegated result. */
+              (event) => {
+                setDocumentTypeFilter(event.target.value);
+                resetPage();
+              }}
           >
             <option value="all">All types</option>
             {[
@@ -214,10 +245,13 @@ const DocumentsAdmin = () => {
               "driver_license",
               "insurance",
               "vehicle_registration",
-            ].map((type) => (
-              <option key={type} value={type}>
-                {formatDocumentType(type)}
-              </option>
+            ].map(
+              /* Transforms each collection entry for the surrounding mapping.
+               * It accepts type and returns the mapped value. */
+              (type) => (
+                <option key={type} value={type}>
+                  {formatDocumentType(type)}
+                </option>
             ))}
           </select>
         </div>
@@ -242,21 +276,27 @@ const DocumentsAdmin = () => {
         ) : adminDocuments.length === 0 ? (
           <p className={styles.emptyMsg}>No documents found for this filter.</p>
         ) : (
-          adminDocuments.map((doc) => (
-            <div className={styles.row} key={doc.documentId}>
-              <DocumentsAdminCards
-                documentType={doc.documentType}
-                account={
-                  `${doc.account?.firstName || ""} ${doc.account?.lastName || ""}`.trim() ||
-                  doc.account?.email ||
-                  "—"
-                }
-                plate={doc.licensePlate}
-                status={doc.status}
-                govStatus={doc.governmentCheck?.status || "not_checked"}
-                onReview={() => openReview(doc.documentId)}
-              />
-            </div>
+          adminDocuments.map(
+            /* Transforms each collection entry for the surrounding mapping.
+             * It accepts doc and returns the mapped value. */
+            (doc) => (
+              <div className={styles.row} key={doc.documentId}>
+                <DocumentsAdminCards
+                  documentType={doc.documentType}
+                  account={
+                    `${doc.account?.firstName || ""} ${doc.account?.lastName || ""}`.trim() ||
+                    doc.account?.email ||
+                    "—"
+                  }
+                  plate={doc.licensePlate}
+                  status={doc.status}
+                  govStatus={doc.governmentCheck?.status || "not_checked"}
+                  onReview={
+                    /* Handles the review callback for this rendered control.
+                     * It accepts no arguments and returns the delegated result. */
+                    () => openReview(doc.documentId)}
+                />
+              </div>
           ))
         )}
 

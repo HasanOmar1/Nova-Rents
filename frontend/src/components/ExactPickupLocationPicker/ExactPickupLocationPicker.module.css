@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the ExactPickupLocationPicker interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .ExactPickupLocationPicker {
   margin-top: 22px;
   padding: 18px 0;

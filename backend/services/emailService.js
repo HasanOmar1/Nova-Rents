@@ -1,3 +1,5 @@
+/** Backend service logic for email operations.
+ * Integrates domain workflows with external or shared infrastructure. */
 const nodemailer = require("nodemailer");
 const { buildMapsDirectionsUrl } = require("../utils/mapsDirections");
 const { buildInsuranceReminderCopy } = require("../utils/insuranceReminder");
@@ -10,6 +12,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+/** Escapes html.
+ * Accepts value; returns the derived value. */
 const escapeHtml = (value) =>
   String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -18,6 +22,8 @@ const escapeHtml = (value) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
+/** Formats complaint status.
+ * Accepts status; returns the derived value. */
 const formatComplaintStatus = (status) => {
   if (!status) {
     return "Unknown";
@@ -25,10 +31,15 @@ const formatComplaintStatus = (status) => {
 
   return status
     .split("_")
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts word; returns the transformed collection value. */
+      (word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
     .join(" ");
 };
 
+/** Formats complaint type.
+ * Accepts complaintType; returns the derived value. */
 const formatComplaintType = (complaintType) => {
   if (!complaintType) {
     return "General Complaint";
@@ -40,6 +51,8 @@ const formatComplaintType = (complaintType) => {
   return `${formattedType} Complaint`;
 };
 
+/** Formats response date.
+ * Accepts responseCreatedAt; returns the derived value. */
 const formatResponseDate = (responseCreatedAt) => {
   if (!responseCreatedAt) {
     return "Not available";
@@ -58,6 +71,8 @@ const formatResponseDate = (responseCreatedAt) => {
   }).format(date);
 };
 
+/** Sends complaint response email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendComplaintResponseEmail = async ({
   to,
   firstName,
@@ -296,12 +311,16 @@ const TEST_ENV_DISCLOSURE =
 const TEST_ENV_CONFIRMATION_DISCLOSURE =
   "This confirmation was generated in the Nova Rents test environment. No real funds were transferred.";
 
+/** Logs email result.
+ * Accepts label and info; returns no meaningful value after logging provider metadata. */
 const logEmailResult = (label, info) => {
   console.log(
     `[email] ${label}: accepted=${JSON.stringify(info.accepted)} rejected=${JSON.stringify(info.rejected)} messageId=${info.messageId} response=${info.response}`,
   );
 };
 
+/** Builds a recipient display name with an email fallback.
+ * Accepts firstName, lastName, and email; returns the formatted display name. */
 const displayName = (firstName, lastName, email) => {
   const full = `${firstName || ""} ${lastName || ""}`.trim();
   if (full) return full;
@@ -310,9 +329,13 @@ const displayName = (firstName, lastName, email) => {
   return "Nova Rents member";
 };
 
+/** Builds a readable vehicle name from its brand and model.
+ * Accepts brandName and modelName; returns the formatted vehicle label. */
 const vehicleDisplayName = (brandName, modelName) =>
   `${brandName || ""} ${modelName || ""}`.trim() || "your vehicle";
 
+/** Formats email date.
+ * Accepts value; returns the derived value. */
 const formatEmailDate = (value) => {
   if (!value) return "Not available";
   const date = new Date(value);
@@ -323,8 +346,12 @@ const formatEmailDate = (value) => {
   }).format(date);
 };
 
+/** Formats email date time.
+ * Accepts value; returns the derived value. */
 const formatEmailDateTime = (value) => formatResponseDate(value);
 
+/** Formats amount.
+ * Accepts amount and currency; returns the derived value. */
 const formatAmount = (amount, currency = "USD") => {
   const numericAmount = Number(amount);
   const code = currency || "USD";
@@ -343,6 +370,8 @@ const formatAmount = (amount, currency = "USD") => {
   }
 };
 
+/** Computes rental days.
+ * Accepts startDate and endDate; returns the derived value. */
 const computeRentalDays = (startDate, endDate) => {
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -353,24 +382,32 @@ const computeRentalDays = (startDate, endDate) => {
   return days > 0 ? days : null;
 };
 
+/** Formats duration.
+ * Accepts startDate and endDate; returns the derived value. */
 const formatDuration = (startDate, endDate) => {
   const days = computeRentalDays(startDate, endDate);
   if (!days) return null;
   return `${days} day${days === 1 ? "" : "s"}`;
 };
 
+/** Builds receipt number.
+ * Accepts paymentId; returns the derived value. */
 const buildReceiptNumber = (paymentId) => {
   const id = Number(paymentId);
   if (!Number.isInteger(id) || id <= 0) return null;
   return `NR-PAY-${String(id).padStart(6, "0")}`;
 };
 
+/** Builds maps url.
+ * Accepts address; returns the derived value. */
 const buildMapsUrl = (address) => {
   const query = String(address || "").trim();
   if (!query) return null;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
 
+/** Normalizes pickup.
+ * Accepts pickup; returns the derived value. */
 const normalizePickup = (pickup) => {
   if (pickup == null) {
     return {
@@ -399,6 +436,8 @@ const normalizePickup = (pickup) => {
   };
 };
 
+/** Builds primary button.
+ * Accepts href and label; returns the derived value. */
 const buildPrimaryButton = (href, label) => {
   if (!href) return "";
   const safeHref = escapeHtml(href);
@@ -423,6 +462,8 @@ const buildPrimaryButton = (href, label) => {
   `;
 };
 
+/** Builds detail row.
+ * Accepts label and value; returns the derived value. */
 const buildDetailRow = (label, value) => {
   if (value === null || value === undefined || value === "") return "";
   return `
@@ -437,6 +478,8 @@ const buildDetailRow = (label, value) => {
   `;
 };
 
+/** Builds detail block.
+ * Accepts title and rowsHtml; returns the derived value. */
 const buildDetailBlock = (title, rowsHtml) => `
   <div style="margin: 24px 0; padding: 18px; background-color: #f3f4f6; border-radius: 8px;">
     <p style="margin: 0 0 12px; font-weight: 700; color: #111827;">${escapeHtml(title)}</p>
@@ -446,6 +489,8 @@ const buildDetailBlock = (title, rowsHtml) => `
   </div>
 `;
 
+/** Builds status badge.
+ * Accepts label; returns the derived value. */
 const buildStatusBadge = (label) => `
   <span
     style="
@@ -462,6 +507,8 @@ const buildStatusBadge = (label) => `
   </span>
 `;
 
+/** Builds pickup html.
+ * Accepts pickup; returns the derived value. */
 const buildPickupHtml = (pickup) => {
   const { address, instructions, latitude, longitude } = normalizePickup(pickup);
   if (!address) return "";
@@ -518,6 +565,8 @@ const buildPickupHtml = (pickup) => {
   `;
 };
 
+/** Builds pickup text.
+ * Accepts pickup; returns the derived value. */
 const buildPickupText = (pickup) => {
   const { address, instructions, latitude, longitude } = normalizePickup(pickup);
   if (!address) return "";
@@ -534,6 +583,8 @@ const buildPickupText = (pickup) => {
   return `Pickup location:\n${address}\n${instructionsText}${linkLabel}: ${mapsUrl}\n`;
 };
 
+/** Builds email shell.
+ * Accepts subtitle, bodyHtml, and footerNote; returns the derived value. */
 const buildEmailShell = (subtitle, bodyHtml, footerNote = null) => `
   <div
     style="
@@ -578,10 +629,14 @@ const buildEmailShell = (subtitle, bodyHtml, footerNote = null) => `
   </div>
 `;
 
+/** Builds the standard plain-text email closing.
+ * Accepts footerNote; returns the plain-text closing. */
 const closingText = (footerNote = null) =>
   `Best regards,\nNova Rents Team${footerNote ? `\n\n${footerNote}` : ""}`;
 
 // --- User contact form → Nova Rents support ---
+/** Sends contact message email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendContactMessageEmail = async ({ sender, subject, message }) => {
   const recipient =
     String(process.env.CONTACT_EMAIL || "").trim() ||
@@ -640,6 +695,8 @@ const sendContactMessageEmail = async ({ sender, subject, message }) => {
 };
 
 // --- Vehicle report filed → vehicle owner (no reporter identity) ---
+/** Sends owner vehicle report email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendOwnerVehicleReportEmail = async ({
   to,
   ownerFirstName,
@@ -742,6 +799,8 @@ ${closingText()}
 };
 
 // --- Owner report filed → reported owner (no reporter identity) ---
+/** Sends reported owner report email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendReportedOwnerReportEmail = async ({
   to,
   ownerFirstName,
@@ -828,6 +887,8 @@ ${closingText()}
 };
 
 // --- Owner report status change → reported owner (no reporter identity) ---
+/** Sends reported owner report status email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendReportedOwnerReportStatusEmail = async ({
   to,
   ownerFirstName,
@@ -960,6 +1021,8 @@ ${closingText()}
 };
 
 // --- Vehicle report status change → vehicle owner (no reporter identity) ---
+/** Sends owner vehicle report status email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendOwnerVehicleReportStatusEmail = async ({
   to,
   ownerFirstName,
@@ -1112,6 +1175,8 @@ ${closingText()}
 };
 
 // --- New rental request → vehicle owner (no pickup Maps link) ---
+/** Sends rental request email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendRentalRequestEmail = async ({
   to,
   ownerFirstName,
@@ -1214,6 +1279,8 @@ ${closingText()}
 };
 
 // --- Approval / payment request → requester (includes Maps when address exists) ---
+/** Sends test payment request email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendTestPaymentRequestEmail = async ({
   to,
   renterFirstName,
@@ -1317,6 +1384,8 @@ ${closingText()}
 };
 
 // --- Rejection → requester (no pickup location) ---
+/** Sends rental rejected email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendRentalRejectedEmail = async ({
   to,
   renterFirstName,
@@ -1401,6 +1470,8 @@ ${closingText()}
 // --- Payment receipt → requester (professional receipt + Maps + disclosure) ---
 // Pickup section MUST use the immutable rental_pickup_locations snapshot only.
 // Never fall back to live vehicles.exactPickup* or public city for exact Maps.
+/** Sends test payment receipt email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendTestPaymentReceiptEmail = async ({
   to,
   paymentId,
@@ -1551,6 +1622,8 @@ ${closingText(TEST_ENV_DISCLOSURE)}
 };
 
 // --- Payment confirmation → vehicle owner (no bank-transfer claim, no Maps) ---
+/** Sends owner payment received email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendOwnerPaymentReceivedEmail = async ({
   to,
   ownerFirstName,
@@ -1646,6 +1719,8 @@ ${closingText(TEST_ENV_CONFIRMATION_DISCLOSURE)}
   return info;
 };
 
+/** Sends account warning email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendAccountWarningEmail = async ({ to, firstName, reason, warningCount, blocked }) => {
   if (!to) throw new Error("Warning email recipient is required");
   const greeting = escapeHtml(firstName || "there");
@@ -1663,7 +1738,10 @@ const sendAccountWarningEmail = async ({ to, firstName, reason, warningCount, bl
   });
 
   const normalizedRecipient = String(to).trim().toLowerCase();
-  const accepted = (info.accepted || []).map((email) => String(email).toLowerCase());
+  const accepted = (info.accepted || []).map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts email; returns the transformed collection value. */
+    (email) => String(email).toLowerCase());
   if (!accepted.includes(normalizedRecipient)) {
     const rejected = (info.rejected || []).join(", ") || normalizedRecipient;
     throw new Error(`Warning email recipient was rejected: ${rejected}`);
@@ -1676,6 +1754,8 @@ const sendAccountWarningEmail = async ({ to, firstName, reason, warningCount, bl
   return info;
 };
 
+/** Sends account blocked email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendAccountBlockedEmail = async ({
   to,
   firstName,
@@ -1718,7 +1798,10 @@ const sendAccountBlockedEmail = async ({
   });
 
   const normalizedRecipient = recipient.toLowerCase();
-  const accepted = (info.accepted || []).map((email) =>
+  const accepted = (info.accepted || []).map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts email; returns the transformed collection value. */
+    (email) =>
     String(email).toLowerCase(),
   );
   if (!accepted.includes(normalizedRecipient)) {
@@ -1730,6 +1813,8 @@ const sendAccountBlockedEmail = async ({
   return info;
 };
 
+/** Sends account unblocked email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendAccountUnblockedEmail = async ({
   to,
   firstName,
@@ -1774,7 +1859,10 @@ const sendAccountUnblockedEmail = async ({
   });
 
   const normalizedRecipient = recipient.toLowerCase();
-  const accepted = (info.accepted || []).map((email) =>
+  const accepted = (info.accepted || []).map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts email; returns the transformed collection value. */
+    (email) =>
     String(email).toLowerCase(),
   );
   if (!accepted.includes(normalizedRecipient)) {
@@ -1788,6 +1876,8 @@ const sendAccountUnblockedEmail = async ({
   return info;
 };
 
+/** Sends insurance expiration email.
+ * Accepts an options object; returns a promise for the email-delivery result. */
 const sendInsuranceExpirationEmail = async ({
   to,
   firstName,

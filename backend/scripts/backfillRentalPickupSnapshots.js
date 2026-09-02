@@ -1,3 +1,5 @@
+/** Executable backend script for the backfill rental pickup snapshots workflow.
+ * Runs its checks or maintenance steps and reports the resulting outcome. */
 /**
  * Legacy backfill: create rental_pickup_locations for paid rentals that have
  * no snapshot yet, using the vehicle's CURRENT exact pickup fields.
@@ -64,7 +66,10 @@ const INSERT_BACKFILL = `
     AND v.pickupLongitude IS NOT NULL
 `;
 
-(async () => {
+(
+ /** Runs the script's main asynchronous workflow.
+  * Accepts no arguments; returns a promise for the operation result. */
+ async () => {
   const db = await getDbConnection();
 
   const [missing] = await db.query(`
@@ -99,13 +104,19 @@ const INSERT_BACKFILL = `
   if (incomplete.length) {
     console.log(
       "incomplete rentalIds:",
-      incomplete.map((r) => r.rentalId).join(", "),
+      incomplete.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts r; returns the transformed collection value. */
+        (r) => r.rentalId).join(", "),
     );
   }
   if (eligible.length) {
     console.log(
       "eligible rentalIds:",
-      eligible.map((r) => r.rentalId).join(", "),
+      eligible.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts r; returns the transformed collection value. */
+        (r) => r.rentalId).join(", "),
     );
   }
 
@@ -127,7 +138,10 @@ const INSERT_BACKFILL = `
   `);
   console.log("rental_pickup_locations rows now:", after[0].n);
   process.exit(0);
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
+})().catch(
+  /** Handles a rejected promise from the surrounding workflow.
+   * Accepts err; returns the error-handling result. */
+  (err) => {
+    console.error(err);
+    process.exit(1);
 });

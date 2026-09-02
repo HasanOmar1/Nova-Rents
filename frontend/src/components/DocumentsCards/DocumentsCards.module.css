@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the DocumentsCards interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .DocumentsCards {
   background-color: var(--bg-gray);
   border: var(--cards-border);

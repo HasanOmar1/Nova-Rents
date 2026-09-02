@@ -1,3 +1,5 @@
+/** Boots and configures the Express backend application.
+ * Registers middleware, routes, static assets, jobs, and the HTTP listener. */
 const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
@@ -53,6 +55,8 @@ if (isProduction) {
 app.use(express.json());
 app.use(
   "/uploads",
+  /** Prevents private complaint evidence from being served as a public upload.
+   * Accepts req, res, and next; returns the HTTP response or delegates to the next handler. */
   async (req, res, next) => {
     const filename = String(req.path || "").replace(/^\/+/, "");
     if (!isSafeStoredImageName(filename)) {
@@ -69,6 +73,8 @@ app.use(
     }
   },
   express.static(path.join(__dirname, "uploads"), {
+    /** Sets headers.
+     * Accepts res and filePath; returns no value after applying safe image headers. */
     setHeaders: (res, filePath) => {
       const safeMime = safeMimeForStoredFile(filePath);
       if (safeMime) res.setHeader("Content-Type", safeMime);
@@ -111,10 +117,13 @@ app.use(errorHandler);
 startRentalReminderJob();
 startDocumentExpirationJob();
 
-app.listen(port, () => {
-  console.log(
-    `Server is running on ${isProduction ? "https://nova-rents.onrender.com/" : `http://localhost:${port}`} `,
-  );
+app.listen(port,
+  /** Logs the server address after the HTTP listener starts.
+   * Accepts no arguments; returns no meaningful value. */
+  () => {
+    console.log(
+      `Server is running on ${isProduction ? "https://nova-rents.onrender.com/" : `http://localhost:${port}`} `,
+    );
 });
 
 module.exports = app;

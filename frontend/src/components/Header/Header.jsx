@@ -1,3 +1,5 @@
+// Defines the Header React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import styles from "./Header.module.css";
 import {
   Car,
@@ -16,6 +18,8 @@ import AsyncButton from "../AsyncButton/AsyncButton";
 import { useRef } from "react";
 import { useEffect } from "react";
 
+// Renders the Header interface.
+// Takes no arguments and returns rendered JSX.
 const Header = () => {
   const { currentUser, logout } = useUserContext();
   const { unreadCount } = useNotificationContext();
@@ -26,21 +30,30 @@ const Header = () => {
 
   const visible = navByRole[currentUser?.role] || [];
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (tabsRef.current && !tabsRef.current.contains(event.target)) {
-        setAreMoreTabsOpen(false);
-      }
-    };
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      // Handles click outside for the surrounding interface.
+      // Accepts event and returns nothing.
+      const handleClickOutside = (event) => {
+        if (tabsRef.current && !tabsRef.current.contains(event.target)) {
+          setAreMoreTabsOpen(false);
+        }
+      };
 
-    // mousedown = clicking on mouse
-    document.addEventListener("mousedown", handleClickOutside);
+      // mousedown = clicking on mouse
+      document.addEventListener("mousedown", handleClickOutside);
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+      // Synchronizes the component with an external effect after rendering.
+      // Takes no arguments and returns an optional cleanup function.
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
 
+  // Handles log out for the surrounding interface.
+  // Takes no arguments and returns a promise for the operation result.
   const handleLogOut = async () => {
     setIsLoggingOut(true);
     try {
@@ -50,8 +63,13 @@ const Header = () => {
     }
   };
 
+  // Handles tabs for the surrounding interface.
+  // Takes no arguments and returns nothing.
   const handleTabs = () => {
-    setAreMoreTabsOpen((prev) => !prev);
+    setAreMoreTabsOpen(
+      // Derives the next state value from the current state.
+      // Accepts prev and returns the updated state value.
+      (prev) => !prev);
   };
 
   return (
@@ -68,22 +86,25 @@ const Header = () => {
         </div>
 
         <nav>
-          {visible.map((item) => {
-            const Icon = icons[item];
-            const page = location.pathname.split("/")[1];
-            const active = page === item;
+          {visible.map(
+            // Transforms one collection entry for the resulting list.
+            // Accepts item and returns the mapped entry.
+            (item) => {
+              const Icon = icons[item];
+              const page = location.pathname.split("/")[1];
+              const active = page === item;
 
-            return (
-              <Link
-                to={"/" + item}
-                key={item}
-                className={`${styles.navButton}  ${active ? styles.active : ""}`}
-              >
-                {Icon && <Icon className="icon" />}
-                {labels[item]}
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  to={"/" + item}
+                  key={item}
+                  className={`${styles.navButton}  ${active ? styles.active : ""}`}
+                >
+                  {Icon && <Icon className="icon" />}
+                  {labels[item]}
+                </Link>
+              );
+            })}
         </nav>
 
         {currentUser && (
@@ -124,7 +145,10 @@ const Header = () => {
                         <Link
                           className={styles.menuLink}
                           to="/rentalDashboard"
-                          onClick={() => setAreMoreTabsOpen(false)}
+                          onClick={
+                            // Handles the component's click event.
+                            // Takes no arguments and returns the handler result.
+                            () => setAreMoreTabsOpen(false)}
                         >
                           <History className={` ${styles.iconSmall} icon `} />
                           Rental Dashboard
@@ -136,7 +160,10 @@ const Header = () => {
                               : ""
                           }`}
                           to="/contact"
-                          onClick={() => setAreMoreTabsOpen(false)}
+                          onClick={
+                            // Handles the component's click event.
+                            // Takes no arguments and returns the handler result.
+                            () => setAreMoreTabsOpen(false)}
                           aria-current={
                             location.pathname === "/contact"
                               ? "page"

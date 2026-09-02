@@ -1,3 +1,5 @@
+/** Provides shared MySQL transaction and connection query helpers.
+ * Commits successful work, rolls back failures, and releases connections. */
 const getDbConnection = require("./db");
 
 /**
@@ -6,6 +8,8 @@ const getDbConnection = require("./db");
  *
  * @param {(connection: import('mysql2/promise').PoolConnection) => Promise<any>} work
  */
+/** Runs asynchronous database work inside a commit-or-rollback transaction.
+ * Accepts work; returns a promise for the committed callback result. */
 async function withTransaction(work) {
   const pool = getDbConnection();
   const connection = await pool.getConnection();
@@ -37,6 +41,8 @@ async function withTransaction(work) {
 }
 
 /** Query helper bound to one transaction connection (same shape as doQuery). */
+/** Executes parameterized SQL on an existing database connection.
+ * Accepts connection, sql, and params; returns a promise for the database rows or write result. */
 async function queryOnConnection(connection, sql, params = []) {
   const [rows] = await connection.query(sql, params);
   return rows;

@@ -1,3 +1,5 @@
+// Combines vehicle listings with an interactive location map.
+// It takes no props and returns the paginated map-view page.
 import { useEffect, useState } from "react";
 import styles from "./Map.module.css";
 import { Link } from "react-router-dom";
@@ -9,6 +11,8 @@ import { parseImgs } from "../../../utils/parseImgs";
 import Pagination from "../../../components/Pagination/Pagination";
 import { usePagination } from "../../../hooks/usePagination";
 
+// Loads vehicles and renders their selectable locations beside a map.
+// It takes no props and returns the vehicle map page JSX.
 const Map = () => {
   const { allVehicles, getAllVehicles, allVehPagination } = useVehicleContext();
   const { currentPage, nextPage, previousPage } = usePagination({
@@ -18,32 +22,46 @@ const Map = () => {
   const [activePlate, setActivePlate] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
 
-  useEffect(() => {
-    getAllVehicles({}, currentPage);
-  }, [currentPage]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getAllVehicles({}, currentPage);
+    }, [currentPage]);
 
-  useEffect(() => {
-    if (allVehicles && allVehicles.length > 0) {
-      setMapQuery(`${allVehicles[0].address}, Israel`);
-      setActivePlate(allVehicles[0].licensePlate);
-    }
-  }, [allVehicles]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (allVehicles && allVehicles.length > 0) {
+        setMapQuery(`${allVehicles[0].address}, Israel`);
+        setActivePlate(allVehicles[0].licensePlate);
+      }
+    }, [allVehicles]);
 
+  // Selects a vehicle and updates the map query to its address.
+  // It accepts a vehicle object and returns undefined.
   const handleCardClick = (veh) => {
     setMapQuery(`${veh.address}, Israel`);
     setActivePlate(veh.licensePlate);
   };
 
+  // Requests browser geolocation and centers the map on the result.
+  // It takes no arguments and returns undefined while callbacks update state.
   const handleUseLocation = () => {
     setIsLocating(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
+        /* Handles a successful browser geolocation request.
+         * It accepts position and returns undefined. */
         (position) => {
           const { latitude, longitude } = position.coords;
           setMapQuery(`${latitude},${longitude}`);
           setActivePlate(null);
           setIsLocating(false);
         },
+        /* Handles a failed browser geolocation request.
+         * It accepts error and returns undefined. */
         (error) => {
           console.error("Error getting location:", error);
           setIsLocating(false);
@@ -105,26 +123,32 @@ const Map = () => {
         <div className={styles.right}>
           <div className={styles.cardsListWrapper}>
             {allVehicles && allVehicles.length > 0 ? (
-              allVehicles.map((veh) => {
-                const mappedVehicle = {
-                  ...veh,
-                  img: parseImgs(veh.image),
-                  vehName: `${veh.brandName} ${veh.modelName}`,
-                  location: veh.address,
-                  type: veh.carTypeName,
-                  ownerName: `${veh.ownerFirstName} ${veh.ownerLastName}`,
-                };
+              allVehicles.map(
+                /* Transforms each collection entry for the surrounding mapping.
+                 * It accepts veh and returns the mapped value. */
+                (veh) => {
+                  const mappedVehicle = {
+                    ...veh,
+                    img: parseImgs(veh.image),
+                    vehName: `${veh.brandName} ${veh.modelName}`,
+                    location: veh.address,
+                    type: veh.carTypeName,
+                    ownerName: `${veh.ownerFirstName} ${veh.ownerLastName}`,
+                  };
 
-                return (
-                  <div
-                    key={veh.licensePlate}
-                    className={`${styles.cardWrapper} ${activePlate === veh.licensePlate ? styles.active : ""}`}
-                    onClick={() => handleCardClick(veh)}
-                  >
-                    <MapVehiclesCards veh={mappedVehicle} />
-                  </div>
-                );
-              })
+                  return (
+                    <div
+                      key={veh.licensePlate}
+                      className={`${styles.cardWrapper} ${activePlate === veh.licensePlate ? styles.active : ""}`}
+                      onClick={
+                        /* Handles the click callback for this rendered control.
+                         * It accepts no arguments and returns the delegated result. */
+                        () => handleCardClick(veh)}
+                    >
+                      <MapVehiclesCards veh={mappedVehicle} />
+                    </div>
+                  );
+                })
             ) : (
               <div className={styles.noVehicles}>
                 <MapPin size={40} />

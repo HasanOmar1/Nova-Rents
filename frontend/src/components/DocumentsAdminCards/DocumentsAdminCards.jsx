@@ -1,3 +1,5 @@
+// Defines the Documents Admin Cards React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import styles from "./DocumentsAdminCards.module.css";
 import {
   formatDocumentStatus,
@@ -22,6 +24,8 @@ const GOV_CLASS = {
   error: styles.notChecked,
 };
 
+// Renders the Documents Admin Cards interface.
+// Accepts an options object and returns rendered JSX.
 const DocumentsAdminCards = ({
   documentType,
   account,

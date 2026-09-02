@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the AddBrandVehicleMenu interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .AddBrandVehicleMenu {
   background-color: var(--bg-gray);
   border: var(--cards-border);

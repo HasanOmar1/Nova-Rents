@@ -1,3 +1,5 @@
+// Defines the Complaint Evidence Gallery React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   ChevronLeft,
@@ -12,13 +14,20 @@ import { parseComplaintImgs } from "../../utils/parseImgs";
 import styles from "./ComplaintEvidenceGallery.module.css";
 import GalleryImage from "./GalleryImage";
 
+// Renders the Complaint Evidence Gallery interface.
+// Accepts an options object and returns rendered JSX.
 const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
   const imageUrls = useMemo(
+    // Computes the memoized value used by the component.
+    // Takes no arguments and returns the derived memoized value.
     () => parseComplaintImgs(images, complaintId, true),
     [complaintId, images],
   );
   const [activeImageIndex, setActiveImageIndex] = useState(null);
-  const [unavailableImages, setUnavailableImages] = useState(() => new Set());
+  const [unavailableImages, setUnavailableImages] = useState(
+    // Runs the callback required by the surrounding operation.
+    // Takes no arguments and returns the callback result.
+    () => new Set());
   const galleryTitleId = useId();
   const dialogTitleId = useId();
   const activeImage =
@@ -28,50 +37,80 @@ const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
   const imageCount = imageUrls.length;
   const imageCountLabel = `${imageCount} ${imageCount === 1 ? "image" : "images"}`;
 
+  // Marks image unavailable in the managed state.
+  // Accepts image url and returns nothing.
   const markImageUnavailable = (imageUrl) => {
-    setUnavailableImages((current) => {
-      if (current.has(imageUrl)) return current;
-      return new Set([...current, imageUrl]);
-    });
+    setUnavailableImages(
+      // Derives the next state value from the current state.
+      // Accepts current and returns the updated state value.
+      (current) => {
+        if (current.has(imageUrl)) return current;
+        return new Set([...current, imageUrl]);
+      });
   };
 
-  useEffect(() => {
-    if (!isLightboxOpen || imageCount < 2) return undefined;
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (!isLightboxOpen || imageCount < 2) return undefined;
 
-    const handleKeyDown = (event) => {
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        setActiveImageIndex((current) =>
-          current === 0 ? imageCount - 1 : current - 1,
-        );
-      }
+      // Handles key down for the surrounding interface.
+      // Accepts event and returns nothing.
+      const handleKeyDown = (event) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          setActiveImageIndex(
+            // Derives the next state value from the current state.
+            // Accepts current and returns the updated state value.
+            (current) =>
+            current === 0 ? imageCount - 1 : current - 1,
+          );
+        }
 
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        setActiveImageIndex((current) =>
-          current === imageCount - 1 ? 0 : current + 1,
-        );
-      }
-    };
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          setActiveImageIndex(
+            // Derives the next state value from the current state.
+            // Accepts current and returns the updated state value.
+            (current) =>
+            current === imageCount - 1 ? 0 : current + 1,
+          );
+        }
+      };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [imageCount, isLightboxOpen]);
+      window.addEventListener("keydown", handleKeyDown);
+      // Synchronizes the component with an external effect after rendering.
+      // Takes no arguments and returns an optional cleanup function.
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [imageCount, isLightboxOpen]);
 
   if (imageCount === 0) return null;
 
+  // Shows previous image in the interface.
+  // Takes no arguments and returns nothing.
   const showPreviousImage = () => {
-    setActiveImageIndex((current) =>
+    setActiveImageIndex(
+      // Derives the next state value from the current state.
+      // Accepts current and returns the updated state value.
+      (current) =>
       current === 0 ? imageCount - 1 : current - 1,
     );
   };
 
+  // Shows next image in the interface.
+  // Takes no arguments and returns nothing.
   const showNextImage = () => {
-    setActiveImageIndex((current) =>
+    setActiveImageIndex(
+      // Derives the next state value from the current state.
+      // Accepts current and returns the updated state value.
+      (current) =>
       current === imageCount - 1 ? 0 : current + 1,
     );
   };
 
+  // Closes lightbox and related transient state.
+  // Takes no arguments and returns the computed result.
   const closeLightbox = () => setActiveImageIndex(null);
 
   return (
@@ -85,14 +124,20 @@ const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
       </div>
 
       <div className={styles.thumbnailStrip}>
-        {imageUrls.map((imageUrl, index) => (
+        {imageUrls.map(
+          // Transforms one collection entry for the resulting list.
+          // Accepts image url and index and returns the mapped entry.
+          (imageUrl, index) => (
           <button
             key={`${imageUrl}-${index}`}
             type="button"
             className={styles.thumbnailButton}
-            onClick={() => {
-              if (!unavailableImages.has(imageUrl)) setActiveImageIndex(index);
-            }}
+            onClick={
+              // Handles the component's click event.
+              // Takes no arguments and returns the handler result.
+              () => {
+                if (!unavailableImages.has(imageUrl)) setActiveImageIndex(index);
+              }}
             aria-disabled={unavailableImages.has(imageUrl)}
             aria-label={
               unavailableImages.has(imageUrl)
@@ -104,7 +149,10 @@ const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
               src={imageUrl}
               alt={`Uploaded complaint evidence ${index + 1} of ${imageCount}`}
               compact
-              onUnavailable={() => markImageUnavailable(imageUrl)}
+              onUnavailable={
+                // Handles the component's unavailable event.
+                // Takes no arguments and returns the handler result.
+                () => markImageUnavailable(imageUrl)}
             />
             <span className={styles.viewCue} aria-hidden="true">
               {unavailableImages.has(imageUrl) ? (
@@ -122,9 +170,12 @@ const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
         ref={dialogRef}
         className={styles.evidenceDialog}
         onClose={closeLightbox}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) closeLightbox();
-        }}
+        onClick={
+          // Handles the component's click event.
+          // Accepts event and returns the handler result.
+          (event) => {
+            if (event.target === event.currentTarget) closeLightbox();
+          }}
         aria-labelledby={dialogTitleId}
       >
         <div className={styles.dialogShell}>
@@ -164,7 +215,10 @@ const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
                 key={`${activeImage}-${activeImageIndex}`}
                 src={activeImage}
                 alt={`Uploaded complaint evidence ${activeImageIndex + 1} of ${imageCount}`}
-                onUnavailable={() => markImageUnavailable(activeImage)}
+                onUnavailable={
+                  // Handles the component's unavailable event.
+                  // Takes no arguments and returns the handler result.
+                  () => markImageUnavailable(activeImage)}
               />
             )}
 
@@ -190,18 +244,24 @@ const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
               role="group"
               aria-label="Choose an evidence image"
             >
-              {imageUrls.map((imageUrl, index) => (
+              {imageUrls.map(
+                // Transforms one collection entry for the resulting list.
+                // Accepts image url and index and returns the mapped entry.
+                (imageUrl, index) => (
                 <button
                   key={`${imageUrl}-dialog-${index}`}
                   type="button"
                   className={`${styles.dialogThumbnailButton} ${
                     activeImageIndex === index ? styles.activeThumbnail : ""
                   }`}
-                  onClick={() => {
-                    if (!unavailableImages.has(imageUrl)) {
-                      setActiveImageIndex(index);
-                    }
-                  }}
+                  onClick={
+                    // Handles the component's click event.
+                    // Takes no arguments and returns the handler result.
+                    () => {
+                      if (!unavailableImages.has(imageUrl)) {
+                        setActiveImageIndex(index);
+                      }
+                    }}
                   aria-disabled={unavailableImages.has(imageUrl)}
                   aria-label={
                     unavailableImages.has(imageUrl)
@@ -214,7 +274,10 @@ const ComplaintEvidenceGallery = ({ images, complaintId, complaintTitle }) => {
                     src={imageUrl}
                     alt=""
                     compact
-                    onUnavailable={() => markImageUnavailable(imageUrl)}
+                    onUnavailable={
+                      // Handles the component's unavailable event.
+                      // Takes no arguments and returns the handler result.
+                      () => markImageUnavailable(imageUrl)}
                   />
                 </button>
               ))}

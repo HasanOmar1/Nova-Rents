@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the ComplaintsAdminCards interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .ComplaintsAdminCards {
   display: grid;
   grid-template-columns: var(--complaints-grid-columns);

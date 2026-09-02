@@ -1,3 +1,5 @@
+// Presents one vehicle's specifications, rental state, owner, and location.
+// It takes route context and returns the detail, booking, or error view.
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import styles from "./VehicleDetails.module.css";
 import {
@@ -44,15 +46,21 @@ const USER_VEHICLE_RETURN_PATHS = new Set([
   "/myVehicles/analytics",
 ]);
 
+/* Checks that a vehicle supplies every specification displayed on the page.
+ * It accepts a vehicle object and returns a boolean. */
 const hasAllDisplayedSpecifications = (vehicle) =>
   Boolean(vehicle) &&
   displayedSpecificationFields.every(
+    /* Tests whether one displayed field has a usable vehicle value.
+     * It accepts a field name and returns a boolean. */
     (field) =>
       vehicle[field] !== undefined &&
       vehicle[field] !== null &&
       vehicle[field] !== "",
   );
 
+/* Normalizes route or API vehicle data for the detail view.
+ * It accepts a vehicle object and returns the normalized object or null. */
 const formatVehicleForDetails = (vehicle) => {
   if (!vehicle) return null;
 
@@ -66,14 +74,20 @@ const formatVehicleForDetails = (vehicle) => {
   };
 };
 
+/* Coerces a value to a positive finite number for metric displays.
+ * It accepts any numeric value and returns that number or zero. */
 const toNonNegativeNumber = (value) => {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : 0;
 };
 
+/* Formats rental count for display.
+ * It accepts value and returns formatted display text. */
 const formatRentalCount = (value) =>
   Math.floor(toNonNegativeNumber(value)).toLocaleString();
 
+/* Formats revenue for display.
+ * It accepts value and returns formatted display text. */
 const formatRevenue = (value) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -82,6 +96,8 @@ const formatRevenue = (value) =>
     maximumFractionDigits: 2,
   }).format(toNonNegativeNumber(value));
 
+/* Renders the vehicle details view and coordinates its page state.
+ * It accepts no arguments and returns the rendered page JSX. */
 const VehicleDetails = () => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { currentUser } = useUserContext();
@@ -91,8 +107,11 @@ const VehicleDetails = () => {
   const routeReturnTo = routeState?.returnTo;
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [vehicle, setVehicle] = useState(() =>
-    formatVehicleForDetails(routeVehicle),
+  const [vehicle, setVehicle] = useState(
+    /* Builds the initial vehicle state lazily from navigation data.
+     * It accepts no arguments and returns a normalized vehicle or null. */
+    () =>
+      formatVehicleForDetails(routeVehicle),
   );
   const [isVehicleLoading, setIsVehicleLoading] = useState(
     !hasAllDisplayedSpecifications(routeVehicle),
@@ -133,7 +152,10 @@ const VehicleDetails = () => {
     ? [...new Set(vehicle.rentalEligibility.reasons.filter(Boolean))]
     : [];
   const validationReasons = vehicleEligibilityReasonCodes.length
-    ? vehicleEligibilityReasonCodes.map((code) => ({
+    ? vehicleEligibilityReasonCodes.map(
+      /* Transforms each collection entry for the surrounding mapping.
+       * It accepts code and returns the mapped value. */
+      (code) => ({
         code,
         message: formatEligibilityReason(code),
       }))
@@ -178,106 +200,142 @@ const VehicleDetails = () => {
   const paidTripForVehicle = currentUser ? findPaidTripForVehicle(plate) : null;
   const canReportVehicle = Boolean(paidTripForVehicle);
 
+  /* Restarts the image slideshow interval from the current gallery state.
+   * It accepts no arguments and returns undefined. */
   const startSlideshow = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        return prevIndex === imageUrls.length - 1 ? 0 : prevIndex + 1;
-      });
-    }, 2500);
+    intervalRef.current = setInterval(
+      /* Advances the slideshow whenever the interval fires.
+       * It accepts no arguments and returns undefined. */
+      () => {
+        setCurrentIndex(
+          /* Derives the next current index state value.
+           * It accepts prevIndex and returns the replacement state. */
+          (prevIndex) => {
+            return prevIndex === imageUrls.length - 1 ? 0 : prevIndex + 1;
+          });
+      }, 2500);
   }, [imageUrls.length]);
 
+  /* Handles refresh vehicle details for this view.
+   * It accepts no arguments and returns a promise that resolves when the operation finishes. */
   const refreshVehicleDetails = useCallback(async () => {
     const refreshedVehicle = await getVehicleByLicensePlate(id, {
       silent: true,
     });
     if (!refreshedVehicle) return false;
 
-    setVehicle((currentVehicle) =>
-      formatVehicleForDetails({
-        ...(currentVehicle || {}),
-        ...refreshedVehicle,
-      }),
+    setVehicle(
+      /* Derives the next vehicle state value.
+       * It accepts currentVehicle and returns the replacement state. */
+      (currentVehicle) =>
+        formatVehicleForDetails({
+          ...(currentVehicle || {}),
+          ...refreshedVehicle,
+        }),
     );
     return true;
   }, [getVehicleByLicensePlate, id]);
 
-  useEffect(() => {
-    if (currentUser?.role === "user") {
-      fetchRentalEligibility();
-    }
-  }, [currentUser?.role, fetchRentalEligibility]);
-
-  useEffect(() => {
-    let isCurrentRequest = true;
-    const navigationVehicle = formatVehicleForDetails(routeVehicle);
-
-    const loadCompleteVehicle = async () => {
-      try {
-        // Route state makes navigation feel instant, but the URL endpoint is
-        // the authority for ownership and other mutable vehicle data.
-        const completeVehicle = await getVehicleByLicensePlate(id, {
-          silent: true,
-        });
-        if (!isCurrentRequest) return;
-
-        if (!completeVehicle) {
-          setVehicle(null);
-          setVehicleLoadError("Vehicle not found.");
-          return;
-        }
-
-        setVehicle(
-          formatVehicleForDetails({
-            ...(navigationVehicle || {}),
-            ...completeVehicle,
-          }),
-        );
-        setVehicleLoadError("");
-      } catch (error) {
-        if (!isCurrentRequest) return;
-
-        if (error?.response?.status === 404) {
-          setVehicle(null);
-          setVehicleLoadError("Vehicle not found.");
-        } else if (navigationVehicle) {
-          setVehicle(navigationVehicle);
-        } else {
-          setVehicle(null);
-          setVehicleLoadError("Vehicle details could not be loaded.");
-        }
-      } finally {
-        if (isCurrentRequest) setIsVehicleLoading(false);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (currentUser?.role === "user") {
+        fetchRentalEligibility();
       }
-    };
+    }, [currentUser?.role, fetchRentalEligibility]);
 
-    loadCompleteVehicle();
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      let isCurrentRequest = true;
+      const navigationVehicle = formatVehicleForDetails(routeVehicle);
 
-    return () => {
-      isCurrentRequest = false;
-    };
-  }, [getVehicleByLicensePlate, id, routeVehicle]);
+      /* Handles load complete vehicle for this view.
+       * It accepts no arguments and returns a promise that resolves when the operation finishes. */
+      const loadCompleteVehicle = async () => {
+        try {
+          // Route state makes navigation feel instant, but the URL endpoint is
+          // the authority for ownership and other mutable vehicle data.
+          const completeVehicle = await getVehicleByLicensePlate(id, {
+            silent: true,
+          });
+          if (!isCurrentRequest) return;
 
-  useEffect(() => {
-    if (imageUrls.length > 1) {
-      startSlideshow();
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [imageUrls.length, startSlideshow]);
+          if (!completeVehicle) {
+            setVehicle(null);
+            setVehicleLoadError("Vehicle not found.");
+            return;
+          }
 
-  useEffect(() => {
-    if (plate) fetchBookedDates(plate);
-  }, [plate]);
+          setVehicle(
+            formatVehicleForDetails({
+              ...(navigationVehicle || {}),
+              ...completeVehicle,
+            }),
+          );
+          setVehicleLoadError("");
+        } catch (error) {
+          if (!isCurrentRequest) return;
+
+          if (error?.response?.status === 404) {
+            setVehicle(null);
+            setVehicleLoadError("Vehicle not found.");
+          } else if (navigationVehicle) {
+            setVehicle(navigationVehicle);
+          } else {
+            setVehicle(null);
+            setVehicleLoadError("Vehicle details could not be loaded.");
+          }
+        } finally {
+          if (isCurrentRequest) setIsVehicleLoading(false);
+        }
+      };
+
+      loadCompleteVehicle();
+
+      /* Releases resources created by the surrounding operation.
+       * It accepts no arguments and returns undefined. */
+      return () => {
+        isCurrentRequest = false;
+      };
+    }, [getVehicleByLicensePlate, id, routeVehicle]);
+
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (imageUrls.length > 1) {
+        startSlideshow();
+      }
+      /* Releases resources created by the surrounding operation.
+       * It accepts no arguments and returns undefined. */
+      return () => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+      };
+    }, [imageUrls.length, startSlideshow]);
+
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (plate) fetchBookedDates(plate);
+    }, [plate]);
 
   // Reuse existing /rentals/history cache for report-button UX (no new endpoint).
-  useEffect(() => {
-    if (currentUser) {
-      fetchRentalHistory();
-    }
-  }, [currentUser]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (currentUser) {
+        fetchRentalHistory();
+      }
+    }, [currentUser]);
 
+  /* Selects a thumbnail and restarts automatic image rotation.
+   * It accepts an image index and returns undefined. */
   const handleThumbnailClick = (index) => {
     setCurrentIndex(index);
     if (imageUrls.length > 1) {
@@ -285,16 +343,22 @@ const VehicleDetails = () => {
     }
   };
 
+  /* Closes the booking modal and clears its previous response.
+   * It accepts no arguments and returns undefined. */
   const handleCloseModal = () => {
     setIsBookingModalOpen(false);
     setRentVehResponse("");
   };
 
+  /* Opens the booking modal when the vehicle remains rentable.
+   * It accepts no arguments and returns undefined. */
   const handleOpenBookingModal = () => {
     if (!canRentVehicle) return;
     setIsBookingModalOpen(true);
   };
 
+  /* Navigates an eligible renter to a prefilled vehicle complaint form.
+   * It accepts no arguments and returns undefined. */
   const handleReportVehicle = () => {
     if (!plate || !paidTripForVehicle?.rentalId) return;
     navigate(
@@ -370,6 +434,8 @@ const VehicleDetails = () => {
     },
   ];
 
+  /* Adds the country suffix needed for a vehicle map lookup.
+   * It accepts an address and returns a normalized map query string. */
   function locationToMapQuery(address) {
     return `${address}, Israel`;
   }
@@ -424,14 +490,20 @@ const VehicleDetails = () => {
 
                 {imageUrls.length > 1 && (
                   <div className={styles.thumbnailsContainer}>
-                    {imageUrls.map((url, index) => (
-                      <div
-                        key={index}
-                        className={`${styles.thumbnailWrapper} ${index === currentIndex ? styles.active : ""}`}
-                        onClick={() => handleThumbnailClick(index)}
-                      >
-                        <img src={url} alt={`thumbnail ${index + 1}`} />
-                      </div>
+                    {imageUrls.map(
+                      /* Transforms each collection entry for the surrounding mapping.
+                       * It accepts url and index and returns the mapped value. */
+                      (url, index) => (
+                        <div
+                          key={index}
+                          className={`${styles.thumbnailWrapper} ${index === currentIndex ? styles.active : ""}`}
+                          onClick={
+                            /* Handles the click callback for this rendered control.
+                             * It accepts no arguments and returns the delegated result. */
+                            () => handleThumbnailClick(index)}
+                        >
+                          <img src={url} alt={`thumbnail ${index + 1}`} />
+                        </div>
                     ))}
                   </div>
                 )}
@@ -477,29 +549,32 @@ const VehicleDetails = () => {
                     </div>
                   </div>
                   <ul className={styles.validationReasons}>
-                    {validationReasons.map((reason) => (
-                      <li
-                        key={
-                          reason.code.startsWith("GOVERNMENT_CHECK_")
-                            ? "government-check"
-                            : reason.code
-                        }
-                      >
-                        <div className={styles.validationReasonContent}>
-                          <strong>{reason.message}</strong>
-                          {currentUser?.role === "admin" &&
-                            reason.code.startsWith("GOVERNMENT_CHECK_") && (
-                              <GovernmentVerificationControls
-                                licensePlate={plate}
-                                governmentStatus={
-                                  vehicle?.rentalEligibility?.statuses
-                                    ?.governmentCheck
-                                }
-                                onUpdated={refreshVehicleDetails}
-                              />
-                            )}
-                        </div>
-                      </li>
+                    {validationReasons.map(
+                      /* Transforms each collection entry for the surrounding mapping.
+                       * It accepts reason and returns the mapped value. */
+                      (reason) => (
+                        <li
+                          key={
+                            reason.code.startsWith("GOVERNMENT_CHECK_")
+                              ? "government-check"
+                              : reason.code
+                          }
+                        >
+                          <div className={styles.validationReasonContent}>
+                            <strong>{reason.message}</strong>
+                            {currentUser?.role === "admin" &&
+                              reason.code.startsWith("GOVERNMENT_CHECK_") && (
+                                <GovernmentVerificationControls
+                                  licensePlate={plate}
+                                  governmentStatus={
+                                    vehicle?.rentalEligibility?.statuses
+                                      ?.governmentCheck
+                                  }
+                                  onUpdated={refreshVehicleDetails}
+                                />
+                              )}
+                          </div>
+                        </li>
                     ))}
                   </ul>
                 </section>
@@ -523,13 +598,16 @@ const VehicleDetails = () => {
               )}
 
               <div className={styles.cards}>
-                {cardsData.map((item) => (
-                  <HomeTopCards
-                    key={crypto.randomUUID()}
-                    title={item.title}
-                    value={item.value}
-                    className={styles.vehicleCardDetails}
-                  />
+                {cardsData.map(
+                  /* Transforms each collection entry for the surrounding mapping.
+                   * It accepts item and returns the mapped value. */
+                  (item) => (
+                    <HomeTopCards
+                      key={crypto.randomUUID()}
+                      title={item.title}
+                      value={item.value}
+                      className={styles.vehicleCardDetails}
+                    />
                 ))}
               </div>
             </div>

@@ -1,3 +1,5 @@
+/** Defines lint rules for the Vite React frontend and its contexts.
+ * Exports flat ESLint settings, globals, plugins, and scoped overrides. */
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

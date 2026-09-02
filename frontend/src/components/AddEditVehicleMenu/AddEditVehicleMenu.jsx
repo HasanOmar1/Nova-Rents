@@ -1,3 +1,5 @@
+// Defines the Add Edit Vehicle Menu React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useState, useEffect } from "react";
 import styles from "./AddEditVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
@@ -72,6 +74,8 @@ const VEHICLE_COLORS = [
   "Other",
 ];
 
+// Renders the Add Edit Vehicle Menu interface.
+// Accepts an options object and returns rendered JSX.
 const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
   const dialogRef = useModalDialog(isOpen);
   const [formData, setFormData] = useState(initialFormState);
@@ -93,106 +97,136 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
 
   const { getCities, cities, isLoading } = useGovApisContext();
 
-  useEffect(() => {
-    if (isOpen) {
-      if (!vehiclesBrands || vehiclesBrands.length === 0) getBrands();
-      if (!vehiclesType || vehiclesType.length === 0) getVehType();
-      if (!cities || cities.length === 0) getCities();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      if (vehicle) {
-        setFormData({
-          brandId: vehicle.brandId ? String(vehicle.brandId) : "0",
-          modelId: vehicle.modelId ? String(vehicle.modelId) : "",
-          carTypeId: vehicle.carTypeId ? String(vehicle.carTypeId) : "",
-          licensePlate: vehicle.licensePlate || "",
-          year: vehicle.year || "",
-          color: vehicle.color || "",
-          fuelType: vehicle.fuelType || "Petrol",
-          transmission: vehicle.transmission || "Automatic",
-          km: vehicle.km || "",
-          price: vehicle.price || "",
-          address: vehicle.address || "",
-          exactPickupAddress: vehicle.exactPickupAddress || "",
-          pickupLatitude:
-            vehicle.pickupLatitude != null
-              ? String(vehicle.pickupLatitude)
-              : "",
-          pickupLongitude:
-            vehicle.pickupLongitude != null
-              ? String(vehicle.pickupLongitude)
-              : "",
-          pickupInstructions: vehicle.pickupInstructions || "",
-          googlePlaceId: vehicle.googlePlaceId || "",
-          expirationDate: vehicle.expirationDate
-            ? formatDateForInput(vehicle.expirationDate)
-            : "",
-          status: vehicle.status || "available",
-          details: vehicle.details || "",
-          seats: vehicle.seats || "4",
-          images: [],
-        });
-
-        if (vehicle.brandId) {
-          getModelsByBrand(vehicle.brandId);
-        }
-      } else {
-        setFormData(initialFormState);
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (isOpen) {
+        if (!vehiclesBrands || vehiclesBrands.length === 0) getBrands();
+        if (!vehiclesType || vehiclesType.length === 0) getVehType();
+        if (!cities || cities.length === 0) getCities();
       }
-    }
-  }, [vehicle, isOpen]);
+    }, [isOpen]);
+
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (isOpen) {
+        if (vehicle) {
+          setFormData({
+            brandId: vehicle.brandId ? String(vehicle.brandId) : "0",
+            modelId: vehicle.modelId ? String(vehicle.modelId) : "",
+            carTypeId: vehicle.carTypeId ? String(vehicle.carTypeId) : "",
+            licensePlate: vehicle.licensePlate || "",
+            year: vehicle.year || "",
+            color: vehicle.color || "",
+            fuelType: vehicle.fuelType || "Petrol",
+            transmission: vehicle.transmission || "Automatic",
+            km: vehicle.km || "",
+            price: vehicle.price || "",
+            address: vehicle.address || "",
+            exactPickupAddress: vehicle.exactPickupAddress || "",
+            pickupLatitude:
+              vehicle.pickupLatitude != null
+                ? String(vehicle.pickupLatitude)
+                : "",
+            pickupLongitude:
+              vehicle.pickupLongitude != null
+                ? String(vehicle.pickupLongitude)
+                : "",
+            pickupInstructions: vehicle.pickupInstructions || "",
+            googlePlaceId: vehicle.googlePlaceId || "",
+            expirationDate: vehicle.expirationDate
+              ? formatDateForInput(vehicle.expirationDate)
+              : "",
+            status: vehicle.status || "available",
+            details: vehicle.details || "",
+            seats: vehicle.seats || "4",
+            images: [],
+          });
+
+          if (vehicle.brandId) {
+            getModelsByBrand(vehicle.brandId);
+          }
+        } else {
+          setFormData(initialFormState);
+        }
+      }
+    }, [vehicle, isOpen]);
 
   // --- SCROLL TO TOP ON ERROR ---
-  useEffect(() => {
-    if (errorMsg && dialogRef.current) {
-      dialogRef.current.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    }
-  }, [dialogRef, errorMsg]);
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (errorMsg && dialogRef.current) {
+        dialogRef.current.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
+    }, [dialogRef, errorMsg]);
 
+  // Handles change for the surrounding interface.
+  // Accepts e and returns nothing.
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => {
-      const newData = { ...prev, [name]: value };
+    setFormData(
+      // Derives the next state value from the current state.
+      // Accepts prev and returns the updated state value.
+      (prev) => {
+        const newData = { ...prev, [name]: value };
 
-      if (name === "brandId") {
-        newData.modelId = "";
-        newData.carTypeId = "";
-        getModelsByBrand(value);
-      } else if (name === "modelId") {
-        const selectedModel = vehicleModel.find(
-          (m) => String(m.modelId) === String(value),
-        );
-        if (selectedModel) {
-          newData.carTypeId = String(selectedModel.carTypeId);
+        if (name === "brandId") {
+          newData.modelId = "";
+          newData.carTypeId = "";
+          getModelsByBrand(value);
+        } else if (name === "modelId") {
+          const selectedModel = vehicleModel.find(
+            // Tests whether one collection entry is the requested match.
+            // Accepts m and returns a Boolean match result.
+            (m) => String(m.modelId) === String(value),
+          );
+          if (selectedModel) {
+            newData.carTypeId = String(selectedModel.carTypeId);
+          }
         }
-      }
 
-      return newData;
-    });
+        return newData;
+      });
   };
 
+  // Handles image change for the surrounding interface.
+  // Accepts e and returns nothing.
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files).slice(0, 4);
-    setFormData((prev) => ({ ...prev, images: files }));
+    setFormData(
+      // Derives the next state value from the current state.
+      // Accepts prev and returns the updated state value.
+      (prev) => ({ ...prev, images: files }));
   };
 
+  // Clears images from the current state.
+  // Takes no arguments and returns nothing.
   const clearImages = () => {
-    setFormData((prev) => ({ ...prev, images: [] }));
+    setFormData(
+      // Derives the next state value from the current state.
+      // Accepts prev and returns the updated state value.
+      (prev) => ({ ...prev, images: [] }));
   };
 
+  // Handles close and reset for the surrounding interface.
+  // Takes no arguments and returns nothing.
   const handleCloseAndReset = () => {
     setFormData(initialFormState);
     onClose();
     setErrorMsg("");
   };
 
+  // Handles submit for the surrounding interface.
+  // Accepts e and returns a promise for the operation result.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -221,9 +255,12 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     submitData.append("seats", formData.seats);
 
     if (formData.images && formData.images.length > 0) {
-      formData.images.forEach((file) => {
-        submitData.append("images", file);
-      });
+      formData.images.forEach(
+        // Processes one collection entry for a side effect.
+        // Accepts file and returns nothing.
+        (file) => {
+          submitData.append("images", file);
+        });
     }
 
     let isSuccess;
@@ -253,6 +290,8 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     : "image-upload-new";
 
   const selectedCategory = vehiclesType?.find(
+    // Runs the callback required by the surrounding operation.
+    // Accepts t and returns the callback result.
     (t) => String(t.carTypeId) === formData.carTypeId,
   );
   const displayCategoryName = selectedCategory
@@ -263,11 +302,17 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
     <dialog
       className={styles.AddEditVehicleMenu}
       ref={dialogRef}
-      onCancel={(e) => {
-        e.preventDefault();
-        handleCloseAndReset();
-      }}
-      onClick={(e) => e.stopPropagation()}
+      onCancel={
+        // Handles the component's cancel event.
+        // Accepts e and returns the handler result.
+        (e) => {
+          e.preventDefault();
+          handleCloseAndReset();
+        }}
+      onClick={
+        // Handles the component's click event.
+        // Accepts e and returns the handler result.
+        (e) => e.stopPropagation()}
       style={{ cursor: "default" }}
     >
       <div className={styles.header}>
@@ -288,12 +333,18 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               <input
                 type="checkbox"
                 checked={formData.status === "available"}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    status: e.target.checked ? "available" : "inactive",
-                  }));
-                }}
+                onChange={
+                  // Handles the component's change event.
+                  // Accepts e and returns the handler result.
+                  (e) => {
+                    setFormData(
+                      // Handles the component's change event.
+                      // Accepts prev and returns the handler result.
+                      (prev) => ({
+                      ...prev,
+                      status: e.target.checked ? "available" : "inactive",
+                    }));
+                  }}
               />
               <p>Restore vehicle to "Available"</p>
             </label>
@@ -305,12 +356,18 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               name="status"
               checked={formData.status === "maintenance"}
               disabled={formData.status === "rented"}
-              onChange={(e) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  status: e.target.checked ? "maintenance" : "available",
-                }));
-              }}
+              onChange={
+                // Handles the component's change event.
+                // Accepts e and returns the handler result.
+                (e) => {
+                  setFormData(
+                    // Handles the component's change event.
+                    // Accepts prev and returns the handler result.
+                    (prev) => ({
+                    ...prev,
+                    status: e.target.checked ? "maintenance" : "available",
+                  }));
+                }}
             />
             <p>Mark as "Under Maintenance"</p>
           </label>
@@ -328,13 +385,16 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
               <option value="0" disabled hidden>
                 Select Brand
               </option>
-              {vehiclesBrands?.map((b) => {
-                return (
-                  <option key={b.brandId} value={String(b.brandId)}>
-                    {b.brandName}
-                  </option>
-                );
-              })}
+              {vehiclesBrands?.map(
+                // Runs the callback required by the surrounding operation.
+                // Accepts b and returns the callback result.
+                (b) => {
+                  return (
+                    <option key={b.brandId} value={String(b.brandId)}>
+                      {b.brandName}
+                    </option>
+                  );
+                })}
             </select>
           </div>
 
@@ -352,13 +412,16 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
                   ? "Pick a brand first"
                   : "Select Model"}
               </option>
-              {vehicleModel?.map((m) => {
-                return (
-                  <option key={m.modelId} value={String(m.modelId)}>
-                    {m.modelName}
-                  </option>
-                );
-              })}
+              {vehicleModel?.map(
+                // Runs the callback required by the surrounding operation.
+                // Accepts m and returns the callback result.
+                (m) => {
+                  return (
+                    <option key={m.modelId} value={String(m.modelId)}>
+                      {m.modelName}
+                    </option>
+                  );
+                })}
             </select>
           </div>
 
@@ -416,7 +479,10 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
                 Select Color
               </option>
 
-              {VEHICLE_COLORS.map((color) => (
+              {VEHICLE_COLORS.map(
+                // Transforms one collection entry for the resulting list.
+                // Accepts color and returns the mapped entry.
+                (color) => (
                 <option key={color} value={color}>
                   {color}
                 </option>
@@ -487,17 +553,20 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
                 {isLoading ? "Loading cities..." : "Select a city"}
               </option>
 
-              {cities?.map((city) => {
-                const displayName = city.nameEn?.trim()
-                  ? city.nameEn.trim()
-                  : city.name.trim();
+              {cities?.map(
+                // Runs the callback required by the surrounding operation.
+                // Accepts city and returns the callback result.
+                (city) => {
+                  const displayName = city.nameEn?.trim()
+                    ? city.nameEn.trim()
+                    : city.name.trim();
 
-                return (
-                  <option key={city.id} value={displayName}>
-                    {displayName}
-                  </option>
-                );
-              })}
+                  return (
+                    <option key={city.id} value={displayName}>
+                      {displayName}
+                    </option>
+                  );
+                })}
             </select>
           </div>
 
@@ -535,8 +604,14 @@ const AddEditVehicleMenu = ({ isOpen, onClose, vehicle = null }) => {
             pickupInstructions: formData.pickupInstructions,
             googlePlaceId: formData.googlePlaceId,
           }}
-          onChange={(partial) =>
-            setFormData((prev) => ({ ...prev, ...partial }))
+          onChange={
+            // Handles the component's change event.
+            // Accepts partial and returns the handler result.
+            (partial) =>
+            setFormData(
+              // Handles the component's change event.
+              // Accepts prev and returns the handler result.
+              (prev) => ({ ...prev, ...partial }))
           }
         />
         <div className={styles.textAreaAndUpload}>

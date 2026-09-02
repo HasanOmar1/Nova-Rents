@@ -1,3 +1,5 @@
+/** Express middleware for upload concerns.
+ * Validates or transforms requests before control reaches route handlers. */
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -18,6 +20,8 @@ const {
 ensureUploadsDir();
 ensureComplaintEvidenceDir();
 
+/** Accepts or rejects an upload by its declared filename and MIME type.
+ * Accepts req, file, and cb; returns no value directly and reports acceptance through cb. */
 const fileFilter = (req, file, cb) => {
   if (!isAllowedDeclaredImage(file.originalname, file.mimetype)) {
     return cb(
@@ -37,6 +41,8 @@ const upload = multer({
   limits: { fileSize: MAX_IMAGE_BYTES },
 });
 
+/** Translates image-upload failures into HTTP responses.
+ * Accepts error, _req, res, and next; returns an HTTP response or delegates to the next middleware. */
 function handleImageUploadError(error, _req, res, next) {
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
@@ -74,6 +80,8 @@ function handleImageUploadError(error, _req, res, next) {
   return next(error);
 }
 
+/** Builds the normalized record for a persisted upload.
+ * Accepts file, normalized, filename, and destination; returns the normalized file record. */
 function storedFileRecord(file, normalized, filename, destination) {
   const storedFile = {
     ...file,
@@ -87,47 +95,53 @@ function storedFileRecord(file, normalized, filename, destination) {
   return storedFile;
 }
 
+/** Persists uploaded images.
+ * Accepts destination; returns the configured asynchronous upload middleware. */
 function persistUploadedImages(destination) {
-  return async function persistImages(req, res, next) {
-    const files = Array.isArray(req.files)
-      ? req.files
-      : req.file
-        ? [req.file]
-        : [];
+  return (
+    /** Persists images.
+     * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
+    async function persistImages(req, res, next) {
+      const files = Array.isArray(req.files)
+        ? req.files
+        : req.file
+          ? [req.file]
+          : [];
 
-    let normalizedFiles;
-    try {
-      normalizedFiles = [];
-      for (const file of files) {
-        normalizedFiles.push(await normalizeUploadedImage(file));
+      let normalizedFiles;
+      try {
+        normalizedFiles = [];
+        for (const file of files) {
+          normalizedFiles.push(await normalizeUploadedImage(file));
+        }
+      } catch (error) {
+        if (error instanceof ImageValidationError) {
+          return res.status(400).json({ message: error.message });
+        }
+        return next(error);
       }
-    } catch (error) {
-      if (error instanceof ImageValidationError) {
-        return res.status(400).json({ message: error.message });
+
+      const storedFiles = [];
+      try {
+        for (let index = 0; index < files.length; index += 1) {
+          const normalized = normalizedFiles[index];
+          const filename = `${crypto.randomUUID()}${normalized.extension}`;
+          const fullPath = path.join(destination, filename);
+          await fs.promises.writeFile(fullPath, normalized.buffer, { flag: "wx" });
+          storedFiles.push(
+            storedFileRecord(files[index], normalized, filename, destination),
+          );
+        }
+      } catch (error) {
+        clearFailedUploads(storedFiles);
+        return next(error);
       }
-      return next(error);
+
+      if (req.file) req.file = storedFiles[0];
+      req.files = storedFiles;
+      return next();
     }
-
-    const storedFiles = [];
-    try {
-      for (let index = 0; index < files.length; index += 1) {
-        const normalized = normalizedFiles[index];
-        const filename = `${crypto.randomUUID()}${normalized.extension}`;
-        const fullPath = path.join(destination, filename);
-        await fs.promises.writeFile(fullPath, normalized.buffer, { flag: "wx" });
-        storedFiles.push(
-          storedFileRecord(files[index], normalized, filename, destination),
-        );
-      }
-    } catch (error) {
-      clearFailedUploads(storedFiles);
-      return next(error);
-    }
-
-    if (req.file) req.file = storedFiles[0];
-    req.files = storedFiles;
-    return next();
-  }
+  );
 }
 
 const validateUploadedImages = persistUploadedImages(UPLOADS_DIR);

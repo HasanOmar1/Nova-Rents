@@ -1,3 +1,5 @@
+/** Express middleware for document upload concerns.
+ * Validates or transforms requests before control reaches route handlers. */
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
@@ -12,16 +14,22 @@ const {
 ensurePrivateDocumentsDir();
 
 const storage = multer.diskStorage({
+  /** Selects the upload destination through Multer's callback.
+   * Accepts req, file, and cb; returns no value directly and reports the directory through cb. */
   destination: function (req, file, cb) {
     ensurePrivateDocumentsDir();
     cb(null, PRIVATE_DOCUMENTS_DIR);
   },
+  /** Generates a unique stored filename through Multer's callback.
+   * Accepts req, file, and cb; returns no value directly and reports the filename through cb. */
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname).toLowerCase());
   },
 });
 
+/** Accepts or rejects an upload by its declared filename and MIME type.
+ * Accepts req, file, and cb; returns no value directly and reports acceptance through cb. */
 const fileFilter = (req, file, cb) => {
   if (isAllowedDeclaredType(file.originalname, file.mimetype)) {
     cb(null, true);
@@ -41,6 +49,8 @@ const documentUpload = multer({
   limits: { fileSize: MAX_DOCUMENT_BYTES },
 });
 
+/** Translates document-upload failures into HTTP responses.
+ * Accepts err, req, res, and next; returns an HTTP response or delegates to the next middleware. */
 function handleDocumentUploadError(err, req, res, next) {
   if (!err) return next();
   if (req.file?.filename) {

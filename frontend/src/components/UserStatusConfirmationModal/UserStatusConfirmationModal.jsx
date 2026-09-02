@@ -1,9 +1,13 @@
+// Defines the User Status Confirmation Modal React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useId } from "react";
 import { AlertTriangle, Ban, ShieldCheck, UserRound, X } from "lucide-react";
 import AsyncButton from "../AsyncButton/AsyncButton";
 import { useModalDialog } from "../../hooks/useModalDialog";
 import styles from "./UserStatusConfirmationModal.module.css";
 
+// Renders the User Status Confirmation Modal interface.
+// Accepts an options object and returns rendered JSX.
 const UserStatusConfirmationModal = ({
   action,
   user,
@@ -22,11 +26,15 @@ const UserStatusConfirmationModal = ({
   const fullName =
     `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
 
+  // Handles cancel for the surrounding interface.
+  // Accepts event and returns nothing.
   const handleCancel = (event) => {
     event.preventDefault();
     if (!isUpdating) onClose();
   };
 
+  // Handles dialog click for the surrounding interface.
+  // Accepts event and returns nothing.
   const handleDialogClick = (event) => {
     const dialog = dialogRef.current;
     if (!dialog || isUpdating) return;

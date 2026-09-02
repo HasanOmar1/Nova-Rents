@@ -1,3 +1,5 @@
+// Builds the user's dashboard from rental metrics and reporting series.
+// It takes no props and returns summary cards, filters, and charts.
 import { Link } from "react-router-dom";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
@@ -37,6 +39,8 @@ const EVENT_LABELS = {
 // Max usage series shown by default before the "Show all" toggle kicks in
 const TOP_SERIES_LIMIT = 6;
 
+// Loads dashboard metrics and renders the user's overview page.
+// It takes no props and returns dashboard controls, cards, and chart JSX.
 const Home = () => {
   const { metrics, fetchDashboardMetrics } = useRentContext();
   const {
@@ -59,14 +63,22 @@ const Home = () => {
   } = useAppliedDateRange();
   const [showAllSeries, setShowAllSeries] = useState(false);
 
-  useEffect(() => {
-    fetchDashboardMetrics();
-  }, [fetchDashboardMetrics]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      fetchDashboardMetrics();
+    }, [fetchDashboardMetrics]);
 
-  useEffect(() => {
-    getUserDashboardReport(appliedFromDate, appliedToDate);
-  }, [appliedFromDate, appliedToDate, getUserDashboardReport]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getUserDashboardReport(appliedFromDate, appliedToDate);
+    }, [appliedFromDate, appliedToDate, getUserDashboardReport]);
 
+  // Commits the edited reporting dates when the range can be applied.
+  // It takes no arguments and returns undefined.
   const handleApplyDates = () => {
     if (isRangeValid && !isUserDashboardLoading) {
       applyDateRange();
@@ -77,6 +89,8 @@ const Home = () => {
   const seriesTotals = {};
   for (const serie of userDashboardData.usageSeries) {
     seriesTotals[serie.eventName] = userDashboardData.usageChartData.reduce(
+      /* Combines the current entry with the running aggregate.
+       * It accepts sum and point and returns the next aggregate. */
       (sum, point) => sum + (point[serie.eventName] || 0),
       0,
     );
@@ -87,20 +101,28 @@ const Home = () => {
 
   const visibleSeries = isSeriesLimited
     ? [...userDashboardData.usageSeries]
-        .sort((a, b) => seriesTotals[b.eventName] - seriesTotals[a.eventName])
+        .sort(
+          /* Orders two collection entries for the surrounding sort.
+           * It accepts a and b and returns their numeric ordering. */
+          (a, b) => seriesTotals[b.eventName] - seriesTotals[a.eventName])
         .slice(0, TOP_SERIES_LIMIT)
     : userDashboardData.usageSeries;
 
-  const usageChartSeries = visibleSeries.map((serie) => ({
-    dataKey: serie.eventName,
-    name: formatEventLabel(serie.eventName, EVENT_LABELS),
-    color:
-      CHART_COLORS[
-        userDashboardData.usageSeries.indexOf(serie) % CHART_COLORS.length
-      ],
-  }));
+  const usageChartSeries = visibleSeries.map(
+    /* Transforms each collection entry for the surrounding mapping.
+     * It accepts serie and returns the mapped value. */
+    (serie) => ({
+      dataKey: serie.eventName,
+      name: formatEventLabel(serie.eventName, EVENT_LABELS),
+      color:
+        CHART_COLORS[
+          userDashboardData.usageSeries.indexOf(serie) % CHART_COLORS.length
+        ],
+    }));
 
   const hasEarnings = userDashboardData.earningsChartData.some(
+    /* Checks whether the current entry satisfies the surrounding condition.
+     * It accepts point and returns a boolean. */
     (point) => point.earnings > 0,
   );
 
@@ -143,18 +165,21 @@ const Home = () => {
       </div>
 
       <div className={styles.topCardsContainer}>
-        {topData.map((item) => {
-          return (
-            <HomeTopCards
-              isAction={item.isAction}
-              to={`/rentalDashboard`}
-              key={item.title}
-              title={item.title}
-              value={item.value}
-              icon={item.icon}
-            />
-          );
-        })}
+        {topData.map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts item and returns the mapped value. */
+          (item) => {
+            return (
+              <HomeTopCards
+                isAction={item.isAction}
+                to={`/rentalDashboard`}
+                key={item.title}
+                title={item.title}
+                value={item.value}
+                icon={item.icon}
+              />
+            );
+          })}
       </div>
 
       <div className={styles.midCardsContainer}>
@@ -170,7 +195,10 @@ const Home = () => {
             type="date"
             value={fromDate}
             max={toDate}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) => setFromDate(e.target.value)}
           />
         </div>
         <div className={styles.filterGroup}>
@@ -180,7 +208,10 @@ const Home = () => {
             type="date"
             value={toDate}
             min={fromDate}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) => setToDate(e.target.value)}
           />
         </div>
         <button
@@ -195,7 +226,10 @@ const Home = () => {
           <button
             type="button"
             className={styles.toggleSeriesBtn}
-            onClick={() => setShowAllSeries(!showAllSeries)}
+            onClick={
+              /* Handles the click callback for this rendered control.
+               * It accepts no arguments and returns the delegated result. */
+              () => setShowAllSeries(!showAllSeries)}
           >
             {showAllSeries
               ? `Show top ${TOP_SERIES_LIMIT}`

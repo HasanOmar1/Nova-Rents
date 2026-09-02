@@ -1,3 +1,5 @@
+// Defines the Document Review Modal React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useState } from "react";
 import { Eye, RefreshCw, X } from "lucide-react";
 import { useModalDialog } from "../../hooks/useModalDialog";
@@ -12,6 +14,8 @@ import {
 } from "../../utils/displayFormat";
 import styles from "./DocumentReviewModal.module.css";
 
+// Renders the Document Review Modal interface.
+// Accepts an options object and returns rendered JSX.
 const DocumentReviewModal = ({
   isOpen,
   detail,
@@ -168,12 +172,18 @@ const DocumentReviewModal = ({
             )}
             {matched.length > 0 && (
               <p className={styles.meta}>
-                Matched stored fields: {matched.map((item) => item.field).join(", ")}
+                Matched stored fields: {matched.map(
+                  // Transforms one collection entry for the resulting list.
+                  // Accepts item and returns the mapped entry.
+                  (item) => item.field).join(", ")}
               </p>
             )}
             {mismatched.length > 0 && (
               <ul className={styles.mismatchList}>
-                {mismatched.map((item) => (
+                {mismatched.map(
+                  // Transforms one collection entry for the resulting list.
+                  // Accepts item and returns the mapped entry.
+                  (item) => (
                   <li key={item.field}>
                     {item.field}: stored {item.ours || "—"} / official government{" "}
                     {item.government || "—"}
@@ -192,7 +202,10 @@ const DocumentReviewModal = ({
             <AsyncButton
               type="button"
               className={styles.secondaryBtn}
-              onClick={() => onRetryGov(document.licensePlate)}
+              onClick={
+                // Handles the component's click event.
+                // Takes no arguments and returns the handler result.
+                () => onRetryGov(document.licensePlate)}
               loading={isBusy}
               loadingText="Checking..."
             >
@@ -208,7 +221,10 @@ const DocumentReviewModal = ({
           <button
             type="button"
             className={styles.secondaryBtn}
-            onClick={() => onOpenFile(document.documentId)}
+            onClick={
+              // Handles the component's click event.
+              // Takes no arguments and returns the handler result.
+              () => onOpenFile(document.documentId)}
             disabled={isBusy}
           >
             <Eye size={16} />
@@ -219,15 +235,24 @@ const DocumentReviewModal = ({
         {isPending && (
           <form
             className={styles.reviewForm}
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={
+              // Handles the component's submit event.
+              // Accepts event and returns the handler result.
+              (event) => event.preventDefault()}
           >
             <label className={styles.field}>
               <span>Rejection reason</span>
               <select
                 value={rejectionCode}
-                onChange={(event) => setRejectionCode(event.target.value)}
+                onChange={
+                  // Handles the component's change event.
+                  // Accepts event and returns the handler result.
+                  (event) => setRejectionCode(event.target.value)}
               >
-                {REJECTION_CODE_OPTIONS.map((code) => (
+                {REJECTION_CODE_OPTIONS.map(
+                  // Transforms one collection entry for the resulting list.
+                  // Accepts code and returns the mapped entry.
+                  (code) => (
                   <option key={code} value={code}>
                     {formatRejectionCode(code)}
                   </option>
@@ -241,7 +266,10 @@ const DocumentReviewModal = ({
               <textarea
                 rows={3}
                 value={rejectionReasonText}
-                onChange={(event) => setRejectionReasonText(event.target.value)}
+                onChange={
+                  // Handles the component's change event.
+                  // Accepts event and returns the handler result.
+                  (event) => setRejectionReasonText(event.target.value)}
               />
             </label>
             <div className={styles.decisionRow}>
@@ -250,7 +278,10 @@ const DocumentReviewModal = ({
                 className={styles.rejectBtn}
                 loading={isBusy}
                 loadingText="Rejecting..."
-                onClick={() =>
+                onClick={
+                  // Handles the component's click event.
+                  // Takes no arguments and returns the handler result.
+                  () =>
                   onReject(document.documentId, {
                     rejectionCode,
                     rejectionReasonText,
@@ -264,7 +295,10 @@ const DocumentReviewModal = ({
                 className={styles.verifyBtn}
                 loading={isBusy}
                 loadingText="Verifying..."
-                onClick={() => onVerify(document.documentId)}
+                onClick={
+                  // Handles the component's click event.
+                  // Takes no arguments and returns the handler result.
+                  () => onVerify(document.documentId)}
               >
                 Verify
               </AsyncButton>

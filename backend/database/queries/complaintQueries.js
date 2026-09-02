@@ -1,3 +1,5 @@
+/** Database query helpers for complaint records.
+ * Encapsulates the domain's SQL reads, writes, and result shaping. */
 const doQuery = require("../query");
 const { queryOnConnection } = require("../withTransaction");
 const { parseStoredImageNames } = require("../../utils/imageFile");
@@ -52,6 +54,8 @@ const ELIGIBLE_OWNER_REPORT_SQL = `
  * Returns one row if this session renter has a paid rental for this rentalId
  * whose licensePlate matches the reported vehicle; otherwise undefined.
  */
+/** Finds eligible rental for vehicle report.
+ * Accepts renterId, rentalId, and licensePlate; returns a promise for the requested data. */
 async function findEligibleRentalForVehicleReport(
   renterId,
   rentalId,
@@ -65,6 +69,8 @@ async function findEligibleRentalForVehicleReport(
   return rows[0];
 }
 
+/** Finds eligible rental for vehicle report on connection.
+ * Accepts connection, renterId, rentalId, and licensePlate; returns a promise for the requested data. */
 async function findEligibleRentalForVehicleReportOnConnection(
   connection,
   renterId,
@@ -85,6 +91,8 @@ async function findEligibleRentalForVehicleReportOnConnection(
  * Returns one row if this session renter has a paid rental for this rentalId
  * whose vehicle belongs to the reported ownerId; otherwise undefined.
  */
+/** Finds eligible rental for owner report.
+ * Accepts renterId, rentalId, and ownerId; returns a promise for the requested data. */
 async function findEligibleRentalForOwnerReport(renterId, rentalId, ownerId) {
   const rows = await doQuery(ELIGIBLE_OWNER_REPORT_SQL, [
     rentalId,
@@ -94,6 +102,8 @@ async function findEligibleRentalForOwnerReport(renterId, rentalId, ownerId) {
   return rows[0];
 }
 
+/** Finds eligible rental for owner report on connection.
+ * Accepts connection, renterId, rentalId, and ownerId; returns a promise for the requested data. */
 async function findEligibleRentalForOwnerReportOnConnection(
   connection,
   renterId,
@@ -109,6 +119,8 @@ async function findEligibleRentalForOwnerReportOnConnection(
 }
 
 /** Lock the rental row used as the race-condition sync point. */
+/** Locks and returns a rental row for transactional complaint checks.
+ * Accepts connection and rentalId; returns a promise for the operation result. */
 async function lockRentalRowForUpdate(connection, rentalId) {
   const rows = await queryOnConnection(
     connection,
@@ -127,6 +139,8 @@ async function lockRentalRowForUpdate(connection, rentalId) {
  * Active duplicate check — must run after rental FOR UPDATE on the same connection.
  * Active = open or in_review for the same rentalId + complaintType.
  */
+/** Finds active complaint for rental type on connection.
+ * Accepts connection, rentalId, and complaintType; returns a promise for the requested data. */
 async function findActiveComplaintForRentalTypeOnConnection(
   connection,
   rentalId,
@@ -147,6 +161,8 @@ async function findActiveComplaintForRentalTypeOnConnection(
   return rows[0];
 }
 
+/** Creates complaint on connection.
+ * Accepts connection, userId, rentalId, complaintType, vehicleLicensePlate, ownerId, title, description, and images; returns a promise for the operation result. */
 async function createComplaintOnConnection(
   connection,
   userId,
@@ -178,6 +194,8 @@ async function createComplaintOnConnection(
   );
 }
 
+/** Fetches complaint evidence by id.
+ * Accepts complaintId; returns a promise for the requested data. */
 async function getComplaintEvidenceById(complaintId) {
   const rows = await doQuery(
     `
@@ -191,6 +209,8 @@ async function getComplaintEvidenceById(complaintId) {
   return rows[0] || null;
 }
 
+/** Checks whether complaint evidence filename.
+ * Accepts filename; returns the validation or boolean result. */
 async function isComplaintEvidenceFilename(filename) {
   const normalizedFilename = filename.toLowerCase();
   const rows = await doQuery(
@@ -203,8 +223,13 @@ async function isComplaintEvidenceFilename(filename) {
     [normalizedFilename],
   );
 
-  return rows.some((row) =>
+  return rows.some(
+    /** Tests whether one collection item satisfies the surrounding condition.
+     * Accepts row; returns a boolean used by the collection operation. */
+    (row) =>
     parseStoredImageNames(row.images).some(
+      /** Tests whether one collection item satisfies the surrounding condition.
+       * Accepts storedFilename; returns a boolean used by the collection operation. */
       (storedFilename) => storedFilename.toLowerCase() === normalizedFilename,
     ),
   );
@@ -214,6 +239,8 @@ async function isComplaintEvidenceFilename(filename) {
  * Active vehicle reports for vehicles owned by session user.
  * Never selects reporter identity columns (userId / email / name / phone).
  */
+/** Fetches active vehicle complaints for owner.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function getActiveVehicleComplaintsForOwner(ownerId) {
   const query = `
     SELECT
@@ -244,6 +271,8 @@ async function getActiveVehicleComplaintsForOwner(ownerId) {
  * Owner-type complaints targeting the session user as reported owner.
  * Never selects reporter identity columns (userId / email / name / phone).
  */
+/** Fetches complaints about owner.
+ * Accepts ownerId and an options object; returns a promise for the requested data. */
 async function getComplaintsAboutOwner(
   ownerId,
   { limit = 5, offset = 0 } = {},
@@ -267,6 +296,8 @@ async function getComplaintsAboutOwner(
   return doQuery(query, [ownerId, limit, offset]);
 }
 
+/** Counts complaints about owner.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function countComplaintsAboutOwner(ownerId) {
   const result = await doQuery(
     `
@@ -286,6 +317,8 @@ async function countComplaintsAboutOwner(ownerId) {
  * session user. Reporter identity and private admin notes are intentionally
  * excluded from the result.
  */
+/** Fetches complaints about owner vehicles.
+ * Accepts ownerId and an options object; returns a promise for the requested data. */
 async function getComplaintsAboutOwnerVehicles(
   ownerId,
   { limit = 5, offset = 0 } = {},
@@ -315,6 +348,8 @@ async function getComplaintsAboutOwnerVehicles(
   return doQuery(query, [ownerId, limit, offset]);
 }
 
+/** Counts complaints about owner vehicles.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function countComplaintsAboutOwnerVehicles(ownerId) {
   const result = await doQuery(
     `
@@ -334,6 +369,8 @@ async function countComplaintsAboutOwnerVehicles(ownerId) {
 // session user. This deliberately has no date or status filter: the vehicle
 // performance page uses it as a stable "times reported" counter while its
 // rental-value period changes.
+/** Fetches vehicle complaint counts for owner.
+ * Accepts ownerId; returns a promise for the requested data. */
 async function getVehicleComplaintCountsForOwner(ownerId) {
   const query = `
     SELECT
@@ -352,6 +389,8 @@ async function getVehicleComplaintCountsForOwner(ownerId) {
 
 // Complete report history for one vehicle currently owned by the session
 // user. Reporter identity and private admin notes are intentionally omitted.
+/** Fetches vehicle complaints for owner by plate.
+ * Accepts ownerId and licensePlate; returns a promise for the requested data. */
 async function getVehicleComplaintsForOwnerByPlate(ownerId, licensePlate) {
   const query = `
     SELECT
@@ -384,6 +423,8 @@ async function getVehicleComplaintsForOwnerByPlate(ownerId, licensePlate) {
 // other reports. LEFT JOINs keep both vehicle and owner complaints visible
 // even when a related record is missing. vehicleOwner is separate from the
 // targeted owner (c.ownerId) so listed-owner text works for vehicle rows.
+/** Fetches complaints by user id.
+ * Accepts userId and an options object; returns a promise for the requested data. */
 async function getComplaintsByUserId(
   userId,
   {
@@ -445,6 +486,8 @@ async function getComplaintsByUserId(
   return doQuery(query, values);
 }
 
+/** Counts complaints by user id.
+ * Accepts userId and an options object; returns a promise for the requested data. */
 async function countComplaintsByUserId(
   userId,
   { status = "all", startDate = null, endDate = null } = {},
@@ -471,6 +514,8 @@ async function countComplaintsByUserId(
 }
 
 // --- UPDATED: Added status filtering, limit, and offset ---
+/** Fetches all complaints.
+ * Accepts status, limit, and offset; returns a promise for the requested data. */
 async function getAllComplaints(status, limit, offset) {
   let whereClause = "WHERE 1=1";
   const values = [];
@@ -525,6 +570,8 @@ async function getAllComplaints(status, limit, offset) {
 }
 
 //  Gets total count for pagination
+/** Counts all complaints.
+ * Accepts status; returns a promise for the requested data. */
 async function countAllComplaints(status) {
   let whereClause = "WHERE 1=1";
   const values = [];
@@ -540,6 +587,8 @@ async function countAllComplaints(status) {
 }
 
 //  Gets stats for the top cards
+/** Fetches complaint stats.
+ * Accepts no arguments; returns a promise for the requested data. */
 async function getComplaintStats() {
   const query = `
     SELECT 
@@ -564,6 +613,8 @@ const UPDATE_COMPLAINT_STATUS_SQL = `
   WHERE complaintId = ?
 `;
 
+/** Updates complaint status.
+ * Accepts complaintId, status, resolutionMessage, and adminNotes; returns a promise for the operation result. */
 async function updateComplaintStatus(
   complaintId,
   status,
@@ -578,6 +629,8 @@ async function updateComplaintStatus(
   ]);
 }
 
+/** Updates complaint status on connection.
+ * Accepts connection, complaintId, status, resolutionMessage, and adminNotes; returns a promise for the operation result. */
 async function updateComplaintStatusOnConnection(
   connection,
   complaintId,
@@ -611,11 +664,15 @@ const COMPLAINT_REPORTER_BY_ID_SQL = `
   WHERE c.complaintId = ?
 `;
 
+/** Fetches complaint reporter by id.
+ * Accepts complaintId; returns a promise for the requested data. */
 async function getComplaintReporterById(complaintId) {
   const result = await doQuery(COMPLAINT_REPORTER_BY_ID_SQL, [complaintId]);
   return result[0];
 }
 
+/** Fetches complaint reporter by id for update on connection.
+ * Accepts connection and complaintId; returns a promise for the requested data. */
 async function getComplaintReporterByIdForUpdateOnConnection(
   connection,
   complaintId,
@@ -628,6 +685,8 @@ async function getComplaintReporterByIdForUpdateOnConnection(
   return result[0];
 }
 
+/** Fetches complaint responded at on connection.
+ * Accepts connection and complaintId; returns a promise for the requested data. */
 async function getComplaintRespondedAtOnConnection(connection, complaintId) {
   const result = await queryOnConnection(
     connection,
@@ -646,6 +705,8 @@ async function getComplaintRespondedAtOnConnection(connection, complaintId) {
 // caller's DATE_FORMAT pattern. createdAt is a DATETIME, so the end bound
 // uses < DATE_ADD(end, 1 DAY) to include the whole final day.
 // An optional status narrows the count to one complaint status.
+/** Fetches complaint trends by range.
+ * Accepts startDate, endDate, status, and dateFormat; returns a promise for the requested data. */
 async function getComplaintTrendsByRange(
   startDate,
   endDate,

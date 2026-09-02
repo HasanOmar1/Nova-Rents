@@ -1,3 +1,5 @@
+/** Defines the root application shell and role-aware route tree.
+ * Renders loading, user, admin, authentication, and fallback views. */
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Header from "./components/Header/Header";
 import { useUserContext } from "./context/UserContext";
@@ -25,6 +27,8 @@ import ReportedUsersProvider from "./context/ReportedUsersContext";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import Contact from "./pages/UserUI/Contact/Contact";
 
+/** Builds the application routes from the current user and URL location.
+ * Takes no arguments and returns the routed React interface. */
 function App() {
   const { currentUser, isLoading } = useUserContext();
   const { pathname } = useLocation();

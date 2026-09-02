@@ -1,3 +1,5 @@
+// Defines the Home Bottom Cards React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import style from "./HomeBottomCards.module.css";
 import {
   ResponsiveContainer,
@@ -12,6 +14,8 @@ import {
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
 
+// Renders the Home Bottom Cards interface.
+// Accepts an options object and returns rendered JSX.
 const HomeBottomCards = ({
   title,
   subtitle,
@@ -104,7 +108,10 @@ const HomeBottomCards = ({
                     wrapperStyle={{ outline: "none", zIndex: 10 }}
                   />
                   {series?.length > 0 ? (
-                    series.map((serie) => (
+                    series.map(
+                      // Transforms one collection entry for the resulting list.
+                      // Accepts serie and returns the mapped entry.
+                      (serie) => (
                       <Line
                         key={serie.dataKey}
                         type="monotone"
@@ -180,7 +187,10 @@ const HomeBottomCards = ({
 
           {showLegend && series?.length > 0 && (
             <div className={style.legend}>
-              {series.map((serie) => (
+              {series.map(
+                // Transforms one collection entry for the resulting list.
+                // Accepts serie and returns the mapped entry.
+                (serie) => (
                 <div key={serie.dataKey} className={style.legendItem}>
                   <span
                     className={style.legendDot}

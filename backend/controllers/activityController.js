@@ -1,9 +1,13 @@
+/** Express controller handlers for activity operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const {
   getActivitiesByUserId,
 } = require("../database/queries/activityQueries");
 const STATUS_CODE = require("../constants/statusCodes");
 const { validateAuthenticatedUser } = require("../utils/validsController");
 
+/** Fetches activities by user id.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getActivitiesByUserId_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
