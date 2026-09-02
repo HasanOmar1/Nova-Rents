@@ -1,3 +1,5 @@
+/** Scheduled background processing for document expiration tasks.
+ * Runs periodic database checks and dispatches the resulting notifications. */
 const cron = require("node-cron");
 const { createActivity } = require("../database/queries/activityQueries");
 const { createSystemHistory } = require("../database/queries/systemHistoryQueries");
@@ -16,6 +18,8 @@ const {
   buildInsuranceReminderCopy,
 } = require("../utils/insuranceReminder");
 
+/** Sends and records one vehicle-insurance expiration reminder.
+ * Accepts row and daysBeforeExpiration; returns a promise when delivery is recorded. */
 async function notifyInsuranceReminder(row, daysBeforeExpiration) {
   const stage = daysBeforeExpiration === 7 ? "7d" : "1d";
   const vehicleLabel = buildVehicleLabel(row);
@@ -56,6 +60,8 @@ async function notifyInsuranceReminder(row, daysBeforeExpiration) {
   );
 }
 
+/** Claims and sends all insurance reminders due at a given lead time.
+ * Accepts daysBeforeExpiration; returns a promise for scanned and sent counts. */
 async function sendInsuranceReminders(daysBeforeExpiration) {
   const candidates = await findVerifiedInsuranceDueForReminder(
     daysBeforeExpiration,
@@ -83,6 +89,8 @@ async function sendInsuranceReminders(daysBeforeExpiration) {
   return { scanned: candidates.length, sentCount };
 }
 
+/** Expires overdue documents and dispatches their notifications.
+ * Accepts no arguments; returns a promise for scanned and expired counts. */
 async function expireOverdueDocuments() {
   const due = await findDocumentsDueForExpiration();
   let expiredCount = 0;
@@ -150,6 +158,8 @@ async function expireOverdueDocuments() {
   return { scanned: due.length, expiredCount };
 }
 
+/** Runs both insurance-reminder stages and the expiration pass.
+ * Accepts no arguments; returns a promise for the combined processing summary. */
 async function processDocumentExpiration() {
   const reminder7 = await sendInsuranceReminders(7);
   const reminder1 = await sendInsuranceReminders(1);
@@ -157,17 +167,22 @@ async function processDocumentExpiration() {
   return { reminder7, reminder1, expired };
 }
 
+/** Starts document expiration job.
+ * Accepts no arguments; returns no meaningful value after registering the schedule. */
 function startDocumentExpirationJob() {
-  cron.schedule("0 9 * * *", async () => {
-    console.log("Running document expiration job...");
-    try {
-      const result = await processDocumentExpiration();
-      console.log(
-        `Document expiration job finished. 7d=${result.reminder7.sentCount} 1d=${result.reminder1.sentCount} expired=${result.expired.expiredCount}`,
-      );
-    } catch (error) {
-      console.error("Document expiration job failed:", error.message);
-    }
+  cron.schedule("0 9 * * *",
+    /** Runs one scheduled background-job cycle.
+     * Accepts no arguments; returns a promise when the scheduled work finishes. */
+    async () => {
+      console.log("Running document expiration job...");
+      try {
+        const result = await processDocumentExpiration();
+        console.log(
+          `Document expiration job finished. 7d=${result.reminder7.sentCount} 1d=${result.reminder1.sentCount} expired=${result.expired.expiredCount}`,
+        );
+      } catch (error) {
+        console.error("Document expiration job failed:", error.message);
+      }
   });
 }
 

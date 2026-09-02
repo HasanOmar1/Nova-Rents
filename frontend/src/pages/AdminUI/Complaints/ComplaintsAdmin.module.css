@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the ComplaintsAdmin interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .ComplaintsAdmin .topCardsContainer {
   display: flex;
   gap: 10px;

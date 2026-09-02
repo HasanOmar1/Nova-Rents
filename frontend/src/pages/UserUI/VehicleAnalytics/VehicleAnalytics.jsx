@@ -1,3 +1,5 @@
+// Presents owner vehicle performance across value, rentals, and reports.
+// It takes no props and returns date controls, comparisons, and report views.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CalendarCheck2, CalendarDays, Flag } from "lucide-react";
@@ -15,11 +17,15 @@ import { useDateRange } from "../../../hooks/useDateRange";
 import VehicleRentalCountChart from "./VehicleRentalCountChart";
 import styles from "./VehicleAnalytics.module.css";
 
+/* Derives vehicle chart color from the supplied input.
+ * It accepts index and returns the derived value. */
 const getVehicleChartColor = (index) => {
   const hue = Math.round((205 + index * 137.508) % 360);
   return `hsl(${hue}, 72%, 66%)`;
 };
 
+/* Formats comparison date for display.
+ * It accepts value and returns formatted display text. */
 const formatComparisonDate = (value) => {
   const [year, month, day] = String(value).split("-").map(Number);
   if (!year || !month || !day) return value;
@@ -31,6 +37,8 @@ const formatComparisonDate = (value) => {
   });
 };
 
+/* Derives vehicle display name from the supplied input.
+ * It accepts name and licensePlate and returns the derived value. */
 const getVehicleDisplayName = (name, licensePlate) => {
   const plateSuffix = ` (${licensePlate})`;
   return name.endsWith(plateSuffix)
@@ -38,6 +46,8 @@ const getVehicleDisplayName = (name, licensePlate) => {
     : name;
 };
 
+/* Loads and renders value, rental, and report analytics for owned vehicles.
+ * It accepts no arguments and returns the vehicle analytics page JSX. */
 const VehicleAnalytics = () => {
   const {
     fromDate,
@@ -64,56 +74,83 @@ const VehicleAnalytics = () => {
     getVehicleComparison,
   } = useReportContext();
 
-  useEffect(() => {
-    getVehicleComparison(appliedFilter);
-  }, [appliedFilter, getVehicleComparison, vehicleInventoryVersion]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getVehicleComparison(appliedFilter);
+    }, [appliedFilter, getVehicleComparison, vehicleInventoryVersion]);
 
   useEffect(
-    () => () => {
-      reportRequestIdRef.current += 1;
-    },
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () =>
+      /* Releases resources created by the surrounding operation.
+       * It accepts no arguments and returns undefined. */
+      () => {
+        reportRequestIdRef.current += 1;
+      },
     [],
   );
 
   const comparisonSeries = useMemo(
+    /* Computes the memoized value used by this component.
+     * It accepts no arguments and returns the derived value. */
     () =>
-      vehicleComparisonData.series.map((serie, index) => ({
-        dataKey: serie.dataKey,
-        licensePlate: String(serie.licensePlate),
-        name: serie.name || String(serie.licensePlate),
-        reportCount: Number(serie.reportCount) || 0,
-        rentalCount: Number(serie.rentalCount) || 0,
-        color: getVehicleChartColor(index),
-      })),
+      vehicleComparisonData.series.map(
+        /* Transforms each collection entry for the surrounding mapping.
+         * It accepts serie and index and returns the mapped value. */
+        (serie, index) => ({
+          dataKey: serie.dataKey,
+          licensePlate: String(serie.licensePlate),
+          name: serie.name || String(serie.licensePlate),
+          reportCount: Number(serie.reportCount) || 0,
+          rentalCount: Number(serie.rentalCount) || 0,
+          color: getVehicleChartColor(index),
+        })),
     [vehicleComparisonData.series],
   );
 
   const comparisonChartData = useMemo(
+    /* Computes the memoized value used by this component.
+     * It accepts no arguments and returns the derived value. */
     () =>
-      vehicleComparisonData.chartData.map((point) => {
-        const normalizedPoint = { ...point };
+      vehicleComparisonData.chartData.map(
+        /* Transforms each collection entry for the surrounding mapping.
+         * It accepts point and returns the mapped value. */
+        (point) => {
+          const normalizedPoint = { ...point };
 
-        for (const serie of comparisonSeries) {
-          normalizedPoint[serie.dataKey] =
-            Number(normalizedPoint[serie.dataKey]) || 0;
-        }
+          for (const serie of comparisonSeries) {
+            normalizedPoint[serie.dataKey] =
+              Number(normalizedPoint[serie.dataKey]) || 0;
+          }
 
-        return normalizedPoint;
-      }),
+          return normalizedPoint;
+        }),
     [comparisonSeries, vehicleComparisonData.chartData],
   );
 
   const vehicleValueRanking = useMemo(
+    /* Computes the memoized value used by this component.
+     * It accepts no arguments and returns the derived value. */
     () =>
       comparisonSeries
-        .map((serie) => ({
-          ...serie,
-          totalValue: comparisonChartData.reduce(
-            (total, point) => total + (Number(point[serie.dataKey]) || 0),
-            0,
-          ),
-        }))
+        .map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts serie and returns the mapped value. */
+          (serie) => ({
+            ...serie,
+            totalValue: comparisonChartData.reduce(
+              /* Combines the current entry with the running aggregate.
+               * It accepts total and point and returns the next aggregate. */
+              (total, point) => total + (Number(point[serie.dataKey]) || 0),
+              0,
+            ),
+          }))
         .sort(
+          /* Orders two collection entries for the surrounding sort.
+           * It accepts firstVehicle and secondVehicle and returns their numeric ordering. */
           (firstVehicle, secondVehicle) =>
             secondVehicle.totalValue - firstVehicle.totalValue ||
             firstVehicle.name.localeCompare(secondVehicle.name) ||
@@ -123,26 +160,38 @@ const VehicleAnalytics = () => {
   );
 
   const vehicleRentalCountData = useMemo(
+    /* Computes the memoized value used by this component.
+     * It accepts no arguments and returns the derived value. */
     () =>
       comparisonSeries
-        .filter((vehicle) => vehicle.rentalCount > 0)
+        .filter(
+          /* Tests whether each collection entry belongs in the filtered result.
+           * It accepts vehicle and returns a boolean. */
+          (vehicle) => vehicle.rentalCount > 0)
         .sort(
+          /* Orders two collection entries for the surrounding sort.
+           * It accepts firstVehicle and secondVehicle and returns their numeric ordering. */
           (firstVehicle, secondVehicle) =>
             secondVehicle.rentalCount - firstVehicle.rentalCount ||
             firstVehicle.name.localeCompare(secondVehicle.name) ||
             firstVehicle.licensePlate.localeCompare(secondVehicle.licensePlate),
         )
-        .map(({ dataKey, name, licensePlate, rentalCount, color }) => ({
-          dataKey,
-          name: getVehicleDisplayName(name, licensePlate),
-          licensePlate,
-          rentalCount,
-          color,
-        })),
+        .map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts destructured values and returns the mapped value. */
+          ({ dataKey, name, licensePlate, rentalCount, color }) => ({
+            dataKey,
+            name: getVehicleDisplayName(name, licensePlate),
+            licensePlate,
+            rentalCount,
+            color,
+          })),
     [comparisonSeries],
   );
 
   const fleetTotalValue = vehicleValueRanking.reduce(
+    /* Combines the current entry with the running aggregate.
+     * It accepts total and vehicle and returns the next aggregate. */
     (total, vehicle) => total + vehicle.totalValue,
     0,
   );
@@ -154,8 +203,14 @@ const VehicleAnalytics = () => {
           appliedFilter.endDate,
         )}`;
 
-  const hasComparisonValue = comparisonChartData.some((point) =>
-    comparisonSeries.some((serie) => point[serie.dataKey] > 0),
+  const hasComparisonValue = comparisonChartData.some(
+    /* Checks whether the current entry satisfies the surrounding condition.
+     * It accepts point and returns a boolean. */
+    (point) =>
+      comparisonSeries.some(
+        /* Checks whether the current entry satisfies the surrounding condition.
+         * It accepts serie and returns a boolean. */
+        (serie) => point[serie.dataKey] > 0),
   );
 
   const comparisonEmptyMessage = vehicleComparisonErrorMsg
@@ -172,13 +227,20 @@ const VehicleAnalytics = () => {
         : `No rentals ending between ${appliedRangeLabel} were completed.`
       : "Add a vehicle to start comparing completed rentals.";
 
+  /* Switches the analytics request back to the all-time range.
+   * It accepts no arguments and returns undefined. */
   const applyAllTime = () => {
     setRangeMode("all");
-    setAppliedFilter((currentFilter) =>
-      currentFilter.range === "all" ? currentFilter : { range: "all" },
+    setAppliedFilter(
+      /* Derives the next applied filter state value.
+       * It accepts currentFilter and returns the replacement state. */
+      (currentFilter) =>
+        currentFilter.range === "all" ? currentFilter : { range: "all" },
     );
   };
 
+  /* Enables custom date inputs without submitting a new range yet.
+   * It accepts no arguments and returns undefined. */
   const applyCustomMode = () => {
     setRangeMode("custom");
     if (isCustomRangeValid) {
@@ -190,6 +252,8 @@ const VehicleAnalytics = () => {
     }
   };
 
+  /* Applies a valid custom date range to the analytics request.
+   * It accepts no arguments and returns undefined. */
   const applyCustomDates = () => {
     if (!isCustomRangeValid || isVehicleComparisonLoading) return;
 
@@ -211,6 +275,8 @@ const VehicleAnalytics = () => {
     setAppliedFilter(nextFilter);
   };
 
+  /* Loads report history and opens the modal for a selected vehicle.
+   * It accepts plate/name fields and returns a promise resolved after loading. */
   const openVehicleReports = async ({ licensePlate, vehicleName }) => {
     const requestId = reportRequestIdRef.current + 1;
     reportRequestIdRef.current = requestId;
@@ -235,6 +301,8 @@ const VehicleAnalytics = () => {
     }
   };
 
+  /* Closes the vehicle-report modal and invalidates its pending request.
+   * It accepts no arguments and returns undefined. */
   const closeVehicleReports = () => {
     reportRequestIdRef.current += 1;
     setSelectedReportVehicle(null);
@@ -322,7 +390,10 @@ const VehicleAnalytics = () => {
                 type="date"
                 value={fromDate}
                 max={toDate || undefined}
-                onChange={(event) => setFromDate(event.target.value)}
+                onChange={
+                  /* Handles the change callback for this rendered control.
+                   * It accepts event and returns the delegated result. */
+                  (event) => setFromDate(event.target.value)}
               />
             </div>
 
@@ -333,7 +404,10 @@ const VehicleAnalytics = () => {
                 type="date"
                 value={toDate}
                 min={fromDate || undefined}
-                onChange={(event) => setToDate(event.target.value)}
+                onChange={
+                  /* Handles the change callback for this rendered control.
+                   * It accepts event and returns the delegated result. */
+                  (event) => setToDate(event.target.value)}
               />
             </div>
 
@@ -401,114 +475,120 @@ const VehicleAnalytics = () => {
           </p>
         ) : (
           <ol className={styles.vehicleValueList}>
-            {vehicleValueRanking.map((vehicle, index) => {
-              const vehicleName = getVehicleDisplayName(
-                vehicle.name,
-                vehicle.licensePlate,
-              );
-              const relativeValue = highestVehicleValue
-                ? (vehicle.totalValue / highestVehicleValue) * 100
-                : 0;
-              const reportCountLabel = `${vehicle.reportCount} ${
-                vehicle.reportCount === 1 ? "report" : "reports"
-              }`;
-              const rentalCountLabel = `${vehicle.rentalCount} ${
-                vehicle.rentalCount === 1 ? "rental" : "rentals"
-              }`;
+            {vehicleValueRanking.map(
+              /* Transforms each collection entry for the surrounding mapping.
+               * It accepts vehicle and index and returns the mapped value. */
+              (vehicle, index) => {
+                const vehicleName = getVehicleDisplayName(
+                  vehicle.name,
+                  vehicle.licensePlate,
+                );
+                const relativeValue = highestVehicleValue
+                  ? (vehicle.totalValue / highestVehicleValue) * 100
+                  : 0;
+                const reportCountLabel = `${vehicle.reportCount} ${
+                  vehicle.reportCount === 1 ? "report" : "reports"
+                }`;
+                const rentalCountLabel = `${vehicle.rentalCount} ${
+                  vehicle.rentalCount === 1 ? "rental" : "rentals"
+                }`;
 
-              return (
-                <li key={vehicle.dataKey} className={styles.vehicleValueRow}>
-                  <Link
-                    className={styles.vehicleValueRowLink}
-                    to={`/vehicles/${encodeURIComponent(vehicle.licensePlate)}`}
-                    state={{
-                      vehicle: {
-                        licensePlate: vehicle.licensePlate,
-                        vehName: vehicleName,
-                      },
-                      returnTo: "/myVehicles/analytics",
-                    }}
-                    aria-label={`View details for ${vehicleName}, plate ${vehicle.licensePlate}`}
-                  />
-                  <span className={styles.vehicleValueRank}>{index + 1}</span>
+                return (
+                  <li key={vehicle.dataKey} className={styles.vehicleValueRow}>
+                    <Link
+                      className={styles.vehicleValueRowLink}
+                      to={`/vehicles/${encodeURIComponent(vehicle.licensePlate)}`}
+                      state={{
+                        vehicle: {
+                          licensePlate: vehicle.licensePlate,
+                          vehName: vehicleName,
+                        },
+                        returnTo: "/myVehicles/analytics",
+                      }}
+                      aria-label={`View details for ${vehicleName}, plate ${vehicle.licensePlate}`}
+                    />
+                    <span className={styles.vehicleValueRank}>{index + 1}</span>
 
-                  <div className={styles.vehicleValueDetails}>
-                    <div className={styles.vehicleValueIdentity}>
-                      <span
-                        className={styles.vehicleValueDot}
-                        style={{ backgroundColor: vehicle.color }}
-                        aria-hidden="true"
-                      />
-                      <div className={styles.vehicleValueMeta}>
-                        <div className={styles.vehicleValueNameRow}>
-                          <strong>{vehicleName}</strong>
-                          <span
-                            className={styles.rentalCountBadge}
-                            title={
-                              appliedFilter.range === "all"
-                                ? `${rentalCountLabel} across all time`
-                                : `${rentalCountLabel} ending between ${appliedRangeLabel}`
-                            }
-                          >
-                            <CalendarCheck2 size={12} aria-hidden="true" />
-                            {rentalCountLabel}
-                          </span>
-                          {vehicle.reportCount > 0 ? (
-                            <button
-                              type="button"
-                              className={`${styles.reportCountBadge} ${styles.reportCountButton}`}
-                              onClick={() =>
-                                openVehicleReports({
-                                  licensePlate: vehicle.licensePlate,
-                                  vehicleName,
-                                })
-                              }
-                              title="View all-time report details"
-                              aria-label={`View ${reportCountLabel} for ${vehicleName}`}
-                              aria-haspopup="dialog"
-                              aria-expanded={
-                                selectedReportVehicle?.licensePlate ===
-                                vehicle.licensePlate
-                              }
-                            >
-                              <Flag size={12} aria-hidden="true" />
-                              {reportCountLabel}
-                            </button>
-                          ) : (
+                    <div className={styles.vehicleValueDetails}>
+                      <div className={styles.vehicleValueIdentity}>
+                        <span
+                          className={styles.vehicleValueDot}
+                          style={{ backgroundColor: vehicle.color }}
+                          aria-hidden="true"
+                        />
+                        <div className={styles.vehicleValueMeta}>
+                          <div className={styles.vehicleValueNameRow}>
+                            <strong>{vehicleName}</strong>
                             <span
-                              className={`${styles.reportCountBadge} ${styles.reportCountBadgeEmpty}`}
-                              title={`No all-time reports for ${vehicleName}`}
+                              className={styles.rentalCountBadge}
+                              title={
+                                appliedFilter.range === "all"
+                                  ? `${rentalCountLabel} across all time`
+                                  : `${rentalCountLabel} ending between ${appliedRangeLabel}`
+                              }
                             >
-                              <Flag size={12} aria-hidden="true" />
-                              {reportCountLabel}
+                              <CalendarCheck2 size={12} aria-hidden="true" />
+                              {rentalCountLabel}
                             </span>
-                          )}
+                            {vehicle.reportCount > 0 ? (
+                              <button
+                                type="button"
+                                className={`${styles.reportCountBadge} ${styles.reportCountButton}`}
+                                onClick={
+                                  /* Handles the click callback for this rendered control.
+                                   * It accepts no arguments and returns the delegated result. */
+                                  () =>
+                                    openVehicleReports({
+                                      licensePlate: vehicle.licensePlate,
+                                      vehicleName,
+                                    })
+                                }
+                                title="View all-time report details"
+                                aria-label={`View ${reportCountLabel} for ${vehicleName}`}
+                                aria-haspopup="dialog"
+                                aria-expanded={
+                                  selectedReportVehicle?.licensePlate ===
+                                  vehicle.licensePlate
+                                }
+                              >
+                                <Flag size={12} aria-hidden="true" />
+                                {reportCountLabel}
+                              </button>
+                            ) : (
+                              <span
+                                className={`${styles.reportCountBadge} ${styles.reportCountBadgeEmpty}`}
+                                title={`No all-time reports for ${vehicleName}`}
+                              >
+                                <Flag size={12} aria-hidden="true" />
+                                {reportCountLabel}
+                              </span>
+                            )}
+                          </div>
+                          <span className={styles.vehiclePlate}>
+                            Plate {vehicle.licensePlate}
+                          </span>
                         </div>
-                        <span className={styles.vehiclePlate}>
-                          Plate {vehicle.licensePlate}
-                        </span>
+                      </div>
+
+                      <div className={styles.vehicleValueBar} aria-hidden="true">
+                        <span
+                          style={{
+                            width: `${relativeValue}%`,
+                            backgroundColor: vehicle.color,
+                          }}
+                        />
                       </div>
                     </div>
 
-                    <div className={styles.vehicleValueBar} aria-hidden="true">
-                      <span
-                        style={{
-                          width: `${relativeValue}%`,
-                          backgroundColor: vehicle.color,
-                        }}
-                      />
+                    <div className={styles.vehicleValueAmount}>
+                      {index === 0 && vehicle.totalValue > 0 && (
+                        <span>Highest value</span>
+                      )}
+                      <strong>{formatCurrency(vehicle.totalValue)}</strong>
                     </div>
-                  </div>
-
-                  <div className={styles.vehicleValueAmount}>
-                    {index === 0 && vehicle.totalValue > 0 && (
-                      <span>Highest value</span>
-                    )}
-                    <strong>{formatCurrency(vehicle.totalValue)}</strong>
-                  </div>
-                </li>
-              );
-            })}
+                  </li>
+                );
+              })}
           </ol>
         )}
       </section>

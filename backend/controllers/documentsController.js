@@ -1,3 +1,5 @@
+/** Express controller handlers for documents operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const path = require("path");
 const STATUS_CODE = require("../constants/statusCodes");
 const { validateAuthenticatedUser } = require("../utils/validsController");
@@ -46,6 +48,8 @@ const {
 const doQuery = require("../database/query");
 const govApiService = require("../services/govApiService");
 
+/** Converts a document row to the fields exposed to its owner.
+ * Accepts row; returns the public document object. */
 function toPublicDocument(row) {
   return {
     documentId: row.documentId,
@@ -69,6 +73,8 @@ function toPublicDocument(row) {
   };
 }
 
+/** Builds an empty response slot for a required document type.
+ * Accepts documentType and licensePlate; returns the empty slot object. */
 function emptySlot(documentType, licensePlate = null) {
   return {
     documentType,
@@ -78,6 +84,8 @@ function emptySlot(documentType, licensePlate = null) {
   };
 }
 
+/** Checks whether it can access document.
+ * Accepts sessionUser, documentRow, and ownedPlates; returns the validation or boolean result. */
 function canAccessDocument(sessionUser, documentRow, ownedPlates) {
   if (!sessionUser) return false;
   if (sessionUser.role === "admin") return true;
@@ -85,9 +93,14 @@ function canAccessDocument(sessionUser, documentRow, ownedPlates) {
     return Number(documentRow.userId) === Number(sessionUser.userId);
   }
   const plate = documentRow.licensePlate;
-  return ownedPlates.some((owned) => String(owned) === String(plate));
+  return ownedPlates.some(
+    /** Tests whether one collection item satisfies the surrounding condition.
+     * Accepts owned; returns a boolean used by the collection operation. */
+    (owned) => String(owned) === String(plate));
 }
 
+/** Validates and stores a new or replacement user or vehicle document.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function uploadOrReplaceDocument_controller(req, res, next) {
   let storedFilename = req.file?.filename || null;
   try {
@@ -176,24 +189,67 @@ async function uploadOrReplaceDocument_controller(req, res, next) {
     );
 
     const { savedRow, replaced, previousUnverifiedFile, obsoleteVerifiedFile } =
-      await withTransaction(async (connection) => {
-        const existing = isUserScopedDocumentType(documentType)
-          ? await findUserScopedDocumentOnConnection(
-              connection,
+      await withTransaction(
+        /** Executes the database work within the surrounding transaction.
+         * Accepts connection; returns a promise for the transactional result. */
+        async (connection) => {
+          const existing = isUserScopedDocumentType(documentType)
+            ? await findUserScopedDocumentOnConnection(
+                connection,
+                userId,
+                documentType,
+              )
+            : await findVehicleScopedDocumentOnConnection(
+                connection,
+                licensePlate,
+                documentType,
+              );
+
+          if (!existing) {
+            const insertResult = await insertDocumentOnConnection(connection, {
               userId,
-              documentType,
-            )
-          : await findVehicleScopedDocumentOnConnection(
-              connection,
               licensePlate,
               documentType,
-            );
+              filePath: storedFilename,
+              originalFilename,
+              mimeType: magic.mimeType,
+              fileSize: req.file.size,
+              documentNumber,
+              insuranceCompany,
+              startDate,
+              expirationDate,
+            });
+            return {
+              savedRow: { documentId: insertResult.insertId },
+              replaced: false,
+              previousUnverifiedFile: null,
+              obsoleteVerifiedFile: null,
+            };
+          }
 
-        if (!existing) {
-          const insertResult = await insertDocumentOnConnection(connection, {
-            userId,
-            licensePlate,
-            documentType,
+          const wasVerified = existing.status === "verified";
+          let lastVerifiedFilePath = existing.lastVerifiedFilePath || null;
+          let lastVerifiedAt = existing.lastVerifiedAt || null;
+          let previousUnverifiedFile = null;
+          let obsoleteVerifiedFile = null;
+
+          if (wasVerified) {
+            if (
+              existing.lastVerifiedFilePath &&
+              existing.lastVerifiedFilePath !== existing.filePath
+            ) {
+              obsoleteVerifiedFile = existing.lastVerifiedFilePath;
+            }
+            lastVerifiedFilePath = existing.filePath;
+            lastVerifiedAt = existing.reviewedAt || new Date();
+          } else if (
+            existing.filePath &&
+            existing.filePath !== existing.lastVerifiedFilePath
+          ) {
+            previousUnverifiedFile = existing.filePath;
+          }
+
+          await replaceDocumentFileOnConnection(connection, existing.documentId, {
             filePath: storedFilename,
             originalFilename,
             mimeType: magic.mimeType,
@@ -202,56 +258,16 @@ async function uploadOrReplaceDocument_controller(req, res, next) {
             insuranceCompany,
             startDate,
             expirationDate,
+            lastVerifiedFilePath,
+            lastVerifiedAt,
           });
+
           return {
-            savedRow: { documentId: insertResult.insertId },
-            replaced: false,
-            previousUnverifiedFile: null,
-            obsoleteVerifiedFile: null,
+            savedRow: { documentId: existing.documentId },
+            replaced: true,
+            previousUnverifiedFile,
+            obsoleteVerifiedFile,
           };
-        }
-
-        const wasVerified = existing.status === "verified";
-        let lastVerifiedFilePath = existing.lastVerifiedFilePath || null;
-        let lastVerifiedAt = existing.lastVerifiedAt || null;
-        let previousUnverifiedFile = null;
-        let obsoleteVerifiedFile = null;
-
-        if (wasVerified) {
-          if (
-            existing.lastVerifiedFilePath &&
-            existing.lastVerifiedFilePath !== existing.filePath
-          ) {
-            obsoleteVerifiedFile = existing.lastVerifiedFilePath;
-          }
-          lastVerifiedFilePath = existing.filePath;
-          lastVerifiedAt = existing.reviewedAt || new Date();
-        } else if (
-          existing.filePath &&
-          existing.filePath !== existing.lastVerifiedFilePath
-        ) {
-          previousUnverifiedFile = existing.filePath;
-        }
-
-        await replaceDocumentFileOnConnection(connection, existing.documentId, {
-          filePath: storedFilename,
-          originalFilename,
-          mimeType: magic.mimeType,
-          fileSize: req.file.size,
-          documentNumber,
-          insuranceCompany,
-          startDate,
-          expirationDate,
-          lastVerifiedFilePath,
-          lastVerifiedAt,
-        });
-
-        return {
-          savedRow: { documentId: existing.documentId },
-          replaced: true,
-          previousUnverifiedFile,
-          obsoleteVerifiedFile,
-        };
       });
 
     if (previousUnverifiedFile) {
@@ -329,6 +345,8 @@ async function uploadOrReplaceDocument_controller(req, res, next) {
   }
 }
 
+/** Fetches my documents.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getMyDocuments_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -339,13 +357,22 @@ async function getMyDocuments_controller(req, res, next) {
     const vehicleRows = await getVehicleScopedDocumentsForPlates(ownedPlates);
     const govRows = await getVehicleGovernmentChecksForPlates(ownedPlates);
     const govByPlate = Object.fromEntries(
-      govRows.map((row) => [String(row.licensePlate), row]),
+      govRows.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts row; returns the transformed collection value. */
+        (row) => [String(row.licensePlate), row]),
     );
 
     const userByType = Object.fromEntries(
-      userRows.map((row) => [row.documentType, row]),
+      userRows.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts row; returns the transformed collection value. */
+        (row) => [row.documentType, row]),
     );
-    const identity = USER_DOCUMENT_TYPES.map((type) =>
+    const identity = USER_DOCUMENT_TYPES.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts type; returns the transformed collection value. */
+      (type) =>
       userByType[type]
         ? toPublicDocument(userByType[type])
         : emptySlot(type),
@@ -361,17 +388,23 @@ async function getMyDocuments_controller(req, res, next) {
       vehicleByPlate[key][row.documentType] = toPublicDocument(row);
     }
 
-    const vehicles = ownedPlates.map((plate) => {
-      const key = String(plate);
-      const current = vehicleByPlate[key] || {};
-      const gov = govByPlate[key];
-      return {
-        licensePlate: key,
-        documents: VEHICLE_DOCUMENT_TYPES.map((type) =>
-          current[type] ? current[type] : emptySlot(type, key),
-        ),
-        governmentCheck: toGovernmentCheckPublic(gov),
-      };
+    const vehicles = ownedPlates.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts plate; returns the transformed collection value. */
+      (plate) => {
+        const key = String(plate);
+        const current = vehicleByPlate[key] || {};
+        const gov = govByPlate[key];
+        return {
+          licensePlate: key,
+          documents: VEHICLE_DOCUMENT_TYPES.map(
+            /** Transforms one collection item for the surrounding mapping operation.
+             * Accepts type; returns the transformed collection value. */
+            (type) =>
+            current[type] ? current[type] : emptySlot(type, key),
+          ),
+          governmentCheck: toGovernmentCheckPublic(gov),
+        };
     });
 
     return res.status(STATUS_CODE.OK).json({
@@ -384,6 +417,8 @@ async function getMyDocuments_controller(req, res, next) {
   }
 }
 
+/** Fetches document by id.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getDocumentById_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -415,6 +450,8 @@ async function getDocumentById_controller(req, res, next) {
   }
 }
 
+/** Fetches document file.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getDocumentFile_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -450,16 +487,21 @@ async function getDocumentFile_controller(req, res, next) {
       "Content-Disposition",
       `inline; filename="${String(downloadName).replace(/"/g, "")}"`,
     );
-    return res.sendFile(absolutePath, (err) => {
-      if (err && !res.headersSent) {
-        next(err);
-      }
+    return res.sendFile(absolutePath,
+      /** Handles completion or failure of the file response.
+       * Accepts err; returns no meaningful value after handling completion. */
+      (err) => {
+        if (err && !res.headersSent) {
+          next(err);
+        }
     });
   } catch (error) {
     next(error);
   }
 }
 
+/** Derives whether an expiration date is present and current.
+ * Accepts expirationDate; returns the validity descriptor. */
 function expirationValidity(expirationDate) {
   if (!expirationDate) return "n_a";
   const value = new Date(expirationDate);
@@ -470,6 +512,8 @@ function expirationValidity(expirationDate) {
   return value >= today ? "valid" : "expired";
 }
 
+/** Parses json field.
+ * Accepts value and fallback; returns the derived value. */
 function parseJsonField(value, fallback) {
   if (value == null || value === "") return fallback;
   if (typeof value === "object") return value;
@@ -480,18 +524,24 @@ function parseJsonField(value, fallback) {
   }
 }
 
+/** Serializes a value for a JSON database column.
+ * Accepts value; returns serialized JSON or null. */
 function toJsonColumn(value) {
   if (value == null) return null;
   if (typeof value === "string") return value;
   return JSON.stringify(value);
 }
 
+/** Parses license plate param.
+ * Accepts raw; returns the derived value. */
 function parseLicensePlateParam(raw) {
   const text = String(raw ?? "").trim();
   if (!/^\d+$/.test(text)) return null;
   return text;
 }
 
+/** Converts a government-check row to its public response shape.
+ * Accepts row and an options object; returns the public government-check object. */
 function toGovernmentCheckPublic(row, { includeSnapshot = false } = {}) {
   if (!row) {
     return {
@@ -520,6 +570,8 @@ function toGovernmentCheckPublic(row, { includeSnapshot = false } = {}) {
   return result;
 }
 
+/** Converts a document row to its administrator response shape.
+ * Accepts row; returns the administrator-facing document object. */
 function toAdminDocument(row) {
   const publicDoc = toPublicDocument(row);
   return {
@@ -560,12 +612,16 @@ function toAdminDocument(row) {
   };
 }
 
+/** Parses document id.
+ * Accepts raw; returns the derived value. */
 function parseDocumentId(raw) {
   const documentId = Number(raw);
   if (!Number.isInteger(documentId) || documentId <= 0) return null;
   return documentId;
 }
 
+/** Verifies that the request has an authenticated administrator session.
+ * Accepts req and res; returns the administrator or an HTTP error response. */
 async function requireAdmin(req, res) {
   if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
     return false;
@@ -579,6 +635,8 @@ async function requireAdmin(req, res) {
   return true;
 }
 
+/** Fetches admin documents.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getAdminDocuments_controller(req, res, next) {
   try {
     if (!(await requireAdmin(req, res))) return;
@@ -636,6 +694,8 @@ async function getAdminDocuments_controller(req, res, next) {
   }
 }
 
+/** Fetches admin document by id.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getAdminDocumentById_controller(req, res, next) {
   try {
     if (!(await requireAdmin(req, res))) return;
@@ -654,11 +714,17 @@ async function getAdminDocumentById_controller(req, res, next) {
 
     const relatedStatuses = await getUserDocumentStatusSummary(row.userId);
     const identityStatus =
-      relatedStatuses.find((d) =>
+      relatedStatuses.find(
+        /** Tests whether one collection item is the requested match.
+         * Accepts d; returns a boolean used by the collection operation. */
+        (d) =>
         ["identity_card", "passport"].includes(d.documentType),
       )?.status || "not_uploaded";
     const driverLicenseStatus =
-      relatedStatuses.find((d) => d.documentType === "driver_license")
+      relatedStatuses.find(
+        /** Tests whether one collection item is the requested match.
+         * Accepts d; returns a boolean used by the collection operation. */
+        (d) => d.documentType === "driver_license")
         ?.status || "not_uploaded";
 
     await createSystemHistory(
@@ -694,6 +760,8 @@ async function getAdminDocumentById_controller(req, res, next) {
   }
 }
 
+/** Applies an administrator approval or rejection to a document.
+ * Accepts req, res, and decision; returns a promise after sending a response or forwarding an error. */
 async function reviewDocument(req, res, decision) {
   const documentId = parseDocumentId(req.params.documentId);
   if (!documentId) {
@@ -724,33 +792,36 @@ async function reviewDocument(req, res, decision) {
   }
 
   const adminId = req.session.user.userId;
-  const result = await withTransaction(async (connection) => {
-    const existing = await lockDocumentByIdOnConnection(connection, documentId);
-    if (!existing) return { missing: true };
-    if (existing.status !== "pending_review") {
-      return { conflict: true, existing };
-    }
-    if (decision === "verified") {
-      const metadataValidation = validateDocumentMetadata(
-        existing.documentType,
-        existing,
-      );
-      if (!metadataValidation.ok) {
-        return { invalidMetadata: metadataValidation };
+  const result = await withTransaction(
+    /** Executes the database work within the surrounding transaction.
+     * Accepts connection; returns a promise for the transactional result. */
+    async (connection) => {
+      const existing = await lockDocumentByIdOnConnection(connection, documentId);
+      if (!existing) return { missing: true };
+      if (existing.status !== "pending_review") {
+        return { conflict: true, existing };
       }
-    }
-    const updateResult = await applyAdminReviewOnConnection(connection, documentId, {
-      status: decision,
-      verificationMethod: decision === "verified" ? "admin" : null,
-      reviewedBy: adminId,
-      rejectionCode,
-      rejectionReasonText,
-    });
-    if (updateResult.affectedRows === 0) {
-      const latest = await lockDocumentByIdOnConnection(connection, documentId);
-      return { conflict: true, existing: latest };
-    }
-    return { ok: true };
+      if (decision === "verified") {
+        const metadataValidation = validateDocumentMetadata(
+          existing.documentType,
+          existing,
+        );
+        if (!metadataValidation.ok) {
+          return { invalidMetadata: metadataValidation };
+        }
+      }
+      const updateResult = await applyAdminReviewOnConnection(connection, documentId, {
+        status: decision,
+        verificationMethod: decision === "verified" ? "admin" : null,
+        reviewedBy: adminId,
+        rejectionCode,
+        rejectionReasonText,
+      });
+      if (updateResult.affectedRows === 0) {
+        const latest = await lockDocumentByIdOnConnection(connection, documentId);
+        return { conflict: true, existing: latest };
+      }
+      return { ok: true };
   });
 
   if (result.missing) {
@@ -833,6 +904,8 @@ async function reviewDocument(req, res, decision) {
   });
 }
 
+/** Approves a document through the shared review workflow.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function verifyDocument_controller(req, res, next) {
   try {
     if (!(await requireAdmin(req, res))) return;
@@ -842,6 +915,8 @@ async function verifyDocument_controller(req, res, next) {
   }
 }
 
+/** Rejects document.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function rejectDocument_controller(req, res, next) {
   try {
     if (!(await requireAdmin(req, res))) return;
@@ -851,6 +926,8 @@ async function rejectDocument_controller(req, res, next) {
   }
 }
 
+/** Persists government check.
+ * Accepts licensePlate, requestedBy, and payload; returns a promise when persistence finishes. */
 async function persistGovernmentCheck(licensePlate, requestedBy, payload) {
   await upsertVehicleGovernmentCheck({
     licensePlate,
@@ -865,6 +942,8 @@ async function persistGovernmentCheck(licensePlate, requestedBy, payload) {
   });
 }
 
+/** Fetches vehicle government check.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getVehicleGovernmentCheck_controller(req, res, next) {
   try {
     if (!(await requireAdmin(req, res))) return;
@@ -891,6 +970,8 @@ async function getVehicleGovernmentCheck_controller(req, res, next) {
   }
 }
 
+/** Runs vehicle government check.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function runVehicleGovernmentCheck_controller(req, res, next) {
   try {
     if (!(await requireAdmin(req, res))) return;
@@ -961,6 +1042,8 @@ const MANUAL_GOVERNMENT_SOURCE = "admin_manual_override";
 const MANUAL_OVERRIDE_REASON_MIN_LENGTH = 10;
 const MANUAL_OVERRIDE_REASON_MAX_LENGTH = 500;
 
+/** Records an administrator's manual government-verification approval.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function manuallyVerifyVehicleGovernmentCheck_controller(
   req,
   res,

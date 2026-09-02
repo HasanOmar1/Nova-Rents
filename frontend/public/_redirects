@@ -1,1 +1,3 @@
+# Sends unmatched frontend routes to the SPA entry document.
+# Preserves client-side routing by returning the index page successfully.
 /* /index.html 200

@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the Header interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .Header {
   min-height: 10vh;
   background-color: #191e32;

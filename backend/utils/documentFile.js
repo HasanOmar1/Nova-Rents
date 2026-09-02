@@ -1,3 +1,5 @@
+/** Shared backend utility for document file operations.
+ * Normalizes, validates, or transforms values for the surrounding domain. */
 const fs = require("fs");
 const path = require("path");
 
@@ -39,24 +41,34 @@ const ALLOWED_UPLOADS = {
   ".pdf": "application/pdf",
 };
 
+/** Ensures private documents dir.
+ * Accepts no arguments; returns no meaningful value after completing the side effect. */
 function ensurePrivateDocumentsDir() {
   if (!fs.existsSync(PRIVATE_DOCUMENTS_DIR)) {
     fs.mkdirSync(PRIVATE_DOCUMENTS_DIR, { recursive: true });
   }
 }
 
+/** Checks whether user scoped document type.
+ * Accepts documentType; returns the validation or boolean result. */
 function isUserScopedDocumentType(documentType) {
   return USER_DOCUMENT_TYPES.includes(documentType);
 }
 
+/** Checks whether vehicle scoped document type.
+ * Accepts documentType; returns the validation or boolean result. */
 function isVehicleScopedDocumentType(documentType) {
   return VEHICLE_DOCUMENT_TYPES.includes(documentType);
 }
 
+/** Extracts and lowercases a filename extension.
+ * Accepts filename; returns the lowercase extension. */
 function extensionOf(filename) {
   return path.extname(String(filename || "")).toLowerCase();
 }
 
+/** Checks whether allowed declared type.
+ * Accepts originalname and mimetype; returns the validation or boolean result. */
 function isAllowedDeclaredType(originalname, mimetype) {
   const ext = extensionOf(originalname);
   const expectedMime = ALLOWED_UPLOADS[ext];
@@ -64,6 +76,8 @@ function isAllowedDeclaredType(originalname, mimetype) {
   return mimetype === expectedMime;
 }
 
+/** Detects magic mime.
+ * Accepts buffer; returns the derived value. */
 function detectMagicMime(buffer) {
   if (!buffer || buffer.length < 4) return null;
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
@@ -82,6 +96,8 @@ function detectMagicMime(buffer) {
   return null;
 }
 
+/** Validates stored document file.
+ * Accepts storedFilename and declaredMime; returns the validation or boolean result. */
 function validateStoredDocumentFile(storedFilename, declaredMime) {
   const safeName = path.basename(storedFilename);
   const fullPath = path.join(PRIVATE_DOCUMENTS_DIR, safeName);
@@ -111,12 +127,16 @@ function validateStoredDocumentFile(storedFilename, declaredMime) {
   }
 }
 
+/** Resolves a stored document filename inside the private directory.
+ * Accepts storedFilename; returns the resolved private file path. */
 function absolutePrivatePath(storedFilename) {
   const safeName = path.basename(String(storedFilename || ""));
   if (!safeName || safeName !== storedFilename) return null;
   return path.join(PRIVATE_DOCUMENTS_DIR, safeName);
 }
 
+/** Deletes private document file.
+ * Accepts storedFilename; returns no meaningful value after deleting the stored document. */
 function deletePrivateDocumentFile(storedFilename) {
   if (!storedFilename) return;
   const fullPath = absolutePrivatePath(storedFilename);

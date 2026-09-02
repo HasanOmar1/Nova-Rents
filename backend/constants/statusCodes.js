@@ -1,3 +1,5 @@
+/** Shared constants for backend status codes values.
+ * Exports stable values used across controllers, middleware, and services. */
 // Central place for common HTTP status codes used in the API
 const STATUS_CODE = {
   OK: 200,

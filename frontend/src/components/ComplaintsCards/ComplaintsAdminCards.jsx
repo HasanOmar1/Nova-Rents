@@ -1,3 +1,5 @@
+// Defines the Complaints Admin Cards React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import styles from "./ComplaintsAdminCards.module.css";
 import { formatComplaintStatus } from "../../utils/displayFormat";
 
@@ -8,6 +10,8 @@ const STATUS_CLASSES = {
   closed: styles.closed,
 };
 
+// Renders the Complaints Admin Cards interface.
+// Accepts an options object and returns rendered JSX.
 const ComplaintsAdminCards = ({
   type,
   title,

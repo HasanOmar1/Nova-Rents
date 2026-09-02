@@ -1,3 +1,5 @@
+// Provides the account-registration form and its submission state.
+// It accepts a form setter prop and returns the registration panel JSX.
 import { useState } from "react";
 import styles from "./LoginRegister.module.css";
 import { ArrowRight } from "lucide-react";
@@ -5,6 +7,8 @@ import { useUserContext } from "../../context/UserContext";
 import { formattedMaxDate, formattedMinDate } from "../../utils/minMaxDate";
 import AsyncButton from "../../components/AsyncButton/AsyncButton";
 
+// Renders and manages registration fields for a new account.
+// It accepts a form setter and returns the registration panel JSX.
 const RegisterForm = ({ setCurrentForm }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -15,11 +19,15 @@ const RegisterForm = ({ setCurrentForm }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, errorMsg, setErrorMsg } = useUserContext();
 
+  // Switches to sign-in and clears any authentication error.
+  // It takes no arguments and returns undefined.
   const handleCurrentForm = () => {
     setCurrentForm("login");
     setErrorMsg("");
   };
 
+  // Prevents native submission and registers the entered account details.
+  // It accepts a form event and returns a promise resolved after registration.
   const handleRegister = async (e) => {
     e.preventDefault();
     const formData = {
@@ -50,7 +58,10 @@ const RegisterForm = ({ setCurrentForm }) => {
               <input
                 type="text"
                 className={styles.inputField}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={
+                  /* Handles the change callback for this rendered control.
+                   * It accepts e and returns the delegated result. */
+                  (e) => setFirstName(e.target.value)}
               />
             </label>
             <label className={styles.inputLabel}>
@@ -58,7 +69,10 @@ const RegisterForm = ({ setCurrentForm }) => {
               <input
                 type="text"
                 className={styles.inputField}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={
+                  /* Handles the change callback for this rendered control.
+                   * It accepts e and returns the delegated result. */
+                  (e) => setLastName(e.target.value)}
               />
             </label>
           </div>
@@ -68,7 +82,10 @@ const RegisterForm = ({ setCurrentForm }) => {
             <input
               type="email"
               className={styles.inputField}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={
+                /* Handles the change callback for this rendered control.
+                 * It accepts e and returns the delegated result. */
+                (e) => setEmail(e.target.value)}
             />
           </label>
 
@@ -77,7 +94,10 @@ const RegisterForm = ({ setCurrentForm }) => {
             <input
               type="tel"
               className={styles.inputField}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={
+                /* Handles the change callback for this rendered control.
+                 * It accepts e and returns the delegated result. */
+                (e) => setPhone(e.target.value)}
             />
           </label>
 
@@ -86,7 +106,10 @@ const RegisterForm = ({ setCurrentForm }) => {
             <input
               type="date"
               value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
+              onChange={
+                /* Handles the change callback for this rendered control.
+                 * It accepts e and returns the delegated result. */
+                (e) => setBirthDate(e.target.value)}
               min={formattedMinDate}
               max={formattedMaxDate}
               className={styles.inputField}
@@ -98,7 +121,10 @@ const RegisterForm = ({ setCurrentForm }) => {
             <input
               type="password"
               className={styles.inputField}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={
+                /* Handles the change callback for this rendered control.
+                 * It accepts e and returns the delegated result. */
+                (e) => setPassword(e.target.value)}
             />
           </label>
 

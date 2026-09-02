@@ -1,3 +1,5 @@
+// Loads a tokenized rental payment and presents its test-payment workflow.
+// It takes no props and returns loading, error, or payment detail views.
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./Payment.module.css";
@@ -14,6 +16,8 @@ import {
   MapPin,
 } from "lucide-react";
 
+// Formats a numeric payment amount with its currency prefix.
+// It accepts an amount and currency code and returns display text.
 const formatAmount = (amount, currency) => {
   const numericAmount = Number(amount);
   if (Number.isNaN(numericAmount)) return `${amount} ${currency || ""}`;
@@ -21,6 +25,8 @@ const formatAmount = (amount, currency) => {
   return `${prefix}${numericAmount.toFixed(2)}`;
 };
 
+// Maps a failed payment lookup to a user-facing title and message.
+// It accepts an HTTP status and backend message and returns a copy object.
 const paymentLoadErrorCopy = (status, backendMessage) => {
   if (status === 401) {
     return {
@@ -52,6 +58,8 @@ const paymentLoadErrorCopy = (status, backendMessage) => {
   };
 };
 
+// Coordinates payment lookup, test payment submission, and page states.
+// It takes no props and returns the appropriate payment page JSX.
 const Payment = () => {
   const { paymentToken } = useParams();
   const navigate = useNavigate();
@@ -64,32 +72,41 @@ const Payment = () => {
   const [loadError, setLoadError] = useState(null);
   const [justPaid, setJustPaid] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      let cancelled = false;
 
-    const loadPayment = async () => {
-      setIsLoading(true);
-      setLoadError(null);
-      const result = await getPaymentByToken(paymentToken);
-      if (cancelled) return;
-      if (result.ok && result.payment) {
-        setPayment(result.payment);
+      // Fetches payment details for the current token unless the effect is stale.
+      // It takes no arguments and returns a promise resolved after state updates.
+      const loadPayment = async () => {
+        setIsLoading(true);
         setLoadError(null);
-      } else {
-        setPayment(null);
-        setLoadError(
-          paymentLoadErrorCopy(result.status, result.message),
-        );
-      }
-      setIsLoading(false);
-    };
+        const result = await getPaymentByToken(paymentToken);
+        if (cancelled) return;
+        if (result.ok && result.payment) {
+          setPayment(result.payment);
+          setLoadError(null);
+        } else {
+          setPayment(null);
+          setLoadError(
+            paymentLoadErrorCopy(result.status, result.message),
+          );
+        }
+        setIsLoading(false);
+      };
 
-    loadPayment();
-    return () => {
-      cancelled = true;
-    };
-  }, [paymentToken]);
+      loadPayment();
+      /* Releases resources created by the surrounding operation.
+       * It accepts no arguments and returns undefined. */
+      return () => {
+        cancelled = true;
+      };
+    }, [paymentToken]);
 
+  // Submits the current test payment and records its success or error state.
+  // It takes no arguments and returns a promise resolved after payment.
   const handlePay = async () => {
     if (isPaying) return;
     setIsPaying(true);
@@ -126,7 +143,10 @@ const Payment = () => {
           </p>
           <button
             className={styles.backBtn}
-            onClick={() => navigate("/rentalDashboard")}
+            onClick={
+              /* Handles the click callback for this rendered control.
+               * It accepts no arguments and returns the delegated result. */
+              () => navigate("/rentalDashboard")}
           >
             <ArrowLeft size={16} /> Back to Rental Dashboard
           </button>
@@ -256,7 +276,10 @@ const Payment = () => {
 
         <button
           className={styles.backBtn}
-          onClick={() => navigate("/rentalDashboard")}
+          onClick={
+            /* Handles the click callback for this rendered control.
+             * It accepts no arguments and returns the delegated result. */
+            () => navigate("/rentalDashboard")}
         >
           <ArrowLeft size={16} /> Back to Rental Dashboard
         </button>

@@ -1,8 +1,12 @@
+/** Backend service logic for gov operations.
+ * Integrates domain workflows with external or shared infrastructure. */
 const RESOURCE_ID = "8f714b6f-c35c-4b40-a0e7-547b675eee0e";
 const BASE_URL = "https://data.gov.il/api/3/action/datastore_search";
 
 let cachedLocalities = null;
 
+/** Fetches all localities.
+ * Accepts no arguments; returns a promise for the requested data. */
 async function fetchAllLocalities() {
   const limit = 500;
   let offset = 0;
@@ -28,7 +32,10 @@ async function fetchAllLocalities() {
     offset += limit;
   }
 
-  return allRecords.map((record) => ({
+  return allRecords.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts record; returns the transformed collection value. */
+    (record) => ({
     id: record._id,
     code: record.city_code,
     name: record.city_name_he?.trim(),
@@ -42,6 +49,8 @@ async function fetchAllLocalities() {
   }));
 }
 
+/** Fetches localities.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getLocalities = async (req, res, next) => {
   try {
     // Check if we already have the data saved in memory

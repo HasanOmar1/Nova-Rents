@@ -1,9 +1,15 @@
+/** Shared backend utility for document eligibility operations.
+ * Normalizes, validates, or transforms values for the surrounding domain. */
+/** Starts of today.
+ * Accepts no arguments; returns a Date at the start of the local day. */
 function startOfToday() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return today;
 }
 
+/** Checks whether expiration date past.
+ * Accepts expirationDate; returns the validation or boolean result. */
 function isExpirationDatePast(expirationDate) {
   if (!expirationDate) return false;
   const date = new Date(expirationDate);
@@ -12,6 +18,8 @@ function isExpirationDatePast(expirationDate) {
   return date < startOfToday();
 }
 
+/** Derives a document slot's effective status, including expiration.
+ * Accepts doc; returns the effective status string. */
 function slotStatus(doc) {
   if (!doc) return "not_uploaded";
   if (doc.status === "verified" && isExpirationDatePast(doc.expirationDate)) {
@@ -20,6 +28,8 @@ function slotStatus(doc) {
   return doc.status;
 }
 
+/** Evaluates identity requirement.
+ * Accepts documentsByType; returns the derived value. */
 function evaluateIdentityRequirement(documentsByType) {
   const identityCard = documentsByType.identity_card;
   const passport = documentsByType.passport;
@@ -36,6 +46,8 @@ function evaluateIdentityRequirement(documentsByType) {
 
   const reasons = [];
   const statuses = [cardStatus, passportStatus].filter(
+    /** Tests whether one collection item should remain in the filtered result.
+     * Accepts status; returns a boolean used by the collection operation. */
     (status) => status !== "not_uploaded",
   );
 
@@ -64,6 +76,8 @@ function evaluateIdentityRequirement(documentsByType) {
   };
 }
 
+/** Evaluates driver license requirement.
+ * Accepts documentsByType; returns the derived value. */
 function evaluateDriverLicenseRequirement(documentsByType) {
   const driverLicense = documentsByType.driver_license;
   const status = slotStatus(driverLicense);
@@ -90,6 +104,8 @@ function evaluateDriverLicenseRequirement(documentsByType) {
   };
 }
 
+/** Normalizes date only.
+ * Accepts value; returns the derived value. */
 function normalizeDateOnly(value) {
   if (value == null || value === "") return null;
   const date = new Date(value);
@@ -98,6 +114,8 @@ function normalizeDateOnly(value) {
   return date;
 }
 
+/** Evaluates insurance covers rental period.
+ * Accepts insuranceDoc, rentalEndDate, and licensePlate; returns the derived value. */
 function evaluateInsuranceCoversRentalPeriod(
   insuranceDoc,
   rentalEndDate,
@@ -150,6 +168,8 @@ function evaluateInsuranceCoversRentalPeriod(
   };
 }
 
+/** Evaluates vehicle document requirement.
+ * Accepts documentsByType, documentType, and prefix; returns the derived value. */
 function evaluateVehicleDocumentRequirement(documentsByType, documentType, prefix) {
   const doc = documentsByType[documentType];
   const status = slotStatus(doc);
@@ -176,6 +196,8 @@ function evaluateVehicleDocumentRequirement(documentsByType, documentType, prefi
   };
 }
 
+/** Evaluates government requirement.
+ * Accepts governmentStatus; returns the derived value. */
 function evaluateGovernmentRequirement(governmentStatus) {
   const status = governmentStatus || "not_checked";
 
@@ -203,6 +225,8 @@ function evaluateGovernmentRequirement(governmentStatus) {
   };
 }
 
+/** Indexes the relevant document rows by document type.
+ * Accepts rows and an options object; returns a document-type lookup object. */
 function documentsByType(rows, { licensePlate = null } = {}) {
   const map = {};
   for (const row of rows) {
@@ -217,6 +241,8 @@ function documentsByType(rows, { licensePlate = null } = {}) {
   return map;
 }
 
+/** Evaluates user rental eligibility.
+ * Accepts userDocuments; returns the derived value. */
 function evaluateUserRentalEligibility(userDocuments) {
   const byType = documentsByType(userDocuments);
   const identity = evaluateIdentityRequirement(byType);
@@ -233,6 +259,8 @@ function evaluateUserRentalEligibility(userDocuments) {
   };
 }
 
+/** Evaluates vehicle rental eligibility.
+ * Accepts an options object; returns the derived value. */
 function evaluateVehicleRentalEligibility({
   ownerDocuments,
   vehicleDocuments,
@@ -242,7 +270,10 @@ function evaluateVehicleRentalEligibility({
   const ownerByType = documentsByType(ownerDocuments);
   const scopedPlate =
     licensePlate ??
-    vehicleDocuments.find((row) => row.licensePlate != null)?.licensePlate ??
+    vehicleDocuments.find(
+      /** Tests whether one collection item is the requested match.
+       * Accepts row; returns a boolean used by the collection operation. */
+      (row) => row.licensePlate != null)?.licensePlate ??
     null;
   const vehicleByType = documentsByType(vehicleDocuments, {
     licensePlate: scopedPlate,
@@ -261,7 +292,10 @@ function evaluateVehicleRentalEligibility({
   );
   const government = evaluateGovernmentRequirement(governmentStatus);
 
-  const ownerReasons = ownerIdentity.reasons.map((reason) =>
+  const ownerReasons = ownerIdentity.reasons.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts reason; returns the transformed collection value. */
+    (reason) =>
     reason.replace(/^IDENTITY_/, "OWNER_IDENTITY_"),
   );
 

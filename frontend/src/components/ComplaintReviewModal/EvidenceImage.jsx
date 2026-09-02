@@ -1,7 +1,11 @@
+// Defines the Evidence Image React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useState } from "react";
 import { ImageOff } from "lucide-react";
 import styles from "./ComplaintReviewModal.module.css";
 
+// Renders the Evidence Image interface.
+// Accepts an options object and returns rendered JSX.
 const EvidenceImage = ({ src, alt, isThumbnail = false }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -28,7 +32,10 @@ const EvidenceImage = ({ src, alt, isThumbnail = false }) => {
       crossOrigin="use-credentials"
       loading="lazy"
       decoding="async"
-      onError={() => setHasError(true)}
+      onError={
+        // Handles the component's error event.
+        // Takes no arguments and returns the handler result.
+        () => setHasError(true)}
     />
   );
 };

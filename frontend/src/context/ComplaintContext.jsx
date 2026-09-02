@@ -1,9 +1,13 @@
+// Provides shared complaint state and API operations through React context.
+// It exports a provider component and a hook for consuming the managed data.
 import { createContext, useCallback, useContext, useState } from "react";
 import axios from "axios";
 import { useActivityContext } from "./ActivityContext";
 
 const ComplaintContext = createContext();
 
+// Supplies complaint data and reporting actions to descendant components.
+// Accepts children and returns a complaint-context provider tree.
 const ComplaintContextProvider = ({ children }) => {
   const { loadActivities } = useActivityContext();
   const [complaints, setComplaints] = useState([]);
@@ -42,6 +46,8 @@ const ComplaintContextProvider = ({ children }) => {
   const [reportsAboutMyVehiclesError, setReportsAboutMyVehiclesError] =
     useState("");
 
+  // Creates complaint for the current workflow.
+  // Accepts complaint data and returns a promise for the operation result.
   const createComplaint = async (complaintData) => {
     try {
       await axios.post("/complaints", complaintData);
@@ -54,6 +60,8 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves my complaints for the current workflow.
+  // Accepts an options object and returns a promise for the operation result.
   const getMyComplaints = async ({
     startDate,
     endDate,
@@ -79,6 +87,8 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  // Updates a complaint's status and optional review details through the API.
+  // Accepts complaint ID, status, and payload and returns a promise for the result.
   const putUpdateComplaintStatus = async (complaintId, status, payload = {}) => {
     try {
       const resolutionMessage =
@@ -103,6 +113,8 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves all complaints for the current workflow.
+  // Accepts page and status and returns a promise for the operation result.
   const getAllComplaints = async (page = 1, status = "all") => {
     try {
       const response = await axios.get(
@@ -119,6 +131,9 @@ const ComplaintContextProvider = ({ children }) => {
 
   // Chart data for the admin Complaint Trends chart. Independent from the
   // paginated complaints table so page changes never refetch or skew it.
+
+  // Retrieves complaint trends for the current workflow.
+  // Accepts start date, end date, and status and returns a promise for the operation result.
   const getComplaintTrends = async (startDate, endDate, status = "all") => {
     try {
       setIsComplaintTrendsLoading(true);
@@ -136,6 +151,8 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves owner vehicle reports for the current workflow.
+  // Takes no arguments and returns a promise for the operation result.
   const getOwnerVehicleReports = async () => {
     try {
       const response = await axios.get("/complaints/owner-vehicle-reports");
@@ -147,6 +164,8 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves owner vehicle report history for the current workflow.
+  // Accepts license plate and returns a promise for the operation result.
   const getOwnerVehicleReportHistory = useCallback(async (licensePlate) => {
     try {
       const response = await axios.get(
@@ -160,6 +179,8 @@ const ComplaintContextProvider = ({ children }) => {
     }
   }, []);
 
+  // Retrieves reports about me for the current workflow.
+  // Accepts an options object and returns a promise for the operation result.
   const getReportsAboutMe = async ({ page = 1, limit = 5 } = {}) => {
     try {
       setIsReportsAboutMeLoading(true);
@@ -182,6 +203,8 @@ const ComplaintContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves reports about my vehicles for the current workflow.
+  // Accepts an options object and returns a promise for the operation result.
   const getReportsAboutMyVehicles = useCallback(
     async ({ page = 1, limit = 5 } = {}) => {
       try {
@@ -248,5 +271,7 @@ const ComplaintContextProvider = ({ children }) => {
   );
 };
 
+// Reads complaint data and actions exposed by the nearest provider.
+// Takes no arguments and returns the current complaint context value.
 export const useComplaintContext = () => useContext(ComplaintContext);
 export default ComplaintContextProvider;

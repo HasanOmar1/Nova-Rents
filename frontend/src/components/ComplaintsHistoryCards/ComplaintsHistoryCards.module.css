@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the ComplaintsHistoryCards interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .ComplaintsHistoryCards {
   margin: 0;
   background: linear-gradient(145deg, var(--input-bg), rgba(19, 27, 43, 0.9));

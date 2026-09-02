@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the DateInput interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .DateInput {
   display: flex;
   flex-direction: column;

@@ -1,3 +1,5 @@
+// Provides shared vehicle state and API operations through React context.
+// It exports a provider component and a hook for consuming the managed data.
 import {
   createContext,
   useCallback,
@@ -9,6 +11,8 @@ import { useActivityContext } from "./ActivityContext";
 
 const VehicleContext = createContext();
 
+// Supplies vehicle collections and mutation actions to descendant components.
+// Accepts children and returns a vehicle-context provider tree.
 const VehicleContextProvider = ({ children }) => {
   const [errorMsg, setErrorMsg] = useState("");
   const [allVehicles, setAllVehicles] = useState([]);
@@ -30,6 +34,8 @@ const VehicleContextProvider = ({ children }) => {
   const [allVehStats, setAllVehStats] = useState(null);
   const { loadActivities } = useActivityContext();
 
+  // Loads vehicles into the relevant application state.
+  // Accepts endpoint, filters, and page and returns a promise for the operation result.
   const loadVehicles = useCallback(async (endpoint, filters = {}, page = 1) => {
     try {
       const response = await axios.get(endpoint, {
@@ -46,17 +52,23 @@ const VehicleContextProvider = ({ children }) => {
     }
   }, []);
 
+  // Retrieves all vehicles for the current workflow.
+  // Accepts filters and page and returns the computed result.
   const getAllVehicles = useCallback(
     (filters = {}, page = 1) => loadVehicles("/vehicles", filters, page),
     [loadVehicles],
   );
 
+  // Retrieves admin vehicles for the current workflow.
+  // Accepts filters and page and returns the computed result.
   const getAdminVehicles = useCallback(
     (filters = {}, page = 1) =>
       loadVehicles("/vehicles/admin", filters, page),
     [loadVehicles],
   );
 
+  // Retrieves user vehicles for the current workflow.
+  // Accepts page and status and returns a promise for the operation result.
   const getUserVehicles = async (page = 1, status = "all") => {
     try {
       setCurrentStatus(status);
@@ -74,13 +86,18 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  // Deletes user vehicle from persistent state.
+  // Accepts license plate and returns a promise for the operation result.
   const deleteUserVehicle = async (licensePlate) => {
     try {
       await axios.delete(`/vehicles/${licensePlate}`);
       getUserVehicles(pagination.currentPage || 1, currentStatus);
       setErrorMsg("");
       loadActivities();
-      setVehicleInventoryVersion((version) => version + 1);
+      setVehicleInventoryVersion(
+        // Derives the next state value from the current state.
+        // Accepts version and returns the updated state value.
+        (version) => version + 1);
       return true;
     } catch (error) {
       setErrorMsg(error?.response?.data?.message);
@@ -88,6 +105,8 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves brands for the current workflow.
+  // Takes no arguments and returns a promise for the operation result.
   const getBrands = async () => {
     try {
       const response = await axios.get("/vehicles/brands");
@@ -102,6 +121,8 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves models by brand for the current workflow.
+  // Accepts brand id and returns a promise for the operation result.
   const getModelsByBrand = async (brandId) => {
     try {
       const response = await axios.get(`/vehicles/models?brandId=${brandId}`);
@@ -116,6 +137,8 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves veh type for the current workflow.
+  // Takes no arguments and returns a promise for the operation result.
   const getVehType = async () => {
     try {
       const response = await axios.get(`/vehicles/types`);
@@ -130,13 +153,18 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  // Creates a vehicle through the API and refreshes the managed vehicle list.
+  // Accepts vehicle form data and returns a promise for the created record.
   const addVehicle = async (vehData) => {
     try {
       await axios.post("/vehicles/add", vehData);
       await Promise.all([getAllVehicles(), getUserVehicles(1, currentStatus)]);
       setErrorMsg("");
       loadActivities();
-      setVehicleInventoryVersion((version) => version + 1);
+      setVehicleInventoryVersion(
+        // Derives the next state value from the current state.
+        // Accepts version and returns the updated state value.
+        (version) => version + 1);
       return true;
     } catch (error) {
       const message =
@@ -148,6 +176,8 @@ const VehicleContextProvider = ({ children }) => {
     }
   };
 
+  // Updates vehicle with the supplied changes.
+  // Accepts license plate and veh data and returns a promise for the operation result.
   const updateVehicle = async (licensePlate, vehData) => {
     try {
       await axios.put(`/vehicles/${licensePlate}`, vehData);
@@ -157,7 +187,10 @@ const VehicleContextProvider = ({ children }) => {
       ]);
 
       loadActivities();
-      setVehicleInventoryVersion((version) => version + 1);
+      setVehicleInventoryVersion(
+        // Derives the next state value from the current state.
+        // Accepts version and returns the updated state value.
+        (version) => version + 1);
 
       setErrorMsg("");
       return true;
@@ -167,6 +200,8 @@ const VehicleContextProvider = ({ children }) => {
       return false;
     }
   };
+  // Updates vehicle status with the supplied changes.
+  // Accepts license plate and status and returns a promise for the operation result.
   const updateVehicleStatus = async (licensePlate, status) => {
     try {
       await axios.put(`/vehicles/update-vehicle-status/${licensePlate}`, {
@@ -179,7 +214,10 @@ const VehicleContextProvider = ({ children }) => {
       ]);
 
       loadActivities();
-      setVehicleInventoryVersion((version) => version + 1);
+      setVehicleInventoryVersion(
+        // Derives the next state value from the current state.
+        // Accepts version and returns the updated state value.
+        (version) => version + 1);
       setErrorMsg("");
       return true;
     } catch (error) {
@@ -191,6 +229,9 @@ const VehicleContextProvider = ({ children }) => {
 
   // Fetch a single vehicle by plate via the existing GET /vehicles/:licensePlate.
   // Returns the vehicle object, or null when not found / request failed.
+
+  // Retrieves vehicle by license plate for the current workflow.
+  // Accepts license plate and an options object and returns a promise for the operation result.
   const getVehicleByLicensePlate = useCallback(
     async (licensePlate, { silent = false } = {}) => {
       try {
@@ -240,5 +281,7 @@ const VehicleContextProvider = ({ children }) => {
   );
 };
 
+// Reads the vehicle state and actions exposed by the nearest provider.
+// Takes no arguments and returns the current vehicle context value.
 export const useVehicleContext = () => useContext(VehicleContext);
 export default VehicleContextProvider;

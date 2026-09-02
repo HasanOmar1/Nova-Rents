@@ -1,3 +1,5 @@
+/** Database query helpers for eligibility records.
+ * Encapsulates the domain's SQL reads, writes, and result shaping. */
 const doQuery = require("../query");
 const {
   evaluateUserRentalEligibility,
@@ -5,6 +7,8 @@ const {
   evaluateInsuranceCoversRentalPeriod,
 } = require("../../utils/documentEligibility");
 
+/** Fetches user scoped documents for eligibility.
+ * Accepts userId; returns a promise for the requested data. */
 async function getUserScopedDocumentsForEligibility(userId) {
   return doQuery(
     `
@@ -17,6 +21,8 @@ async function getUserScopedDocumentsForEligibility(userId) {
   );
 }
 
+/** Fetches vehicle scoped documents for eligibility.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getVehicleScopedDocumentsForEligibility(licensePlate) {
   return doQuery(
     `
@@ -29,6 +35,8 @@ async function getVehicleScopedDocumentsForEligibility(licensePlate) {
   );
 }
 
+/** Fetches government check status.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getGovernmentCheckStatus(licensePlate) {
   const rows = await doQuery(
     `
@@ -42,11 +50,15 @@ async function getGovernmentCheckStatus(licensePlate) {
   return rows[0]?.status || "not_checked";
 }
 
+/** Fetches user rental eligibility.
+ * Accepts userId; returns a promise for the requested data. */
 async function getUserRentalEligibility(userId) {
   const documents = await getUserScopedDocumentsForEligibility(userId);
   return evaluateUserRentalEligibility(documents);
 }
 
+/** Fetches vehicle rental eligibility.
+ * Accepts licensePlate and ownerId; returns a promise for the requested data. */
 async function getVehicleRentalEligibility(licensePlate, ownerId) {
   const [ownerDocuments, vehicleDocuments, governmentStatus] = await Promise.all([
     getUserScopedDocumentsForEligibility(ownerId),
@@ -62,6 +74,8 @@ async function getVehicleRentalEligibility(licensePlate, ownerId) {
   });
 }
 
+/** Fetches vehicle rental eligibility for new rental.
+ * Accepts licensePlate, ownerId, and rentalEndDate; returns a promise for the requested data. */
 async function getVehicleRentalEligibilityForNewRental(
   licensePlate,
   ownerId,
@@ -76,6 +90,8 @@ async function getVehicleRentalEligibilityForNewRental(
     licensePlate,
   );
   const insurance = vehicleDocuments.find(
+    /** Tests whether one collection item is the requested match.
+     * Accepts row; returns a boolean used by the collection operation. */
     (row) => row.documentType === "insurance",
   );
   const period = evaluateInsuranceCoversRentalPeriod(
@@ -102,6 +118,8 @@ async function getVehicleRentalEligibilityForNewRental(
  * SQL fragments for public vehicle browse: operational filters remain in the
  * controller; these conditions gate verification eligibility centrally.
  */
+/** Fetches public verification eligibility sql.
+ * Accepts an options object; returns the requested data. */
 function getPublicVerificationEligibilitySql({ vehicleAlias = "v" } = {}) {
   const v = vehicleAlias;
   return `
@@ -139,6 +157,8 @@ function getPublicVerificationEligibilitySql({ vehicleAlias = "v" } = {}) {
   `;
 }
 
+/** Fetches effective vehicle status sql.
+ * Accepts an options object; returns the requested data. */
 function getEffectiveVehicleStatusSql({
   vehicleAlias = "v",
   ownerAlias = "u",
@@ -166,6 +186,8 @@ function getEffectiveVehicleStatusSql({
   `;
 }
 
+/** Derives effective vehicle status.
+ * Accepts an options object; returns the derived value. */
 function deriveEffectiveVehicleStatus({
   status,
   ownerStatus,
@@ -193,13 +215,27 @@ function deriveEffectiveVehicleStatus({
   return "available";
 }
 
+/** Fetches vehicle eligibility summaries for plates.
+ * Accepts platesWithOwners; returns a promise for the requested data. */
 async function getVehicleEligibilitySummariesForPlates(platesWithOwners) {
   if (!platesWithOwners.length) return new Map();
 
-  const plates = [...new Set(platesWithOwners.map((row) => String(row.licensePlate)))];
-  const ownerIds = [...new Set(platesWithOwners.map((row) => Number(row.ownerId)))];
-  const plateParams = plates.map(() => "?").join(", ");
-  const ownerParams = ownerIds.map(() => "?").join(", ");
+  const plates = [...new Set(platesWithOwners.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts row; returns the transformed collection value. */
+    (row) => String(row.licensePlate)))];
+  const ownerIds = [...new Set(platesWithOwners.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts row; returns the transformed collection value. */
+    (row) => Number(row.ownerId)))];
+  const plateParams = plates.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts no arguments; returns the transformed collection value. */
+    () => "?").join(", ");
+  const ownerParams = ownerIds.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts no arguments; returns the transformed collection value. */
+    () => "?").join(", ");
 
   const [ownerDocuments, vehicleDocuments, governmentRows] = await Promise.all([
     doQuery(
@@ -245,7 +281,10 @@ async function getVehicleEligibilitySummariesForPlates(platesWithOwners) {
   }
 
   const govByPlate = new Map(
-    governmentRows.map((row) => [String(row.licensePlate), row.status]),
+    governmentRows.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts row; returns the transformed collection value. */
+      (row) => [String(row.licensePlate), row.status]),
   );
 
   const summaries = new Map();

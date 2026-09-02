@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the DocumentsAdmin interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .DocumentsAdmin .intro {
   margin-top: 8px;
   color: var(--gray);

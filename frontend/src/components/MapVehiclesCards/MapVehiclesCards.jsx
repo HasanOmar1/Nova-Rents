@@ -1,8 +1,12 @@
+// Defines the Map Vehicles Cards React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { Link } from "react-router-dom";
 import styles from "./MapVehiclesCards.module.css";
 import { MapPin, User } from "lucide-react";
 import { parseImgs } from "../../utils/parseImgs";
 
+// Renders the Map Vehicles Cards interface.
+// Accepts an options object and returns rendered JSX.
 const MapVehiclesCards = ({ veh }) => {
   const imageUrl = veh.image ? parseImgs(veh.image) : "";
   const vehName = `${veh.brandName} ${veh.modelName}`;

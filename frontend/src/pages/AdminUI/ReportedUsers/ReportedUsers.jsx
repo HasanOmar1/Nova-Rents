@@ -1,3 +1,5 @@
+// Presents reported-user risk data and administrative moderation actions.
+// It takes no props and returns filters, user rows, and action dialogs.
 import {
   AlertTriangle,
   Ban,
@@ -13,13 +15,19 @@ import styles from "./ReportedUsers.module.css";
 import AsyncButton from "../../../components/AsyncButton/AsyncButton";
 import { useReportedUsersContext } from "../../../context/ReportedUsersContext";
 
+/* Classifies a user's report count into a moderation risk level.
+ * It accepts a count and returns a risk label string. */
 const risk = (count) =>
   count >= 6 ? "High Attention" : count >= 3 ? "Review" : "Normal";
+/* Formats date text for display.
+ * It accepts value and returns formatted display text. */
 const dateText = (value) =>
   !value || String(value).startsWith("1000-")
     ? "\u2014"
     : new Date(value).toLocaleDateString("en-GB");
 
+/* Renders the reported users view and coordinates its page state.
+ * It accepts no arguments and returns the rendered page JSX. */
 export default function ReportedUsers() {
   const {
     users,
@@ -42,6 +50,8 @@ export default function ReportedUsers() {
     removeLatestWarning,
   } = useReportedUsersContext();
 
+  /* Validates the warning reason before opening its confirmation dialog.
+   * It accepts no arguments and returns undefined. */
   const requestWarningConfirmation = () => {
     const clean = reason.trim();
     if (clean.length < 5 || clean.length > 500) {
@@ -70,8 +80,11 @@ export default function ReportedUsers() {
             <input
               value={filters.search}
               placeholder="Name or email"
-              onChange={(e) =>
-                setFilters({ ...filters, search: e.target.value })
+              onChange={
+                /* Handles the change callback for this rendered control.
+                 * It accepts e and returns the delegated result. */
+                (e) =>
+                  setFilters({ ...filters, search: e.target.value })
               }
             />
           </div>
@@ -80,8 +93,11 @@ export default function ReportedUsers() {
           <span>Account status</span>
           <select
             value={filters.accountStatus}
-            onChange={(e) =>
-              setFilters({ ...filters, accountStatus: e.target.value })
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) =>
+                setFilters({ ...filters, accountStatus: e.target.value })
             }
           >
             <option value="all">All</option>
@@ -93,8 +109,11 @@ export default function ReportedUsers() {
           <span>Complaint status</span>
           <select
             value={filters.complaintStatus}
-            onChange={(e) =>
-              setFilters({ ...filters, complaintStatus: e.target.value })
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) =>
+                setFilters({ ...filters, complaintStatus: e.target.value })
             }
           >
             <option value="all">All</option>
@@ -108,7 +127,10 @@ export default function ReportedUsers() {
           <span>Sort by</span>
           <select
             value={filters.sortBy}
-            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) => setFilters({ ...filters, sortBy: e.target.value })}
           >
             <option value="total_reports">Most reported</option>
             <option value="recent_report">Most recent report</option>
@@ -136,112 +158,130 @@ export default function ReportedUsers() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr key={user.userId}>
-                  <td data-label="Email" className={styles.emailCell}>
-                    {user.email}
-                  </td>
-                  <td data-label="Direct reports">{user.directReports}</td>
-                  <td data-label="Vehicle reports">{user.vehicleReports}</td>
-                  <td data-label="Total reports">{user.totalReports}</td>
-                  <td data-label="Open reports">{user.openReports}</td>
-                  <td data-label="Warnings" className={styles.warningCell}>
-                    <button
-                      className={styles.link}
-                      title={
-                        Number(user.warningCount) >= 3
-                          ? "Maximum warnings reached; account blocked"
-                          : "View warning history"
-                      }
-                      onClick={() => openDetails(user, "warnings")}
-                    >
-                      {user.warningCount} / 3
-                    </button>
-                  </td>
-                  <td data-label="Status">
-                    <span className={`${styles.badge} ${styles[user.status]}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td data-label="Last report">
-                    {dateText(user.lastReportDate)}
-                  </td>
-                  <td data-label="Risk">
-                    <span
-                      className={`${styles.badge} ${styles[risk(user.totalReports).replace(" ", "")]}`}
-                    >
-                      {risk(user.totalReports)}
-                    </span>
-                  </td>
-                  <td data-label="Actions" className={styles.actionsCell}>
-                    <div className={styles.actions}>
-                      <AsyncButton
-                        className={styles.viewAction}
-                        title="View reports"
-                        aria-label="View reports"
-                        loading={loadingAction === `reports-${user.userId}`}
-                        loadingText=""
-                        onClick={() => openDetails(user, "reports")}
-                      >
-                        <Eye size={16} />
-                      </AsyncButton>
-                      <AsyncButton
-                        className={styles.warnAction}
-                        title="Warn user"
-                        aria-label="Warn user"
-                        disabled={Number(user.warningCount) >= 3}
-                        onClick={() => {
-                          setReason("");
-                          setWarningError("");
-                          setModal({ type: "warn", user });
-                        }}
-                      >
-                        <TriangleAlert size={16} />
-                      </AsyncButton>
-                      <AsyncButton
-                        className={styles.removeWarningAction}
-                        title="Remove latest warning"
-                        aria-label="Remove latest warning"
-                        disabled={Number(user.warningCount) === 0}
-                        onClick={() =>
-                          setModal({ type: "confirmRemoveWarning", user })
-                        }
-                      >
-                        <Undo2 size={16} />
-                      </AsyncButton>
-                      <AsyncButton
-                        className={
-                          user.status === "blocked"
-                            ? styles.unblockAction
-                            : styles.blockAction
-                        }
+              {users.map(
+                /* Transforms each collection entry for the surrounding mapping.
+                 * It accepts user and returns the mapped value. */
+                (user) => (
+                  <tr key={user.userId}>
+                    <td data-label="Email" className={styles.emailCell}>
+                      {user.email}
+                    </td>
+                    <td data-label="Direct reports">{user.directReports}</td>
+                    <td data-label="Vehicle reports">{user.vehicleReports}</td>
+                    <td data-label="Total reports">{user.totalReports}</td>
+                    <td data-label="Open reports">{user.openReports}</td>
+                    <td data-label="Warnings" className={styles.warningCell}>
+                      <button
+                        className={styles.link}
                         title={
-                          user.status === "blocked"
-                            ? "Unblock user"
-                            : "Block user"
+                          Number(user.warningCount) >= 3
+                            ? "Maximum warnings reached; account blocked"
+                            : "View warning history"
                         }
-                        aria-label={
-                          user.status === "blocked"
-                            ? "Unblock user"
-                            : "Block user"
-                        }
-                        onClick={() =>
-                          setModal({
-                            type: "confirmStatus",
-                            user,
-                            block: user.status !== "blocked",
-                          })
-                        }
+                        onClick={
+                          /* Handles the click callback for this rendered control.
+                           * It accepts no arguments and returns the delegated result. */
+                          () => openDetails(user, "warnings")}
                       >
-                        {user.status === "blocked" ? (
-                          <ShieldCheck size={16} />
-                        ) : (
-                          <Ban size={16} />
-                        )}
-                      </AsyncButton>
-                    </div>
-                  </td>
-                </tr>
+                        {user.warningCount} / 3
+                      </button>
+                    </td>
+                    <td data-label="Status">
+                      <span className={`${styles.badge} ${styles[user.status]}`}>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td data-label="Last report">
+                      {dateText(user.lastReportDate)}
+                    </td>
+                    <td data-label="Risk">
+                      <span
+                        className={`${styles.badge} ${styles[risk(user.totalReports).replace(" ", "")]}`}
+                      >
+                        {risk(user.totalReports)}
+                      </span>
+                    </td>
+                    <td data-label="Actions" className={styles.actionsCell}>
+                      <div className={styles.actions}>
+                        <AsyncButton
+                          className={styles.viewAction}
+                          title="View reports"
+                          aria-label="View reports"
+                          loading={loadingAction === `reports-${user.userId}`}
+                          loadingText=""
+                          onClick={
+                            /* Handles the click callback for this rendered control.
+                             * It accepts no arguments and returns the delegated result. */
+                            () => openDetails(user, "reports")}
+                        >
+                          <Eye size={16} />
+                        </AsyncButton>
+                        <AsyncButton
+                          className={styles.warnAction}
+                          title="Warn user"
+                          aria-label="Warn user"
+                          disabled={Number(user.warningCount) >= 3}
+                          onClick={
+                            /* Handles the click callback for this rendered control.
+                             * It accepts no arguments and returns the delegated result. */
+                            () => {
+                              setReason("");
+                              setWarningError("");
+                              setModal({ type: "warn", user });
+                            }}
+                        >
+                          <TriangleAlert size={16} />
+                        </AsyncButton>
+                        <AsyncButton
+                          className={styles.removeWarningAction}
+                          title="Remove latest warning"
+                          aria-label="Remove latest warning"
+                          disabled={Number(user.warningCount) === 0}
+                          onClick={
+                            /* Handles the click callback for this rendered control.
+                             * It accepts no arguments and returns the delegated result. */
+                            () =>
+                              setModal({ type: "confirmRemoveWarning", user })
+                          }
+                        >
+                          <Undo2 size={16} />
+                        </AsyncButton>
+                        <AsyncButton
+                          className={
+                            user.status === "blocked"
+                              ? styles.unblockAction
+                              : styles.blockAction
+                          }
+                          title={
+                            user.status === "blocked"
+                              ? "Unblock user"
+                              : "Block user"
+                          }
+                          aria-label={
+                            user.status === "blocked"
+                              ? "Unblock user"
+                              : "Block user"
+                          }
+                          onClick={
+                            /* Handles the click callback for this rendered control.
+                             * It accepts no arguments and returns the delegated result. */
+                            () =>
+                              setModal({
+                                type: "confirmStatus",
+                                user,
+                                block: user.status !== "blocked",
+                              })
+                          }
+                        >
+                          {user.status === "blocked" ? (
+                            <ShieldCheck size={16} />
+                          ) : (
+                            <Ban size={16} />
+                          )}
+                        </AsyncButton>
+                      </div>
+                    </td>
+                  </tr>
               ))}
             </tbody>
           </table>
@@ -252,20 +292,35 @@ export default function ReportedUsers() {
         <Pagination
           currentPage={pagination.currentPage}
           totalPages={pagination.totalPages}
-          handlePrevPage={() => load(pagination.currentPage - 1)}
-          handleNextPage={() => load(pagination.currentPage + 1)}
+          handlePrevPage={
+            /* Handles the prev page callback for this rendered control.
+             * It accepts no arguments and returns the delegated result. */
+            () => load(pagination.currentPage - 1)}
+          handleNextPage={
+            /* Handles the next page callback for this rendered control.
+             * It accepts no arguments and returns the delegated result. */
+            () => load(pagination.currentPage + 1)}
           leftText={`Reported users: ${pagination.totalUsers}`}
         />
       </section>
       {modal && (
-        <div className={styles.overlay} onMouseDown={() => setModal(null)}>
+        <div className={styles.overlay} onMouseDown={
+          /* Handles the mouse down callback for this rendered control.
+           * It accepts no arguments and returns the delegated result. */
+          () => setModal(null)}>
           <div
             className={styles.modal}
-            onMouseDown={(e) => e.stopPropagation()}
+            onMouseDown={
+              /* Handles the mouse down callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) => e.stopPropagation()}
           >
             <button
               className={styles.close}
-              onClick={() => setModal(null)}
+              onClick={
+                /* Handles the click callback for this rendered control.
+                 * It accepts no arguments and returns the delegated result. */
+                () => setModal(null)}
               aria-label="Close"
             >
               <X />
@@ -297,10 +352,13 @@ export default function ReportedUsers() {
                   id="warningReason"
                   maxLength={500}
                   value={reason}
-                  onChange={(e) => {
-                    setReason(e.target.value);
-                    setWarningError("");
-                  }}
+                  onChange={
+                    /* Handles the change callback for this rendered control.
+                     * It accepts e and returns the delegated result. */
+                    (e) => {
+                      setReason(e.target.value);
+                      setWarningError("");
+                    }}
                   placeholder="Explain clearly why this warning is being issued..."
                   aria-invalid={Boolean(warningError)}
                   aria-describedby={warningError ? "warningError" : undefined}
@@ -354,7 +412,10 @@ export default function ReportedUsers() {
                   <button
                     className={styles.cancelButton}
                     disabled={Boolean(loadingAction)}
-                    onClick={() => setModal({ type: "warn", user: modal.user })}
+                    onClick={
+                      /* Handles the click callback for this rendered control.
+                       * It accepts no arguments and returns the delegated result. */
+                      () => setModal({ type: "warn", user: modal.user })}
                   >
                     Go back
                   </button>
@@ -385,7 +446,10 @@ export default function ReportedUsers() {
                   <button
                     className={styles.cancelButton}
                     disabled={Boolean(loadingAction)}
-                    onClick={() => setModal(null)}
+                    onClick={
+                      /* Handles the click callback for this rendered control.
+                       * It accepts no arguments and returns the delegated result. */
+                      () => setModal(null)}
                   >
                     Cancel
                   </button>
@@ -395,7 +459,10 @@ export default function ReportedUsers() {
                     }
                     loading={loadingAction === `status-${modal.user.userId}`}
                     loadingText={modal.block ? "Blocking..." : "Unblocking..."}
-                    onClick={() => changeStatus(modal.user, modal.block)}
+                    onClick={
+                      /* Handles the click callback for this rendered control.
+                       * It accepts no arguments and returns the delegated result. */
+                      () => changeStatus(modal.user, modal.block)}
                   >
                     {modal.block ? "Block account" : "Unblock account"}
                   </AsyncButton>
@@ -415,7 +482,10 @@ export default function ReportedUsers() {
                   <button
                     className={styles.cancelButton}
                     disabled={Boolean(loadingAction)}
-                    onClick={() => setModal(null)}
+                    onClick={
+                      /* Handles the click callback for this rendered control.
+                       * It accepts no arguments and returns the delegated result. */
+                      () => setModal(null)}
                   >
                     Cancel
                   </button>
@@ -423,7 +493,10 @@ export default function ReportedUsers() {
                     className={styles.removeWarningButton}
                     loading={loadingAction === `remove-${modal.user.userId}`}
                     loadingText="Removing..."
-                    onClick={() => removeLatestWarning(modal.user)}
+                    onClick={
+                      /* Handles the click callback for this rendered control.
+                       * It accepts no arguments and returns the delegated result. */
+                      () => removeLatestWarning(modal.user)}
                   >
                     Remove warning
                   </AsyncButton>
@@ -433,61 +506,64 @@ export default function ReportedUsers() {
             {(modal.type === "reports" || modal.type === "warnings") && (
               <div className={styles.cards}>
                 {details.length ? (
-                  details.map((item, i) => (
-                    <article key={item.complaintId || item.warningId}>
-                      <div className={styles.cardHeading}>
-                        <h3>
-                          {modal.type === "warnings"
-                            ? `Warning ${i + 1}`
-                            : `${item.complaintType} report #${item.complaintId}`}
-                        </h3>
-                        <span>{dateText(item.createdAt)}</span>
-                      </div>
-                      {modal.type === "reports" && (
-                        <div className={styles.reportFields}>
-                          <div>
-                            <span>Title</span>
-                            <p>{item.title || "No title"}</p>
-                          </div>
-                          <div>
-                            <span>Description</span>
-                            <p>{item.description || "No description"}</p>
-                          </div>
-                          {item.vehicleLicensePlate && (
-                            <div>
-                              <span>Vehicle</span>
-                              <p>{item.vehicleLicensePlate}</p>
-                            </div>
-                          )}
-                          <div>
-                            <span>Status</span>
-                            <p>{item.status}</p>
-                          </div>
-                          {item.resolutionMessage && (
-                            <div>
-                              <span>Resolution</span>
-                              <p>{item.resolutionMessage}</p>
-                            </div>
-                          )}
+                  details.map(
+                    /* Transforms each collection entry for the surrounding mapping.
+                     * It accepts item and i and returns the mapped value. */
+                    (item, i) => (
+                      <article key={item.complaintId || item.warningId}>
+                        <div className={styles.cardHeading}>
+                          <h3>
+                            {modal.type === "warnings"
+                              ? `Warning ${i + 1}`
+                              : `${item.complaintType} report #${item.complaintId}`}
+                          </h3>
+                          <span>{dateText(item.createdAt)}</span>
                         </div>
-                      )}
-                      {modal.type === "warnings" && (
-                        <div className={styles.reportFields}>
-                          <div>
-                            <span>Reason</span>
-                            <p>{item.reason}</p>
-                          </div>
-                          {item.adminFirstName && (
+                        {modal.type === "reports" && (
+                          <div className={styles.reportFields}>
                             <div>
-                              <span>Issued by</span>
-                              <p>
-                                {item.adminFirstName} {item.adminLastName}
-                              </p>
+                              <span>Title</span>
+                              <p>{item.title || "No title"}</p>
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </article>
+                            <div>
+                              <span>Description</span>
+                              <p>{item.description || "No description"}</p>
+                            </div>
+                            {item.vehicleLicensePlate && (
+                              <div>
+                                <span>Vehicle</span>
+                                <p>{item.vehicleLicensePlate}</p>
+                              </div>
+                            )}
+                            <div>
+                              <span>Status</span>
+                              <p>{item.status}</p>
+                            </div>
+                            {item.resolutionMessage && (
+                              <div>
+                                <span>Resolution</span>
+                                <p>{item.resolutionMessage}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {modal.type === "warnings" && (
+                          <div className={styles.reportFields}>
+                            <div>
+                              <span>Reason</span>
+                              <p>{item.reason}</p>
+                            </div>
+                            {item.adminFirstName && (
+                              <div>
+                                <span>Issued by</span>
+                                <p>
+                                  {item.adminFirstName} {item.adminLastName}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </article>
                   ))
                 ) : (
                   <p>No history found.</p>

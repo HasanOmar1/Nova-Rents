@@ -1,3 +1,5 @@
+// Defines the Complaint Review Modal React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useEffect, useState } from "react";
 import styles from "./ComplaintReviewModal.module.css";
 import {
@@ -13,6 +15,8 @@ import { parseComplaintImgs } from "../../utils/parseImgs";
 import { useModalDialog } from "../../hooks/useModalDialog";
 import EvidenceImage from "./EvidenceImage";
 
+// Renders the Complaint Review Modal interface.
+// Accepts an options object and returns rendered JSX.
 const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const dialogRef = useModalDialog(isOpen && Boolean(complaint));
   const [status, setStatus] = useState("open");
@@ -21,14 +25,17 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  useEffect(() => {
-    if (!isOpen || !complaint) return;
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (!isOpen || !complaint) return;
 
-    setStatus(complaint.status || "open");
-    setResolutionMessage(complaint.resolutionMessage ?? "");
-    setAdminNotes(complaint.adminNotes || "");
-    setActiveImageIndex(0);
-  }, [isOpen, complaint]);
+      setStatus(complaint.status || "open");
+      setResolutionMessage(complaint.resolutionMessage ?? "");
+      setAdminNotes(complaint.adminNotes || "");
+      setActiveImageIndex(0);
+    }, [isOpen, complaint]);
 
   if (!complaint) return null;
 
@@ -55,6 +62,8 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
   const isClosed = status === "resolved" || status === "closed";
   const resolutionRequired = status === "resolved" || status === "closed";
 
+  // Handles submit for the surrounding interface.
+  // Accepts e and returns a promise for the operation result.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (resolutionRequired && !resolutionMessage.trim()) {
@@ -73,7 +82,10 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
       className={styles.ComplaintReviewModal}
       ref={dialogRef}
       onClose={onClose}
-      onClick={(e) => e.stopPropagation()}
+      onClick={
+        // Handles the component's click event.
+        // Accepts e and returns the handler result.
+        (e) => e.stopPropagation()}
       aria-labelledby="complaint-review-title"
     >
       <div className={styles.header}>
@@ -195,14 +207,20 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
                   role="group"
                   aria-label="Choose complaint evidence image"
                 >
-                  {images.map((img, idx) => (
+                  {images.map(
+                    // Transforms one collection entry for the resulting list.
+                    // Accepts img and idx and returns the mapped entry.
+                    (img, idx) => (
                     <button
                       key={`${img}-${idx}`}
                       type="button"
                       className={`${styles.thumbnailButton} ${
                         idx === activeImageIndex ? styles.activeThumbnail : ""
                       }`}
-                      onClick={() => setActiveImageIndex(idx)}
+                      onClick={
+                        // Handles the component's click event.
+                        // Takes no arguments and returns the handler result.
+                        () => setActiveImageIndex(idx)}
                       aria-label={`Show complaint evidence ${idx + 1} of ${images.length}`}
                       aria-pressed={idx === activeImageIndex}
                     >
@@ -223,7 +241,10 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
             <select
               id="status"
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={
+                // Handles the component's change event.
+                // Accepts e and returns the handler result.
+                (e) => setStatus(e.target.value)}
               className={styles.statusSelect}
             >
               <option value="open">Open</option>
@@ -240,7 +261,10 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
             <textarea
               id="resolutionMessage"
               value={resolutionMessage}
-              onChange={(e) => setResolutionMessage(e.target.value)}
+              onChange={
+                // Handles the component's change event.
+                // Accepts e and returns the handler result.
+                (e) => setResolutionMessage(e.target.value)}
               placeholder={
                 resolutionRequired
                   ? "Public decision shown to the reporter and affected parties, and included in email."
@@ -268,7 +292,10 @@ const ComplaintReviewModal = ({ isOpen, onClose, complaint, onUpdate }) => {
             <textarea
               id="adminNotes"
               value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
+              onChange={
+                // Handles the component's change event.
+                // Accepts e and returns the handler result.
+                (e) => setAdminNotes(e.target.value)}
               placeholder="Private notes for Nova Rents administrators only..."
               rows={3}
             />

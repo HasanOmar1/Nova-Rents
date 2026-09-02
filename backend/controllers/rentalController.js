@@ -1,3 +1,5 @@
+/** Express controller handlers for rental operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const {
   getVehicleByLicensePlate,
 } = require("../database/queries/vehicleQueries");
@@ -57,6 +59,8 @@ const FRONTEND_URL =
 
 // Paid trips may expose immutable rental_pickup_locations fields only.
 // Never COALESCE with live vehicles.exactPickup* / lat / lng.
+/** Converts a rental-history row to the renter-facing trip response.
+ * Accepts trip; returns the renter-facing trip object. */
 const toMyTripResponse = (trip) => {
   const {
     snapshotPickupAddress,
@@ -91,6 +95,8 @@ const toMyTripResponse = (trip) => {
   };
 };
 
+/** Creates rental.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function createRental(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -255,6 +261,8 @@ async function createRental(req, res, next) {
   }
 }
 
+/** Fetches my rentals.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getMyRentals(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -276,6 +284,8 @@ async function getMyRentals(req, res, next) {
   }
 }
 
+/** Fetches requests for my vehicles.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getRequestsForMyVehicles(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -297,6 +307,8 @@ async function getRequestsForMyVehicles(req, res, next) {
   }
 }
 
+/** Fetches booked dates.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getBookedDates(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -314,6 +326,8 @@ async function getBookedDates(req, res, next) {
   }
 }
 
+/** Approves a pending rental request and triggers its notifications.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function approveRental(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -415,6 +429,8 @@ async function approveRental(req, res, next) {
   }
 }
 
+/** Rejects rental.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function rejectRental(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -498,6 +514,8 @@ async function rejectRental(req, res, next) {
     next(error);
   }
 }
+/** Cancels rental.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function cancelRental(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -564,6 +582,8 @@ async function cancelRental(req, res, next) {
   }
 }
 
+/** Completes or expires rentals whose scheduled dates have passed.
+ * Accepts no arguments; returns a promise when all status updates are recorded. */
 async function autoUpdateRentalStatuses() {
   // 1. If approved and endDate has passed -> change to 'completed'
   const rentalsToComplete = await getRentalsToComplete();
@@ -600,6 +620,8 @@ async function autoUpdateRentalStatuses() {
   }
 }
 
+/** Fetches dashboard metrics.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getDashboardMetrics(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -630,6 +652,8 @@ async function getDashboardMetrics(req, res, next) {
   }
 }
 
+/** Fetches rental history.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getRentalHistory = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -655,6 +679,8 @@ const getRentalHistory = async (req, res, next) => {
   }
 };
 
+/** Fetches rental eligibility.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getRentalEligibility(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) return;

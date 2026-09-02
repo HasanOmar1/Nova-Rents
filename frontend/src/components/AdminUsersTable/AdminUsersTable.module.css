@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the AdminUsersTable interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .AdminUsersTable {
   border: var(--cards-border);
   background-color: var(--bg-gray);

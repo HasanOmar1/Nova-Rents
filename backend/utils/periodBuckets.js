@@ -1,3 +1,5 @@
+/** Shared backend utility for period buckets operations.
+ * Normalizes, validates, or transforms values for the surrounding domain. */
 // Shared time-bucketing policy for report/analytics endpoints.
 // Ranges up to DAILY_BUCKET_LIMIT_DAYS are grouped by day, up to
 // WEEKLY_BUCKET_LIMIT_DAYS by week, anything longer by month.
@@ -6,6 +8,8 @@ const WEEKLY_BUCKET_LIMIT_DAYS = 180;
 
 // Parse "YYYY-MM-DD" using local date parts — new Date("YYYY-MM-DD") is
 // UTC-based and can shift the local day, which would misalign bucket keys.
+/** Parses local date.
+ * Accepts value; returns the derived value. */
 function parseLocalDate(value) {
   const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return null;
@@ -30,6 +34,8 @@ function parseLocalDate(value) {
 }
 
 // Granularity + matching MySQL DATE_FORMAT pattern for a parsed range.
+/** Resolves granularity.
+ * Accepts start and end; returns the derived value. */
 function resolveGranularity(start, end) {
   const rangeInDays = (end - start) / (1000 * 60 * 60 * 24);
 
@@ -44,6 +50,8 @@ function resolveGranularity(start, end) {
 
 // ISO week key ("2026-W27") for a local date, matching MySQL's "%x-W%v".
 // The Thursday of a date's week always falls inside its ISO year/week.
+/** Fetches iso week key.
+ * Accepts date; returns the requested data. */
 function getIsoWeekKey(date) {
   const thursday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   thursday.setDate(thursday.getDate() - ((thursday.getDay() + 6) % 7) + 3);
@@ -58,6 +66,8 @@ function getIsoWeekKey(date) {
 
 // Ordered, de-duplicated period keys covering [start, end] so chart buckets
 // with no rows can be zero-filled instead of disappearing.
+/** Builds period keys.
+ * Accepts start, end, and granularity; returns the derived value. */
 function buildPeriodKeys(start, end, granularity) {
   const keys = [];
 

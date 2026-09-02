@@ -1,3 +1,5 @@
+// Presents complaint metrics, trends, filters, and review actions for admins.
+// It takes no props and returns the complaint administration dashboard.
 import styles from "./ComplaintsAdmin.module.css";
 import {
   FileWarning,
@@ -20,6 +22,8 @@ import {
 import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
 import { useAppliedDateRange } from "../../../hooks/useAppliedDateRange";
 
+/* Renders the complaints admin view and coordinates its page state.
+ * It accepts no arguments and returns the rendered page JSX. */
 const ComplaintsAdmin = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,33 +58,47 @@ const ComplaintsAdmin = () => {
   } = useAppliedDateRange();
 
   // Fetch data when page or filter changes
-  useEffect(() => {
-    getAllComplaints(currentPage, statusFilter);
-  }, [currentPage, statusFilter]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getAllComplaints(currentPage, statusFilter);
+    }, [currentPage, statusFilter]);
 
   // The chart shares the table's status filter but not its pagination,
   // so page changes never refetch or skew the chart totals. It always uses
   // the applied dates, never the in-progress input values.
-  useEffect(() => {
-    getComplaintTrends(appliedFromDate, appliedToDate, statusFilter);
-  }, [statusFilter, appliedFromDate, appliedToDate]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getComplaintTrends(appliedFromDate, appliedToDate, statusFilter);
+    }, [statusFilter, appliedFromDate, appliedToDate]);
 
+  /* Applies a valid date range to the complaint trend request.
+   * It accepts no arguments and returns undefined. */
   const handleApplyDates = () => {
     if (isRangeValid && !isComplaintTrendsLoading) {
       applyDateRange();
     }
   };
 
+  /* Selects a complaint and opens its admin review dialog.
+   * It accepts a complaint object and returns undefined. */
   const openReviewModal = (complaint) => {
     setSelectedComplaint(complaint);
     setIsModalOpen(true);
   };
 
+  /* Closes the complaint review dialog and clears its selection.
+   * It accepts no arguments and returns undefined. */
   const closeReviewModal = () => {
     setSelectedComplaint(null);
     setIsModalOpen(false);
   };
 
+  /* Handles update status for this view.
+   * It accepts complaintId, status, and payload and returns a promise that resolves when the operation finishes. */
   const handleUpdateStatus = async (complaintId, status, payload) => {
     const result = await putUpdateComplaintStatus(complaintId, status, payload);
     if (result) {
@@ -94,35 +112,50 @@ const ComplaintsAdmin = () => {
       title: "Total Complaints",
       value: complaintStats?.total || 0,
       icon: <FileWarning size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("all"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("all"),
       isAction: true,
     },
     {
       title: "Open",
       value: complaintStats?.open || 0,
       icon: <AlertTriangle size={28} color="#eab308" />,
-      onClick: () => handleStatusChange("open"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("open"),
       isAction: true,
     },
     {
       title: "Under Review",
       value: complaintStats?.review || 0,
       icon: <Clock size={28} color="#3b82f6" />,
-      onClick: () => handleStatusChange("in_review"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("in_review"),
       isAction: true,
     },
     {
       title: "Resolved",
       value: complaintStats?.resolved || 0,
       icon: <BookCheck size={28} color="#3b82f6" />,
-      onClick: () => handleStatusChange("resolved"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("resolved"),
       isAction: true,
     },
     {
       title: "Closed",
       value: complaintStats?.closed || 0,
       icon: <BookCheck size={28} color="#3b82f6" />,
-      onClick: () => handleStatusChange("closed"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("closed"),
       isAction: true,
     },
   ];
@@ -139,15 +172,18 @@ const ComplaintsAdmin = () => {
       />
 
       <div className={styles.topCardsContainer}>
-        {topData.map((item) => (
-          <HomeTopCards
-            key={crypto.randomUUID()}
-            title={item.title}
-            value={item.value}
-            icon={item.icon}
-            onClick={item.onClick}
-            isAction={item.isAction}
-          />
+        {topData.map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts item and returns the mapped value. */
+          (item) => (
+            <HomeTopCards
+              key={crypto.randomUUID()}
+              title={item.title}
+              value={item.value}
+              icon={item.icon}
+              onClick={item.onClick}
+              isAction={item.isAction}
+            />
         ))}
       </div>
 
@@ -185,32 +221,38 @@ const ComplaintsAdmin = () => {
             No complaints found for this filter.
           </p>
         ) : (
-          complaints.map((comp) => {
-            const listedOwner =
-              comp.complaintType === "vehicle"
-                ? `${comp.vehicleOwnerFirstName || ""} ${comp.vehicleOwnerLastName || ""}`
-                : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
+          complaints.map(
+            /* Transforms each collection entry for the surrounding mapping.
+             * It accepts comp and returns the mapped value. */
+            (comp) => {
+              const listedOwner =
+                comp.complaintType === "vehicle"
+                  ? `${comp.vehicleOwnerFirstName || ""} ${comp.vehicleOwnerLastName || ""}`
+                  : `${comp.ownerFirstName || ""} ${comp.ownerLastName || ""}`;
 
-            const target =
-              comp.complaintType === "vehicle"
-                ? comp.vehicleLicensePlate || "—"
-                : comp.ownerEmail || "—";
+              const target =
+                comp.complaintType === "vehicle"
+                  ? comp.vehicleLicensePlate || "—"
+                  : comp.ownerEmail || "—";
 
-            return (
-              <div className={styles.complaintRow} key={comp.complaintId}>
-                <ComplaintsAdminCards
-                  action="Review"
-                  owner={listedOwner.trim() || "—"}
-                  reporter={comp.complainerEmail || comp.userId || "—"}
-                  status={comp.status}
-                  target={target}
-                  title={comp.title || "Untitled complaint"}
-                  type={comp.complaintType === "vehicle" ? "Vehicle" : "Owner"}
-                  onReview={() => openReviewModal(comp)}
-                />
-              </div>
-            );
-          })
+              return (
+                <div className={styles.complaintRow} key={comp.complaintId}>
+                  <ComplaintsAdminCards
+                    action="Review"
+                    owner={listedOwner.trim() || "—"}
+                    reporter={comp.complainerEmail || comp.userId || "—"}
+                    status={comp.status}
+                    target={target}
+                    title={comp.title || "Untitled complaint"}
+                    type={comp.complaintType === "vehicle" ? "Vehicle" : "Owner"}
+                    onReview={
+                      /* Handles the review callback for this rendered control.
+                       * It accepts no arguments and returns the delegated result. */
+                      () => openReviewModal(comp)}
+                  />
+                </div>
+              );
+            })
         )}
 
         <div className={styles.paginationWrapper}>
@@ -247,7 +289,10 @@ const ComplaintsAdmin = () => {
                 type="date"
                 value={fromDate}
                 max={toDate}
-                onChange={(event) => setFromDate(event.target.value)}
+                onChange={
+                  /* Handles the change callback for this rendered control.
+                   * It accepts event and returns the delegated result. */
+                  (event) => setFromDate(event.target.value)}
               />
             </div>
             <div className={styles.filterGroup}>
@@ -257,7 +302,10 @@ const ComplaintsAdmin = () => {
                 type="date"
                 value={toDate}
                 min={fromDate}
-                onChange={(event) => setToDate(event.target.value)}
+                onChange={
+                  /* Handles the change callback for this rendered control.
+                   * It accepts event and returns the delegated result. */
+                  (event) => setToDate(event.target.value)}
               />
             </div>
             <button
@@ -279,7 +327,10 @@ const ComplaintsAdmin = () => {
           subtitle="Complaints submitted during the selected period"
           type="line"
           data={
-            complaintTrendsData.some((point) => point.complaints > 0)
+            complaintTrendsData.some(
+              /* Checks whether the current entry satisfies the surrounding condition.
+               * It accepts point and returns a boolean. */
+              (point) => point.complaints > 0)
               ? complaintTrendsData
               : []
           }

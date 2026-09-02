@@ -1,3 +1,5 @@
+/** Express controller handlers for contact operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const STATUS_CODE = require("../constants/statusCodes");
 const { sendContactMessageEmail } = require("../services/emailService");
 
@@ -7,9 +9,13 @@ const MESSAGE_MIN_LENGTH = 10;
 const MESSAGE_MAX_LENGTH = 3000;
 const CONTACT_COOLDOWN_MS = 60 * 1000;
 
+/** Normalizes text.
+ * Accepts value; returns the derived value. */
 const normalizeText = (value) =>
   typeof value === "string" ? value.trim() : "";
 
+/** Sends contact message.
+ * Accepts req and res; returns a promise after sending a response or forwarding an error. */
 const sendContactMessage = async (req, res) => {
   const subject = normalizeText(req.body?.subject);
   const message = normalizeText(req.body?.message);

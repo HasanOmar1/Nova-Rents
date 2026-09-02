@@ -1,3 +1,5 @@
+/** Express route definitions for reported users endpoints.
+ * Maps HTTP requests and access checks to the corresponding controllers. */
 const express = require("express");
 const { isAdmin } = require("../middleWare/authMiddleware");
 const { listReportedUsers, listUserReports, listWarnings, warnUser, removeLatestWarning } = require("../controllers/reportedUsersController");

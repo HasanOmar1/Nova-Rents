@@ -1,3 +1,5 @@
+/** Express controller handlers for vehicles operations.
+ * Validates requests and returns the domain's HTTP responses. */
 // Handlers for vehicle-related database actions (list, add, update, delete)
 const doQuery = require("../database/query");
 const STATUS_CODE = require("../constants/statusCodes");
@@ -55,6 +57,8 @@ const UNKNOWN_VEHICLE_ELIGIBILITY = Object.freeze({
   statuses: {},
 });
 
+/** Fetches user vehicles.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getUserVehicles = async (req, res, next) => {
   try {
     if (
@@ -119,23 +123,29 @@ const getUserVehicles = async (req, res, next) => {
 
     const vehicles = await doQuery(query, [...queryParams, limit, offset]);
     const eligibilitySummaries = await getVehicleEligibilitySummariesForPlates(
-      vehicles.map((vehicle) => ({
+      vehicles.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts vehicle; returns the transformed collection value. */
+        (vehicle) => ({
         licensePlate: vehicle.licensePlate,
         ownerId: vehicle.ownerId,
       })),
     );
-    const vehiclesWithEligibility = vehicles.map((vehicle) => {
-      const rentalEligibility =
-        eligibilitySummaries.get(String(vehicle.licensePlate)) || {
-          eligible: false,
-          reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
-          statuses: {},
+    const vehiclesWithEligibility = vehicles.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts vehicle; returns the transformed collection value. */
+      (vehicle) => {
+        const rentalEligibility =
+          eligibilitySummaries.get(String(vehicle.licensePlate)) || {
+            eligible: false,
+            reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
+            statuses: {},
+          };
+        return {
+          ...vehicle,
+          rentalEligible: rentalEligibility.eligible,
+          rentalEligibility,
         };
-      return {
-        ...vehicle,
-        rentalEligible: rentalEligibility.eligible,
-        rentalEligibility,
-      };
     });
 
     const countResult = await doQuery(countQuery, queryParams);
@@ -175,6 +185,8 @@ const getUserVehicles = async (req, res, next) => {
   }
 };
 
+/** Adds vehicle.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const addVehicle = async (req, res, next) => {
   try {
     const normalized = validateAndNormalizeVehicleCreate(req, res);
@@ -271,6 +283,8 @@ const addVehicle = async (req, res, next) => {
   }
 };
 
+/** Fetches vehicle by id.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getVehicleById = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
@@ -368,6 +382,8 @@ const getVehicleById = async (req, res, next) => {
   }
 };
 
+/** Deletes vehicle.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const deleteVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
@@ -475,6 +491,8 @@ const deleteVehicle = async (req, res, next) => {
   }
 };
 
+/** Updates vehicle.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const updateVehicle = async (req, res, next) => {
   try {
     const { licensePlate } = req.params;
@@ -625,6 +643,8 @@ const updateVehicle = async (req, res, next) => {
   }
 };
 
+/** Lists vehicles.
+ * Accepts req, res, next, and an options object; returns a promise after sending a response or forwarding an error. */
 const listVehicles = async (
   req,
   res,
@@ -777,25 +797,31 @@ const listVehicles = async (
     if (includeBlockedOwners) {
       const eligibilitySummaries =
         await getVehicleEligibilitySummariesForPlates(
-          vehicles.map((vehicle) => ({
+          vehicles.map(
+            /** Transforms one collection item for the surrounding mapping operation.
+             * Accepts vehicle; returns the transformed collection value. */
+            (vehicle) => ({
             licensePlate: vehicle.licensePlate,
             ownerId: vehicle.ownerId,
           })),
         );
 
-      responseVehicles = vehicles.map((vehicle) => {
-        const rentalEligibility =
-          eligibilitySummaries.get(String(vehicle.licensePlate)) ||
-          UNKNOWN_VEHICLE_ELIGIBILITY;
-        const effectiveStatus = vehicle.effectiveStatus;
+      responseVehicles = vehicles.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts vehicle; returns the transformed collection value. */
+        (vehicle) => {
+          const rentalEligibility =
+            eligibilitySummaries.get(String(vehicle.licensePlate)) ||
+            UNKNOWN_VEHICLE_ELIGIBILITY;
+          const effectiveStatus = vehicle.effectiveStatus;
 
-        return omitPrivatePickupFields({
-          ...vehicle,
-          effectiveStatus,
-          rentalEligible: rentalEligibility.eligible,
-          rentalEligibility,
-          canRent: effectiveStatus === "available",
-        });
+          return omitPrivatePickupFields({
+            ...vehicle,
+            effectiveStatus,
+            rentalEligible: rentalEligibility.eligible,
+            rentalEligibility,
+            canRent: effectiveStatus === "available",
+          });
       });
     } else {
       responseVehicles = vehicles.map(omitPrivatePickupFields);
@@ -866,19 +892,31 @@ const listVehicles = async (
 
     const modelsWithBrands = [];
     const seenModels = new Set();
-    optionsData.forEach((row) => {
-      if (!seenModels.has(row.modelName)) {
-        seenModels.add(row.modelName);
-        modelsWithBrands.push({ model: row.modelName, brand: row.brandName });
-      }
+    optionsData.forEach(
+      /** Processes one collection item for side effects.
+       * Accepts row; returns no meaningful value. */
+      (row) => {
+        if (!seenModels.has(row.modelName)) {
+          seenModels.add(row.modelName);
+          modelsWithBrands.push({ model: row.modelName, brand: row.brandName });
+        }
     });
 
     const availableFilters = {
       combinations: optionsData,
-      locations: [...new Set(optionsData.map((r) => r.address))],
-      brands: [...new Set(optionsData.map((r) => r.brandName))],
+      locations: [...new Set(optionsData.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts r; returns the transformed collection value. */
+        (r) => r.address))],
+      brands: [...new Set(optionsData.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts r; returns the transformed collection value. */
+        (r) => r.brandName))],
       models: modelsWithBrands,
-      types: [...new Set(optionsData.map((r) => r.carTypeName))],
+      types: [...new Set(optionsData.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts r; returns the transformed collection value. */
+        (r) => r.carTypeName))],
     };
 
     res.status(200).json({
@@ -898,11 +936,17 @@ const listVehicles = async (
   }
 };
 
+/** Fetches all vehicles.
+ * Accepts req, res, and next; returns a response or delegates to the next middleware. */
 const getAllVehicles = (req, res, next) => listVehicles(req, res, next);
 
+/** Fetches admin vehicles.
+ * Accepts req, res, and next; returns a response or delegates to the next middleware. */
 const getAdminVehicles = (req, res, next) =>
   listVehicles(req, res, next, { includeBlockedOwners: true });
 
+/** Fetches all car brands.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getAllCarBrands = async (req, res, next) => {
   try {
     const query = "SELECT * FROM carBrands";
@@ -916,6 +960,8 @@ const getAllCarBrands = async (req, res, next) => {
   }
 };
 
+/** Fetches all car models.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getAllCarModels = async (req, res, next) => {
   try {
     const { brandId, typeId } = req.query;
@@ -951,6 +997,8 @@ const getAllCarModels = async (req, res, next) => {
   }
 };
 
+/** Fetches all car types.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getAllCarTypes = async (req, res, next) => {
   try {
     const query = `
@@ -970,6 +1018,8 @@ const getAllCarTypes = async (req, res, next) => {
   }
 };
 
+/** Updates vehicle status.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function updateVehicleStatus(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -1069,6 +1119,8 @@ async function updateVehicleStatus(req, res, next) {
 }
 
 // --- ADD BRAND / MODEL / TYPE TO DATABASE ---
+/** Adds car model.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const addCarModel = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {

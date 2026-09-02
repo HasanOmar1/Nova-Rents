@@ -1,3 +1,5 @@
+// Provides shared activity state and API operations through React context.
+// It exports a provider component and a hook for consuming the managed data.
 import {
   createContext,
   useCallback,
@@ -12,6 +14,8 @@ import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 
 const ActivityContext = createContext();
 
+// Supplies recent activity state and refresh behavior to descendant components.
+// Accepts children and returns an activity-context provider tree.
 const ActivityContextProvider = ({ children }) => {
   const { currentUser } = useUserContext();
   const activeUserId = currentUser?.userId ?? null;
@@ -21,6 +25,8 @@ const ActivityContextProvider = ({ children }) => {
   const activeUserIdRef = useRef(activeUserId);
   const requestControllerRef = useRef(null);
 
+  // Loads activities into the relevant application state.
+  // Takes no arguments and returns a promise for the operation result.
   const loadActivities = useCallback(async () => {
     const requestedUserId = activeUserIdRef.current;
     if (!requestedUserId) return false;
@@ -63,24 +69,29 @@ const ActivityContextProvider = ({ children }) => {
     }
   }, []);
 
-  useEffect(() => {
-    activeUserIdRef.current = activeUserId;
-    requestControllerRef.current?.abort();
-    requestControllerRef.current = null;
-
-    if (!activeUserId) {
-      setActivities([]);
-      setErrorMsg("");
-      setActivityLoading(false);
-      return;
-    }
-
-    setActivityLoading(true);
-
-    return () => {
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      activeUserIdRef.current = activeUserId;
       requestControllerRef.current?.abort();
-    };
-  }, [activeUserId]);
+      requestControllerRef.current = null;
+
+      if (!activeUserId) {
+        setActivities([]);
+        setErrorMsg("");
+        setActivityLoading(false);
+        return;
+      }
+
+      setActivityLoading(true);
+
+      // Synchronizes the component with an external effect after rendering.
+      // Takes no arguments and returns an optional cleanup function.
+      return () => {
+        requestControllerRef.current?.abort();
+      };
+    }, [activeUserId]);
 
   useVisibilityPolling(loadActivities, {
     enabled: Boolean(activeUserId),
@@ -102,6 +113,8 @@ const ActivityContextProvider = ({ children }) => {
   );
 };
 
+// Reads recent-activity state and refresh controls from the nearest provider.
+// Takes no arguments and returns the current activity context value.
 export const useActivityContext = () => useContext(ActivityContext);
 
 export default ActivityContextProvider;

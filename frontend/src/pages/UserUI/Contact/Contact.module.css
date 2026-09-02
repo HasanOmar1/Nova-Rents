@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the Contact interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .Contact {
   padding-bottom: 64px;
 }

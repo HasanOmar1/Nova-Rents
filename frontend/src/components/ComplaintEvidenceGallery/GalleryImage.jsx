@@ -1,7 +1,11 @@
+// Defines the Gallery Image React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useState } from "react";
 import { ImageOff } from "lucide-react";
 import styles from "./ComplaintEvidenceGallery.module.css";
 
+// Renders the Gallery Image interface.
+// Accepts an options object and returns rendered JSX.
 const GalleryImage = ({ src, alt, compact = false, onUnavailable }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -28,10 +32,13 @@ const GalleryImage = ({ src, alt, compact = false, onUnavailable }) => {
       crossOrigin="use-credentials"
       loading="lazy"
       decoding="async"
-      onError={() => {
-        setHasError(true);
-        onUnavailable?.();
-      }}
+      onError={
+        // Handles the component's error event.
+        // Takes no arguments and returns the handler result.
+        () => {
+          setHasError(true);
+          onUnavailable?.();
+        }}
     />
   );
 };

@@ -1,6 +1,10 @@
+// Defines the Pagination React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import styles from "./Pagination.module.css";
 
+// Renders the Pagination interface.
+// Accepts an options object and returns rendered JSX.
 const Pagination = ({
   currentPage = 1,
   totalPages = 1,

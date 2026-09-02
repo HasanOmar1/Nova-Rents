@@ -1,3 +1,5 @@
+// Provides shared document state and API operations through React context.
+// It exports a provider component and a hook for consuming the managed data.
 import { createContext, useCallback, useContext, useState } from "react";
 import axios from "axios";
 import { useActivityContext } from "./ActivityContext";
@@ -10,6 +12,8 @@ const ALLOWED_DOCUMENT_TYPES = [
   "application/pdf",
 ];
 
+// Extracts the most useful API error message, including text from blob responses.
+// Accepts an Axios error and fallback and returns a promise for message text.
 async function messageFromAxiosError(error, fallback) {
   const data = error?.response?.data;
   if (data instanceof Blob) {
@@ -23,6 +27,8 @@ async function messageFromAxiosError(error, fallback) {
   return data?.message || fallback;
 }
 
+// Supplies document upload and review state to descendant components.
+// Accepts children and returns a document-context provider tree.
 const DocumentContextProvider = ({ children }) => {
   const { loadActivities } = useActivityContext();
   const [overview, setOverview] = useState({ identity: [], vehicles: [] });
@@ -41,6 +47,8 @@ const DocumentContextProvider = ({ children }) => {
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [adminErrorMsg, setAdminErrorMsg] = useState("");
 
+  // Retrieves my documents for the current workflow.
+  // Accepts an options object and returns a promise for the operation result.
   const getMyDocuments = useCallback(async ({ silent = false } = {}) => {
     try {
       if (!silent) setIsLoading(true);
@@ -58,6 +66,8 @@ const DocumentContextProvider = ({ children }) => {
     }
   }, []);
 
+  // Uploads document form data and refreshes the user's managed documents.
+  // Accepts document fields and a file and returns a promise for the API response.
   const uploadDocument = async ({
     file,
     documentType,
@@ -106,6 +116,8 @@ const DocumentContextProvider = ({ children }) => {
     }
   };
 
+  // Opens document file for the user.
+  // Accepts document id and returns a promise for the operation result.
   const openDocumentFile = async (documentId) => {
     try {
       const response = await axios.get(`/documents/${documentId}/file`, {
@@ -113,7 +125,10 @@ const DocumentContextProvider = ({ children }) => {
       });
       const url = URL.createObjectURL(response.data);
       window.open(url, "_blank", "noopener,noreferrer");
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setTimeout(
+        // Runs delayed work after the configured timeout elapses.
+        // Takes no arguments and returns nothing.
+        () => URL.revokeObjectURL(url), 60_000);
       setErrorMsg("");
       setAdminErrorMsg("");
       return true;
@@ -128,6 +143,8 @@ const DocumentContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves admin documents for the current workflow.
+  // Accepts an options object and returns a promise for the operation result.
   const getAdminDocuments = useCallback(
     async ({
       page = 1,
@@ -172,6 +189,8 @@ const DocumentContextProvider = ({ children }) => {
     [],
   );
 
+  // Retrieves admin document by id for the current workflow.
+  // Accepts document id and returns a promise for the operation result.
   const getAdminDocumentById = async (documentId) => {
     try {
       const response = await axios.get(`/documents/admin/${documentId}`);
@@ -185,6 +204,8 @@ const DocumentContextProvider = ({ children }) => {
     }
   };
 
+  // Marks an administrator-reviewed document as verified through the API.
+  // Accepts a document ID and returns a promise for the updated record.
   const verifyAdminDocument = async (documentId) => {
     try {
       const response = await axios.put(`/documents/admin/${documentId}/verify`, {});
@@ -206,6 +227,8 @@ const DocumentContextProvider = ({ children }) => {
     }
   };
 
+  // Rejects an administrator-reviewed document with structured reason details.
+  // Accepts a document ID and review options and returns a promise for the result.
   const rejectAdminDocument = async (
     documentId,
     { rejectionCode, rejectionReasonText },
@@ -233,6 +256,8 @@ const DocumentContextProvider = ({ children }) => {
     }
   };
 
+  // Runs vehicle government check for the current workflow.
+  // Accepts license plate and returns a promise for the operation result.
   const runVehicleGovernmentCheck = async (licensePlate) => {
     try {
       const response = await axios.post(
@@ -255,6 +280,8 @@ const DocumentContextProvider = ({ children }) => {
     }
   };
 
+  // Records an administrator's manual vehicle-verification decision.
+  // Accepts a license plate and reason and returns a promise for the API result.
   const manuallyVerifyVehicleGovernmentCheck = async (
     licensePlate,
     reason,
@@ -311,5 +338,7 @@ const DocumentContextProvider = ({ children }) => {
   );
 };
 
+// Reads document state and review actions exposed by the nearest provider.
+// Takes no arguments and returns the current document context value.
 export const useDocumentContext = () => useContext(DocumentContext);
 export default DocumentContextProvider;

@@ -1,3 +1,5 @@
+// Defines the Document Slot React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { Eye, Upload } from "lucide-react";
 import {
   formatDocumentStatus,
@@ -12,6 +14,8 @@ import { STATUS_CLASS } from "./DocumentsCards.constants";
 import { isPastDate } from "./DocumentsCards.utils";
 import styles from "./DocumentsCards.module.css";
 
+// Renders the Document Slot interface.
+// Accepts an options object and returns rendered JSX.
 const DocumentSlot = ({ slot, onUpload, onView, viewingId }) => {
   const status = slot.status || "not_uploaded";
   const canView = Boolean(slot.documentId);
@@ -58,7 +62,10 @@ const DocumentSlot = ({ slot, onUpload, onView, viewingId }) => {
             <button
               type="button"
               className={styles.iconBtn}
-              onClick={() => onView(slot.documentId)}
+              onClick={
+                // Handles the component's click event.
+                // Takes no arguments and returns the handler result.
+                () => onView(slot.documentId)}
               disabled={viewingId === slot.documentId}
               aria-label={`View ${formatDocumentType(slot.documentType)}`}
             >
@@ -68,7 +75,10 @@ const DocumentSlot = ({ slot, onUpload, onView, viewingId }) => {
           <button
             type="button"
             className={styles.iconBtn}
-            onClick={() => onUpload(slot)}
+            onClick={
+              // Handles the component's click event.
+              // Takes no arguments and returns the handler result.
+              () => onUpload(slot)}
             aria-label={actionLabel}
           >
             <Upload size={20} />

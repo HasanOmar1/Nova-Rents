@@ -1,3 +1,5 @@
+// Manages complaint submission and histories for users and their vehicles.
+// It takes no props and returns complaint forms, filters, and report lists.
 import { useCallback, useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import styles from "./Complaints.module.css";
@@ -15,6 +17,8 @@ import { Car, History, ShieldAlert } from "lucide-react";
 const TITLE_CHARACTER_LIMIT = 100;
 const DESCRIPTION_CHARACTER_LIMIT = 1000;
 
+/* Formats submitted date for display.
+ * It accepts value and returns formatted display text. */
 const formatSubmittedDate = (value) => {
   if (!value) return "Unknown date";
   const date = new Date(value);
@@ -26,6 +30,8 @@ const formatSubmittedDate = (value) => {
   });
 };
 
+/* Formats trip date for display.
+ * It accepts value and returns formatted display text. */
 const formatTripDate = (value) => {
   if (!value) return "Unknown date";
   const date = new Date(value);
@@ -37,11 +43,15 @@ const formatTripDate = (value) => {
   });
 };
 
+/* Chooses the best available display label for a reported user.
+ * It accepts name/email fields and returns a nonempty display string. */
 const displayName = (firstName, lastName, email) => {
   const fullName = `${firstName || ""} ${lastName || ""}`.trim();
   return fullName || email || "Unknown user";
 };
 
+/* Renders the complaints view and coordinates its page state.
+ * It accepts no arguments and returns the rendered page JSX. */
 const Complaints = () => {
   const {
     createComplaint,
@@ -130,6 +140,8 @@ const Complaints = () => {
 
   const isTargetLoading = isVehicleLoading || isOwnerLoading;
 
+  /* Clears route-prefilled complaint targets and their locked state.
+   * It accepts no arguments and returns undefined. */
   const resetComplaintPrefill = useCallback(() => {
     setIsVehicleLocked(false);
     setReportedVehicle(null);
@@ -142,202 +154,258 @@ const Complaints = () => {
     setRentalSummary(null);
   }, []);
 
-  useEffect(() => {
-    const view = searchParams.get("view");
-    if (["history", "reports", "vehicleReports"].includes(view)) {
-      setActiveHistoryView(view);
-    }
-  }, [searchParams]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      const view = searchParams.get("view");
+      if (["history", "reports", "vehicleReports"].includes(view)) {
+        setActiveHistoryView(view);
+      }
+    }, [searchParams]);
 
   // Load My Trips once so rental summary can be shown without a new API.
-  useEffect(() => {
-    if (currentUser) {
-      fetchRentalHistory();
-    }
-  }, [currentUser]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (currentUser) {
+        fetchRentalHistory();
+      }
+    }, [currentUser]);
 
   // Prefill from URL params (UX only). Invalid params fall back to the
   // normal unprefilled form without crashing.
-  useEffect(() => {
-    const complaintType = searchParams.get("complaintType");
-    const plate = searchParams.get("vehicleLicensePlate")?.trim() || "";
-    const ownerIdParam = searchParams.get("ownerId")?.trim() || "";
-    const rentalIdParam = Number(searchParams.get("rentalId"));
-    const hasValidRentalId =
-      Number.isInteger(rentalIdParam) && rentalIdParam > 0;
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      const complaintType = searchParams.get("complaintType");
+      const plate = searchParams.get("vehicleLicensePlate")?.trim() || "";
+      const ownerIdParam = searchParams.get("ownerId")?.trim() || "";
+      const rentalIdParam = Number(searchParams.get("rentalId"));
+      const hasValidRentalId =
+        Number.isInteger(rentalIdParam) && rentalIdParam > 0;
 
-    if (!complaintType && !plate && !ownerIdParam && !hasValidRentalId) {
-      return;
-    }
-
-    let cancelled = false;
-
-    if (hasValidRentalId) {
-      setLockedRentalId(rentalIdParam);
-    } else {
-      setLockedRentalId(null);
-      setRentalSummary(null);
-    }
-
-    if (complaintType === "vehicle") {
-      if (!/^\d{7,8}$/.test(plate)) {
-        setLocalErrorMsg(
-          "Invalid report link. Please select the complaint type and target manually.",
-        );
-        resetComplaintPrefill();
+      if (!complaintType && !plate && !ownerIdParam && !hasValidRentalId) {
         return;
       }
 
-      if (!hasValidRentalId) {
-        setLocalErrorMsg(
-          "Reporting requires a paid rental. Open Report from Vehicle Details or My Trips after payment.",
-        );
+      let cancelled = false;
+
+      if (hasValidRentalId) {
+        setLockedRentalId(rentalIdParam);
+      } else {
+        setLockedRentalId(null);
+        setRentalSummary(null);
       }
 
-      const resolveReportedVehicle = async () => {
-        setIsOwnerLocked(false);
-        setReportedOwner(null);
-        setLockedOwnerId(null);
-        setIsVehicleLoading(true);
-        setActiveTab("vehicle");
-        setFormData((prev) => ({ ...prev, relatedTarget: plate }));
-        setIsVehicleLocked(true);
-
-        const vehicle = await getVehicleByLicensePlate(plate);
-        if (cancelled) return;
-
-        if (!vehicle) {
+      if (complaintType === "vehicle") {
+        if (!/^\d{7,8}$/.test(plate)) {
           setLocalErrorMsg(
-            "Vehicle not found. Please enter a valid plate number manually.",
+            "Invalid report link. Please select the complaint type and target manually.",
           );
-          setIsVehicleLocked(false);
-          setReportedVehicle(null);
-          setFormData((prev) => ({ ...prev, relatedTarget: "" }));
-        } else {
-          setReportedVehicle(vehicle);
-          if (hasValidRentalId) {
-            setLocalErrorMsg("");
-            setErrorMsg("");
-          }
+          resetComplaintPrefill();
+          return;
         }
-        setIsVehicleLoading(false);
-      };
 
-      resolveReportedVehicle();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (complaintType === "owner") {
-      const ownerId = Number(ownerIdParam);
-      if (!Number.isInteger(ownerId) || ownerId <= 0) {
-        setLocalErrorMsg(
-          "Invalid report link. Please select the complaint type and target manually.",
-        );
-        resetComplaintPrefill();
-        return;
-      }
-
-      if (!hasValidRentalId) {
-        setLocalErrorMsg(
-          "Reporting requires a paid rental. Open Report from Owner Profile or My Trips after payment.",
-        );
-      }
-
-      const resolveReportedOwner = async () => {
-        setIsVehicleLocked(false);
-        setReportedVehicle(null);
-        setIsOwnerLoading(true);
-        setActiveTab("owner");
-        setIsOwnerLocked(true);
-        setLockedOwnerId(ownerId);
-
-        const owner = await getUserById(ownerId);
-        if (cancelled) return;
-
-        if (!owner) {
+        if (!hasValidRentalId) {
           setLocalErrorMsg(
-            "Owner not found. Please enter a valid owner email manually.",
+            "Reporting requires a paid rental. Open Report from Vehicle Details or My Trips after payment.",
           );
+        }
+
+        /* Handles resolve reported vehicle for this view.
+         * It accepts no arguments and returns a promise that resolves when the operation finishes. */
+        const resolveReportedVehicle = async () => {
           setIsOwnerLocked(false);
           setReportedOwner(null);
           setLockedOwnerId(null);
-          setFormData((prev) => ({ ...prev, relatedTarget: "" }));
-        } else {
-          setReportedOwner(owner);
-          setFormData((prev) => ({
-            ...prev,
-            relatedTarget: owner.email || "",
-          }));
-          if (hasValidRentalId) {
-            setLocalErrorMsg("");
-            setErrorMsg("");
+          setIsVehicleLoading(true);
+          setActiveTab("vehicle");
+          setFormData(
+            /* Derives the next form data state value.
+             * It accepts prev and returns the replacement state. */
+            (prev) => ({ ...prev, relatedTarget: plate }));
+          setIsVehicleLocked(true);
+
+          const vehicle = await getVehicleByLicensePlate(plate);
+          if (cancelled) return;
+
+          if (!vehicle) {
+            setLocalErrorMsg(
+              "Vehicle not found. Please enter a valid plate number manually.",
+            );
+            setIsVehicleLocked(false);
+            setReportedVehicle(null);
+            setFormData(
+              /* Derives the next form data state value.
+               * It accepts prev and returns the replacement state. */
+              (prev) => ({ ...prev, relatedTarget: "" }));
+          } else {
+            setReportedVehicle(vehicle);
+            if (hasValidRentalId) {
+              setLocalErrorMsg("");
+              setErrorMsg("");
+            }
           }
+          setIsVehicleLoading(false);
+        };
+
+        resolveReportedVehicle();
+        /* Releases resources created by the surrounding operation.
+         * It accepts no arguments and returns undefined. */
+        return () => {
+          cancelled = true;
+        };
+      }
+
+      if (complaintType === "owner") {
+        const ownerId = Number(ownerIdParam);
+        if (!Number.isInteger(ownerId) || ownerId <= 0) {
+          setLocalErrorMsg(
+            "Invalid report link. Please select the complaint type and target manually.",
+          );
+          resetComplaintPrefill();
+          return;
         }
-        setIsOwnerLoading(false);
-      };
 
-      resolveReportedOwner();
-      return () => {
-        cancelled = true;
-      };
-    }
+        if (!hasValidRentalId) {
+          setLocalErrorMsg(
+            "Reporting requires a paid rental. Open Report from Owner Profile or My Trips after payment.",
+          );
+        }
 
-    setLocalErrorMsg(
-      "Invalid report link. Please select the complaint type and target manually.",
-    );
-    resetComplaintPrefill();
-  }, [resetComplaintPrefill, searchParams]);
+        /* Handles resolve reported owner for this view.
+         * It accepts no arguments and returns a promise that resolves when the operation finishes. */
+        const resolveReportedOwner = async () => {
+          setIsVehicleLocked(false);
+          setReportedVehicle(null);
+          setIsOwnerLoading(true);
+          setActiveTab("owner");
+          setIsOwnerLocked(true);
+          setLockedOwnerId(ownerId);
+
+          const owner = await getUserById(ownerId);
+          if (cancelled) return;
+
+          if (!owner) {
+            setLocalErrorMsg(
+              "Owner not found. Please enter a valid owner email manually.",
+            );
+            setIsOwnerLocked(false);
+            setReportedOwner(null);
+            setLockedOwnerId(null);
+            setFormData(
+              /* Derives the next form data state value.
+               * It accepts prev and returns the replacement state. */
+              (prev) => ({ ...prev, relatedTarget: "" }));
+          } else {
+            setReportedOwner(owner);
+            setFormData(
+              /* Derives the next form data state value.
+               * It accepts prev and returns the replacement state. */
+              (prev) => ({
+                ...prev,
+                relatedTarget: owner.email || "",
+              }));
+            if (hasValidRentalId) {
+              setLocalErrorMsg("");
+              setErrorMsg("");
+            }
+          }
+          setIsOwnerLoading(false);
+        };
+
+        resolveReportedOwner();
+        /* Releases resources created by the surrounding operation.
+         * It accepts no arguments and returns undefined. */
+        return () => {
+          cancelled = true;
+        };
+      }
+
+      setLocalErrorMsg(
+        "Invalid report link. Please select the complaint type and target manually.",
+      );
+      resetComplaintPrefill();
+    }, [resetComplaintPrefill, searchParams]);
 
   // Resolve rental summary from cached My Trips (same GET /rentals/history).
-  useEffect(() => {
-    if (!lockedRentalId) {
-      setRentalSummary(null);
-      return;
-    }
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (!lockedRentalId) {
+        setRentalSummary(null);
+        return;
+      }
 
-    const trip = (rentalHistory.myTrips || []).find(
-      (item) =>
-        Number(item.rentalId) === Number(lockedRentalId) &&
-        item.paymentStatus === "paid",
-    );
+      const trip = (rentalHistory.myTrips || []).find(
+        /* Checks whether the current entry is the requested match.
+         * It accepts item and returns a boolean. */
+        (item) =>
+          Number(item.rentalId) === Number(lockedRentalId) &&
+          item.paymentStatus === "paid",
+      );
 
-    setRentalSummary(
-      trip || {
-        rentalId: lockedRentalId,
-        paymentStatus: "paid",
-      },
-    );
-  }, [lockedRentalId, rentalHistory.myTrips]);
+      setRentalSummary(
+        trip || {
+          rentalId: lockedRentalId,
+          paymentStatus: "paid",
+        },
+      );
+    }, [lockedRentalId, rentalHistory.myTrips]);
 
-  useEffect(() => {
-    const urls = formData.images.map((image) => URL.createObjectURL(image));
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      const urls = formData.images.map(
+        /* Transforms each collection entry for the surrounding mapping.
+         * It accepts image and returns the mapped value. */
+        (image) => URL.createObjectURL(image));
 
-    setPreviewUrls(urls);
+      setPreviewUrls(urls);
 
-    return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [formData.images]);
+      /* Releases resources created by the surrounding operation.
+       * It accepts no arguments and returns undefined. */
+      return () => {
+        urls.forEach(
+          /* Processes one entry for the surrounding collection operation.
+           * It accepts url and returns undefined. */
+          (url) => URL.revokeObjectURL(url));
+      };
+    }, [formData.images]);
 
-  useEffect(() => {
-    getMyComplaints({
-      startDate: appliedFromDate,
-      endDate: appliedToDate,
-      status: appliedStatus,
-      page: currentPage,
-    });
-  }, [appliedFromDate, appliedToDate, appliedStatus, currentPage]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getMyComplaints({
+        startDate: appliedFromDate,
+        endDate: appliedToDate,
+        status: appliedStatus,
+        page: currentPage,
+      });
+    }, [appliedFromDate, appliedToDate, appliedStatus, currentPage]);
 
-  useEffect(() => {
-    getReportsAboutMe({ page: reportsPage });
-  }, [reportsPage]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getReportsAboutMe({ page: reportsPage });
+    }, [reportsPage]);
 
-  useEffect(() => {
-    getReportsAboutMyVehicles({ page: vehicleReportsPage });
-  }, [getReportsAboutMyVehicles, vehicleReportsPage]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getReportsAboutMyVehicles({ page: vehicleReportsPage });
+    }, [getReportsAboutMyVehicles, vehicleReportsPage]);
 
+  /* Reloads the user's complaint list with the applied filters.
+   * It accepts no arguments and returns undefined. */
   const refreshMyComplaints = () => {
     getMyComplaints({
       startDate: appliedFromDate,
@@ -347,6 +415,8 @@ const Complaints = () => {
     });
   };
 
+  /* Commits valid complaint-history filters and returns to page one.
+   * It accepts no arguments and returns undefined. */
   const handleApplyFilters = () => {
     if (!isRangeValid || isMyComplaintsLoading) return;
     applyDateRange();
@@ -354,6 +424,8 @@ const Complaints = () => {
     resetHistoryPage();
   };
 
+  /* Handles submit form for this view.
+   * It accepts e and returns a promise that resolves when the operation finishes. */
   const handleSubmitForm = async (e) => {
     e.preventDefault();
     if (isSubmitting || isTargetLoading) return;
@@ -411,9 +483,12 @@ const Complaints = () => {
     }
 
     if (formData.images && formData.images.length > 0) {
-      formData.images.forEach((image) => {
-        complaintData.append("images", image);
-      });
+      formData.images.forEach(
+        /* Processes one entry for the surrounding collection operation.
+         * It accepts image and returns undefined. */
+        (image) => {
+          complaintData.append("images", image);
+        });
     }
 
     const success = await createComplaint(complaintData);
@@ -428,7 +503,10 @@ const Complaints = () => {
       });
       resetComplaintPrefill();
       setSuccessMsg("Your complaint was submitted successfully!");
-      setTimeout(() => setSuccessMsg(""), 5000);
+      setTimeout(
+        /* Clears the success message after its display interval.
+         * It accepts no arguments and returns undefined. */
+        () => setSuccessMsg(""), 5000);
       refreshMyComplaints();
       if (
         searchParams.has("complaintType") ||
@@ -441,45 +519,73 @@ const Complaints = () => {
     }
   };
 
+  /* Selects owner complaints and clears the previous target field.
+   * It accepts no arguments and returns undefined. */
   const switchActiveTabToOwner = () => {
     setActiveTab("owner");
     setLocalErrorMsg("");
     resetComplaintPrefill();
-    setFormData((prev) => ({ ...prev, relatedTarget: "" }));
+    setFormData(
+      /* Derives the next form data state value.
+       * It accepts prev and returns the replacement state. */
+      (prev) => ({ ...prev, relatedTarget: "" }));
   };
 
+  /* Selects vehicle complaints and clears the previous target field.
+   * It accepts no arguments and returns undefined. */
   const switchActiveTabToVehicle = () => {
     setActiveTab("vehicle");
     setLocalErrorMsg("");
     resetComplaintPrefill();
-    setFormData((prev) => ({ ...prev, relatedTarget: "" }));
+    setFormData(
+      /* Derives the next form data state value.
+       * It accepts prev and returns the replacement state. */
+      (prev) => ({ ...prev, relatedTarget: "" }));
   };
 
+  /* Sanitizes and stores the complaint's related owner or vehicle target.
+   * It accepts an input event and returns undefined. */
   const handleRelatedTargetChange = (e) => {
     if (isVehicleLocked || isOwnerLocked) return;
     let value = e.target.value;
     if (activeTab === "vehicle") {
       value = value.replace(/\D/g, "").slice(0, 8);
     }
-    setFormData((prev) => ({ ...prev, relatedTarget: value }));
+    setFormData(
+      /* Derives the next form data state value.
+       * It accepts prev and returns the replacement state. */
+      (prev) => ({ ...prev, relatedTarget: value }));
   };
 
+  /* Adds selected evidence images up to the form's attachment limit.
+   * It accepts a file-input event and returns undefined. */
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
 
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...files].slice(0, 4),
-    }));
+    setFormData(
+      /* Derives the next form data state value.
+       * It accepts prev and returns the replacement state. */
+      (prev) => ({
+        ...prev,
+        images: [...prev.images, ...files].slice(0, 4),
+      }));
 
     e.target.value = "";
   };
 
+  /* Removes one evidence image from the complaint form state.
+   * It accepts an image index and returns undefined. */
   const removeImage = (indexToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, index) => index !== indexToRemove),
-    }));
+    setFormData(
+      /* Derives the next form data state value.
+       * It accepts prev and returns the replacement state. */
+      (prev) => ({
+        ...prev,
+        images: prev.images.filter(
+          /* Tests whether each collection entry belongs in the filtered result.
+           * It accepts _ and index and returns a boolean. */
+          (_, index) => index !== indexToRemove),
+      }));
   };
 
   const emptyMessage =
@@ -710,8 +816,11 @@ const Complaints = () => {
               type="text"
               name="title"
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
+              onChange={
+                /* Handles the change callback for this rendered control.
+                 * It accepts e and returns the delegated result. */
+                (e) =>
+                  setFormData({ ...formData, title: e.target.value })
               }
               disabled={isSubmitting}
               maxLength={TITLE_CHARACTER_LIMIT}
@@ -740,8 +849,11 @@ const Complaints = () => {
               id="complaint-description"
               name="description"
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
+              onChange={
+                /* Handles the change callback for this rendered control.
+                 * It accepts e and returns the delegated result. */
+                (e) =>
+                  setFormData({ ...formData, description: e.target.value })
               }
               disabled={isSubmitting}
               maxLength={DESCRIPTION_CHARACTER_LIMIT}
@@ -761,25 +873,31 @@ const Complaints = () => {
               <p>Upload Images</p>
             ) : (
               <div className={styles.imagePreviewContainer}>
-                {previewUrls.map((image, index) => (
-                  <div className={styles.previewCard} key={index}>
-                    <img
-                      src={image}
-                      alt="preview"
-                      className={styles.previewImage}
-                    />
+                {previewUrls.map(
+                  /* Transforms each collection entry for the surrounding mapping.
+                   * It accepts image and index and returns the mapped value. */
+                  (image, index) => (
+                    <div className={styles.previewCard} key={index}>
+                      <img
+                        src={image}
+                        alt="preview"
+                        className={styles.previewImage}
+                      />
 
-                    <button
-                      type="button"
-                      className={styles.removeImageBtn}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeImage(index);
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        className={styles.removeImageBtn}
+                        onClick={
+                          /* Handles the click callback for this rendered control.
+                           * It accepts e and returns the delegated result. */
+                          (e) => {
+                            e.preventDefault();
+                            removeImage(index);
+                          }}
+                      >
+                        ×
+                      </button>
+                    </div>
                 ))}
               </div>
             )}
@@ -807,7 +925,10 @@ const Complaints = () => {
                 ? styles.activeHistoryViewButton
                 : ""
             }`}
-            onClick={() => setActiveHistoryView("history")}
+            onClick={
+              /* Handles the click callback for this rendered control.
+               * It accepts no arguments and returns the delegated result. */
+              () => setActiveHistoryView("history")}
             aria-pressed={activeHistoryView === "history"}
           >
             <History size={18} aria-hidden="true" />
@@ -825,7 +946,10 @@ const Complaints = () => {
                 ? styles.activeHistoryViewButton
                 : ""
             }`}
-            onClick={() => setActiveHistoryView("reports")}
+            onClick={
+              /* Handles the click callback for this rendered control.
+               * It accepts no arguments and returns the delegated result. */
+              () => setActiveHistoryView("reports")}
             aria-pressed={activeHistoryView === "reports"}
           >
             <ShieldAlert size={18} aria-hidden="true" />
@@ -843,7 +967,10 @@ const Complaints = () => {
                 ? styles.activeHistoryViewButton
                 : ""
             }`}
-            onClick={() => setActiveHistoryView("vehicleReports")}
+            onClick={
+              /* Handles the click callback for this rendered control.
+               * It accepts no arguments and returns the delegated result. */
+              () => setActiveHistoryView("vehicleReports")}
             aria-pressed={activeHistoryView === "vehicleReports"}
           >
             <Car size={18} aria-hidden="true" />
@@ -876,7 +1003,10 @@ const Complaints = () => {
                   type="date"
                   value={fromDate}
                   max={toDate}
-                  onChange={(e) => setFromDate(e.target.value)}
+                  onChange={
+                    /* Handles the change callback for this rendered control.
+                     * It accepts e and returns the delegated result. */
+                    (e) => setFromDate(e.target.value)}
                 />
               </div>
               <div className={styles.filterGroup}>
@@ -886,7 +1016,10 @@ const Complaints = () => {
                   type="date"
                   value={toDate}
                   min={fromDate}
-                  onChange={(e) => setToDate(e.target.value)}
+                  onChange={
+                    /* Handles the change callback for this rendered control.
+                     * It accepts e and returns the delegated result. */
+                    (e) => setToDate(e.target.value)}
                 />
               </div>
               <div className={styles.filterGroup}>
@@ -894,7 +1027,10 @@ const Complaints = () => {
                 <select
                   id="myComplaintsStatus"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={
+                    /* Handles the change callback for this rendered control.
+                     * It accepts e and returns the delegated result. */
+                    (e) => setStatusFilter(e.target.value)}
                 >
                   <option value="all">All</option>
                   <option value="open">Open</option>
@@ -923,54 +1059,57 @@ const Complaints = () => {
               <p className={styles.historyEmpty}>{emptyMessage}</p>
             ) : (
               <div className={styles.historyList}>
-                {myComplaints.map((comp) => {
-                  const isVehicle = comp.complaintType === "vehicle";
-                  const vehicleLabel = [
-                    comp.brandName,
-                    comp.modelName,
-                    comp.vehicleLicensePlate
-                      ? `(${comp.vehicleLicensePlate})`
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" ");
+                {myComplaints.map(
+                  /* Transforms each collection entry for the surrounding mapping.
+                   * It accepts comp and returns the mapped value. */
+                  (comp) => {
+                    const isVehicle = comp.complaintType === "vehicle";
+                    const vehicleLabel = [
+                      comp.brandName,
+                      comp.modelName,
+                      comp.vehicleLicensePlate
+                        ? `(${comp.vehicleLicensePlate})`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
 
-                  const ownerTarget = displayName(
-                    comp.ownerFirstName,
-                    comp.ownerLastName,
-                    comp.ownerEmail,
-                  );
+                    const ownerTarget = displayName(
+                      comp.ownerFirstName,
+                      comp.ownerLastName,
+                      comp.ownerEmail,
+                    );
 
-                  const listedOwner = isVehicle
-                    ? displayName(
-                        comp.vehicleOwnerFirstName,
-                        comp.vehicleOwnerLastName,
-                        comp.vehicleOwnerEmail,
-                      )
-                    : null;
+                    const listedOwner = isVehicle
+                      ? displayName(
+                          comp.vehicleOwnerFirstName,
+                          comp.vehicleOwnerLastName,
+                          comp.vehicleOwnerEmail,
+                        )
+                      : null;
 
-                  return (
-                    <ComplaintsHistoryCards
-                      key={comp.complaintId}
-                      title={comp.title}
-                      status={comp.status}
-                      targetLabel={
-                        isVehicle ? "Reported vehicle" : "Reported owner"
-                      }
-                      targetValue={
-                        isVehicle
-                          ? vehicleLabel || "Unknown vehicle"
-                          : ownerTarget
-                      }
-                      listedOwner={listedOwner}
-                      submittedDate={formatSubmittedDate(comp.createdAt)}
-                      description={comp.description}
-                      images={comp.images}
-                      complaintId={comp.complaintId}
-                      adminResponse={comp.resolutionMessage?.trim() || null}
-                    />
-                  );
-                })}
+                    return (
+                      <ComplaintsHistoryCards
+                        key={comp.complaintId}
+                        title={comp.title}
+                        status={comp.status}
+                        targetLabel={
+                          isVehicle ? "Reported vehicle" : "Reported owner"
+                        }
+                        targetValue={
+                          isVehicle
+                            ? vehicleLabel || "Unknown vehicle"
+                            : ownerTarget
+                        }
+                        listedOwner={listedOwner}
+                        submittedDate={formatSubmittedDate(comp.createdAt)}
+                        description={comp.description}
+                        images={comp.images}
+                        complaintId={comp.complaintId}
+                        adminResponse={comp.resolutionMessage?.trim() || null}
+                      />
+                    );
+                  })}
               </div>
             )}
 
@@ -1016,17 +1155,20 @@ const Complaints = () => {
               </p>
             ) : (
               <div className={styles.historyList}>
-                {reportsAboutMe.map((comp) => (
-                  <ComplaintsHistoryCards
-                    key={comp.complaintId}
-                    title={comp.title}
-                    status={comp.status}
-                    targetLabel="Reference"
-                    targetValue={`#${comp.complaintId}`}
-                    submittedDate={formatSubmittedDate(comp.createdAt)}
-                    description={comp.description}
-                    adminResponse={comp.resolutionMessage?.trim() || null}
-                  />
+                {reportsAboutMe.map(
+                  /* Transforms each collection entry for the surrounding mapping.
+                   * It accepts comp and returns the mapped value. */
+                  (comp) => (
+                    <ComplaintsHistoryCards
+                      key={comp.complaintId}
+                      title={comp.title}
+                      status={comp.status}
+                      targetLabel="Reference"
+                      targetValue={`#${comp.complaintId}`}
+                      submittedDate={formatSubmittedDate(comp.createdAt)}
+                      description={comp.description}
+                      adminResponse={comp.resolutionMessage?.trim() || null}
+                    />
                 ))}
               </div>
             )}
@@ -1079,31 +1221,34 @@ const Complaints = () => {
               </p>
             ) : (
               <div className={styles.historyList}>
-                {reportsAboutMyVehicles.map((comp) => {
-                  const vehicleLabel = [
-                    comp.brandName,
-                    comp.modelName,
-                    comp.vehicleLicensePlate
-                      ? `(${comp.vehicleLicensePlate})`
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" ");
+                {reportsAboutMyVehicles.map(
+                  /* Transforms each collection entry for the surrounding mapping.
+                   * It accepts comp and returns the mapped value. */
+                  (comp) => {
+                    const vehicleLabel = [
+                      comp.brandName,
+                      comp.modelName,
+                      comp.vehicleLicensePlate
+                        ? `(${comp.vehicleLicensePlate})`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
 
-                  return (
-                    <ComplaintsHistoryCards
-                      key={comp.complaintId}
-                      title={comp.title}
-                      status={comp.status}
-                      targetLabel="Reported vehicle"
-                      targetValue={vehicleLabel || "Unknown vehicle"}
-                      referenceValue={`#${comp.complaintId}`}
-                      submittedDate={formatSubmittedDate(comp.createdAt)}
-                      description={comp.description}
-                      adminResponse={comp.resolutionMessage?.trim() || null}
-                    />
-                  );
-                })}
+                    return (
+                      <ComplaintsHistoryCards
+                        key={comp.complaintId}
+                        title={comp.title}
+                        status={comp.status}
+                        targetLabel="Reported vehicle"
+                        targetValue={vehicleLabel || "Unknown vehicle"}
+                        referenceValue={`#${comp.complaintId}`}
+                        submittedDate={formatSubmittedDate(comp.createdAt)}
+                        description={comp.description}
+                        adminResponse={comp.resolutionMessage?.trim() || null}
+                      />
+                    );
+                  })}
               </div>
             )}
 

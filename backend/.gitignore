@@ -1,3 +1,5 @@
+# Excludes backend dependencies, secrets, generated output, and private uploads.
+# Retains only the placeholder needed for the private-document directory.
 node_modules
 .env
 .DS_Store
