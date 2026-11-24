@@ -1,3 +1,5 @@
+/** Express controller handlers for reported users operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const STATUS_CODE = require("../constants/statusCodes");
 const { withTransaction } = require("../database/withTransaction");
 const {
@@ -13,9 +15,15 @@ const { sendAccountWarningEmail } = require("../services/emailService");
 const VALID_ACCOUNT_STATUSES = new Set(["all", "active", "blocked"]);
 const VALID_COMPLAINT_STATUSES = new Set(["all", "open", "in_review", "resolved", "closed"]);
 const VALID_SORTS = new Set(["total_reports", "recent_report", "warning_count", "open_reports", "email_asc"]);
+/** Checks whether a value is a positive integer identifier.
+ * Accepts value; returns a boolean validity result. */
 const validId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
+/** Checks whether a value is a real ISO calendar date.
+ * Accepts value; returns a boolean validity result. */
 const validDate = (value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value);
 
+/** Lists reported users.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function listReportedUsers(req, res, next) {
   try {
     const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
@@ -38,6 +46,8 @@ async function listReportedUsers(req, res, next) {
   } catch (error) { next(error); }
 }
 
+/** Lists user reports.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function listUserReports(req, res, next) {
   try {
     if (!validId(req.params.userId)) return res.status(STATUS_CODE.BAD_REQUEST).json({ message: "Invalid user ID" });
@@ -46,6 +56,8 @@ async function listUserReports(req, res, next) {
   } catch (error) { next(error); }
 }
 
+/** Lists warnings.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function listWarnings(req, res, next) {
   try {
     if (!validId(req.params.userId)) return res.status(STATUS_CODE.BAD_REQUEST).json({ message: "Invalid user ID" });
@@ -54,6 +66,8 @@ async function listWarnings(req, res, next) {
   } catch (error) { next(error); }
 }
 
+/** Issues an account warning and applies escalation rules transactionally.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function warnUser(req, res, next) {
   try {
     const userId = Number(req.params.userId);
@@ -62,17 +76,20 @@ async function warnUser(req, res, next) {
     if (!validId(userId) || !validId(adminId)) return res.status(STATUS_CODE.BAD_REQUEST).json({ message: "Invalid user ID" });
     if (reason.length < 5 || reason.length > 500) return res.status(STATUS_CODE.BAD_REQUEST).json({ message: "Reason must be 5-500 characters" });
 
-    const result = await withTransaction(async (connection) => {
-      const user = await lockTargetUser(connection, userId);
-      if (!user) { const error = new Error("User not found"); error.status = STATUS_CODE.NOT_FOUND; throw error; }
-      if (user.role === "admin") { const error = new Error("Administrators cannot be warned"); error.status = STATUS_CODE.FORBIDDEN; throw error; }
-      const currentCount = await countWarningsOnConnection(connection, userId);
-      if (currentCount >= 3) { const error = new Error("This user already has the maximum of 3 warnings"); error.status = STATUS_CODE.CONFLICT; throw error; }
-      await insertWarningOnConnection(connection, userId, adminId, reason);
-      const warningCount = currentCount + 1;
-      const blocked = warningCount === 3;
-      if (blocked) await blockUserOnConnection(connection, userId);
-      return { user, warningCount, blocked };
+    const result = await withTransaction(
+      /** Executes the database work within the surrounding transaction.
+       * Accepts connection; returns a promise for the transactional result. */
+      async (connection) => {
+        const user = await lockTargetUser(connection, userId);
+        if (!user) { const error = new Error("User not found"); error.status = STATUS_CODE.NOT_FOUND; throw error; }
+        if (user.role === "admin") { const error = new Error("Administrators cannot be warned"); error.status = STATUS_CODE.FORBIDDEN; throw error; }
+        const currentCount = await countWarningsOnConnection(connection, userId);
+        if (currentCount >= 3) { const error = new Error("This user already has the maximum of 3 warnings"); error.status = STATUS_CODE.CONFLICT; throw error; }
+        await insertWarningOnConnection(connection, userId, adminId, reason);
+        const warningCount = currentCount + 1;
+        const blocked = warningCount === 3;
+        if (blocked) await blockUserOnConnection(connection, userId);
+        return { user, warningCount, blocked };
     });
 
     const title = result.blocked ? "Account Blocked" : "Account Warning";
@@ -102,6 +119,8 @@ async function warnUser(req, res, next) {
   }
 }
 
+/** Removes latest warning.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function removeLatestWarning(req, res, next) {
   try {
     const userId = Number(req.params.userId);
@@ -110,14 +129,17 @@ async function removeLatestWarning(req, res, next) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({ message: "Invalid user ID" });
     }
 
-    const removed = await withTransaction(async (connection) => {
-      const user = await lockTargetUser(connection, userId);
-      if (!user) { const error = new Error("User not found"); error.status = STATUS_CODE.NOT_FOUND; throw error; }
-      if (user.role === "admin") { const error = new Error("Administrator warnings cannot be changed"); error.status = STATUS_CODE.FORBIDDEN; throw error; }
-      const warning = await removeLatestWarningOnConnection(connection, userId, adminId);
-      if (!warning) { const error = new Error("This user has no warnings to remove"); error.status = STATUS_CODE.CONFLICT; throw error; }
-      const warningCount = await countWarningsOnConnection(connection, userId);
-      return { warning, warningCount };
+    const removed = await withTransaction(
+      /** Executes the database work within the surrounding transaction.
+       * Accepts connection; returns a promise for the transactional result. */
+      async (connection) => {
+        const user = await lockTargetUser(connection, userId);
+        if (!user) { const error = new Error("User not found"); error.status = STATUS_CODE.NOT_FOUND; throw error; }
+        if (user.role === "admin") { const error = new Error("Administrator warnings cannot be changed"); error.status = STATUS_CODE.FORBIDDEN; throw error; }
+        const warning = await removeLatestWarningOnConnection(connection, userId, adminId);
+        if (!warning) { const error = new Error("This user has no warnings to remove"); error.status = STATUS_CODE.CONFLICT; throw error; }
+        const warningCount = await countWarningsOnConnection(connection, userId);
+        return { warning, warningCount };
     });
 
     await createActivity(adminId, "Removed User Warning", `Removed warning ${removed.warning.warningId} from user ${userId}`,

@@ -1,3 +1,5 @@
+/** Creates and exposes the shared MySQL connection pool.
+ * Selects environment-specific settings and returns the initialized pool. */
 const mysql = require("mysql2/promise");
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -18,6 +20,8 @@ if (isProduction) {
 
 let pool;
 
+/** Fetches db connection.
+ * Accepts no arguments; returns the requested data. */
 function getDbConnection() {
   if (!pool) {
     pool = mysql.createPool(dbConfig);

@@ -1,3 +1,5 @@
+// Presents searchable user administration with status metrics and growth data.
+// It takes no props and returns the paginated users management page.
 import {
   Users as UsersIcon,
   Shield,
@@ -26,6 +28,8 @@ import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 const axisTick = { fill: "rgba(255,255,255,0.45)", fontSize: 11 };
 const gridStroke = "rgba(255,255,255,0.06)";
 
+// Loads filtered users and renders admin controls, metrics, and charts.
+// It takes no props and returns the users administration page JSX.
 const Users = () => {
   const { getUsers, usersStats, pagination, userChartData, errorMsg } =
     useUserContext();
@@ -41,10 +45,15 @@ const Users = () => {
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput, 300, resetPage);
 
-  useEffect(() => {
-    getUsers(currentPage, statusFilter, debouncedSearch);
-  }, [currentPage, statusFilter, debouncedSearch]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getUsers(currentPage, statusFilter, debouncedSearch);
+    }, [currentPage, statusFilter, debouncedSearch]);
 
+  // Copies the search field value into local state for debounced filtering.
+  // It accepts an input event and returns undefined.
   const handleSearchChange = (e) => {
     setSearchInput(e.target.value);
   };
@@ -54,28 +63,40 @@ const Users = () => {
       title: "All Users",
       value: usersStats.total,
       icon: <UsersIcon size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("all"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("all"),
       isAction: true,
     },
     {
       title: "Active",
       value: usersStats.active,
       icon: <CheckCircle2 size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("active"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("active"),
       isAction: true,
     },
     {
       title: "Blocked",
       value: usersStats.blocked,
       icon: <Shield size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("blocked"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("blocked"),
       isAction: true,
     },
     {
       title: "Admins",
       value: usersStats.admins,
       icon: <UsersIcon size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("admins"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("admins"),
       isAction: true,
     },
   ];
@@ -85,18 +106,21 @@ const Users = () => {
       <h1>Users</h1>
 
       <div className={styles.topCardsContainer}>
-        {topData.map((item) => {
-          return (
-            <HomeTopCards
-              key={crypto.randomUUID()}
-              title={item.title}
-              value={item.value}
-              icon={item.icon}
-              onClick={item.onClick}
-              isAction={item.isAction}
-            />
-          );
-        })}
+        {topData.map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts item and returns the mapped value. */
+          (item) => {
+            return (
+              <HomeTopCards
+                key={crypto.randomUUID()}
+                title={item.title}
+                value={item.value}
+                icon={item.icon}
+                onClick={item.onClick}
+                isAction={item.isAction}
+              />
+            );
+          })}
       </div>
 
       <div className={styles.searchContainer}>

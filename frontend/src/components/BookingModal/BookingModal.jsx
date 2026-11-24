@@ -1,3 +1,5 @@
+// Defines the Booking Modal React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -7,6 +9,8 @@ import { formatDateForInput } from "../../utils/dateFormat";
 import AsyncButton from "../AsyncButton/AsyncButton";
 import { useModalDialog } from "../../hooks/useModalDialog";
 
+// Renders the Booking Modal interface.
+// Accepts an options object and returns rendered JSX.
 const BookingModal = ({ isOpen, onClose, vehicle }) => {
   const dialogRef = useModalDialog(isOpen);
   const {
@@ -24,6 +28,9 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
 
   // --- SMART DATE CALCULATION ---
   // Finds the first available date that isn't inside the bookedRanges
+
+  // Finds first available date in the available data.
+  // Takes no arguments and returns the computed result.
   const findFirstAvailableDate = () => {
     let checkDate = new Date();
     checkDate.setDate(checkDate.getDate() + 1); // Start by checking tomorrow
@@ -35,11 +42,14 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
       const timeToCheck = checkDate.getTime();
 
       // Look for any overlap
-      const collision = bookedRanges.find((range) => {
-        const rStart = new Date(range.startDate).setHours(0, 0, 0, 0);
-        const rEnd = new Date(range.endDate).setHours(0, 0, 0, 0);
-        return timeToCheck >= rStart && timeToCheck <= rEnd;
-      });
+      const collision = bookedRanges.find(
+        // Tests whether one collection entry is the requested match.
+        // Accepts range and returns a Boolean match result.
+        (range) => {
+          const rStart = new Date(range.startDate).setHours(0, 0, 0, 0);
+          const rEnd = new Date(range.endDate).setHours(0, 0, 0, 0);
+          return timeToCheck >= rStart && timeToCheck <= rEnd;
+        });
 
       if (collision) {
         // If it collides, bump forward 1 day and loop again
@@ -53,21 +63,27 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
   };
 
   // Run the smart date calculation whenever the modal opens or the booked dates change
-  useEffect(() => {
-    if (isOpen) {
-      const firstAvailable = findFirstAvailableDate();
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (isOpen) {
+        const firstAvailable = findFirstAvailableDate();
 
-      const nextDay = new Date(firstAvailable);
-      nextDay.setDate(nextDay.getDate() + 1);
+        const nextDay = new Date(firstAvailable);
+        nextDay.setDate(nextDay.getDate() + 1);
 
-      setStartDate(firstAvailable);
-      setEndDate(nextDay);
-      setDateError(""); // Clear old errors
-    }
-  }, [isOpen, bookedRanges]);
+        setStartDate(firstAvailable);
+        setEndDate(nextDay);
+        setDateError(""); // Clear old errors
+      }
+    }, [isOpen, bookedRanges]);
 
   // Format database dates for react-datepicker
-  const excludedIntervals = bookedRanges.map((range) => ({
+  const excludedIntervals = bookedRanges.map(
+    // Transforms one collection entry for the resulting list.
+    // Accepts range and returns the mapped entry.
+    (range) => ({
     start: new Date(range.startDate),
     end: new Date(range.endDate),
   }));
@@ -86,6 +102,8 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
       : 0;
   const totalPrice = totalDays > 0 ? totalDays * dailyRate : 0;
 
+  // Handles start date change for the surrounding interface.
+  // Accepts date and returns nothing.
   const handleStartDateChange = (date) => {
     setStartDate(date);
     // Push end date forward if start date passes it
@@ -96,6 +114,8 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
     }
   };
 
+  // Handles form submit for the surrounding interface.
+  // Accepts e and returns a promise for the operation result.
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setDateError("");
@@ -119,9 +139,12 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
       await fetchBookedDates(vehicle.licensePlate); // This updates the grayed-out dates immediately!
 
       // Close the modal shortly after success
-      setTimeout(() => {
-        onClose();
-      }, 500);
+      setTimeout(
+        // Runs delayed work after the configured timeout elapses.
+        // Takes no arguments and returns nothing.
+        () => {
+          onClose();
+        }, 500);
     }
     setIsSubmitting(false);
   };
@@ -175,7 +198,10 @@ const BookingModal = ({ isOpen, onClose, vehicle }) => {
             <label>End Date</label>
             <DatePicker
               selected={endDate}
-              onChange={(date) => setEndDate(date)}
+              onChange={
+                // Handles the component's change event.
+                // Accepts date and returns the handler result.
+                (date) => setEndDate(date)}
               selectsEnd
               startDate={startDate}
               endDate={endDate}

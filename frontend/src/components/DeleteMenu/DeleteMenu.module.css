@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the DeleteMenu interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .DeleteMenu {
   border: var(--cards-border);
   background-color: var(--bg-gray);

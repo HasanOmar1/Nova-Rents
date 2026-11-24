@@ -1,11 +1,17 @@
+// Renders the authentication hero and login/register selector.
+// It consumes the active form and its setter, then returns hero JSX.
 import styles from "./LoginRegister.module.css";
 import heroImg from "../../assets/loginRegisterCar.avif";
 import { Car } from "lucide-react";
 import { useUserContext } from "../../context/UserContext";
 
+// Displays the form selector and clears errors when the selection changes.
+// It accepts form state props and returns the authentication hero JSX.
 const FormOption = ({ setCurrentForm, currentForm }) => {
   const {setErrorMsg} = useUserContext()
 
+  // Clears the current authentication error and selects the requested form.
+  // It accepts a form name and returns undefined.
   const handleSwitchForm = (form) => {
     setErrorMsg("")
     setCurrentForm(form)
@@ -22,13 +28,19 @@ const FormOption = ({ setCurrentForm, currentForm }) => {
         <div className={styles.switchWrapper}>
           <div className={styles.switchContainer}>
             <button
-              onClick={() => handleSwitchForm("login")}
+              onClick={
+                /* Handles the click callback for this rendered control.
+                 * It accepts no arguments and returns the delegated result. */
+                () => handleSwitchForm("login")}
               className={`${styles.switchBtn} ${currentForm === "login" && styles.switchBtnActive}`}
             >
               Sign in
             </button>
             <button
-              onClick={() => handleSwitchForm("register")}
+              onClick={
+                /* Handles the click callback for this rendered control.
+                 * It accepts no arguments and returns the delegated result. */
+                () => handleSwitchForm("register")}
               className={`${styles.switchBtn} ${currentForm === "register" && styles.switchBtnActive}`}
             >
               Register

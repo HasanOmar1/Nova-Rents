@@ -1,5 +1,9 @@
+/** Shared backend utility for valids operations.
+ * Normalizes, validates, or transforms values for the surrounding domain. */
 // Frontend-copy friendly validators (pure functions, no req/res/session dependency)
 
+/** Validates an Israeli mobile number in local or international form.
+ * Accepts phone; returns a boolean validity result. */
 function checkValidPhoneIL(phone) {
   if (typeof phone !== "string" && typeof phone !== "number") return false;
   const cleaned = String(phone).replace(/[^\d+]/g, "");
@@ -9,6 +13,8 @@ function checkValidPhoneIL(phone) {
   return false;
 }
 
+/** Validates a name against the allowed length and character rules.
+ * Accepts name; returns a boolean validity result. */
 function checkValidName(name) {
   const regex = /^[a-zA-Z0-9_]+$/;
   const minLength = 2;
@@ -18,12 +24,16 @@ function checkValidName(name) {
   return regex.test(name);
 }
 
+/** Validates a string with the service's email-address pattern.
+ * Accepts email; returns a boolean validity result. */
 function checkValidEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (typeof email !== "string") return false;
   return regex.test(email);
 }
 
+/** Validates a password against the configured strength rules.
+ * Accepts password; returns a boolean validity result. */
 function checkValidPassword(password) {
   const maxLength = 8;
   const minLength = 3;

@@ -1,3 +1,5 @@
+// Defines the Add Brand Vehicle Menu React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useEffect, useRef, useState } from "react";
 import styles from "./AddBrandVehicleMenu.module.css";
 import { useVehicleContext } from "../../context/VehicleContext";
@@ -5,6 +7,8 @@ import axios from "axios";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useModalDialog } from "../../hooks/useModalDialog";
 
+// Renders the Add Brand Vehicle Menu interface.
+// Accepts an options object and returns rendered JSX.
 const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
   const dialogRef = useModalDialog(isOpen);
   const modelCacheRef = useRef({});
@@ -33,27 +37,38 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
   const activeBrandName =
     brandSelection === "NEW"
       ? customBrandName
-      : vehiclesBrands?.find((b) => String(b.brandId) === brandSelection)
+      : vehiclesBrands?.find(
+        // Runs the callback required by the surrounding operation.
+        // Accepts b and returns the callback result.
+        (b) => String(b.brandId) === brandSelection)
           ?.brandName || "";
   const debouncedBrandName = useDebouncedValue(activeBrandName, 500);
 
   // Load initial data and reset the form around the dialog lifecycle.
-  useEffect(() => {
-    if (isOpen) {
-      if (!vehiclesBrands || vehiclesBrands.length === 0) getBrands();
-      if (!vehiclesType || vehiclesType.length === 0) getVehType();
-    } else {
-      handleResetForm();
-    }
-  }, [isOpen]);
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (isOpen) {
+        if (!vehiclesBrands || vehiclesBrands.length === 0) getBrands();
+        if (!vehiclesType || vehiclesType.length === 0) getVehType();
+      } else {
+        handleResetForm();
+      }
+    }, [isOpen]);
 
   // 2. Fetch ALL Makes from API for the autocomplete datalist if "NEW" is selected
-  useEffect(() => {
-    if (brandSelection === "NEW" && apiMakes.length === 0) {
-      fetchAllMakes();
-    }
-  }, [brandSelection]);
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (brandSelection === "NEW" && apiMakes.length === 0) {
+        fetchAllMakes();
+      }
+    }, [brandSelection]);
 
+  // Fetches all makes from its configured data source.
+  // Takes no arguments and returns a promise for the operation result.
   const fetchAllMakes = async () => {
     setIsLoadingMakes(true);
     try {
@@ -61,7 +76,10 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
         "https://vpic.nhtsa.dot.gov/api/vehicles/GetAllMakes?format=json",
         { withCredentials: false },
       );
-      const makes = res.data.Results?.map((m) => m.Make_Name) || [];
+      const makes = res.data.Results?.map(
+        // Runs the callback required by the surrounding operation.
+        // Accepts m and returns the callback result.
+        (m) => m.Make_Name) || [];
       const uniqueMakes = [...new Set(makes)].sort();
       setApiMakes(uniqueMakes);
     } catch (error) {
@@ -71,6 +89,8 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
     }
   };
 
+  // Fetches models from vpic from its configured data source.
+  // Accepts make and signal and returns a promise for the operation result.
   const fetchModelsFromVpic = async (make, signal) => {
     const cacheKey = make.trim().toLowerCase();
 
@@ -93,7 +113,10 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
 
       if (signal.aborted) return;
 
-      const models = res.data.Results?.map((m) => m.Model_Name) || [];
+      const models = res.data.Results?.map(
+        // Runs the callback required by the surrounding operation.
+        // Accepts m and returns the callback result.
+        (m) => m.Model_Name) || [];
       const uniqueModels = [...new Set(models)].sort();
 
       // --- SAVE TO CACHE ---
@@ -113,21 +136,28 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
   };
 
   // Fetch models after the selected brand has stopped changing.
-  useEffect(() => {
-    const controller = new AbortController();
-    const brandName = debouncedBrandName.trim();
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      const controller = new AbortController();
+      const brandName = debouncedBrandName.trim();
 
-    if (isOpen && brandName.length >= 2) {
-      void fetchModelsFromVpic(brandName, controller.signal);
-    } else {
-      setVpicModels([]);
-      setSelectedModel("0");
-      setIsLoadingModels(false);
-    }
+      if (isOpen && brandName.length >= 2) {
+        void fetchModelsFromVpic(brandName, controller.signal);
+      } else {
+        setVpicModels([]);
+        setSelectedModel("0");
+        setIsLoadingModels(false);
+      }
 
-    return () => controller.abort();
-  }, [debouncedBrandName, isOpen]);
+      // Synchronizes the component with an external effect after rendering.
+      // Takes no arguments and returns an optional cleanup function.
+      return () => controller.abort();
+    }, [debouncedBrandName, isOpen]);
 
+  // Handles reset form for the surrounding interface.
+  // Takes no arguments and returns nothing.
   const handleResetForm = () => {
     setBrandSelection("0");
     setCustomBrandName("");
@@ -139,12 +169,17 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
     setIsSubmitting(false);
   };
 
+  // Handles close and reset for the surrounding interface.
+  // Takes no arguments and returns nothing.
   const handleCloseAndReset = () => {
     handleResetForm();
     onClose();
   };
 
   // 4. Submit to your Backend
+
+  // Handles submit for the surrounding interface.
+  // Accepts e and returns a promise for the operation result.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -194,11 +229,17 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
   return (
     <dialog
       ref={dialogRef}
-      onCancel={(e) => {
-        e.preventDefault();
-        handleCloseAndReset(); // Fixes the Escape key bug!
-      }}
-      onClick={(e) => e.stopPropagation()}
+      onCancel={
+        // Handles the component's cancel event.
+        // Accepts e and returns the handler result.
+        (e) => {
+          e.preventDefault();
+          handleCloseAndReset(); // Fixes the Escape key bug!
+        }}
+      onClick={
+        // Handles the component's click event.
+        // Accepts e and returns the handler result.
+        (e) => e.stopPropagation()}
       className={styles.AddBrandVehicleMenu}
     >
       <form onSubmit={handleSubmit}>
@@ -214,15 +255,21 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
           <label>Brand (Make)</label>
           <select
             value={brandSelection}
-            onChange={(e) => {
-              setBrandSelection(e.target.value);
-              setSelectedModel("0");
-            }}
+            onChange={
+              // Handles the component's change event.
+              // Accepts e and returns the handler result.
+              (e) => {
+                setBrandSelection(e.target.value);
+                setSelectedModel("0");
+              }}
           >
             <option value="0" disabled hidden>
               Select Brand
             </option>
-            {vehiclesBrands?.map((brand) => (
+            {vehiclesBrands?.map(
+              // Runs the callback required by the surrounding operation.
+              // Accepts brand and returns the callback result.
+              (brand) => (
               <option key={brand.brandId} value={String(brand.brandId)}>
                 {brand.brandName}
               </option>
@@ -247,13 +294,19 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
                   : "Search NHTSA API brands..."
               }
               value={customBrandName}
-              onChange={(e) => setCustomBrandName(e.target.value)}
+              onChange={
+                // Handles the component's change event.
+                // Accepts e and returns the handler result.
+                (e) => setCustomBrandName(e.target.value)}
               list="api-makes"
               required
             />
             {/* The datalist gives them an autocomplete dropdown of 10,000+ API makes! */}
             <datalist id="api-makes">
-              {apiMakes.map((make) => (
+              {apiMakes.map(
+                // Transforms one collection entry for the resulting list.
+                // Accepts make and returns the mapped entry.
+                (make) => (
                 <option key={make} value={make} />
               ))}
             </datalist>
@@ -264,7 +317,10 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
           <label>Model</label>
           <select
             value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
+            onChange={
+              // Handles the component's change event.
+              // Accepts e and returns the handler result.
+              (e) => setSelectedModel(e.target.value)}
             disabled={brandSelection === "0" || isLoadingModels}
           >
             <option value="0" disabled hidden>
@@ -276,7 +332,10 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
                     ? "No models found"
                     : "Select Model"}
             </option>
-            {vpicModels.map((model) => (
+            {vpicModels.map(
+              // Transforms one collection entry for the resulting list.
+              // Accepts model and returns the mapped entry.
+              (model) => (
               <option key={model} value={model}>
                 {model}
               </option>
@@ -288,12 +347,18 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
           <label>Car Type (Body Class)</label>
           <select
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
+            onChange={
+              // Handles the component's change event.
+              // Accepts e and returns the handler result.
+              (e) => setSelectedType(e.target.value)}
           >
             <option value="0" disabled hidden>
               Select Type
             </option>
-            {vehiclesType?.map((type) => (
+            {vehiclesType?.map(
+              // Runs the callback required by the surrounding operation.
+              // Accepts type and returns the callback result.
+              (type) => (
               <option key={type.carTypeId} value={String(type.carTypeId)}>
                 {type.carTypeName}
               </option>
@@ -314,7 +379,10 @@ const AddBrandVehicleMenu = ({ isOpen, onClose }) => {
               type="text"
               placeholder="e.g. Convertible, Minivan..."
               value={customTypeName}
-              onChange={(e) => setCustomTypeName(e.target.value)}
+              onChange={
+                // Handles the component's change event.
+                // Accepts e and returns the handler result.
+                (e) => setCustomTypeName(e.target.value)}
               required
             />
           </div>

@@ -1,3 +1,5 @@
+/** Executable backend script for the test rental eligibility workflow.
+ * Runs its checks or maintenance steps and reports the resulting outcome. */
 require("dotenv").config();
 const doQuery = require("../database/query");
 const {
@@ -13,6 +15,8 @@ const {
 
 const TEST_FILE_PATH = "elig-test.jpg";
 
+/** Asserts that a verification condition is true.
+ * Accepts condition and label; returns no value and throws when the condition fails. */
 const assert = (condition, label) => {
   console.log(`${condition ? "PASS" : "FAIL"} - ${label}`);
   if (!condition) process.exitCode = 1;
@@ -21,24 +25,42 @@ const assert = (condition, label) => {
 const DOC_USER_TYPES = ["identity_card", "passport", "driver_license"];
 const DOC_VEHICLE_TYPES = ["insurance", "vehicle_registration"];
 
+/** Fetches restorable columns.
+ * Accepts tableName; returns a promise for the requested data. */
 async function getRestorableColumns(tableName) {
   const rows = await doQuery(`SHOW COLUMNS FROM ${tableName}`);
   return rows
-    .filter((row) => !String(row.Extra || "").toLowerCase().includes("generated"))
-    .map((row) => row.Field);
+    .filter(
+      /** Tests whether one collection item should remain in the filtered result.
+       * Accepts row; returns a boolean used by the collection operation. */
+      (row) => !String(row.Extra || "").toLowerCase().includes("generated"))
+    .map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts row; returns the transformed collection value. */
+      (row) => row.Field);
 }
 
+/** Inserts rows.
+ * Accepts tableName, columns, and rows; returns a promise for the operation result. */
 async function insertRows(tableName, columns, rows) {
   if (!rows.length) return;
   const colSql = columns.join(", ");
-  const placeholders = `(${columns.map(() => "?").join(", ")})`;
+  const placeholders = `(${columns.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts no arguments; returns the transformed collection value. */
+    () => "?").join(", ")})`;
   const sql = `INSERT INTO ${tableName} (${colSql}) VALUES ${placeholders}`;
   for (const row of rows) {
-    const values = columns.map((col) => row[col] ?? null);
+    const values = columns.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts col; returns the transformed collection value. */
+      (col) => row[col] ?? null);
     await doQuery(sql, values);
   }
 }
 
+/** Fetches snapshot.
+ * Accepts an options object; returns a promise for the requested data. */
 async function fetchSnapshot({ ownerId, renterId, plate, otherPlate }) {
   const [docColumns, govColumns] = await Promise.all([
     getRestorableColumns("documents"),
@@ -46,9 +68,18 @@ async function fetchSnapshot({ ownerId, renterId, plate, otherPlate }) {
   ]);
 
   const userIds = [...new Set([ownerId, renterId])];
-  const userPlaceholders = userIds.map(() => "?").join(", ");
-  const docTypePlaceholders = DOC_USER_TYPES.map(() => "?").join(", ");
-  const plateDocTypesPlaceholders = DOC_VEHICLE_TYPES.map(() => "?").join(", ");
+  const userPlaceholders = userIds.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts no arguments; returns the transformed collection value. */
+    () => "?").join(", ");
+  const docTypePlaceholders = DOC_USER_TYPES.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts no arguments; returns the transformed collection value. */
+    () => "?").join(", ");
+  const plateDocTypesPlaceholders = DOC_VEHICLE_TYPES.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts no arguments; returns the transformed collection value. */
+    () => "?").join(", ");
 
   const userScopedDocs = await doQuery(
     `
@@ -98,6 +129,8 @@ async function fetchSnapshot({ ownerId, renterId, plate, otherPlate }) {
   };
 }
 
+/** Restores snapshot.
+ * Accepts snapshot and an options object; returns a promise for the operation result. */
 async function restoreSnapshot(snapshot, { ownerId, renterId, plate, otherPlate }) {
   const userIds = [...new Set([ownerId, renterId])];
   for (const userId of userIds) {
@@ -137,6 +170,8 @@ async function restoreSnapshot(snapshot, { ownerId, renterId, plate, otherPlate 
   await insertRows("vehicle_government_checks", snapshot.govColumns, snapshot.govRows);
 }
 
+/** Creates or updates user doc.
+ * Accepts an options object; returns a promise for the operation result. */
 const upsertUserDoc = async ({
   userId,
   documentType,
@@ -157,6 +192,8 @@ const upsertUserDoc = async ({
   );
 };
 
+/** Creates or updates vehicle doc.
+ * Accepts an options object; returns a promise for the operation result. */
 const upsertVehicleDoc = async ({
   userId,
   licensePlate,
@@ -178,6 +215,8 @@ const upsertVehicleDoc = async ({
   );
 };
 
+/** Sets gov status.
+ * Accepts licensePlate and status; returns a promise for the operation result. */
 const setGovStatus = async (licensePlate, status) => {
   await doQuery(
     `INSERT INTO vehicle_government_checks (licensePlate, status, checkedAt, governmentSource)
@@ -187,7 +226,10 @@ const setGovStatus = async (licensePlate, status) => {
   );
 };
 
-(async () => {
+(
+ /** Runs the script's main asynchronous workflow.
+  * Accepts no arguments; returns a promise for the operation result. */
+ async () => {
   const vehicle = (
     await doQuery(
       `SELECT ownerId, licensePlate FROM vehicles ORDER BY licensePlate LIMIT 1`,
@@ -392,7 +434,10 @@ const setGovStatus = async (licensePlate, status) => {
     });
     vehicleElig = await getVehicleRentalEligibility(plate, ownerId);
     assert(
-      vehicleElig.reasons.some((r) => r.startsWith("OWNER_IDENTITY_")),
+      vehicleElig.reasons.some(
+        /** Tests whether one collection item satisfies the surrounding condition.
+         * Accepts r; returns a boolean used by the collection operation. */
+        (r) => r.startsWith("OWNER_IDENTITY_")),
       "Owner identity missing => NOT eligible",
     );
     await upsertUserDoc({
@@ -728,7 +773,10 @@ const setGovStatus = async (licensePlate, status) => {
   }
 
   process.exit(process.exitCode || 0);
-})().catch((error) => {
-  console.error(error);
-  process.exit(1);
+})().catch(
+  /** Handles a rejected promise from the surrounding workflow.
+   * Accepts error; returns the error-handling result. */
+  (error) => {
+    console.error(error);
+    process.exit(1);
 });

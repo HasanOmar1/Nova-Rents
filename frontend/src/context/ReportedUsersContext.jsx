@@ -1,3 +1,5 @@
+// Provides shared reported users state and API operations through React context.
+// It exports a provider component and a hook for consuming the managed data.
 import {
   createContext,
   useCallback,
@@ -12,6 +14,8 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 
 const ReportedUsersContext = createContext(null);
 
+// Supplies reported-user moderation state and actions to descendants.
+// Accepts children and returns a reported-users context provider tree.
 const ReportedUsersProvider = ({ children }) => {
   const { loadActivities } = useActivityContext();
   const [users, setUsers] = useState([]);
@@ -37,6 +41,8 @@ const ReportedUsersProvider = ({ children }) => {
   const debouncedSearch = useDebouncedValue(filters.search, 300);
   const query = debouncedSearch.trim();
 
+  // Loads one page of reported users and related pagination metadata.
+  // Accepts a page number and returns a promise for the fetch operation.
   const load = useCallback(
     async (page = 1) => {
       loadControllerRef.current?.abort();
@@ -84,14 +90,21 @@ const ReportedUsersProvider = ({ children }) => {
     [query, filters.accountStatus, filters.complaintStatus, filters.sortBy],
   );
 
-  useEffect(() => {
-    void load(1);
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      void load(1);
 
-    return () => {
-      loadControllerRef.current?.abort();
-    };
-  }, [load]);
+      // Synchronizes the component with an external effect after rendering.
+      // Takes no arguments and returns an optional cleanup function.
+      return () => {
+        loadControllerRef.current?.abort();
+      };
+    }, [load]);
 
+  // Opens details for the user.
+  // Accepts user and type and returns a promise for the operation result.
   const openDetails = async (user, type) => {
     setLoadingAction(`${type}-${user.userId}`);
     try {
@@ -108,6 +121,8 @@ const ReportedUsersProvider = ({ children }) => {
     }
   };
 
+  // Issues a warning for the selected user and refreshes their detail state.
+  // Takes no arguments and returns a promise for the warning operation.
   const issueWarning = async () => {
     if (!modal?.user) return;
 
@@ -134,6 +149,8 @@ const ReportedUsersProvider = ({ children }) => {
     }
   };
 
+  // Blocks or unblocks a reported user and refreshes the managed list.
+  // Accepts a user and block flag and returns a promise for the status change.
   const changeStatus = async (user, block) => {
     setLoadingAction(`status-${user.userId}`);
     try {
@@ -150,6 +167,8 @@ const ReportedUsersProvider = ({ children }) => {
     }
   };
 
+  // Removes latest warning from the current data.
+  // Accepts user and returns a promise for the operation result.
   const removeLatestWarning = async (user) => {
     setLoadingAction(`remove-${user.userId}`);
     try {
@@ -194,6 +213,8 @@ const ReportedUsersProvider = ({ children }) => {
   );
 };
 
+// Reads reported-user moderation state and actions from the nearest provider.
+// Takes no arguments and returns the current reported-users context value.
 export const useReportedUsersContext = () => useContext(ReportedUsersContext);
 
 export default ReportedUsersProvider;

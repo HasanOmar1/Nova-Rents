@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the DocumentReviewModal interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .DocumentReviewModal {
   border: var(--cards-border);
   border-radius: 16px;

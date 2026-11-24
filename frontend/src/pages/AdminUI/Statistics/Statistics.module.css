@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the Statistics interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .Statistics .filtersToolbar {
   display: flex;
   align-items: center;

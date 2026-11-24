@@ -1,3 +1,5 @@
+/** Express controller handlers for users operations.
+ * Validates requests and returns the domain's HTTP responses. */
 // Handlers for user-related database actions (register, login, profile, etc.)
 const bcrypt = require("bcrypt");
 const doQuery = require("../database/query");
@@ -32,6 +34,8 @@ const {
 } = require("../services/emailService");
 
 // Get a list of all users in the system
+/** Fetches all users.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getAllUsers = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -71,7 +75,10 @@ const getAllUsers = async (req, res, next) => {
     `;
     const users = await doQuery(query, [...queryParams, limit, offset]);
 
-    const formattedUsers = users.map((user) => ({
+    const formattedUsers = users.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts user; returns the transformed collection value. */
+      (user) => ({
       ...user,
       birthDate: user.birthDate
         ? new Date(user.birthDate).toLocaleDateString("en-GB")
@@ -129,11 +136,16 @@ const getAllUsers = async (req, res, next) => {
     `;
 
     const growthResult = await doQuery(growthQuery);
-    growthResult.forEach((row) => {
-      const monthObj = chartData.find(
-        (m) => m.monthIndex === row.monthIndex && m.year === row.year,
-      );
-      if (monthObj) monthObj.users = Number(row.newUsers) || 0;
+    growthResult.forEach(
+      /** Processes one collection item for side effects.
+       * Accepts row; returns no meaningful value. */
+      (row) => {
+        const monthObj = chartData.find(
+          /** Tests whether one collection item is the requested match.
+           * Accepts m; returns a boolean used by the collection operation. */
+          (m) => m.monthIndex === row.monthIndex && m.year === row.year,
+        );
+        if (monthObj) monthObj.users = Number(row.newUsers) || 0;
     });
 
     res.status(200).json({
@@ -159,6 +171,8 @@ const getAllUsers = async (req, res, next) => {
 };
 
 // --- GET USERS BY STATUS (WITH SEARCH) ---
+/** Fetches users by status.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getUsersByStatus = async (req, res, next) => {
   try {
     const { status } = req.params;
@@ -200,7 +214,10 @@ const getUsersByStatus = async (req, res, next) => {
     const finalQueryParams = [...queryParams, limit, offset];
     const users = await doQuery(query, finalQueryParams);
 
-    const formattedUsers = users.map((user) => ({
+    const formattedUsers = users.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts user; returns the transformed collection value. */
+      (user) => ({
       ...user,
       birthDate: user.birthDate
         ? new Date(user.birthDate).toLocaleDateString("en-GB")
@@ -242,6 +259,8 @@ const getUsersByStatus = async (req, res, next) => {
 };
 
 // Register a new user: validates input, hashes password, inserts into DB
+/** Registers the requested operation.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function register(req, res, next) {
   try {
     const { firstName, lastName, email, password, phone, birthDate } = req.body;
@@ -322,6 +341,8 @@ async function register(req, res, next) {
   }
 }
 // Login existing user: validates credentials and stores basic user data in session
+/** Authenticates credentials and establishes an API session.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function login(req, res, next) {
   const { email, password } = req.body;
 
@@ -368,6 +389,8 @@ async function login(req, res, next) {
     next(error);
   }
 }
+/** Fetches user details by email.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getUserDetailsByEmail = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -414,6 +437,8 @@ const getUserDetailsByEmail = async (req, res, next) => {
   }
 };
 // Return the logged-in user's profile data from the session
+/** Fetches profile.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getProfile(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -446,15 +471,20 @@ async function getProfile(req, res, next) {
 }
 
 // Logout the current user: destroys session and clears cookie
+/** Destroys the active authenticated session.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function logout(req, res, next) {
   try {
-    req.session.destroy((err) => {
-      if (err) {
-        return next(err);
-      }
-      res.clearCookie("connect.sid");
+    req.session.destroy(
+      /** Handles completion of the session-destruction operation.
+       * Accepts err; returns no meaningful value after handling completion. */
+      (err) => {
+        if (err) {
+          return next(err);
+        }
+        res.clearCookie("connect.sid");
 
-      return res.status(STATUS_CODE.OK).json({ message: "Logout successful" });
+        return res.status(STATUS_CODE.OK).json({ message: "Logout successful" });
     });
   } catch (error) {
     next(error);
@@ -462,6 +492,8 @@ async function logout(req, res, next) {
 }
 
 // blocks user by email (it doesnt delete the user, just changes its status to blocked)
+/** Blocks user by email.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const blockUserByEmail = async (req, res, next) => {
   const { email } = req.params;
   try {
@@ -559,6 +591,8 @@ const blockUserByEmail = async (req, res, next) => {
   }
 };
 
+/** Unblocks user by email.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const unblockUserByEmail = async (req, res, next) => {
   try {
     const { email } = req.params;
@@ -658,6 +692,8 @@ const unblockUserByEmail = async (req, res, next) => {
   }
 };
 
+/** Updates user profile.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const updateUserProfile = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -828,18 +864,23 @@ const updateUserProfile = async (req, res, next) => {
 
     // Force the session to save BEFORE sending the 200 OK.
     // This completely eliminates race conditions with the frontend.
-    req.session.save((err) => {
-      if (err) return next(err);
-      res.status(STATUS_CODE.OK).json({
-        message: "User profile updated successfully",
-        user: loggedUser,
-      });
+    req.session.save(
+      /** Handles completion of the session-save operation.
+       * Accepts err; returns no meaningful value after handling completion. */
+      (err) => {
+        if (err) return next(err);
+        res.status(STATUS_CODE.OK).json({
+          message: "User profile updated successfully",
+          user: loggedUser,
+        });
     });
   } catch (error) {
     next(error);
   }
 };
 
+/** Fetches user stats by email.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getUserStatsByEmail = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -894,32 +935,38 @@ const getUserStatsByEmail = async (req, res, next) => {
     ]);
     const eligibilitySummaries =
       await getVehicleEligibilitySummariesForPlates(
-        vehicles.map((vehicle) => ({
+        vehicles.map(
+          /** Transforms one collection item for the surrounding mapping operation.
+           * Accepts vehicle; returns the transformed collection value. */
+          (vehicle) => ({
           licensePlate: vehicle.licensePlate,
           ownerId: targetUser.userId,
         })),
       );
-    const vehiclesWithAvailability = vehicles.map((vehicle) => {
-      const rentalEligibility =
-        eligibilitySummaries.get(String(vehicle.licensePlate)) || {
-          eligible: false,
-          reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
-          statuses: {},
-        };
-      const effectiveStatus = deriveEffectiveVehicleStatus({
-        status: vehicle.status,
-        ownerStatus: targetUser.status,
-        rentalEligibility,
-      });
+    const vehiclesWithAvailability = vehicles.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts vehicle; returns the transformed collection value. */
+      (vehicle) => {
+        const rentalEligibility =
+          eligibilitySummaries.get(String(vehicle.licensePlate)) || {
+            eligible: false,
+            reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
+            statuses: {},
+          };
+        const effectiveStatus = deriveEffectiveVehicleStatus({
+          status: vehicle.status,
+          ownerStatus: targetUser.status,
+          rentalEligibility,
+        });
 
-      return {
-        ...vehicle,
-        ownerStatus: targetUser.status,
-        effectiveStatus,
-        rentalEligible: rentalEligibility.eligible,
-        rentalEligibility,
-        canRent: effectiveStatus === "available",
-      };
+        return {
+          ...vehicle,
+          ownerStatus: targetUser.status,
+          effectiveStatus,
+          rentalEligible: rentalEligibility.eligible,
+          rentalEligibility,
+          canRent: effectiveStatus === "available",
+        };
     });
 
     const countVehiclesQuery = `SELECT COUNT(*) as total FROM vehicles WHERE ownerId = ?`;
@@ -948,6 +995,8 @@ const getUserStatsByEmail = async (req, res, next) => {
 
 // Resolve a user by id for complaint prefill / public profile summary.
 // Returns the same non-private field set used by the stats profile header.
+/** Fetches user public by id.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 const getUserPublicById = async (req, res, next) => {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))

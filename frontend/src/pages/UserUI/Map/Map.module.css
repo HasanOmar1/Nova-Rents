@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the Map interface.
+ * Covers its layout, visual states, and responsive behavior. */
 /* .Map .btnsContainer {
   display: flex;
   gap: 10px;

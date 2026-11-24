@@ -1,8 +1,12 @@
+// Defines the Owner Vehicle Reports Modal React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { X } from "lucide-react";
 import styles from "./OwnerVehicleReportsModal.module.css";
 import { formatComplaintStatus } from "../../utils/displayFormat";
 import { useModalDialog } from "../../hooks/useModalDialog";
 
+// Formats date for display.
+// Accepts value and returns the computed result.
 const formatDate = (value) => {
   if (!value) return "—";
   return new Date(value).toLocaleDateString(undefined, {
@@ -16,6 +20,9 @@ const formatDate = (value) => {
  * Read-only owner view of active vehicle reports.
  * Never renders reporter identity (userId / email / name / phone).
  */
+
+// Renders the Owner Vehicle Reports Modal interface.
+// Accepts an options object and returns rendered JSX.
 const OwnerVehicleReportsModal = ({
   isOpen,
   onClose,
@@ -33,7 +40,10 @@ const OwnerVehicleReportsModal = ({
       className={styles.OwnerVehicleReportsModal}
       ref={dialogRef}
       onClose={onClose}
-      onClick={(e) => e.stopPropagation()}
+      onClick={
+        // Handles the component's click event.
+        // Accepts e and returns the handler result.
+        (e) => e.stopPropagation()}
     >
       <div className={styles.header}>
         <div>
@@ -62,7 +72,10 @@ const OwnerVehicleReportsModal = ({
         ) : reports.length === 0 ? (
           <p className={styles.empty}>{emptyMessage}</p>
         ) : (
-          reports.map((report) => (
+          reports.map(
+            // Transforms one collection entry for the resulting list.
+            // Accepts report and returns the mapped entry.
+            (report) => (
             <article key={report.complaintId} className={styles.reportCard}>
               <section className={styles.detailBlock}>
                 <p className={styles.detailLabel}>Title</p>

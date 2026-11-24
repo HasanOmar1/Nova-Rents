@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the ComplaintEvidenceGallery interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .gallery {
   margin-top: 6px;
   padding-top: 14px;

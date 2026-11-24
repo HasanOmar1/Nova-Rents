@@ -1,3 +1,6 @@
+// Formats daily, weekly, and monthly reporting keys as readable chart labels.
+// It uses local-time date arithmetic so labels do not shift across timezones.
+
 // Formats internal chart period keys ("2026-07-28", "2026-W27", "2026-07")
 // into human-readable labels. All date math uses local-time Date constructors —
 // never toISOString() or Date("YYYY-MM-DD") parsing, which are UTC-based and can
@@ -38,6 +41,9 @@ const WEEK_KEY = /^(\d{4})-W(\d{1,2})$/;
 const MONTH_KEY = /^(\d{4})-(\d{2})$/;
 
 // Monday of the given ISO week. Week 1 contains January 4.
+
+// Finds the Monday that begins the requested ISO calendar week.
+// Accepts an ISO year and week number and returns the corresponding local Date.
 const getIsoWeekStart = (isoYear, isoWeek) => {
   const jan4 = new Date(isoYear, 0, 4);
   const isoWeekday = jan4.getDay() === 0 ? 7 : jan4.getDay(); // Mon=1..Sun=7
@@ -47,6 +53,9 @@ const getIsoWeekStart = (isoYear, isoWeek) => {
 };
 
 // "Jul 6–12" within one month, "Jun 29–Jul 5" across months
+
+// Formats the start and end of an ISO week as a compact date range.
+// Accepts an ISO year and week and returns a range label with its ending year.
 const formatIsoWeekRange = (isoYear, isoWeek) => {
   const start = getIsoWeekStart(isoYear, isoWeek);
   const end = new Date(start);
@@ -62,6 +71,9 @@ const formatIsoWeekRange = (isoYear, isoWeek) => {
 };
 
 // Short X-axis tick: "Jul 28" / "Jul 6–12" / "Jul 2026"
+
+// Converts a supported period key into a short chart-axis label.
+// Accepts a day, ISO-week, or month key and returns a formatted string.
 export const formatPeriodTick = (periodKey) => {
   const key = String(periodKey);
 
@@ -84,6 +96,9 @@ export const formatPeriodTick = (periodKey) => {
 };
 
 // Longer tooltip heading: "July 28, 2026" / "Jul 6–12, 2026" / "July 2026"
+
+// Converts a supported period key into a detailed tooltip heading.
+// Accepts a day, ISO-week, or month key and returns a formatted string.
 export const formatPeriodTooltip = (periodKey) => {
   const key = String(periodKey);
 

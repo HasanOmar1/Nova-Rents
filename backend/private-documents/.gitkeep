@@ -1,0 +1,2 @@
+# Keeps the private-document storage directory present in fresh checkouts.
+# The directory's uploaded contents remain excluded from version control.

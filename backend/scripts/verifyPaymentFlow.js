@@ -1,3 +1,5 @@
+/** Executable backend script for the verify payment flow workflow.
+ * Runs its checks or maintenance steps and reports the resulting outcome. */
 // Section L verification: exercises the real payment query layer against the
 // live DB with a temporary rental, then cleans up. Read-only for real data.
 const crypto = require("crypto");
@@ -12,12 +14,17 @@ const {
   getMyTripsHistoryByRenterId,
 } = require("../database/queries/rentalQueries");
 
+/** Asserts that a verification condition is true.
+ * Accepts cond and label; returns no value and throws when the condition fails. */
 const assert = (cond, label) => {
   console.log(`${cond ? "PASS" : "FAIL"} - ${label}`);
   if (!cond) process.exitCode = 1;
 };
 
-(async () => {
+(
+ /** Runs the script's main asynchronous workflow.
+  * Accepts no arguments; returns a promise for the operation result. */
+ async () => {
   // Pick a real vehicle and a user who is not its owner.
   const [vehicle] = await doQuery(
     "SELECT licensePlate, ownerId, price FROM vehicles LIMIT 1",
@@ -89,7 +96,10 @@ const assert = (cond, label) => {
       "ownerLastName",
       "ownerEmail",
     ];
-    const missing = contractFields.filter((f) => payment[f] === undefined);
+    const missing = contractFields.filter(
+      /** Tests whether one collection item should remain in the filtered result.
+       * Accepts f; returns a boolean used by the collection operation. */
+      (f) => payment[f] === undefined);
     assert(
       missing.length === 0,
       `all contract fields defined${missing.length ? ` (missing: ${missing.join(", ")})` : ""}`,
@@ -109,7 +119,10 @@ const assert = (cond, label) => {
 
     // 8. LEFT JOIN adds no duplicate rows in trips history.
     const trips = await getMyTripsHistoryByRenterId(renter.userId);
-    const rows = trips.filter((t) => t.rentalId === rentalId);
+    const rows = trips.filter(
+      /** Tests whether one collection item should remain in the filtered result.
+       * Accepts t; returns a boolean used by the collection operation. */
+      (t) => t.rentalId === rentalId);
     assert(rows.length === 1, "trips history has exactly one row for the rental");
     assert(rows[0].paymentToken === token, "trips row exposes paymentToken");
     assert(rows[0].paymentStatus === "paid", "trips row exposes paymentStatus");
@@ -121,7 +134,10 @@ const assert = (cond, label) => {
   }
 
   process.exit();
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
+})().catch(
+  /** Handles a rejected promise from the surrounding workflow.
+   * Accepts err; returns the error-handling result. */
+  (err) => {
+    console.error(err);
+    process.exit(1);
 });

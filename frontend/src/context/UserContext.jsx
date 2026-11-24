@@ -1,9 +1,13 @@
+// Provides shared user state and API operations through React context.
+// It exports a provider component and a hook for consuming the managed data.
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const UserContext = createContext();
 
+// Supplies authentication and user-management state to descendant components.
+// Accepts children and returns a user-context provider tree.
 const UserContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
@@ -18,13 +22,19 @@ const UserContextProvider = ({ children }) => {
   const [isStatsLoading, setIsStatsLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (localStorage.getItem("session")) loadMe();
-    else setIsLoading(false);
-  }, []);
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (localStorage.getItem("session")) loadMe();
+      else setIsLoading(false);
+    }, []);
 
   // Function to check if user is already logged in when the app loads
   // The server uses cookies to track sessions, so we just ask for the profile
+
+  // Loads me into the relevant application state.
+  // Takes no arguments and returns a promise for the operation result.
   async function loadMe() {
     try {
       const res = await axios.get("/users/profile"); // cookies are sent automatically
@@ -36,10 +46,11 @@ const UserContextProvider = ({ children }) => {
     }
   }
 
+  // Authenticates a user and stores the returned account in context state.
+  // Accepts login credentials and returns a promise for the API response.
   const login = async (userData) => {
     try {
       const response = await axios.post("/users/login", userData);
-      console.log("logged in successfully", response.data);
       setCurrentUser(response.data);
 
       if (response.data.role === "user") {
@@ -51,11 +62,16 @@ const UserContextProvider = ({ children }) => {
       setErrorMsg("");
       localStorage.setItem("session", "true");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to sign in. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
+  // Registers a new account and reports whether the API accepted it.
+  // Accepts registration data and returns a promise for the API response.
   const register = async (userData) => {
     try {
       const response = await axios.post("/users/register", userData);
@@ -64,27 +80,37 @@ const UserContextProvider = ({ children }) => {
       navigate("/home");
       localStorage.setItem("session", "true");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to create your account. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     }
   };
 
+  // Ends the server session and clears the authenticated user state.
+  // Takes no arguments and returns a promise for the logout request.
   const logout = async () => {
     setIsLoading(true);
     try {
       await axios.post("/users/logout", null, {});
-      localStorage.clear();
+      localStorage.removeItem("session");
       setCurrentUser(null);
       navigate("/");
       setErrorMsg("");
     } catch (error) {
-      console.log(error?.response.data?.message);
-      setErrorMsg(error?.response.data?.message);
+      const message =
+        error?.response?.data?.message ||
+        "Unable to sign out. Please check your connection and try again.";
+      console.log(message);
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Updates profile with the supplied changes.
+  // Accepts new data and returns a promise for the operation result.
   const updateProfile = async (newData) => {
     try {
       const res = await axios.put("/users/profile", newData);
@@ -98,6 +124,8 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  // Retrieves users for the current workflow.
+  // Accepts page, status, and search and returns a promise for the operation result.
   const getUsers = async (page = 1, status = "all", search = "") => {
     try {
       setCurrentStatus(status);
@@ -131,17 +159,15 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  // Blocks the account identified by email and updates the current user list.
+  // Accepts an email address and returns a promise for the API response.
   const blockUser = async (email) => {
     try {
       const response = await axios.post(
         `/users/block/${encodeURIComponent(email)}`,
       );
       setErrorMsg("");
-      await getUsers(
-        pagination.currentPage || 1,
-        currentStatus,
-        currentSearch,
-      );
+      await getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
       if (response.data.emailSent === false) {
         setErrorMsg(response.data.message);
       }
@@ -155,17 +181,15 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  // Unblocks the account identified by email and updates the current user list.
+  // Accepts an email address and returns a promise for the API response.
   const unBlockUser = async (email) => {
     try {
       const response = await axios.post(
         `/users/unblock/${encodeURIComponent(email)}`,
       );
       setErrorMsg("");
-      await getUsers(
-        pagination.currentPage || 1,
-        currentStatus,
-        currentSearch,
-      );
+      await getUsers(pagination.currentPage || 1, currentStatus, currentSearch);
       if (response.data.emailSent === false) {
         setErrorMsg(response.data.message);
       }
@@ -179,13 +203,14 @@ const UserContextProvider = ({ children }) => {
     }
   };
 
+  // Fetches user stats from its configured data source.
+  // Accepts email and current page and returns a promise for the operation result.
   const fetchUserStats = async (email, currentPage) => {
     try {
       setIsStatsLoading(true);
-      const res = await axios.get(
-        `/users/stats/${encodeURIComponent(email)}`,
-        { params: { page: currentPage, limit: 3 } },
-      );
+      const res = await axios.get(`/users/stats/${encodeURIComponent(email)}`, {
+        params: { page: currentPage, limit: 3 },
+      });
       setUserStatsPerEmail(res.data);
       setErrorMsg("");
     } catch (err) {
@@ -197,6 +222,9 @@ const UserContextProvider = ({ children }) => {
 
   // Resolve a public user profile by id (complaint prefill). Returns the user
   // or null when not found / unauthorized.
+
+  // Retrieves user by id for the current workflow.
+  // Accepts user id and returns a promise for the operation result.
   const getUserById = async (userId) => {
     try {
       const response = await axios.get(`/users/id/${userId}`);
@@ -237,5 +265,7 @@ const UserContextProvider = ({ children }) => {
   );
 };
 
+// Reads the authenticated-user state and actions from the nearest provider.
+// Takes no arguments and returns the current user context value.
 export const useUserContext = () => useContext(UserContext);
 export default UserContextProvider;

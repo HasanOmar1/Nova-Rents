@@ -1,3 +1,5 @@
+/** Executable backend script for the verify pickup snapshot scenarios workflow.
+ * Runs its checks or maintenance steps and reports the resulting outcome. */
 /**
  * Step 8 verification — private pickup snapshot scenarios A–D + security checks.
  * Creates disposable users/vehicle/rentals, prints evidence, then cleans up.
@@ -56,6 +58,8 @@ const LOC_C = {
 let passCount = 0;
 let failCount = 0;
 
+/** Asserts that a verification condition is true.
+ * Accepts cond and label; returns no value and throws when the condition fails. */
 const assert = (cond, label) => {
   if (cond) {
     passCount += 1;
@@ -66,10 +70,14 @@ const assert = (cond, label) => {
   }
 };
 
+/** Prints a labeled section in the verification output.
+ * Accepts title; returns no meaningful value. */
 const section = (title) => {
   console.log(`\n=== ${title} ===`);
 };
 
+/** Sets exact pickup.
+ * Accepts plate and loc; returns a promise for the operation result. */
 const setExactPickup = async (plate, loc) => {
   await doQuery(
     `
@@ -84,6 +92,8 @@ const setExactPickup = async (plate, loc) => {
   );
 };
 
+/** Clears exact pickup.
+ * Accepts plate; returns no meaningful value after completing the side effect. */
 const clearExactPickup = async (plate) => {
   await doQuery(
     `
@@ -98,6 +108,8 @@ const clearExactPickup = async (plate) => {
   );
 };
 
+/** Loads vehicle pickup.
+ * Accepts plate; returns a promise for the requested data. */
 const loadVehiclePickup = async (plate) => {
   const rows = await doQuery(
     `
@@ -109,25 +121,32 @@ const loadVehiclePickup = async (plate) => {
   return rows[0];
 };
 
+/** Completes a test payment once inside a transaction.
+ * Accepts paymentToken and rentalId; returns a promise for the operation result. */
 const payOnce = async (paymentToken, rentalId) => {
   let transitionSucceeded = false;
-  await withTransaction(async (connection) => {
-    const payResult = await markPaymentPaidByTokenOnConnection(
-      connection,
-      paymentToken,
-    );
-    if (payResult.affectedRows !== 1) {
-      const err = new Error("PAYMENT_ALREADY_PAID");
-      err.code = "PAYMENT_ALREADY_PAID";
-      err.affectedRows = payResult.affectedRows;
-      throw err;
-    }
-    await insertPickupSnapshotFromVehicle(connection, rentalId);
-    transitionSucceeded = true;
+  await withTransaction(
+    /** Executes the database work within the surrounding transaction.
+     * Accepts connection; returns a promise for the transactional result. */
+    async (connection) => {
+      const payResult = await markPaymentPaidByTokenOnConnection(
+        connection,
+        paymentToken,
+      );
+      if (payResult.affectedRows !== 1) {
+        const err = new Error("PAYMENT_ALREADY_PAID");
+        err.code = "PAYMENT_ALREADY_PAID";
+        err.affectedRows = payResult.affectedRows;
+        throw err;
+      }
+      await insertPickupSnapshotFromVehicle(connection, rentalId);
+      transitionSucceeded = true;
   });
   return { transitionSucceeded, affectedRows: 1 };
 };
 
+/** Authenticates credentials and establishes an API session.
+ * Accepts email; returns a promise for the operation result. */
 const login = async (email) => {
   const res = await fetch(`${API}/users/login`, {
     method: "POST",
@@ -140,6 +159,8 @@ const login = async (email) => {
   return res.headers.get("set-cookie").split(";")[0];
 };
 
+/** Sends an authenticated request to the local API and parses its response.
+ * Accepts cookie, method, and path; returns a promise for status and response data. */
 const api = async (cookie, method, path) => {
   const res = await fetch(`${API}${path}`, {
     method,
@@ -156,7 +177,10 @@ const api = async (cookie, method, path) => {
   return { status: res.status, data };
 };
 
-(async () => {
+(
+ /** Runs the script's main asynchronous workflow.
+  * Accepts no arguments; returns a promise for the operation result. */
+ async () => {
   const hash = await bcrypt.hash(PASSWORD, 10);
   const suffix = String(Date.now()).slice(-7);
   const [gmailLocal, gmailDomain] = String(
@@ -487,6 +511,8 @@ const api = async (cookie, method, path) => {
       const myVehicles = await api(cookieOwner, "GET", "/vehicles/myVehicles");
       assert(myVehicles.status === 200, "owner myVehicles 200");
       const owned = (myVehicles.data.vehicles || myVehicles.data || []).find?.(
+        /** Tests whether one collection item is the requested match.
+         * Accepts v; returns a boolean used by the collection operation. */
         (v) => Number(v.licensePlate) === licensePlate,
       );
       // response shape may vary — inspect payload
@@ -593,7 +619,10 @@ const api = async (cookie, method, path) => {
   section("Summary");
   console.log(`PASS=${passCount} FAIL=${failCount}`);
   process.exit(failCount > 0 ? 1 : 0);
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
+})().catch(
+  /** Handles a rejected promise from the surrounding workflow.
+   * Accepts err; returns the error-handling result. */
+  (err) => {
+    console.error(err);
+    process.exit(1);
 });

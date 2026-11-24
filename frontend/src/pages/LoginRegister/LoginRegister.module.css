@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the LoginRegister interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .LoginRegister .container {
   display: flex;
   gap: 1.5rem;

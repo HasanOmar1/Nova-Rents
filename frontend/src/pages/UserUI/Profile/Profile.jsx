@@ -1,3 +1,5 @@
+// Presents the signed-in user's profile editor and verification documents.
+// It takes no props and returns editable account details with status feedback.
 import { useState, useEffect } from "react";
 import styles from "./Profile.module.css";
 import DocumentsCards from "../../../components/DocumentsCards/DocumentsCards";
@@ -7,6 +9,8 @@ import { formattedMaxDate, formattedMinDate } from "../../../utils/minMaxDate";
 import AsyncButton from "../../../components/AsyncButton/AsyncButton";
 import { useLocation } from "react-router-dom";
 
+// Manages profile editing, persistence, and the user's document section.
+// It takes no props and returns the profile page JSX.
 const Profile = () => {
   const { search } = useLocation();
   const [editProfileClicked, setEditProfileClicked] = useState(false);
@@ -26,39 +30,53 @@ const Profile = () => {
     password: "",
   });
 
+  // Converts an ISO-style date string into day/month/year display text.
+  // It accepts a date string and returns the formatted string or an empty one.
   const formatDisplayDate = (dateStr) => {
     if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-");
     return `${day}/${month}/${year}`;
   };
 
-  useEffect(() => {
-    if (currentUser && !editProfileClicked) {
-      setInputsValues({
-        firstName: currentUser.firstName || "",
-        lastName: currentUser.lastName || "",
-        email: currentUser.email.toLowerCase() || "",
-        phone: currentUser.phone || "",
-        birthDate: currentUser?.birthDate || "",
-        password: "",
-      });
-    }
-  }, [currentUser, editProfileClicked]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (currentUser && !editProfileClicked) {
+        setInputsValues({
+          firstName: currentUser.firstName || "",
+          lastName: currentUser.lastName || "",
+          email: currentUser.email.toLowerCase() || "",
+          phone: currentUser.phone || "",
+          birthDate: currentUser?.birthDate || "",
+          password: "",
+        });
+      }
+    }, [currentUser, editProfileClicked]);
 
+  // Copies the changed form field into the profile input state.
+  // It accepts an input event and returns undefined.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setInputsValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setInputsValues(
+      /* Derives the next inputs values state value.
+       * It accepts prev and returns the replacement state. */
+      (prev) => ({
+        ...prev,
+        [name]: value,
+      }));
   };
 
+  // Enables profile editing and clears earlier feedback messages.
+  // It takes no arguments and returns undefined.
   const clickEditProfile = () => {
     setEditProfileClicked(true);
     setErrorMsg("");
     setSuccessMsg("");
   };
 
+  // Cancels editing and restores fields from the current user record.
+  // It takes no arguments and returns undefined.
   const clickCancel = () => {
     setEditProfileClicked(false);
     setErrorMsg("");
@@ -73,6 +91,8 @@ const Profile = () => {
     });
   };
 
+  // Submits changed profile fields and refreshes activity after success.
+  // It accepts a form event and returns a promise resolved after the update.
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -95,7 +115,10 @@ const Profile = () => {
     if (isSuccess) {
       setSuccessMsg("Profile updated successfully!");
       setEditProfileClicked(false);
-      setInputsValues((prev) => ({ ...prev, password: "" }));
+      setInputsValues(
+        /* Derives the next inputs values state value.
+         * It accepts prev and returns the replacement state. */
+        (prev) => ({ ...prev, password: "" }));
       loadActivities();
     }
   };

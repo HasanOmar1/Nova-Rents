@@ -1,15 +1,44 @@
+/** Database query helpers for activity records.
+ * Encapsulates the domain's SQL reads, writes, and result shaping. */
 const doQuery = require("../query");
+const { queryOnConnection } = require("../withTransaction");
 
+const CREATE_ACTIVITY_SQL = `
+  INSERT INTO activity_logs
+  (userId, action, description, relatedId)
+  VALUES (?, ?, ?, ?)
+`;
+
+/** Creates activity.
+ * Accepts userId, action, description, and relatedId; returns a promise for the operation result. */
 async function createActivity(userId, action, description, relatedId = null) {
-  const query = `
-    INSERT INTO activity_logs
-    (userId, action, description, relatedId)
-    VALUES (?, ?, ?, ?)
-  `;
-
-  return await doQuery(query, [userId, action, description, relatedId]);
+  return doQuery(CREATE_ACTIVITY_SQL, [
+    userId,
+    action,
+    description,
+    relatedId,
+  ]);
 }
 
+/** Creates activity on connection.
+ * Accepts connection, userId, action, description, and relatedId; returns a promise for the operation result. */
+async function createActivityOnConnection(
+  connection,
+  userId,
+  action,
+  description,
+  relatedId = null,
+) {
+  return queryOnConnection(connection, CREATE_ACTIVITY_SQL, [
+    userId,
+    action,
+    description,
+    relatedId,
+  ]);
+}
+
+/** Fetches activities by user id.
+ * Accepts userId; returns a promise for the requested data. */
 async function getActivitiesByUserId(userId) {
   const query = `
     SELECT
@@ -30,5 +59,6 @@ async function getActivitiesByUserId(userId) {
 
 module.exports = {
   createActivity,
+  createActivityOnConnection,
   getActivitiesByUserId,
 };

@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the DashBoard interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .DashBoard .topCardsContainer {
   display: flex;
   gap: 20px;

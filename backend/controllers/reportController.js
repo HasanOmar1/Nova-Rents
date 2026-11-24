@@ -1,3 +1,5 @@
+/** Express controller handlers for report operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   getSystemActivityChartData,
@@ -23,6 +25,8 @@ const {
 
 const MAX_VEHICLE_COMPARISON_RANGE_DAYS = 3660;
 
+/** Fetches system activity chart.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getSystemActivityChart_controller(req, res, next) {
   try {
     const { startDate, endDate } = req.query;
@@ -112,6 +116,8 @@ async function getSystemActivityChart_controller(req, res, next) {
 // the same rental rows: approved + completed booking requests created in the
 // range (by createdAt). bookingValue is their gross totalPrice sum — there is
 // no commission column, so this is not platform commission revenue.
+/** Fetches statistics.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getStatistics_controller(req, res, next) {
   try {
     const { startDate, endDate } = req.query;
@@ -145,9 +151,14 @@ async function getStatistics_controller(req, res, next) {
     ]);
 
     const countsByPeriod = new Map(
-      chartRows.map((row) => [row.periodKey, Number(row.bookings)]),
+      chartRows.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts row; returns the transformed collection value. */
+        (row) => [row.periodKey, Number(row.bookings)]),
     );
     const bookingsChartData = buildPeriodKeys(start, end, granularity).map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts period; returns the transformed collection value. */
       (period) => ({
         period,
         bookings: countsByPeriod.get(period) || 0,
@@ -157,6 +168,8 @@ async function getStatistics_controller(req, res, next) {
     // Card total derived from the buckets, so card and chart can never
     // disagree — one query is the single source of truth for both.
     const bookings = bookingsChartData.reduce(
+      /** Folds one collection item into the surrounding accumulator.
+       * Accepts sum and point; returns the updated accumulator. */
       (sum, point) => sum + point.bookings,
       0,
     );
@@ -177,6 +190,8 @@ async function getStatistics_controller(req, res, next) {
 // session user owns, plus the user's own actions from system_history.
 // Identity comes only from the session — never from client parameters —
 // so a user can never request another user's report.
+/** Fetches user dashboard report.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getUserDashboardReport_controller(req, res, next) {
   try {
     const userId = req.session.user.userId;
@@ -215,15 +230,23 @@ async function getUserDashboardReport_controller(req, res, next) {
     const periods = buildPeriodKeys(start, end, granularity);
 
     const earningsByPeriod = new Map(
-      earningRows.map((row) => [row.periodKey, Number(row.earnings)]),
+      earningRows.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts row; returns the transformed collection value. */
+        (row) => [row.periodKey, Number(row.earnings)]),
     );
-    const earningsChartData = periods.map((period) => ({
+    const earningsChartData = periods.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts period; returns the transformed collection value. */
+      (period) => ({
       period,
       earnings: earningsByPeriod.get(period) || 0,
     }));
 
     // Total derived from the buckets — card and chart can never disagree.
     const earningsTotal = earningsChartData.reduce(
+      /** Folds one collection item into the surrounding accumulator.
+       * Accepts sum and point; returns the updated accumulator. */
       (sum, point) => sum + point.earnings,
       0,
     );
@@ -248,13 +271,16 @@ async function getUserDashboardReport_controller(req, res, next) {
     }
 
     const usageSeries = [...seriesMap.values()];
-    const usageChartData = periods.map((period) => {
-      const point = { period };
-      const counts = usageByPeriod.get(period) || {};
-      for (const serie of usageSeries) {
-        point[serie.eventName] = counts[serie.eventName] || 0;
-      }
-      return point;
+    const usageChartData = periods.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts period; returns the transformed collection value. */
+      (period) => {
+        const point = { period };
+        const counts = usageByPeriod.get(period) || {};
+        for (const serie of usageSeries) {
+          point[serie.eventName] = counts[serie.eventName] || 0;
+        }
+        return point;
     });
 
     return res.status(STATUS_CODE.OK).json({
@@ -273,6 +299,8 @@ async function getUserDashboardReport_controller(req, res, next) {
 // Compares completed-rental value and count across every vehicle owned by the
 // authenticated user. Both metrics use rental endDate, matching the personal
 // dashboard's definition of when a rental is earned.
+/** Fetches vehicle comparison.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getVehicleComparison_controller(req, res, next) {
   try {
     const userId = req.session.user.userId;
@@ -375,7 +403,10 @@ async function getVehicleComparison_controller(req, res, next) {
     ]);
 
     const reportCountByPlate = new Map(
-      vehicleReportRows.map((row) => [
+      vehicleReportRows.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts row; returns the transformed collection value. */
+        (row) => [
         String(row.licensePlate),
         Number(row.reportCount) || 0,
       ]),
@@ -412,15 +443,18 @@ async function getVehicleComparison_controller(req, res, next) {
     const series = [...seriesMap.values()];
     const periods =
       start && end ? buildPeriodKeys(start, end, granularity) : [];
-    const chartData = periods.map((period) => {
-      const point = { period };
-      const periodEarnings = earningsByPeriod.get(period) || {};
+    const chartData = periods.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts period; returns the transformed collection value. */
+      (period) => {
+        const point = { period };
+        const periodEarnings = earningsByPeriod.get(period) || {};
 
-      for (const vehicle of series) {
-        point[vehicle.dataKey] = periodEarnings[vehicle.dataKey] || 0;
-      }
+        for (const vehicle of series) {
+          point[vehicle.dataKey] = periodEarnings[vehicle.dataKey] || 0;
+        }
 
-      return point;
+        return point;
     });
 
     return res.status(STATUS_CODE.OK).json({

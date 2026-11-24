@@ -1,3 +1,5 @@
+// Presents the admin system-activity dashboard and its chart filters.
+// It takes no props and returns activity cards, controls, and chart content.
 import styles from "./DashBoard.module.css";
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import HomeMidCards from "../../../components/HomeCards/HomeMidCards/HomeMidCards";
@@ -36,6 +38,8 @@ const CHART_COLORS = [
 // Max series shown by default before the "Show all" toggle kicks in
 const TOP_SERIES_LIMIT = 6;
 
+// Loads system activity and renders category-filtered chart series.
+// It takes no props and returns the administrative dashboard JSX.
 const DashBoard = () => {
   const {
     systemActivityData,
@@ -54,26 +58,36 @@ const DashBoard = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showAllSeries, setShowAllSeries] = useState(false);
 
-  useEffect(() => {
-    if (isRangeValid) {
-      getSystemActivityChart(fromDate, toDate);
-    }
-  }, [fromDate, toDate, isRangeValid]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (isRangeValid) {
+        getSystemActivityChart(fromDate, toDate);
+      }
+    }, [fromDate, toDate, isRangeValid]);
 
   const categories = [
-    ...new Set(systemActivitySeries.map((serie) => serie.category)),
+    ...new Set(systemActivitySeries.map(
+      /* Transforms each collection entry for the surrounding mapping.
+       * It accepts serie and returns the mapped value. */
+      (serie) => serie.category)),
   ];
 
   // Total occurrences per event across the whole period (for top-N ranking)
   const seriesTotals = {};
   for (const serie of systemActivitySeries) {
     seriesTotals[serie.eventName] = systemActivityData.reduce(
+      /* Combines the current entry with the running aggregate.
+       * It accepts sum and point and returns the next aggregate. */
       (sum, point) => sum + (point[serie.eventName] || 0),
       0,
     );
   }
 
   const filteredSeries = systemActivitySeries.filter(
+    /* Tests whether each collection entry belongs in the filtered result.
+     * It accepts serie and returns a boolean. */
     (serie) => categoryFilter === "all" || serie.category === categoryFilter,
   );
 
@@ -82,16 +96,22 @@ const DashBoard = () => {
 
   const visibleSeries = isSeriesLimited
     ? [...filteredSeries]
-        .sort((a, b) => seriesTotals[b.eventName] - seriesTotals[a.eventName])
+        .sort(
+          /* Orders two collection entries for the surrounding sort.
+           * It accepts a and b and returns their numeric ordering. */
+          (a, b) => seriesTotals[b.eventName] - seriesTotals[a.eventName])
         .slice(0, TOP_SERIES_LIMIT)
     : filteredSeries;
 
-  const chartSeries = visibleSeries.map((serie) => ({
-    dataKey: serie.eventName,
-    name: formatEventLabel(serie.eventName),
-    color:
-      CHART_COLORS[systemActivitySeries.indexOf(serie) % CHART_COLORS.length],
-  }));
+  const chartSeries = visibleSeries.map(
+    /* Transforms each collection entry for the surrounding mapping.
+     * It accepts serie and returns the mapped value. */
+    (serie) => ({
+      dataKey: serie.eventName,
+      name: formatEventLabel(serie.eventName),
+      color:
+        CHART_COLORS[systemActivitySeries.indexOf(serie) % CHART_COLORS.length],
+    }));
 
   return (
     <div className={`${styles.DashBoard} page`}>
@@ -110,7 +130,10 @@ const DashBoard = () => {
             type="date"
             value={fromDate}
             max={toDate}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) => setFromDate(e.target.value)}
           />
           <label htmlFor="toDate">To</label>
           <input
@@ -118,7 +141,10 @@ const DashBoard = () => {
             type="date"
             value={toDate}
             min={fromDate}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) => setToDate(e.target.value)}
           />
         </div>
 
@@ -127,16 +153,22 @@ const DashBoard = () => {
           <select
             id="categoryFilter"
             value={categoryFilter}
-            onChange={(e) => {
-              setCategoryFilter(e.target.value);
-              setShowAllSeries(false);
-            }}
+            onChange={
+              /* Handles the change callback for this rendered control.
+               * It accepts e and returns the delegated result. */
+              (e) => {
+                setCategoryFilter(e.target.value);
+                setShowAllSeries(false);
+              }}
           >
             <option value="all">All</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
+            {categories.map(
+              /* Transforms each collection entry for the surrounding mapping.
+               * It accepts category and returns the mapped value. */
+              (category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
             ))}
           </select>
 
@@ -144,7 +176,10 @@ const DashBoard = () => {
             <button
               type="button"
               className={styles.toggleSeriesBtn}
-              onClick={() => setShowAllSeries(!showAllSeries)}
+              onClick={
+                /* Handles the click callback for this rendered control.
+                 * It accepts no arguments and returns the delegated result. */
+                () => setShowAllSeries(!showAllSeries)}
             >
               {showAllSeries
                 ? `Show top ${TOP_SERIES_LIMIT}`

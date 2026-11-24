@@ -1,3 +1,5 @@
+// Defines the Users Cards React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useActivityContext } from "../../context/ActivityContext";
 import styles from "./UsersCards.module.css";
 import { useState } from "react";
@@ -6,6 +8,8 @@ import { Link } from "react-router-dom";
 import AsyncButton from "../AsyncButton/AsyncButton";
 import UserStatusConfirmationModal from "../UserStatusConfirmationModal/UserStatusConfirmationModal";
 
+// Renders the Users Cards interface.
+// Accepts an options object and returns rendered JSX.
 const UsersCards = ({ user, blockUser, unBlockUser }) => {
   const { loadActivities } = useActivityContext();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -17,6 +21,8 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
     `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
   const profilePath = `/userStats/${encodeURIComponent(user.email)}`;
 
+  // Handles user action for the surrounding interface.
+  // Takes no arguments and returns a promise for the operation result.
   const handleUserAction = async () => {
     if (isUpdating || !pendingAction) return;
     setIsUpdating(true);
@@ -73,7 +79,10 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
             className={`${styles.action} ${
               isBlocked ? styles.unblockAction : styles.blockAction
             }`}
-            onClick={() =>
+            onClick={
+              // Handles the component's click event.
+              // Takes no arguments and returns the handler result.
+              () =>
               setPendingAction(isBlocked ? "unblock" : "block")
             }
             loading={isUpdating}
@@ -94,9 +103,12 @@ const UsersCards = ({ user, blockUser, unBlockUser }) => {
         action={pendingAction}
         user={user}
         isUpdating={isUpdating}
-        onClose={() => {
-          if (!isUpdating) setPendingAction(null);
-        }}
+        onClose={
+          // Handles the component's close event.
+          // Takes no arguments and returns the handler result.
+          () => {
+            if (!isUpdating) setPendingAction(null);
+          }}
         onConfirm={handleUserAction}
       />
     </div>

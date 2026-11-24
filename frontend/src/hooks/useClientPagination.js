@@ -1,5 +1,9 @@
+// Provides reusable React state and behavior for client pagination.
+// It packages related lifecycle logic and controls for use by components.
 import { usePagination } from "./usePagination";
 
+// Normalizes page size into a consistent value.
+// Accepts page size and returns the computed result.
 const normalizePageSize = (pageSize) => {
   const parsedPageSize = Number(pageSize);
 
@@ -8,6 +12,8 @@ const normalizePageSize = (pageSize) => {
     : 1;
 };
 
+// Paginates an in-memory collection using the shared bounded page state.
+// Accepts items and pagination options and returns the current slice and controls.
 export const useClientPagination = ({
   items = [],
   pageSize = 10,

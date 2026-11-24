@@ -1,14 +1,26 @@
+// Centralizes user-facing labels, guidance, masking, and eligibility summaries.
+// Its helpers translate raw API values into consistent display-ready data.
+
 /** Formats project currency values with a dollar prefix and locale separators. */
+
+// Formats currency for display.
+// Accepts value and returns the computed result.
 export const formatCurrency = (value) =>
   `$${(Number(value) || 0).toLocaleString()}`;
 
 /** Converts an event key such as "vehicle_created" to "Vehicle Created". */
+
+// Formats event label for display.
+// Accepts event name and custom labels and returns the computed result.
 export const formatEventLabel = (eventName, customLabels = {}) => {
   if (customLabels[eventName]) return customLabels[eventName];
 
   return String(eventName || "")
     .split("_")
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+    .map(
+      // Transforms one collection entry for the resulting list.
+      // Accepts word and returns the mapped entry.
+      (word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
     .join(" ");
 };
 
@@ -19,6 +31,8 @@ const COMPLAINT_STATUS_LABELS = {
   closed: "Closed",
 };
 
+// Formats complaint status for display.
+// Accepts status and fallback and returns the computed result.
 export const formatComplaintStatus = (status, fallback = "Unknown") =>
   COMPLAINT_STATUS_LABELS[status] || status || fallback;
 
@@ -31,6 +45,8 @@ const VEHICLE_STATUS_LABELS = {
   inactive: "Inactive",
 };
 
+// Normalizes vehicle status into a consistent value.
+// Accepts status and returns the computed result.
 const normalizeVehicleStatus = (status) =>
   String(status || "")
     .trim()
@@ -38,6 +54,8 @@ const normalizeVehicleStatus = (status) =>
     .replace(/[\s-]+/g, "_")
     .toLowerCase();
 
+// Determines whether explicitly false applies.
+// Accepts value and returns the computed result.
 const isExplicitlyFalse = (value) =>
   value === false || value === 0 || value === "false" || value === "0";
 
@@ -45,6 +63,9 @@ const isExplicitlyFalse = (value) =>
  * Returns the status people can actually act on while preserving the raw
  * operational status in `vehicle.status` for editing and rental workflows.
  */
+
+// Retrieves vehicle display status for the current workflow.
+// Accepts vehicle and returns the computed result.
 export const getVehicleDisplayStatus = (vehicle) => {
   const effectiveStatus = normalizeVehicleStatus(vehicle?.effectiveStatus);
   if (effectiveStatus) return effectiveStatus;
@@ -64,6 +85,8 @@ export const getVehicleDisplayStatus = (vehicle) => {
   return rawStatus || "unknown";
 };
 
+// Formats vehicle status for display.
+// Accepts status and fallback and returns the computed result.
 export const formatVehicleStatus = (status, fallback = "Unknown") => {
   const normalizedStatus = normalizeVehicleStatus(status);
   return (
@@ -237,6 +260,8 @@ const FALLBACK_DOCUMENT_DISPLAY = {
   },
 };
 
+// Retrieves document display config for the current workflow.
+// Accepts document type and audience and returns the computed result.
 export const getDocumentDisplayConfig = (documentType, audience = "user") => {
   const config = DOCUMENT_DISPLAY_CONFIG[documentType] || {
     ...FALLBACK_DOCUMENT_DISPLAY,
@@ -251,6 +276,8 @@ export const getDocumentDisplayConfig = (documentType, audience = "user") => {
   };
 };
 
+// Retrieves document action label for the current workflow.
+// Accepts document type and status and returns the computed result.
 export const getDocumentActionLabel = (documentType, status) => {
   const config = getDocumentDisplayConfig(documentType);
   return (
@@ -261,11 +288,15 @@ export const getDocumentActionLabel = (documentType, status) => {
   );
 };
 
+// Retrieves document guidance for the current workflow.
+// Accepts document type and status and returns the computed result.
 export const getDocumentGuidance = (documentType, status) => {
   const config = getDocumentDisplayConfig(documentType);
   return config.nextStepByStatus?.[status] || null;
 };
 
+// Retrieves document upload copy for the current workflow.
+// Accepts document type, status, and is replace and returns the computed result.
 export const getDocumentUploadCopy = (documentType, status, isReplace) => {
   const config = getDocumentDisplayConfig(documentType);
   const action = getDocumentActionLabel(documentType, status);
@@ -292,6 +323,8 @@ const USER_GOV_STATUS_GUIDANCE = {
   error: "Vehicle verification could not be completed. Please try again later.",
 };
 
+// Retrieves government check guidance for the current workflow.
+// Accepts status and returns the computed result.
 export const getGovernmentCheckGuidance = (status) =>
   USER_GOV_STATUS_GUIDANCE[status] || null;
 
@@ -341,10 +374,14 @@ const REJECTION_CODE_LABELS = {
   other: "Other",
 };
 
+// Formats document type for display.
+// Accepts document type and returns the computed result.
 export const formatDocumentType = (documentType) =>
   DOCUMENT_DISPLAY_CONFIG[documentType]?.title ||
   formatEventLabel(documentType);
 
+// Formats document status for display.
+// Accepts status and audience and returns the computed result.
 export const formatDocumentStatus = (status, audience = "user") => {
   const labels =
     audience === "admin"
@@ -353,6 +390,8 @@ export const formatDocumentStatus = (status, audience = "user") => {
   return labels[status] || formatEventLabel(status);
 };
 
+// Formats gov check status for display.
+// Accepts status and audience and returns the computed result.
 export const formatGovCheckStatus = (status, audience = "user") => {
   const labels =
     audience === "admin"
@@ -361,12 +400,17 @@ export const formatGovCheckStatus = (status, audience = "user") => {
   return labels[status] || formatEventLabel(status);
 };
 
+// Formats rejection code for display.
+// Accepts code and returns the computed result.
 export const formatRejectionCode = (code) =>
   REJECTION_CODE_LABELS[code] || formatEventLabel(code);
 
 export const REJECTION_CODE_OPTIONS = Object.keys(REJECTION_CODE_LABELS);
 
 /** Masks an identity / policy number for list display. Full value stays in upload form. */
+
+// Masks an identity or policy number while retaining its final four characters.
+// Accepts a sensitive value and returns masked text or null when empty.
 export const maskSensitiveNumber = (value) => {
   const text = String(value || "").trim();
   if (!text) return null;
@@ -421,16 +465,25 @@ const VEHICLE_ELIGIBILITY_MESSAGES = {
     "Vehicle verification could not be completed. Please try again later.",
 };
 
+// Formats eligibility reason for display.
+// Accepts reason and returns the computed result.
 export const formatEligibilityReason = (reason) =>
   RENTER_ELIGIBILITY_MESSAGES[reason] ||
   VEHICLE_ELIGIBILITY_MESSAGES[reason] ||
   formatEventLabel(String(reason || "").toLowerCase());
 
+// Retrieves primary renter eligibility message for the current workflow.
+// Accepts reasons and returns the computed result.
 export const getPrimaryRenterEligibilityMessage = (reasons = []) => {
-  const first = reasons.find((reason) => RENTER_ELIGIBILITY_MESSAGES[reason]);
+  const first = reasons.find(
+    // Tests whether one collection entry is the requested match.
+    // Accepts reason and returns a Boolean match result.
+    (reason) => RENTER_ELIGIBILITY_MESSAGES[reason]);
   return first ? RENTER_ELIGIBILITY_MESSAGES[first] : null;
 };
 
+// Builds vehicle eligibility summary from the supplied data.
+// Accepts rental eligibility and returns the computed result.
 export const buildVehicleEligibilitySummary = (rentalEligibility) => {
   if (!rentalEligibility) return null;
   const statuses = rentalEligibility.statuses || {};
@@ -462,7 +515,10 @@ export const buildVehicleEligibilitySummary = (rentalEligibility) => {
     message: rentalEligibility.eligible
       ? null
       : (rentalEligibility.reasons || [])
-          .map((reason) => formatEligibilityReason(reason))
+          .map(
+            // Transforms one collection entry for the resulting list.
+            // Accepts reason and returns the mapped entry.
+            (reason) => formatEligibilityReason(reason))
           .join(" "),
   };
 };

@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the HomeTopCards interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .HomeTopCards {
   background-color: var(--bg-gray);
   padding: 15px 20px;

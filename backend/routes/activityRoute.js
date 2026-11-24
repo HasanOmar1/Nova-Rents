@@ -1,3 +1,5 @@
+/** Express route definitions for activity endpoints.
+ * Maps HTTP requests and access checks to the corresponding controllers. */
 express = require("express");
 const router = express.Router();
 const { isAuthenticated } = require("../middleWare/authMiddleware");

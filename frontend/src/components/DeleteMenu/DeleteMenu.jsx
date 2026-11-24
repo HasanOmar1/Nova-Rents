@@ -1,8 +1,12 @@
+// Defines the Delete Menu React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import styles from "./DeleteMenu.module.css";
 import { TriangleAlert } from "lucide-react";
 import AsyncButton from "../AsyncButton/AsyncButton";
 import { useModalDialog } from "../../hooks/useModalDialog";
 
+// Renders the Delete Menu interface.
+// Accepts an options object and returns rendered JSX.
 const DeleteMenu = ({
   img,
   name,

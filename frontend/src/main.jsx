@@ -1,3 +1,5 @@
+/** Bootstraps Nova Rents with routing, API defaults, and context providers.
+ * Mounts the configured React application into the document root. */
 import { createRoot } from "react-dom/client";
 import axios from "axios";
 import "./index.css";

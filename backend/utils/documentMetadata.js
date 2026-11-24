@@ -1,3 +1,5 @@
+/** Shared backend utility for document metadata operations.
+ * Normalizes, validates, or transforms values for the surrounding domain. */
 const METADATA_FIELDS = [
   "documentNumber",
   "insuranceCompany",
@@ -12,6 +14,8 @@ const TEXT_FIELD_MAX_LENGTH = Object.freeze({
 
 const DATE_FIELDS = new Set(["startDate", "expirationDate"]);
 
+/** Creates rule.
+ * Accepts an options object; returns the derived value. */
 const makeRule = ({ allowedFields, requiredFields, labels }) =>
   Object.freeze({
     allowedFields: Object.freeze(allowedFields),
@@ -73,6 +77,8 @@ const DOCUMENT_METADATA_RULES = Object.freeze({
   }),
 });
 
+/** Checks whether real iso calendar date.
+ * Accepts value; returns the validation or boolean result. */
 function isRealIsoCalendarDate(value) {
   if (typeof value !== "string") return false;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -87,6 +93,8 @@ function isRealIsoCalendarDate(value) {
   return day <= daysInMonth;
 }
 
+/** Converts a supported date value to an ISO date string.
+ * Accepts value; returns the ISO date string or null. */
 function dateToIso(value) {
   if (!(value instanceof Date) || Number.isNaN(value.getTime())) return null;
   const year = value.getFullYear();
@@ -95,6 +103,8 @@ function dateToIso(value) {
   return `${year}-${month}-${day}`;
 }
 
+/** Normalizes text.
+ * Accepts value and maxLength; returns the derived value. */
 function normalizeText(value, maxLength) {
   if (value == null || value === "") return { value: null };
   if (typeof value === "object") {
@@ -109,6 +119,8 @@ function normalizeText(value, maxLength) {
   return { value: text };
 }
 
+/** Normalizes date.
+ * Accepts value; returns the derived value. */
 function normalizeDate(value) {
   if (value == null || value === "") return { value: null };
   const isDateObject = value instanceof Date;
@@ -120,10 +132,14 @@ function normalizeDate(value) {
   return { value: text };
 }
 
+/** Builds a structured document-metadata validation error.
+ * Accepts field, code, and message; returns the structured error object. */
 function metadataError(field, code, message) {
   return { field, code, message };
 }
 
+/** Validates document metadata.
+ * Accepts documentType and input; returns the validation or boolean result. */
 function validateDocumentMetadata(documentType, input = {}) {
   const rule = DOCUMENT_METADATA_RULES[documentType];
   if (!rule) {
@@ -143,7 +159,10 @@ function validateDocumentMetadata(documentType, input = {}) {
   const source = input && typeof input === "object" ? input : {};
   const allowed = new Set(rule.allowedFields);
   const normalized = Object.fromEntries(
-    METADATA_FIELDS.map((field) => [field, null]),
+    METADATA_FIELDS.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts field; returns the transformed collection value. */
+      (field) => [field, null]),
   );
   const errors = [];
 
@@ -164,7 +183,10 @@ function validateDocumentMetadata(documentType, input = {}) {
   for (const field of rule.requiredFields) {
     if (
       normalized[field] == null &&
-      !errors.some((error) => error.field === field)
+      !errors.some(
+        /** Tests whether one collection item satisfies the surrounding condition.
+         * Accepts error; returns a boolean used by the collection operation. */
+        (error) => error.field === field)
     ) {
       const label = rule.labels[field] || field;
       errors.push(metadataError(field, "required", `${label} is required.`));

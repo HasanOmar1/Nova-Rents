@@ -1,3 +1,5 @@
+// Presents admin booking statistics for a selectable reporting period.
+// It takes no props and returns date controls, totals, and a trend chart.
 import HomeBottomCards from "../../../components/HomeCards/HomeBottomCards/HomeBottomCards";
 import HomeTopCards from "../../../components/HomeCards/HomeTopCards/HomeTopCards";
 import styles from "./Statistics.module.css";
@@ -11,6 +13,8 @@ import {
 } from "../../../utils/periodFormat";
 import { formatCurrency } from "../../../utils/displayFormat";
 
+// Loads and renders booking statistics for the selected date range.
+// It takes no props and returns the statistics page JSX.
 const Statistics = () => {
   const {
     statisticsData,
@@ -27,10 +31,15 @@ const Statistics = () => {
     isRangeValid,
   } = useDateRange();
 
-  useEffect(() => {
-    getStatistics(fromDate, toDate);
-  }, []);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getStatistics(fromDate, toDate);
+    }, []);
 
+  // Requests fresh statistics when the selected range is valid and idle.
+  // It takes no arguments and returns undefined.
   const handleApply = () => {
     if (isRangeValid && !isStatisticsLoading) {
       getStatistics(fromDate, toDate);
@@ -57,6 +66,8 @@ const Statistics = () => {
   ];
 
   const hasBookings = statisticsData.bookingsChartData.some(
+    /* Checks whether the current entry satisfies the surrounding condition.
+     * It accepts point and returns a boolean. */
     (point) => point.bookings > 0,
   );
 
@@ -71,7 +82,10 @@ const Statistics = () => {
           type="date"
           value={fromDate}
           max={toDate}
-          onChange={(e) => setFromDate(e.target.value)}
+          onChange={
+            /* Handles the change callback for this rendered control.
+             * It accepts e and returns the delegated result. */
+            (e) => setFromDate(e.target.value)}
         />
         <label htmlFor="statsToDate">To</label>
         <input
@@ -79,7 +93,10 @@ const Statistics = () => {
           type="date"
           value={toDate}
           min={fromDate}
-          onChange={(e) => setToDate(e.target.value)}
+          onChange={
+            /* Handles the change callback for this rendered control.
+             * It accepts e and returns the delegated result. */
+            (e) => setToDate(e.target.value)}
         />
         <button
           type="button"
@@ -95,16 +112,19 @@ const Statistics = () => {
       </div>
 
       <div className={styles.topCardsContainer}>
-        {topData.map((item) => {
-          return (
-            <HomeTopCards
-              key={item.title}
-              title={item.title}
-              value={item.value}
-              icon={item.icon}
-            />
-          );
-        })}
+        {topData.map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts item and returns the mapped value. */
+          (item) => {
+            return (
+              <HomeTopCards
+                key={item.title}
+                title={item.title}
+                value={item.value}
+                icon={item.icon}
+              />
+            );
+          })}
       </div>
 
       <div className={styles.bottomCardsContainer}>

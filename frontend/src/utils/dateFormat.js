@@ -1,3 +1,8 @@
+// Provides local-time date parsing, validation, masking, and display formatting.
+// Its helpers exchange ISO input values and user-facing date strings safely.
+
+// Tests whether a value is a valid JavaScript Date instance.
+// Accepts a candidate value and returns a Boolean validity result.
 const isValidDate = (date) =>
   date instanceof Date && !Number.isNaN(date.getTime());
 
@@ -5,6 +10,9 @@ const isValidDate = (date) =>
  * Formats a Date or date-like value for an HTML date input using local time.
  * Using local fields avoids the day shift that can happen with toISOString().
  */
+
+// Formats date for input for display.
+// Accepts value and returns the computed result.
 export const formatDateForInput = (value) => {
   if (!value) return "";
 
@@ -19,6 +27,9 @@ export const formatDateForInput = (value) => {
 };
 
 /** Converts API YYYY-MM-DD (or Date) to DD/MM/YYYY for display/typing. */
+
+// Formats iso date to display for display.
+// Accepts value and returns the computed result.
 export const formatIsoDateToDisplay = (value) => {
   if (!value) return "";
   const iso = String(value).slice(0, 10);
@@ -27,6 +38,8 @@ export const formatIsoDateToDisplay = (value) => {
   return `${match[3]}/${match[2]}/${match[1]}`;
 };
 
+// Determines whether real calendar date applies.
+// Accepts year, month, and day and returns the computed result.
 const isRealCalendarDate = (year, month, day) => {
   if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
     return false;
@@ -46,6 +59,9 @@ const isRealCalendarDate = (year, month, day) => {
  * Parses a typed DD/MM/YYYY string into YYYY-MM-DD.
  * Rejects incomplete and impossible dates without overflowing (e.g. 31/02/2028).
  */
+
+// Parses display date to iso into the required application shape.
+// Accepts value and returns the computed result.
 export const parseDisplayDateToIso = (value) => {
   const text = String(value || "").trim();
   if (!text) {
@@ -72,6 +88,9 @@ export const parseDisplayDateToIso = (value) => {
 };
 
 /** Keeps typed date input as digits with optional slashes, max DD/MM/YYYY. */
+
+// Restricts typed date content to the DD/MM/YYYY shape during editing.
+// Accepts raw text and insertion options and returns the masked display string.
 export const maskDisplayDateInput = (raw, { inserting = true } = {}) => {
   const digits = String(raw || "").replace(/\D/g, "").slice(0, 8);
   if (!inserting) {
@@ -87,6 +106,9 @@ export const maskDisplayDateInput = (raw, { inserting = true } = {}) => {
 export const DISPLAY_DATE_ERROR = "Enter a valid date in DD/MM/YYYY format.";
 
 /** Returns an inclusive recent-month range ending today. */
+
+// Creates recent month range for the current workflow.
+// Accepts month count and today and returns the computed result.
 export const createRecentMonthRange = (
   monthCount = 6,
   today = new Date(),
@@ -104,6 +126,9 @@ export const createRecentMonthRange = (
 };
 
 /** Formats a date as "17 Aug 2026" using the project's rental-date style. */
+
+// Formats short date for display.
+// Accepts value and fallback and returns the computed result.
 export const formatShortDate = (value, fallback = "Unknown date") => {
   if (!value) return fallback;
 

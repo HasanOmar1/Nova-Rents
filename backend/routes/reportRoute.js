@@ -1,3 +1,5 @@
+/** Express route definitions for report endpoints.
+ * Maps HTTP requests and access checks to the corresponding controllers. */
 const express = require("express");
 const router = express.Router();
 

@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the Pagination interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .pagination {
   border: var(--cards-border);
   display: flex;

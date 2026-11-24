@@ -1,3 +1,5 @@
+// Defines the Compact Vehicle Document Row React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { Eye, Upload } from "lucide-react";
 import {
   formatDocumentStatus,
@@ -12,6 +14,8 @@ import { STATUS_CLASS } from "./DocumentsCards.constants";
 import { isPastDate } from "./DocumentsCards.utils";
 import styles from "./DocumentsCards.module.css";
 
+// Renders the Compact Vehicle Document Row interface.
+// Accepts an options object and returns rendered JSX.
 const CompactVehicleDocumentRow = ({
   slot,
   onUpload,
@@ -73,7 +77,10 @@ const CompactVehicleDocumentRow = ({
           <button
             type="button"
             className={styles.compactIconBtn}
-            onClick={() => onView(slot.documentId)}
+            onClick={
+              // Handles the component's click event.
+              // Takes no arguments and returns the handler result.
+              () => onView(slot.documentId)}
             disabled={viewingId === slot.documentId}
             aria-label={`View ${formatDocumentType(slot.documentType)}`}
           >
@@ -83,7 +90,10 @@ const CompactVehicleDocumentRow = ({
         <button
           type="button"
           className={styles.compactUploadBtn}
-          onClick={() => onUpload(slot)}
+          onClick={
+            // Handles the component's click event.
+            // Takes no arguments and returns the handler result.
+            () => onUpload(slot)}
         >
           <Upload size={14} />
           {actionLabel}

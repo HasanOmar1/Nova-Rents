@@ -1,3 +1,5 @@
+// Presents the signed-in owner's vehicles, metrics, and report details.
+// It takes no props and returns the filterable vehicle-management page.
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -19,6 +21,8 @@ import { useComplaintContext } from "../../../context/ComplaintContext";
 import { usePaginatedStatusFilter } from "../../../hooks/usePaginatedStatusFilter";
 import styles from "./MyVehicles.module.css";
 
+// Loads and renders the owner's paginated vehicle-management dashboard.
+// It takes no props and returns vehicle cards, controls, and modal JSX.
 const MyVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { getUserVehicles, userVehicles, vehicleStats, pagination } =
@@ -34,23 +38,32 @@ const MyVehicles = () => {
   const [selectedVehicleForReports, setSelectedVehicleForReports] =
     useState(null);
 
-  useEffect(() => {
-    getUserVehicles(currentPage, statusFilter);
-  }, [currentPage, statusFilter]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getUserVehicles(currentPage, statusFilter);
+    }, [currentPage, statusFilter]);
 
-  useEffect(() => {
-    getOwnerVehicleReports();
-  }, []);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getOwnerVehicleReports();
+    }, []);
 
-  const reportsByPlate = useMemo(() => {
-    const map = new Map();
-    for (const report of ownerVehicleReports) {
-      const key = String(report.vehicleLicensePlate);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(report);
-    }
-    return map;
-  }, [ownerVehicleReports]);
+  const reportsByPlate = useMemo(
+    /* Computes the memoized value used by this component.
+     * It accepts no arguments and returns the derived value. */
+    () => {
+      const map = new Map();
+      for (const report of ownerVehicleReports) {
+        const key = String(report.vehicleLicensePlate);
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(report);
+      }
+      return map;
+    }, [ownerVehicleReports]);
 
   const selectedReports = selectedVehicleForReports
     ? reportsByPlate.get(String(selectedVehicleForReports.licensePlate)) || []
@@ -60,7 +73,11 @@ const MyVehicles = () => {
     ? `${selectedVehicleForReports.brandName} ${selectedVehicleForReports.modelName}`
     : "";
 
+  // Opens the add-vehicle menu by updating local visibility state.
+  // It takes no arguments and returns the state setter's undefined result.
   const openAddVehMenu = () => setIsOpen(true);
+  // Closes the add-vehicle menu by updating local visibility state.
+  // It takes no arguments and returns the state setter's undefined result.
   const closeAddVehMenu = () => setIsOpen(false);
 
   const topData = [
@@ -68,7 +85,10 @@ const MyVehicles = () => {
       title: "Vehicles Count",
       value: vehicleStats?.allVehicles || 0,
       icon: <Car size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("all"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("all"),
       isAction: true,
     },
     {
@@ -76,21 +96,30 @@ const MyVehicles = () => {
       value: vehicleStats?.availableNow || 0,
       icon: <ShieldCheck size={28} color="#a7d2eb" />,
       isAction: true,
-      onClick: () => handleStatusChange("available"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("available"),
     },
     {
       title: "Under Maintenance",
       value: vehicleStats?.maintenance || 0,
       icon: <ShieldAlert size={28} color="#a7d2eb" />,
       isAction: true,
-      onClick: () => handleStatusChange("maintenance"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("maintenance"),
     },
     {
       title: "Inactive",
       value: vehicleStats?.inactive || 0,
       icon: <ShieldOff size={28} color="#a7d2eb" />,
       isAction: true,
-      onClick: () => handleStatusChange("inactive"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("inactive"),
     },
     {
       title: "Avg. daily rate",
@@ -137,15 +166,18 @@ const MyVehicles = () => {
       </div>
 
       <div className={styles.topCardsContainer}>
-        {topData.map((item) => (
-          <HomeTopCards
-            key={item.title}
-            title={item.title}
-            value={item.value}
-            icon={item.icon}
-            onClick={item.onClick}
-            isAction={item.isAction}
-          />
+        {topData.map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts item and returns the mapped value. */
+          (item) => (
+            <HomeTopCards
+              key={item.title}
+              title={item.title}
+              value={item.value}
+              icon={item.icon}
+              onClick={item.onClick}
+              isAction={item.isAction}
+            />
         ))}
       </div>
 
@@ -162,17 +194,20 @@ const MyVehicles = () => {
 
         {userVehicles?.length ? (
           <>
-            {userVehicles.map((veh, i) => (
-              <div key={veh.licensePlate}>
-                <VehiclesCardsTable
-                  veh={veh}
-                  activeReportCount={
-                    reportsByPlate.get(String(veh.licensePlate))?.length || 0
-                  }
-                  onViewReports={setSelectedVehicleForReports}
-                />
-                {i < userVehicles.length - 1 && <hr />}
-              </div>
+            {userVehicles.map(
+              /* Transforms each collection entry for the surrounding mapping.
+               * It accepts veh and i and returns the mapped value. */
+              (veh, i) => (
+                <div key={veh.licensePlate}>
+                  <VehiclesCardsTable
+                    veh={veh}
+                    activeReportCount={
+                      reportsByPlate.get(String(veh.licensePlate))?.length || 0
+                    }
+                    onViewReports={setSelectedVehicleForReports}
+                  />
+                  {i < userVehicles.length - 1 && <hr />}
+                </div>
             ))}
 
             <Pagination
@@ -194,7 +229,10 @@ const MyVehicles = () => {
 
       <OwnerVehicleReportsModal
         isOpen={Boolean(selectedVehicleForReports)}
-        onClose={() => setSelectedVehicleForReports(null)}
+        onClose={
+          /* Handles the close callback for this rendered control.
+           * It accepts no arguments and returns the delegated result. */
+          () => setSelectedVehicleForReports(null)}
         vehicleLabel={selectedVehicleLabel}
         reports={selectedReports}
       />

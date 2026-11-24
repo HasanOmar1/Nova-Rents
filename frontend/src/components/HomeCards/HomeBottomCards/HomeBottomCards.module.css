@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the HomeBottomCards interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .HomeBottomCards {
   display: flex;
   flex-direction: column;

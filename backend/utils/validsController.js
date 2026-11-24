@@ -1,3 +1,5 @@
+/** Shared backend utility for valids operations.
+ * Normalizes, validates, or transforms values for the surrounding domain. */
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   checkValidName,
@@ -7,10 +9,14 @@ const {
 } = require("./Valids");
 const { clearFailedUploads } = require("./handleUploads");
 
+/** Sends validation error.
+ * Accepts res, code, and message; returns the resulting JSON error response. */
 function sendValidationError(res, code, message) {
   return res.status(code).json({ message });
 }
 
+/** Validates required register fields.
+ * Accepts body and res; returns the validation or boolean result. */
 function validateRequiredRegisterFields(body, res) {
   const { firstName, lastName, email, password, phone, birthDate } = body;
   if (!firstName || !lastName || !email || !password || !phone || !birthDate) {
@@ -22,6 +28,8 @@ function validateRequiredRegisterFields(body, res) {
   }
   return true;
 }
+/** Validates required rental fields.
+ * Accepts body and res; returns the validation or boolean result. */
 function validateRequiredRentalFields(body, res) {
   const { licensePlate, startDate, endDate } = body;
   if (!licensePlate || !startDate || !endDate) {
@@ -34,6 +42,8 @@ function validateRequiredRentalFields(body, res) {
   return true;
 }
 
+/** Validates register input formats.
+ * Accepts body and res; returns the validation or boolean result. */
 function validateRegisterInputFormats(body, res) {
   const { firstName, lastName, email, password, phone } = body;
 
@@ -75,6 +85,8 @@ function validateRegisterInputFormats(body, res) {
   return true;
 }
 
+/** Validates login fields.
+ * Accepts email, password, and res; returns the validation or boolean result. */
 function validateLoginFields(email, password, res) {
   if (!email || !password) {
     return sendValidationError(
@@ -86,6 +98,8 @@ function validateLoginFields(email, password, res) {
   return true;
 }
 
+/** Validates update input formats.
+ * Accepts body and res; returns the validation or boolean result. */
 function validateUpdateInputFormats(body, res) {
   const { firstName, lastName, newEmail, password, phone } = body;
 
@@ -129,6 +143,8 @@ function validateUpdateInputFormats(body, res) {
   return true;
 }
 
+/** Validates authenticated user.
+ * Accepts req, res, and message; returns a response or delegates to the next middleware. */
 function validateAuthenticatedUser(req, res, message) {
   if (!req.session?.user) {
     return sendValidationError(res, STATUS_CODE.UNAUTHORIZED, message);
@@ -136,6 +152,8 @@ function validateAuthenticatedUser(req, res, message) {
   return true;
 }
 
+/** Validates email in body.
+ * Accepts email and res; returns the validation or boolean result. */
 function validateEmailInBody(email, res) {
   if (!email) {
     return sendValidationError(
@@ -147,7 +165,11 @@ function validateEmailInBody(email, res) {
   return true;
 }
 
+/** Validates and normalize vehicle create.
+ * Accepts req and res; returns a response or delegates to the next middleware. */
 function validateAndNormalizeVehicleCreate(req, res) {
+  /** Clears failed uploads and sends a validation-error response.
+   * Accepts status and msg; returns the HTTP error response. */
   const handleError = (status, msg) => {
     clearFailedUploads(req.files);
     return sendValidationError(res, status, msg);
@@ -203,7 +225,10 @@ function validateAndNormalizeVehicleCreate(req, res) {
     return handleError(STATUS_CODE.BAD_REQUEST, "All fields are required.");
   }
 
-  const imageFilenames = uploadedFiles.map((file) => file.filename);
+  const imageFilenames = uploadedFiles.map(
+    /** Transforms one collection item for the surrounding mapping operation.
+     * Accepts file; returns the transformed collection value. */
+    (file) => file.filename);
   const imageJsonString = JSON.stringify(imageFilenames);
 
   const plateString = String(licensePlate).trim();
@@ -278,6 +303,8 @@ function validateAndNormalizeVehicleCreate(req, res) {
   };
 }
 
+/** Validates exact pickup fields.
+ * Accepts body and res; returns the validation or boolean result. */
 function validateExactPickupFields(body, res) {
   const exactPickupAddress = String(body.exactPickupAddress || "").trim();
   const pickupInstructionsRaw = body.pickupInstructions;
@@ -346,6 +373,8 @@ function validateExactPickupFields(body, res) {
   };
 }
 
+/** Validates and merge vehicle update.
+ * Accepts existingVehicle, body, req, and res; returns a response or delegates to the next middleware. */
 function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   if (
     !validateAuthenticatedUser(
@@ -359,7 +388,10 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
 
   let imageToSave = existingVehicle.image;
   if (req.files && req.files.length > 0) {
-    const imageFilenames = req.files.map((file) => file.filename);
+    const imageFilenames = req.files.map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts file; returns the transformed collection value. */
+      (file) => file.filename);
     imageToSave = JSON.stringify(imageFilenames);
   }
 
@@ -478,6 +510,8 @@ function validateAndMergeVehicleUpdate(existingVehicle, body, req, res) {
   };
 }
 
+/** Validates complaint fields.
+ * Accepts body and res; returns the validation or boolean result. */
 function validateComplaintFields(body, res) {
   const { complaintType, title, description, rentalId } = body;
 

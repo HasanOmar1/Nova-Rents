@@ -1,3 +1,5 @@
+/** Express route definitions for documents endpoints.
+ * Maps HTTP requests and access checks to the corresponding controllers. */
 const express = require("express");
 const router = express.Router();
 const { isAuthenticated, isAdmin } = require("../middleWare/authMiddleware");
@@ -10,10 +12,15 @@ const documentsController = require("../controllers/documentsController");
 router.post(
   "/",
   isAuthenticated,
+  /** Runs the single-file document upload before the controller executes.
+   * Accepts req, res, and next; returns the HTTP response or delegates to the next handler. */
   (req, res, next) => {
-    documentUpload.single("file")(req, res, (err) => {
-      if (err) return handleDocumentUploadError(err, req, res, next);
-      next();
+    documentUpload.single("file")(req, res,
+      /** Continues document handling after the Multer upload finishes.
+       * Accepts err; returns the upload response or delegates onward. */
+      (err) => {
+        if (err) return handleDocumentUploadError(err, req, res, next);
+        next();
     });
   },
   documentsController.uploadOrReplaceDocument_controller,

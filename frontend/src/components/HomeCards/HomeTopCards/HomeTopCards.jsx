@@ -1,6 +1,10 @@
+// Defines the Home Top Cards React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useNavigate } from "react-router-dom";
 import styles from "./HomeTopCards.module.css";
 
+// Renders the Home Top Cards interface.
+// Accepts an options object and returns rendered JSX.
 const HomeTopCards = ({
   title,
   icon,
@@ -12,6 +16,8 @@ const HomeTopCards = ({
 }) => {
   const navigate = useNavigate();
 
+  // Handles navigate for the surrounding interface.
+  // Takes no arguments and returns nothing.
   const handleNavigate = () => {
     navigate(to);
   };

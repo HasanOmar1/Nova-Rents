@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the HomeMidCards interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .HomeMidCards {
   background-color: var(--bg-gray);
   border: var(--cards-border);

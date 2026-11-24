@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the DocumentsAdminCards interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .DocumentsAdminCards {
   display: grid;
   grid-template-columns: var(--documents-grid-columns);

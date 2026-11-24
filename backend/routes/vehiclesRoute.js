@@ -1,9 +1,15 @@
+/** Express route definitions for vehicles endpoints.
+ * Maps HTTP requests and access checks to the corresponding controllers. */
 // Express routes for vehicle actions: list, my vehicles, add, update, delete
 const express = require("express");
 const router = express.Router();
 const { isAuthenticated, isAdmin } = require("../middleWare/authMiddleware");
 const vehicleQueries = require("../controllers/vehiclesController");
-const upload = require("../middleWare/uploadMiddleware");
+const {
+  handleImageUploadError,
+  upload,
+  validateUploadedImages,
+} = require("../middleWare/uploadMiddleware");
 
 router.get("/", isAuthenticated, vehicleQueries.getAllVehicles);
 router.get("/admin", isAdmin, vehicleQueries.getAdminVehicles);
@@ -18,6 +24,8 @@ router.put(
   "/:licensePlate",
   isAuthenticated,
   upload.array("images", 4),
+  handleImageUploadError,
+  validateUploadedImages,
   vehicleQueries.updateVehicle,
 );
 // accept max 4 images
@@ -25,6 +33,8 @@ router.post(
   "/add",
   isAuthenticated,
   upload.array("images", 4),
+  handleImageUploadError,
+  validateUploadedImages,
   vehicleQueries.addVehicle,
 );
 

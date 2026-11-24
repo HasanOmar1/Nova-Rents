@@ -1,3 +1,5 @@
+// Defines birth-date input bounds for users between eighteen and seventy years old.
+// It exports locally formatted minimum and maximum dates for registration forms.
 import { formatDateForInput } from "./dateFormat";
 
 const today = new Date();

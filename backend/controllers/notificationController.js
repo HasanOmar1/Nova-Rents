@@ -1,3 +1,5 @@
+/** Express controller handlers for notification operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const STATUS_CODE = require("../constants/statusCodes");
 const {
   getNotificationsByUserId,
@@ -7,6 +9,8 @@ const {
 
 const { validateAuthenticatedUser } = require("../utils/validsController");
 
+/** Fetches my notifications.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getMyNotifications_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -24,6 +28,8 @@ async function getMyNotifications_controller(req, res, next) {
     next(error);
   }
 }
+/** Fetches unread notifications count.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getUnreadNotificationsCount_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -37,6 +43,8 @@ async function getUnreadNotificationsCount_controller(req, res, next) {
 }
 
 
+/** Marks notification as read.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function markNotificationAsRead_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))

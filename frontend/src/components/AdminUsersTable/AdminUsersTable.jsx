@@ -1,8 +1,12 @@
+// Defines the Admin Users Table React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useUserContext } from "../../context/UserContext";
 import UsersCards from "../UsersCards/UsersCards";
 import styles from "./AdminUsersTable.module.css";
 import Pagination from "../Pagination/Pagination";
 
+// Renders the Admin Users Table interface.
+// Accepts an options object and returns rendered JSX.
 const AdminUsersTable = ({ handleNextPage, handlePrevPage }) => {
   const { allUsers, pagination, blockUser, unBlockUser } = useUserContext();
 
@@ -18,18 +22,21 @@ const AdminUsersTable = ({ handleNextPage, handlePrevPage }) => {
 
       {allUsers?.length ? (
         <>
-          {allUsers?.map((user, i) => {
-            return (
-              <div key={user.userId}>
-                <UsersCards
-                  user={user}
-                  blockUser={blockUser}
-                  unBlockUser={unBlockUser}
-                />
-                {i < allUsers?.length - 1 && <hr />}
-              </div>
-            );
-          })}
+          {allUsers?.map(
+            // Runs the callback required by the surrounding operation.
+            // Accepts user and i and returns the callback result.
+            (user, i) => {
+              return (
+                <div key={user.userId}>
+                  <UsersCards
+                    user={user}
+                    blockUser={blockUser}
+                    unBlockUser={unBlockUser}
+                  />
+                  {i < allUsers?.length - 1 && <hr />}
+                </div>
+              );
+            })}
 
           <Pagination
             currentPage={pagination?.currentPage}

@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the UserStatusConfirmationModal interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .UserStatusConfirmationModal {
   width: min(92vw, 480px);
   max-height: min(90vh, 680px);

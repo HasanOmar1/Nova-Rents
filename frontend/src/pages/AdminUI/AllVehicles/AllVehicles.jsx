@@ -1,3 +1,5 @@
+// Presents the admin vehicle inventory with search and status filters.
+// It takes no props and returns inventory metrics, rows, and edit controls.
 import { useState, useEffect } from "react";
 import styles from "./AllVehicles.module.css";
 import {
@@ -30,6 +32,8 @@ const STATUS_LABELS = {
 
 const MAX_SEARCH_LENGTH = 100;
 
+/* Renders the all vehicles view and coordinates its page state.
+ * It accepts no arguments and returns the rendered page JSX. */
 const AllVehicles = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
@@ -48,12 +52,15 @@ const AllVehicles = () => {
   const debouncedSearch = useDebouncedValue(searchInput, 300, resetPage);
   const normalizedSearch = debouncedSearch.trim();
 
-  useEffect(() => {
-    getAdminVehicles(
-      { status: statusFilter, search: normalizedSearch },
-      currentPage,
-    );
-  }, [getAdminVehicles, statusFilter, normalizedSearch, currentPage]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      getAdminVehicles(
+        { status: statusFilter, search: normalizedSearch },
+        currentPage,
+      );
+    }, [getAdminVehicles, statusFilter, normalizedSearch, currentPage]);
 
   const totalVehicles = Number(allVehPagination?.totalVehicles) || 0;
   const pageLimit = Number(allVehPagination?.limit) || 6;
@@ -64,8 +71,14 @@ const AllVehicles = () => {
     ? firstVehicleNumber + allVehicles.length - 1
     : 0;
 
+  /* Opens the vehicle brand management menu.
+   * It accepts no arguments and returns undefined. */
   const openAddBrandMenu = () => setIsOpen(true);
+  /* Closes the vehicle brand management menu.
+   * It accepts no arguments and returns undefined. */
   const closeAddBrandMenu = () => setIsOpen(false);
+  /* Clears the inventory search input.
+   * It accepts no arguments and returns undefined. */
   const clearSearch = () => setSearchInput("");
   const selectedStatusLabel = STATUS_LABELS[statusFilter];
   const resultSummary = [
@@ -88,49 +101,70 @@ const AllVehicles = () => {
       title: "Total in system",
       value: allVehStats?.total || 0,
       icon: <Car size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("all"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("all"),
       isAction: true,
     },
     {
       title: "Available",
       value: allVehStats?.available || 0,
       icon: <CheckCircle2 size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("available"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("available"),
       isAction: true,
     },
     {
       title: "Not validated",
       value: allVehStats?.notValidated ?? allVehStats?.not_validated ?? 0,
       icon: <AlertTriangle size={28} color="#f9e081" />,
-      onClick: () => handleStatusChange("not_validated"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("not_validated"),
       isAction: true,
     },
     {
       title: "Unavailable",
       value: allVehStats?.unavailable || 0,
       icon: <Ban size={28} color="#fb7185" />,
-      onClick: () => handleStatusChange("unavailable"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("unavailable"),
       isAction: true,
     },
     {
       title: "Rented",
       value: allVehStats?.rented || 0,
       icon: <CalendarClock size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("rented"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("rented"),
       isAction: true,
     },
     {
       title: "Maintenance",
       value: allVehStats?.maintenance || 0,
       icon: <Wrench size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("maintenance"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("maintenance"),
       isAction: true,
     },
     {
       title: "Inactive",
       value: allVehStats?.inactive || 0,
       icon: <ShieldOff size={28} color="#a7d2eb" />,
-      onClick: () => handleStatusChange("inactive"),
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("inactive"),
       isAction: true,
     },
   ];
@@ -161,7 +195,10 @@ const AllVehicles = () => {
               id="vehicle-search"
               type="search"
               value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
+              onChange={
+                /* Handles the change callback for this rendered control.
+                 * It accepts event and returns the delegated result. */
+                (event) => setSearchInput(event.target.value)}
               placeholder="Plate, owner, vehicle, or location"
               maxLength={MAX_SEARCH_LENGTH}
               autoComplete="off"
@@ -205,16 +242,19 @@ const AllVehicles = () => {
       </div>
 
       <div className={styles.topCardsContainer}>
-        {topData.map((item) => (
-          <HomeTopCards
-            key={item.title}
-            className={styles.vehicleStatCard}
-            title={item.title}
-            value={item.value}
-            icon={item.icon}
-            onClick={item.onClick}
-            isAction={item.isAction}
-          />
+        {topData.map(
+          /* Transforms each collection entry for the surrounding mapping.
+           * It accepts item and returns the mapped value. */
+          (item) => (
+            <HomeTopCards
+              key={item.title}
+              className={styles.vehicleStatCard}
+              title={item.title}
+              value={item.value}
+              icon={item.icon}
+              onClick={item.onClick}
+              isAction={item.isAction}
+            />
         ))}
       </div>
 
@@ -235,11 +275,14 @@ const AllVehicles = () => {
 
         {allVehicles?.length > 0 ? (
           <>
-            {allVehicles.map((veh, i) => (
-              <div key={veh.licensePlate}>
-                <VehiclesCardsTable veh={veh} admin />
-                {i < allVehicles.length - 1 && <hr />}
-              </div>
+            {allVehicles.map(
+              /* Transforms each collection entry for the surrounding mapping.
+               * It accepts veh and i and returns the mapped value. */
+              (veh, i) => (
+                <div key={veh.licensePlate}>
+                  <VehiclesCardsTable veh={veh} admin />
+                  {i < allVehicles.length - 1 && <hr />}
+                </div>
             ))}
             <Pagination
               currentPage={currentPage}

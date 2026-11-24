@@ -1,3 +1,5 @@
+// Defines constants used by the documents cards interface.
+// It exports stable configuration data for related components and helpers.
 import styles from "./DocumentsCards.module.css";
 
 export const STATUS_CLASS = {

@@ -1,3 +1,5 @@
+// Defines the Government Verification Controls React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useState } from "react";
 import { RefreshCw, ShieldCheck, TriangleAlert } from "lucide-react";
 import AsyncButton from "../AsyncButton/AsyncButton";
@@ -8,6 +10,8 @@ import styles from "./GovernmentVerificationControls.module.css";
 const MIN_OVERRIDE_REASON_LENGTH = 10;
 const MAX_OVERRIDE_REASON_LENGTH = 500;
 
+// Renders the Government Verification Controls interface.
+// Accepts an options object and returns rendered JSX.
 const GovernmentVerificationControls = ({
   licensePlate,
   governmentStatus,
@@ -29,6 +33,8 @@ const GovernmentVerificationControls = ({
     governmentStatus === "not_checked" ||
     governmentStatus === "pending";
 
+  // Reloads the current vehicle so verification details reflect the latest API state.
+  // Takes no arguments and returns a promise for the refresh operation.
   const refreshVehicle = async () => {
     try {
       await onUpdated?.();
@@ -38,6 +44,8 @@ const GovernmentVerificationControls = ({
     }
   };
 
+  // Handles official check for the surrounding interface.
+  // Takes no arguments and returns a promise for the operation result.
   const handleOfficialCheck = async () => {
     if (busy) return;
     setFeedback(null);
@@ -65,6 +73,8 @@ const GovernmentVerificationControls = ({
     await refreshVehicle();
   };
 
+  // Handles manual override for the surrounding interface.
+  // Accepts event and returns a promise for the operation result.
   const handleManualOverride = async (event) => {
     event.preventDefault();
     if (busy) return;
@@ -122,10 +132,16 @@ const GovernmentVerificationControls = ({
         <button
           type="button"
           className={styles.overrideButton}
-          onClick={() => {
-            setIsOverrideOpen((open) => !open);
-            setFeedback(null);
-          }}
+          onClick={
+            // Handles the component's click event.
+            // Takes no arguments and returns the handler result.
+            () => {
+              setIsOverrideOpen(
+                // Handles the component's click event.
+                // Accepts open and returns the handler result.
+                (open) => !open);
+              setFeedback(null);
+            }}
           disabled={busy}
           aria-expanded={isOverrideOpen}
         >
@@ -150,7 +166,10 @@ const GovernmentVerificationControls = ({
           <textarea
             id={`manual-government-reason-${licensePlate}`}
             value={reason}
-            onChange={(event) => setReason(event.target.value)}
+            onChange={
+              // Handles the component's change event.
+              // Accepts event and returns the handler result.
+              (event) => setReason(event.target.value)}
             minLength={MIN_OVERRIDE_REASON_LENGTH}
             maxLength={MAX_OVERRIDE_REASON_LENGTH}
             rows={3}
@@ -166,11 +185,14 @@ const GovernmentVerificationControls = ({
               <button
                 type="button"
                 className={styles.cancelButton}
-                onClick={() => {
-                  setIsOverrideOpen(false);
-                  setReason("");
-                  setFeedback(null);
-                }}
+                onClick={
+                  // Handles the component's click event.
+                  // Takes no arguments and returns the handler result.
+                  () => {
+                    setIsOverrideOpen(false);
+                    setReason("");
+                    setFeedback(null);
+                  }}
                 disabled={busy}
               >
                 Cancel

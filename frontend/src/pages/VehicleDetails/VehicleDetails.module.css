@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the VehicleDetails interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .VehicleDetails .top {
   display: flex;
   justify-content: space-between;

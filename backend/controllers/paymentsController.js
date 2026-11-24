@@ -1,3 +1,5 @@
+/** Express controller handlers for payments operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const crypto = require("crypto");
 const STATUS_CODE = require("../constants/statusCodes");
 const { validateAuthenticatedUser } = require("../utils/validsController");
@@ -39,6 +41,8 @@ const { buildMapsDirectionsUrl } = require("../utils/mapsDirections");
 // chars (rental_payments.paymentToken is VARCHAR(128)).
 const TOKEN_REGEX = /^[a-f0-9]{64}$/;
 
+/** Generates payment token.
+ * Accepts no arguments; returns a unique payment token string. */
 const generatePaymentToken = () => crypto.randomBytes(32).toString("hex");
 
 const FRONTEND_URL =
@@ -49,6 +53,8 @@ const FRONTEND_URL =
 // Shape returned to the frontend — one contract for both endpoints.
 // Public city only (vehicleAddress). Exact pickup snapshot fields are attached
 // only after payment when a rental_pickup_locations row exists.
+/** Builds the public payment response and optional pickup snapshot.
+ * Accepts payment and snapshot; returns the payment response object. */
 const toPaymentResponse = (payment, snapshot = null) => {
   const safe = omitPrivatePickupFields(payment);
   const paid = safe.paymentStatus === "paid";
@@ -97,6 +103,8 @@ const toPaymentResponse = (payment, snapshot = null) => {
   };
 };
 
+/** Fetches payment.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getPayment(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -140,6 +148,8 @@ async function getPayment(req, res, next) {
   }
 }
 
+/** Completes test payment.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function completeTestPayment(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -201,20 +211,23 @@ async function completeTestPayment(req, res, next) {
     // Atomic: pending → paid + one immutable snapshot. Emails only after COMMIT.
     let transitionSucceeded = false;
     try {
-      await withTransaction(async (connection) => {
-        const payResult = await markPaymentPaidByTokenOnConnection(
-          connection,
-          paymentToken,
-        );
+      await withTransaction(
+        /** Executes the database work within the surrounding transaction.
+         * Accepts connection; returns a promise for the transactional result. */
+        async (connection) => {
+          const payResult = await markPaymentPaidByTokenOnConnection(
+            connection,
+            paymentToken,
+          );
 
-        if (payResult.affectedRows !== 1) {
-          const err = new Error("Payment was already completed");
-          err.code = "PAYMENT_ALREADY_PAID";
-          throw err;
-        }
+          if (payResult.affectedRows !== 1) {
+            const err = new Error("Payment was already completed");
+            err.code = "PAYMENT_ALREADY_PAID";
+            throw err;
+          }
 
-        await insertPickupSnapshotFromVehicle(connection, payment.rentalId);
-        transitionSucceeded = true;
+          await insertPickupSnapshotFromVehicle(connection, payment.rentalId);
+          transitionSucceeded = true;
       });
     } catch (txError) {
       if (txError.code === "PAYMENT_ALREADY_PAID") {

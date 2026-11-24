@@ -1,3 +1,5 @@
+// Defines the Vehicles Cards Table React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useState } from "react";
 import DeleteMenu from "../DeleteMenu/DeleteMenu";
 import styles from "./VehiclesCardsTable.module.css";
@@ -13,6 +15,8 @@ import {
   getVehicleDisplayStatus,
 } from "../../utils/displayFormat";
 
+// Renders the Vehicles Cards Table interface.
+// Accepts an options object and returns rendered JSX.
 const VehiclesCardsTable = ({
   veh,
   admin,
@@ -26,15 +30,25 @@ const VehiclesCardsTable = ({
 
   const { deleteUserVehicle, errorMsg, setErrorMsg } = useVehicleContext();
 
+  // Opens delete menu for the user.
+  // Takes no arguments and returns the computed result.
   const openDeleteMenu = () => setIsDeleteOpen(true);
+  // Closes delete menu and related transient state.
+  // Takes no arguments and returns nothing.
   const closeDeleteMenu = () => {
     setIsDeleteOpen(false);
     setErrorMsg("");
   };
 
+  // Opens edit menu for the user.
+  // Takes no arguments and returns the computed result.
   const openEditMenu = () => setIsEditOpen(true);
+  // Closes edit menu and related transient state.
+  // Takes no arguments and returns the computed result.
   const closeEditMenu = () => setIsEditOpen(false);
 
+  // Handles delete vehicle for the surrounding interface.
+  // Takes no arguments and returns a promise for the operation result.
   const handleDeleteVehicle = async () => {
     if (isDeleting) return;
     setIsDeleting(true);
@@ -67,9 +81,7 @@ const VehiclesCardsTable = ({
     vehicleForDetails.ownerEmail || ownerFullName || "Unknown owner";
   const isOwnerBlocked =
     admin && String(vehicleForDetails.ownerStatus).toLowerCase() === "blocked";
-  const displayedStatus = admin
-    ? getVehicleDisplayStatus(vehicleForDetails)
-    : veh.status || "unknown";
+  const displayedStatus = getVehicleDisplayStatus(vehicleForDetails);
   const eligibilitySummary =
     !admin && veh.rentalEligibility
       ? buildVehicleEligibilitySummary(veh.rentalEligibility)
@@ -120,7 +132,10 @@ const VehiclesCardsTable = ({
                 ? styles.reportBadge
                 : styles.reportBadgeMuted
             }
-            onClick={() => onViewReports?.(veh)}
+            onClick={
+              // Handles the component's click event.
+              // Takes no arguments and returns the handler result.
+              () => onViewReports?.(veh)}
             title="View active reports"
           >
             <Flag size={12} />
@@ -216,7 +231,10 @@ const VehiclesCardsTable = ({
           <div className={styles.eligibilitySummary}>
             <p className={styles.eligibilityTitle}>Verification incomplete</p>
             <ul className={styles.eligibilityChecks}>
-              {eligibilitySummary.checks.map((check) => (
+              {eligibilitySummary.checks.map(
+                // Transforms one collection entry for the resulting list.
+                // Accepts check and returns the mapped entry.
+                (check) => (
                 <li key={check.key}>
                   {check.ok ? "✓" : "✗"} {check.label}
                 </li>

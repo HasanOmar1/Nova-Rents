@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the GovernmentVerificationControls interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .GovernmentVerificationControls {
   display: grid;
   gap: 10px;

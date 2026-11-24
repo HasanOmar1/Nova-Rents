@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the AllVehicles interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .AllVehicles {
   container: all-vehicles-page / inline-size;
 }

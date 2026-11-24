@@ -1,3 +1,5 @@
+/** Shared constants for backend status codes values.
+ * Exports stable values used across controllers, middleware, and services. */
 // Central place for common HTTP status codes used in the API
 const STATUS_CODE = {
   OK: 200,
@@ -8,6 +10,7 @@ const STATUS_CODE = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  PAYLOAD_TOO_LARGE: 413,
   TOO_MANY_REQUESTS: 429,
   INTERNAL_SERVER_ERROR: 500,
 };

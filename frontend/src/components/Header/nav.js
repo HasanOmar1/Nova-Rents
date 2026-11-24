@@ -1,3 +1,5 @@
+// Defines the role-aware navigation entries displayed by the application header.
+// It exports static labels, routes, and icons for each supported user role.
 import {
   Car,
   MapPin,

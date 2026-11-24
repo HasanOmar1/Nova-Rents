@@ -1,6 +1,10 @@
+/** Database query helpers for rental pickup location records.
+ * Encapsulates the domain's SQL reads, writes, and result shaping. */
 const doQuery = require("../query");
 const { queryOnConnection } = require("../withTransaction");
 
+/** Fetches vehicle exact pickup by license plate.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getVehicleExactPickupByLicensePlate(licensePlate) {
   const rows = await doQuery(
     `
@@ -19,6 +23,8 @@ async function getVehicleExactPickupByLicensePlate(licensePlate) {
   return rows[0] || null;
 }
 
+/** Checks whether exact pickup complete.
+ * Accepts vehicle; returns the validation or boolean result. */
 function isExactPickupComplete(vehicle) {
   if (!vehicle) return false;
   const address = String(vehicle.exactPickupAddress || "").trim();
@@ -35,6 +41,8 @@ function isExactPickupComplete(vehicle) {
   );
 }
 
+/** Fetches pickup snapshot by rental id.
+ * Accepts rentalId; returns a promise for the requested data. */
 async function getPickupSnapshotByRentalId(rentalId) {
   const rows = await doQuery(
     `
@@ -58,6 +66,8 @@ async function getPickupSnapshotByRentalId(rentalId) {
  * Immutable snapshot insert. Copies live vehicle exact pickup at payment time.
  * Must run inside a transaction connection. Never UPDATEs an existing row.
  */
+/** Inserts pickup snapshot from vehicle.
+ * Accepts connection and rentalId; returns a promise for the operation result. */
 async function insertPickupSnapshotFromVehicle(connection, rentalId) {
   const insertResult = await queryOnConnection(
     connection,
@@ -113,6 +123,8 @@ async function insertPickupSnapshotFromVehicle(connection, rentalId) {
   return insertResult;
 }
 
+/** Marks payment paid by token on connection.
+ * Accepts connection and paymentToken; returns a promise for the operation result. */
 async function markPaymentPaidByTokenOnConnection(connection, paymentToken) {
   return queryOnConnection(
     connection,

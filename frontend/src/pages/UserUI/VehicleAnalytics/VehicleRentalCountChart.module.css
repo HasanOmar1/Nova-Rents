@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the VehicleRentalCountChart interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .card {
   container-type: inline-size;
   display: flex;

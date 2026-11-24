@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the Users interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .Users .topCardsContainer {
   display: flex;
   gap: 20px;

@@ -1,3 +1,5 @@
+// Presents a user's public profile, statistics, vehicles, and report action.
+// It takes route data and returns loading, missing-user, or profile content.
 import { useEffect } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import styles from "./UserStats.module.css";
@@ -24,6 +26,8 @@ import {
   getVehicleDisplayStatus,
 } from "../../utils/displayFormat";
 
+/* Renders the user stats view and coordinates its page state.
+ * It accepts no arguments and returns the rendered page JSX. */
 const UserStats = () => {
   const { email } = useParams();
   const navigate = useNavigate();
@@ -40,18 +44,25 @@ const UserStats = () => {
     resetKey: email,
   });
 
-  useEffect(() => {
-    fetchUserStats(email, currentPage);
-  }, [email, currentPage]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      fetchUserStats(email, currentPage);
+    }, [email, currentPage]);
 
   // Reuse existing /rentals/history for report-button UX (no new endpoint).
-  useEffect(() => {
-    if (currentUser) {
-      fetchRentalHistory();
-    }
-  }, [currentUser]);
+  useEffect(
+    /* Runs this component effect when its dependency values change.
+     * It accepts no arguments and returns an optional cleanup function. */
+    () => {
+      if (currentUser) {
+        fetchRentalHistory();
+      }
+    }, [currentUser]);
 
-  // --- NEW: Handles formatting and passing ALL data to VehicleDetails ---
+  // Normalizes a selected vehicle and opens its detail route.
+  // It accepts a vehicle object and returns undefined.
   const handleVehicleClick = (veh) => {
     const formattedVehicle = {
       ...veh,
@@ -86,6 +97,8 @@ const UserStats = () => {
     : null;
   const canReportOwner = Boolean(paidTripForOwner);
 
+  /* Opens a complaint form prefilled with the displayed owner's details.
+   * It accepts no arguments and returns undefined. */
   const handleReportOwner = () => {
     if (!user?.userId || !paidTripForOwner?.rentalId) return;
     navigate(
@@ -104,7 +117,10 @@ const UserStats = () => {
   return (
     <div className={`${styles.UserStats} page`}>
       <div className={styles.topActions}>
-        <button className={styles.backBtn} onClick={() => navigate(-1)}>
+        <button className={styles.backBtn} onClick={
+          /* Handles the click callback for this rendered control.
+           * It accepts no arguments and returns the delegated result. */
+          () => navigate(-1)}>
           <ArrowLeft size={18} /> Back
         </button>
         {!isOwnProfile && (
@@ -197,47 +213,53 @@ const UserStats = () => {
       ) : (
         <>
           <div className={styles.vehiclesList}>
-            {vehicles.map((veh) => {
-              const vehicleWithOwnerStatus = {
-                ...veh,
-                ownerStatus: veh.ownerStatus ?? user.status,
-              };
-              const displayStatus = getVehicleDisplayStatus(
-                vehicleWithOwnerStatus,
-              );
-              const statusClass =
-                displayStatus === "not_validated"
-                  ? styles.notValidated
-                  : styles[displayStatus] || styles.unknownStatus;
+            {vehicles.map(
+              /* Transforms each collection entry for the surrounding mapping.
+               * It accepts veh and returns the mapped value. */
+              (veh) => {
+                const vehicleWithOwnerStatus = {
+                  ...veh,
+                  ownerStatus: veh.ownerStatus ?? user.status,
+                };
+                const displayStatus = getVehicleDisplayStatus(
+                  vehicleWithOwnerStatus,
+                );
+                const statusClass =
+                  displayStatus === "not_validated"
+                    ? styles.notValidated
+                    : styles[displayStatus] || styles.unknownStatus;
 
-              return (
-                <div
-                  key={veh.licensePlate}
-                  className={styles.vehCard}
-                  onClick={() => handleVehicleClick(veh)}
-                >
-                  <img
-                    src={parseImgs(veh.image)}
-                    alt={veh.modelName}
-                    className={styles.vehImg}
-                  />
-                  <div className={styles.vehInfo}>
-                    <h4>
-                      {veh.brandName} {veh.modelName}
-                    </h4>
-                    <p className={styles.vehPlate}>
-                      Plate: {veh.licensePlate}
-                    </p>
-                    <p className={styles.vehDetails}>
-                      Year: {veh.year} • ${veh.price}/day
-                    </p>
-                    <span className={`${styles.vehStatus} ${statusClass}`}>
-                      {formatVehicleStatus(displayStatus)}
-                    </span>
+                return (
+                  <div
+                    key={veh.licensePlate}
+                    className={styles.vehCard}
+                    onClick={
+                      /* Handles the click callback for this rendered control.
+                       * It accepts no arguments and returns the delegated result. */
+                      () => handleVehicleClick(veh)}
+                  >
+                    <img
+                      src={parseImgs(veh.image)}
+                      alt={veh.modelName}
+                      className={styles.vehImg}
+                    />
+                    <div className={styles.vehInfo}>
+                      <h4>
+                        {veh.brandName} {veh.modelName}
+                      </h4>
+                      <p className={styles.vehPlate}>
+                        Plate: {veh.licensePlate}
+                      </p>
+                      <p className={styles.vehDetails}>
+                        Year: {veh.year} • ${veh.price}/day
+                      </p>
+                      <span className={`${styles.vehStatus} ${statusClass}`}>
+                        {formatVehicleStatus(displayStatus)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
 
           <div className={styles.paginationContainer}>

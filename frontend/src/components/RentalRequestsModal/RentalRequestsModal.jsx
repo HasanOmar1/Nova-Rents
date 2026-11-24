@@ -1,3 +1,5 @@
+// Defines the Rental Requests Modal React component and its supporting UI behavior.
+// It converts supplied props and shared state into the rendered interface.
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./RentalRequestsModal.module.css";
@@ -14,6 +16,8 @@ import AsyncButton from "../AsyncButton/AsyncButton";
 import { formatShortDate } from "../../utils/dateFormat";
 import { useModalDialog } from "../../hooks/useModalDialog";
 
+// Renders the Rental Requests Modal interface.
+// Accepts an options object and returns rendered JSX.
 const RentalRequestsModal = ({
   isOpen,
   onClose,
@@ -28,6 +32,8 @@ const RentalRequestsModal = ({
   const [pendingAction, setPendingAction] = useState("");
   const navigate = useNavigate();
 
+  // Handles rental action for the surrounding interface.
+  // Accepts rental id and action and returns a promise for the operation result.
   const handleRentalAction = async (rentalId, action) => {
     const actionKey = `${action}-${rentalId}`;
     setPendingAction(actionKey);
@@ -38,18 +44,24 @@ const RentalRequestsModal = ({
     }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      setTripFilter(mode === "pending" ? "all" : initialTripFilter);
-      setReportMenuRentalId(null);
-    }
-  }, [initialTripFilter, isOpen, mode]);
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (isOpen) {
+        setTripFilter(mode === "pending" ? "all" : initialTripFilter);
+        setReportMenuRentalId(null);
+      }
+    }, [initialTripFilter, isOpen, mode]);
 
-  useEffect(() => {
-    if (isOpen && groupData && groupData.rentals.length === 0) {
-      onClose();
-    }
-  }, [groupData, isOpen, onClose]);
+  useEffect(
+    // Synchronizes the component with an external effect after rendering.
+    // Takes no arguments and returns an optional cleanup function.
+    () => {
+      if (isOpen && groupData && groupData.rentals.length === 0) {
+        onClose();
+      }
+    }, [groupData, isOpen, onClose]);
 
   if (!groupData) return null;
 
@@ -58,7 +70,10 @@ const RentalRequestsModal = ({
 
   const filteredRentals = isPendingMode
     ? rentals
-    : rentals.filter((trip) => {
+    : rentals.filter(
+      // Tests whether one collection entry belongs in the filtered result.
+      // Accepts trip and returns a Boolean inclusion result.
+      (trip) => {
         if (tripFilter === "all") return true;
         if (tripFilter === "rejected") {
           return (
@@ -73,7 +88,10 @@ const RentalRequestsModal = ({
       className={styles.RentalRequestsModal}
       ref={dialogRef}
       onClose={onClose}
-      onClick={(e) => e.stopPropagation()}
+      onClick={
+        // Handles the component's click event.
+        // Accepts e and returns the handler result.
+        (e) => e.stopPropagation()}
     >
       <div className={styles.header}>
         <div className={styles.headerInfo}>
@@ -90,7 +108,10 @@ const RentalRequestsModal = ({
           {!isPendingMode && (
             <select
               value={tripFilter}
-              onChange={(e) => setTripFilter(e.target.value)}
+              onChange={
+                // Handles the component's change event.
+                // Accepts e and returns the handler result.
+                (e) => setTripFilter(e.target.value)}
               className={styles.filterSelect}
             >
               <option value="all">All Trips</option>
@@ -114,7 +135,10 @@ const RentalRequestsModal = ({
         {filteredRentals.length === 0 ? (
           <p className={styles.emptyMsg}>No trips found for this filter.</p>
         ) : (
-          filteredRentals.map((rental) => (
+          filteredRentals.map(
+            // Transforms one collection entry for the resulting list.
+            // Accepts rental and returns the mapped entry.
+            (rental) => (
             <div key={rental.rentalId} className={styles.rentalItem}>
               <div className={styles.itemHeader}>
                 {/* --- UPDATED: Renter Name + User Stats Button --- */}
@@ -129,7 +153,10 @@ const RentalRequestsModal = ({
                   {isPendingMode && rental.renterEmail && (
                     <button
                       className={styles.viewUserBtn}
-                      onClick={() =>
+                      onClick={
+                        // Handles the component's click event.
+                        // Takes no arguments and returns the handler result.
+                        () =>
                         navigate(`/userStats/${rental.renterEmail}`, {
                           state: rental,
                         })
@@ -200,18 +227,21 @@ const RentalRequestsModal = ({
                           <button
                             type="button"
                             className={styles.reportChoiceBtn}
-                            onClick={() => {
-                              onClose();
-                              navigate(
-                                `/complaints?complaintType=vehicle` +
-                                  `&vehicleLicensePlate=${encodeURIComponent(
-                                    rental.licensePlate,
-                                  )}` +
-                                  `&rentalId=${encodeURIComponent(
-                                    rental.rentalId,
-                                  )}`,
-                              );
-                            }}
+                            onClick={
+                              // Handles the component's click event.
+                              // Takes no arguments and returns the handler result.
+                              () => {
+                                onClose();
+                                navigate(
+                                  `/complaints?complaintType=vehicle` +
+                                    `&vehicleLicensePlate=${encodeURIComponent(
+                                      rental.licensePlate,
+                                    )}` +
+                                    `&rentalId=${encodeURIComponent(
+                                      rental.rentalId,
+                                    )}`,
+                                );
+                              }}
                           >
                             Vehicle
                           </button>
@@ -219,26 +249,32 @@ const RentalRequestsModal = ({
                             type="button"
                             className={styles.reportChoiceBtn}
                             disabled={!rental.ownerId}
-                            onClick={() => {
-                              if (!rental.ownerId) return;
-                              onClose();
-                              navigate(
-                                `/complaints?complaintType=owner` +
-                                  `&ownerId=${encodeURIComponent(
-                                    rental.ownerId,
-                                  )}` +
-                                  `&rentalId=${encodeURIComponent(
-                                    rental.rentalId,
-                                  )}`,
-                              );
-                            }}
+                            onClick={
+                              // Handles the component's click event.
+                              // Takes no arguments and returns the handler result.
+                              () => {
+                                if (!rental.ownerId) return;
+                                onClose();
+                                navigate(
+                                  `/complaints?complaintType=owner` +
+                                    `&ownerId=${encodeURIComponent(
+                                      rental.ownerId,
+                                    )}` +
+                                    `&rentalId=${encodeURIComponent(
+                                      rental.rentalId,
+                                    )}`,
+                                );
+                              }}
                           >
                             Owner
                           </button>
                           <button
                             type="button"
                             className={styles.reportCancelBtn}
-                            onClick={() => setReportMenuRentalId(null)}
+                            onClick={
+                              // Handles the component's click event.
+                              // Takes no arguments and returns the handler result.
+                              () => setReportMenuRentalId(null)}
                           >
                             Cancel
                           </button>
@@ -248,7 +284,10 @@ const RentalRequestsModal = ({
                       <button
                         type="button"
                         className={styles.reportIssueBtn}
-                        onClick={() => setReportMenuRentalId(rental.rentalId)}
+                        onClick={
+                          // Handles the component's click event.
+                          // Takes no arguments and returns the handler result.
+                          () => setReportMenuRentalId(rental.rentalId)}
                       >
                         <AlertTriangle size={16} /> Report an Issue
                       </button>
@@ -264,7 +303,10 @@ const RentalRequestsModal = ({
                     loading={pendingAction === `approve-${rental.rentalId}`}
                     loadingText="Approving..."
                     disabled={Boolean(pendingAction)}
-                    onClick={() =>
+                    onClick={
+                      // Handles the component's click event.
+                      // Takes no arguments and returns the handler result.
+                      () =>
                       handleRentalAction(rental.rentalId, "approve")
                     }
                   >
@@ -275,7 +317,10 @@ const RentalRequestsModal = ({
                     loading={pendingAction === `reject-${rental.rentalId}`}
                     loadingText="Declining..."
                     disabled={Boolean(pendingAction)}
-                    onClick={() =>
+                    onClick={
+                      // Handles the component's click event.
+                      // Takes no arguments and returns the handler result.
+                      () =>
                       handleRentalAction(rental.rentalId, "reject")
                     }
                   >

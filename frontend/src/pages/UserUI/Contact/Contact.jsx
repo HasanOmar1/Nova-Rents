@@ -1,3 +1,5 @@
+// Presents the authenticated contact form and admin contact information.
+// It takes no props and returns the contact page with send-status feedback.
 import { useState } from "react";
 import axios from "axios";
 import {
@@ -19,6 +21,8 @@ const SUBJECT_MAX_LENGTH = 120;
 const MESSAGE_MIN_LENGTH = 10;
 const MESSAGE_MAX_LENGTH = 3000;
 
+// Manages and renders the signed-in user's admin contact form.
+// It takes no props and returns the contact page JSX.
 const Contact = () => {
   const { currentUser } = useUserContext();
   const [subject, setSubject] = useState("");
@@ -31,6 +35,8 @@ const Contact = () => {
     `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`.trim() ||
     "Nova Rents member";
 
+  // Validates the message and submits it to the contact endpoint.
+  // It accepts a form event and returns a promise resolved after the request.
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMsg("");
@@ -126,7 +132,10 @@ const Contact = () => {
                 id="contact-subject"
                 type="text"
                 value={subject}
-                onChange={(event) => setSubject(event.target.value)}
+                onChange={
+                  /* Handles the change callback for this rendered control.
+                   * It accepts event and returns the delegated result. */
+                  (event) => setSubject(event.target.value)}
                 minLength={SUBJECT_MIN_LENGTH}
                 maxLength={SUBJECT_MAX_LENGTH}
                 placeholder="How can we help?"
@@ -152,7 +161,10 @@ const Contact = () => {
               <textarea
                 id="contact-message"
                 value={message}
-                onChange={(event) => setMessage(event.target.value)}
+                onChange={
+                  /* Handles the change callback for this rendered control.
+                   * It accepts event and returns the delegated result. */
+                  (event) => setMessage(event.target.value)}
                 minLength={MESSAGE_MIN_LENGTH}
                 maxLength={MESSAGE_MAX_LENGTH}
                 placeholder="Describe your question or issue and include any useful details."

@@ -1,3 +1,5 @@
+/* Defines scoped presentation rules for the UserStats interface.
+ * Covers its layout, visual states, and responsive behavior. */
 .UserStats {
   display: flex;
   flex-direction: column;

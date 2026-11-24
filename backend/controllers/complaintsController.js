@@ -1,5 +1,9 @@
+/** Express controller handlers for complaints operations.
+ * Validates requests and returns the domain's HTTP responses. */
 const STATUS_CODE = require("../constants/statusCodes");
 const doQuery = require("../database/query");
+const fs = require("fs");
+const path = require("path");
 
 const {
   getVehicleByLicensePlate,
@@ -13,6 +17,7 @@ const {
   lockRentalRowForUpdate,
   findActiveComplaintForRentalTypeOnConnection,
   createComplaintOnConnection,
+  getComplaintEvidenceById,
   getActiveVehicleComplaintsForOwner,
   getComplaintsAboutOwner,
   countComplaintsAboutOwner,
@@ -24,10 +29,18 @@ const {
   getAllComplaints,
   countAllComplaints,
   getComplaintStats,
-  updateComplaintStatus,
-  getComplaintReporterById,
+  updateComplaintStatusOnConnection,
+  getComplaintReporterByIdForUpdateOnConnection,
+  getComplaintRespondedAtOnConnection,
   getComplaintTrendsByRange,
 } = require("../database/queries/complaintQueries");
+const {
+  COMPLAINT_EVIDENCE_DIR,
+  UPLOADS_DIR,
+  isSafeStoredImageName,
+  parseStoredImageNames,
+  safeMimeForStoredFile,
+} = require("../utils/imageFile");
 const { withTransaction } = require("../database/withTransaction");
 const {
   parseLocalDate,
@@ -35,9 +48,11 @@ const {
   buildPeriodKeys,
 } = require("../utils/periodBuckets");
 
-const { createActivity } = require("../database/queries/activityQueries");
 const {
-  createSystemHistory,
+  createActivityOnConnection,
+} = require("../database/queries/activityQueries");
+const {
+  createSystemHistoryOnConnection,
 } = require("../database/queries/systemHistoryQueries");
 
 const {
@@ -59,7 +74,35 @@ const {
   sendReportedOwnerReportStatusEmail,
   sendOwnerVehicleReportStatusEmail,
 } = require("../services/emailService");
+const { clearFailedUploads } = require("../utils/handleUploads");
 
+const COMPLAINT_STATUSES = new Set([
+  "open",
+  "in_review",
+  "resolved",
+  "closed",
+]);
+const COMPLAINT_FILTER_STATUSES = new Set(["all", ...COMPLAINT_STATUSES]);
+const DEFAULT_COMPLAINT_PAGE_SIZE = 5;
+const MAX_COMPLAINT_PAGE_SIZE = 50;
+
+/** Parses complaint pagination.
+ * Accepts query; returns the derived value. */
+function parseComplaintPagination(query) {
+  const parsedPage = Number.parseInt(query.page, 10);
+  const parsedLimit = Number.parseInt(query.limit, 10);
+
+  return {
+    requestedPage: parsedPage > 0 ? parsedPage : 1,
+    limit:
+      parsedLimit > 0
+        ? Math.min(parsedLimit, MAX_COMPLAINT_PAGE_SIZE)
+        : DEFAULT_COMPLAINT_PAGE_SIZE,
+  };
+}
+
+/** Fetches vehicle label for owner notice.
+ * Accepts licensePlate; returns a promise for the requested data. */
 async function getVehicleLabelForOwnerNotice(licensePlate) {
   // Owner email/name from users join — never reporter identity.
   const rows = await doQuery(
@@ -83,14 +126,103 @@ async function getVehicleLabelForOwnerNotice(licensePlate) {
   return rows[0] || null;
 }
 
+/** Formats complaint status label.
+ * Accepts status; returns the derived value. */
 function formatComplaintStatusLabel(status) {
   if (status === "in_review") return "In Review";
   if (!status) return "Unknown";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
-async function createComplaint_controller(req, res, next) {
+
+/** Finds stored complaint evidence.
+ * Accepts filename; returns a promise for the requested data. */
+async function findStoredComplaintEvidence(filename) {
+  for (const directory of [COMPLAINT_EVIDENCE_DIR, UPLOADS_DIR]) {
+    const filePath = path.join(directory, filename);
+    try {
+      const stats = await fs.promises.stat(filePath);
+      if (stats.isFile()) return filePath;
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  }
+  return null;
+}
+
+/** Fetches complaint evidence.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
+async function getComplaintEvidence_controller(req, res, next) {
   try {
-    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
+    const complaintId = Number(req.params.complaintId);
+    const filename = String(req.params.filename || "").trim();
+
+    if (
+      !Number.isInteger(complaintId) ||
+      complaintId <= 0 ||
+      !isSafeStoredImageName(filename)
+    ) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    const complaint = await getComplaintEvidenceById(complaintId);
+    const sessionUser = req.session.user;
+    const canViewEvidence =
+      complaint &&
+      (sessionUser.role === "admin" ||
+        Number(complaint.userId) === Number(sessionUser.userId));
+
+    const storedFilename = complaint
+      ? parseStoredImageNames(complaint.images).find(
+        /** Tests whether one collection item is the requested match.
+         * Accepts candidate; returns a boolean used by the collection operation. */
+        (candidate) => candidate.toLowerCase() === filename.toLowerCase(),
+        )
+      : null;
+
+    if (!canViewEvidence || !storedFilename) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    const filePath = await findStoredComplaintEvidence(storedFilename);
+    const safeMime = filePath ? safeMimeForStoredFile(filePath) : null;
+    if (!filePath || !safeMime) {
+      return res.sendStatus(STATUS_CODE.NOT_FOUND);
+    }
+
+    res.set({
+      "Cache-Control": "private, no-store",
+      "Content-Security-Policy":
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
+      "Content-Type": safeMime,
+      "Cross-Origin-Resource-Policy": "same-origin",
+      "X-Content-Type-Options": "nosniff",
+    });
+
+    return res.sendFile(
+      filePath,
+      { acceptRanges: false, cacheControl: false, dotfiles: "deny" },
+      /** Handles completion or failure of the file response.
+       * Accepts error; returns no meaningful value after handling completion. */
+      (error) => {
+        if (error) next(error);
+      },
+    );
+  } catch (error) {
+    return next(error);
+  }
+}
+
+/** Creates complaint.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
+async function createComplaint_controller(req, res, next) {
+  let complaintCommitted = false;
+  let insertResult = null;
+
+  try {
+    if (
+      validateAuthenticatedUser(req, res, "Unauthorized, Login first!") !==
+      true
+    ) {
       return;
     }
 
@@ -109,10 +241,13 @@ async function createComplaint_controller(req, res, next) {
 
     const images =
       req.files && req.files.length > 0
-        ? JSON.stringify(req.files.map((file) => file.filename))
+        ? JSON.stringify(req.files.map(
+          /** Transforms one collection item for the surrounding mapping operation.
+           * Accepts file; returns the transformed collection value. */
+          (file) => file.filename))
         : null;
 
-    if (!validateComplaintFields(req.body, res)) {
+    if (validateComplaintFields(req.body, res) !== true) {
       return;
     }
 
@@ -197,77 +332,122 @@ async function createComplaint_controller(req, res, next) {
       complaintType === "vehicle" ? eligibleRental.licensePlate : null;
     const ownerForInsert = complaintType === "owner" ? resolvedOwnerId : null;
 
-    let insertResult;
+    // Build the audit descriptions before the transaction so the complaint
+    // and both required audit rows can be committed as one unit.
+    const fullName = `${req.session.user.firstName || ""} ${
+      req.session.user.lastName || ""
+    }`.trim();
+
+    const actorName = fullName
+      ? `${fullName} (${req.session.user.email})`
+      : req.session.user.email || "A user";
+
+    const typeArticle = /^[aeiou]/i.test(complaintType) ? "an" : "a";
+    const userActivityDescription =
+      `You filed ${typeArticle} ${complaintType} complaint: ${title}`.slice(
+        0,
+        255,
+      );
+    const adminHistoryDescription =
+      `${actorName} filed ${typeArticle} ${complaintType} complaint: ${title}`.slice(
+        0,
+        255,
+      );
+
     try {
-      insertResult = await withTransaction(async (connection) => {
-        const lockedRental = await lockRentalRowForUpdate(
-          connection,
-          parsedRentalId,
-        );
-        if (!lockedRental) {
-          const err = new Error("Rental not found");
-          err.code = "RENTAL_NOT_FOUND";
-          throw err;
-        }
+      insertResult = await withTransaction(
+        /** Executes the database work within the surrounding transaction.
+         * Accepts connection; returns a promise for the transactional result. */
+        async (connection) => {
+          const lockedRental = await lockRentalRowForUpdate(
+            connection,
+            parsedRentalId,
+          );
+          if (!lockedRental) {
+            const err = new Error("Rental not found");
+            err.code = "RENTAL_NOT_FOUND";
+            throw err;
+          }
 
-        // Re-validate paid relationship on the same connection after the lock.
-        let stillEligible = null;
-        if (complaintType === "vehicle") {
-          stillEligible = await findEligibleRentalForVehicleReportOnConnection(
+          // Re-validate paid relationship on the same connection after the lock.
+          let stillEligible = null;
+          if (complaintType === "vehicle") {
+            stillEligible = await findEligibleRentalForVehicleReportOnConnection(
+              connection,
+              userId,
+              parsedRentalId,
+              plateForInsert,
+            );
+          } else {
+            stillEligible = await findEligibleRentalForOwnerReportOnConnection(
+              connection,
+              userId,
+              parsedRentalId,
+              ownerForInsert,
+            );
+          }
+
+          if (!stillEligible) {
+            const err = new Error("Rental is no longer eligible for reporting");
+            err.code = "RENTAL_NOT_ELIGIBLE";
+            throw err;
+          }
+
+          const activeComplaint =
+            await findActiveComplaintForRentalTypeOnConnection(
+              connection,
+              parsedRentalId,
+              complaintType,
+            );
+
+          if (activeComplaint) {
+            const err = new Error(
+              "You already have an active report for this rental.",
+            );
+            err.code = "ACTIVE_COMPLAINT_EXISTS";
+            throw err;
+          }
+
+          const result = await createComplaintOnConnection(
             connection,
             userId,
-            parsedRentalId,
-            plateForInsert,
-          );
-        } else {
-          stillEligible = await findEligibleRentalForOwnerReportOnConnection(
-            connection,
-            userId,
-            parsedRentalId,
-            ownerForInsert,
-          );
-        }
-
-        if (!stillEligible) {
-          const err = new Error("Rental is no longer eligible for reporting");
-          err.code = "RENTAL_NOT_ELIGIBLE";
-          throw err;
-        }
-
-        const activeComplaint =
-          await findActiveComplaintForRentalTypeOnConnection(
-            connection,
             parsedRentalId,
             complaintType,
+            plateForInsert,
+            ownerForInsert,
+            title,
+            description,
+            images,
           );
 
-        if (activeComplaint) {
-          const err = new Error(
-            "You already have an active report for this rental.",
+          if (!result || result.affectedRows !== 1) {
+            const err = new Error("Failed to create complaint");
+            err.code = "COMPLAINT_INSERT_FAILED";
+            throw err;
+          }
+
+          await createActivityOnConnection(
+            connection,
+            userId,
+            "Created a Complaint",
+            userActivityDescription,
+            result.insertId,
           );
-          err.code = "ACTIVE_COMPLAINT_EXISTS";
-          throw err;
-        }
 
-        const result = await createComplaintOnConnection(
-          connection,
-          userId,
-          parsedRentalId,
-          complaintType,
-          plateForInsert,
-          ownerForInsert,
-          title,
-          description,
-          images,
-        );
+          await createSystemHistoryOnConnection(
+            connection,
+            userId,
+            "complaint",
+            "create",
+            "Created a Complaint",
+            "complaint",
+            String(result.insertId),
+            parsedRentalId,
+            complaintType === "vehicle" ? plateForInsert : null,
+            adminHistoryDescription,
+          );
 
-        if (!result || result.affectedRows !== 1) {
-          const err = new Error("Failed to create complaint");
-          err.code = "COMPLAINT_INSERT_FAILED";
-          throw err;
-        }
-
-        return result;
+          return result;
       });
     } catch (txError) {
       if (txError.code === "ACTIVE_COMPLAINT_EXISTS") {
@@ -287,45 +467,11 @@ async function createComplaint_controller(req, res, next) {
       throw txError;
     }
 
-    // Build readable user name
-    const fullName = `${req.session.user.firstName || ""} ${
-      req.session.user.lastName || ""
-    }`.trim();
+    // From this point onward the complaint owns its evidence. Later activity,
+    // notification, or email failures must never delete committed attachments.
+    complaintCommitted = true;
 
-    const actorName = fullName
-      ? `${fullName} (${req.session.user.email})`
-      : req.session.user.email || "A user";
-
-    // Choose "a" or "an"
-    // vehicle -> a vehicle complaint
-    // owner   -> an owner complaint
-    const typeArticle = /^[aeiou]/i.test(complaintType) ? "an" : "a";
-
-    const userActivityDescription = `You filed ${typeArticle} ${complaintType} complaint: ${title}`;
-
-    const adminHistoryDescription = `${actorName} filed ${typeArticle} ${complaintType} complaint: ${title}`;
-
-    // Side effects only after successful COMMIT.
-    await createActivity(
-      userId,
-      "Created a Complaint",
-      userActivityDescription,
-      insertResult.insertId,
-    );
-
-    await createSystemHistory(
-      userId,
-      "complaint",
-      "create",
-      "Created a Complaint",
-      "complaint",
-      String(insertResult.insertId),
-      parsedRentalId,
-      complaintType === "vehicle" ? plateForInsert : null,
-      adminHistoryDescription,
-    );
-
-    // Notify all admins (existing behavior)
+    // Optional post-commit notifications and emails are best effort.
     try {
       const admins = await doQuery(
         "SELECT userId FROM users WHERE role = 'admin'",
@@ -469,12 +615,35 @@ async function createComplaint_controller(req, res, next) {
       complaintId: insertResult.insertId,
     });
   } catch (error) {
-    next(error);
+    if (complaintCommitted && !res.headersSent) {
+      console.error(
+        "Complaint follow-up failed after commit:",
+        error.message,
+      );
+      return res.status(STATUS_CODE.CREATED).json({
+        message:
+          "Complaint submitted successfully, but some notifications could not be completed.",
+        complaintId: insertResult.insertId,
+      });
+    }
+    return next(error);
+  } finally {
+    if (!complaintCommitted) {
+      clearFailedUploads(req.files);
+    }
   }
 }
+/** Updates complaint status.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function updateComplaintStatus_controller(req, res, next) {
+  let statusUpdateCommitted = false;
+  let committedStatusChanged = false;
+
   try {
-    if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
+    if (
+      validateAuthenticatedUser(req, res, "Unauthorized, Login first!") !==
+      true
+    )
       return;
     if (req.session.user.role !== "admin") {
       return res
@@ -484,15 +653,13 @@ async function updateComplaintStatus_controller(req, res, next) {
     const complaintId = Number(req.params.complaintId);
     const { status, responseToUser, resolutionMessage, adminNotes } = req.body;
 
-    const allowedStatuses = ["open", "in_review", "resolved", "closed"];
-
     if (!Number.isInteger(complaintId) || complaintId <= 0) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "Invalid complaint ID",
       });
     }
 
-    if (!allowedStatuses.includes(status)) {
+    if (!COMPLAINT_STATUSES.has(status)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "Invalid complaint status",
       });
@@ -519,29 +686,6 @@ async function updateComplaintStatus_controller(req, res, next) {
     const trimmedAdminNotes =
       typeof adminNotes === "string" ? adminNotes.trim() : "";
 
-    const complaint = await getComplaintReporterById(complaintId);
-    if (!complaint) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "Complaint not found",
-      });
-    }
-
-    const previousStatus = complaint.status;
-    const statusChanged = previousStatus !== status;
-
-    const result = await updateComplaintStatus(
-      complaintId,
-      status,
-      trimmedResolution || null,
-      trimmedAdminNotes || null,
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(STATUS_CODE.NOT_FOUND).json({
-        message: "Complaint not found",
-      });
-    }
-
     let statusEventName = "complaint_status_updated";
     let statusOperation = "update";
     if (status === "in_review") {
@@ -553,17 +697,72 @@ async function updateComplaintStatus_controller(req, res, next) {
       statusEventName = "complaint_closed";
     }
 
-    await createSystemHistory(
-      req.session.user.userId,
-      "admin",
-      statusOperation,
-      statusEventName,
-      "complaint",
-      String(complaintId),
-      null,
-      null,
-      `Complaint #${complaintId} status updated to ${status}`,
-    );
+    let mutation;
+    try {
+      mutation = await withTransaction(
+        /** Executes the database work within the surrounding transaction.
+         * Accepts connection; returns a promise for the transactional result. */
+        async (connection) => {
+          const complaint = await getComplaintReporterByIdForUpdateOnConnection(
+            connection,
+            complaintId,
+          );
+          if (!complaint) {
+            const error = new Error("Complaint not found");
+            error.code = "COMPLAINT_NOT_FOUND";
+            throw error;
+          }
+
+          const statusChanged = complaint.status !== status;
+          const result = await updateComplaintStatusOnConnection(
+            connection,
+            complaintId,
+            status,
+            trimmedResolution || null,
+            trimmedAdminNotes || null,
+          );
+
+          if (!result || result.affectedRows !== 1) {
+            const error = new Error("Complaint not found");
+            error.code = "COMPLAINT_NOT_FOUND";
+            throw error;
+          }
+
+          await createSystemHistoryOnConnection(
+            connection,
+            req.session.user.userId,
+            "admin",
+            statusOperation,
+            statusEventName,
+            "complaint",
+            String(complaintId),
+            null,
+            null,
+            `Complaint #${complaintId} status updated to ${status}`.slice(
+              0,
+              255,
+            ),
+          );
+
+          const respondedAt = await getComplaintRespondedAtOnConnection(
+            connection,
+            complaintId,
+          );
+
+          return { complaint, respondedAt, statusChanged };
+      });
+    } catch (transactionError) {
+      if (transactionError.code === "COMPLAINT_NOT_FOUND") {
+        return res.status(STATUS_CODE.NOT_FOUND).json({
+          message: "Complaint not found",
+        });
+      }
+      throw transactionError;
+    }
+
+    statusUpdateCommitted = true;
+    committedStatusChanged = mutation.statusChanged;
+    const { complaint, respondedAt, statusChanged } = mutation;
 
     // Lifecycle side effects only on an actual status transition.
     // Same-status resubmit may still update adminNotes/respondedAt above,
@@ -669,13 +868,6 @@ async function updateComplaintStatus_controller(req, res, next) {
       );
     }
 
-    // DB-authoritative respondedAt written by UPDATE … respondedAt = NOW().
-    const respondedRows = await doQuery(
-      `SELECT respondedAt FROM complaints WHERE complaintId = ? LIMIT 1`,
-      [complaintId],
-    );
-    const respondedAt = respondedRows[0]?.respondedAt ?? null;
-
     let emailSent = false;
     try {
       await sendComplaintResponseEmail({
@@ -780,10 +972,24 @@ async function updateComplaintStatus_controller(req, res, next) {
       statusChanged: true,
     });
   } catch (error) {
-    next(error);
+    if (statusUpdateCommitted && !res.headersSent) {
+      console.error(
+        "Complaint status follow-up failed after commit:",
+        error.message,
+      );
+      return res.status(STATUS_CODE.OK).json({
+        message:
+          "Complaint updated, but some follow-up actions could not be completed.",
+        emailSent: false,
+        statusChanged: committedStatusChanged,
+      });
+    }
+    return next(error);
   }
 }
 
+/** Fetches my complaints.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getMyComplaints_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -793,12 +999,9 @@ async function getMyComplaints_controller(req, res, next) {
     const userId = req.session.user.userId;
     const { startDate, endDate } = req.query;
     const status = req.query.status || "all";
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 5;
-    const offset = (page - 1) * limit;
+    const { requestedPage, limit } = parseComplaintPagination(req.query);
 
-    const allowedStatuses = ["all", "open", "in_review", "resolved", "closed"];
-    if (!allowedStatuses.includes(status)) {
+    if (!COMPLAINT_FILTER_STATUSES.has(status)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         message: "Invalid complaint status",
       });
@@ -825,20 +1028,23 @@ async function getMyComplaints_controller(req, res, next) {
       });
     }
 
-    const filters = { status, startDate, endDate, limit, offset };
-    const complaints = await getComplaintsByUserId(userId, filters);
     const totalComplaints = await countComplaintsByUserId(userId, {
       status,
       startDate,
       endDate,
     });
+    const totalPages = Math.max(Math.ceil(totalComplaints / limit), 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+    const offset = (currentPage - 1) * limit;
+    const filters = { status, startDate, endDate, limit, offset };
+    const complaints = await getComplaintsByUserId(userId, filters);
 
     return res.status(STATUS_CODE.OK).json({
       message: "Complaints fetched successfully",
       complaints,
       pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalComplaints / limit) || 1,
+        currentPage,
+        totalPages,
         totalComplaints,
         limit,
       },
@@ -848,6 +1054,8 @@ async function getMyComplaints_controller(req, res, next) {
   }
 }
 
+/** Fetches all complaints.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getAllComplaints_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -859,13 +1067,20 @@ async function getAllComplaints_controller(req, res, next) {
       });
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const offset = (page - 1) * limit;
+    const { requestedPage, limit } = parseComplaintPagination(req.query);
     const status = req.query.status || "all";
 
-    const complaints = await getAllComplaints(status, limit, offset);
+    if (!COMPLAINT_FILTER_STATUSES.has(status)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid complaint status",
+      });
+    }
+
     const totalComplaints = await countAllComplaints(status);
+    const totalPages = Math.max(Math.ceil(totalComplaints / limit), 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+    const offset = (currentPage - 1) * limit;
+    const complaints = await getAllComplaints(status, limit, offset);
     const stats = await getComplaintStats();
 
     return res.status(STATUS_CODE.OK).json({
@@ -873,8 +1088,8 @@ async function getAllComplaints_controller(req, res, next) {
       complaints,
       stats,
       pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalComplaints / limit),
+        currentPage,
+        totalPages,
         totalComplaints,
         limit,
       },
@@ -887,6 +1102,8 @@ async function getAllComplaints_controller(req, res, next) {
 // Complaints submitted over time (by createdAt), zero-filled per period,
 // for the admin Complaint Trends chart. Uses the same bucketing policy as
 // the other report charts. Not affected by pagination.
+/** Fetches complaint trends.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getComplaintTrends_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!"))
@@ -900,6 +1117,12 @@ async function getComplaintTrends_controller(req, res, next) {
 
     const { startDate, endDate } = req.query;
     const status = req.query.status || "all";
+
+    if (!COMPLAINT_FILTER_STATUSES.has(status)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid complaint status",
+      });
+    }
 
     if (!startDate || !endDate) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
@@ -932,9 +1155,14 @@ async function getComplaintTrends_controller(req, res, next) {
     );
 
     const countsByPeriod = new Map(
-      rows.map((row) => [row.periodKey, Number(row.complaints)]),
+      rows.map(
+        /** Transforms one collection item for the surrounding mapping operation.
+         * Accepts row; returns the transformed collection value. */
+        (row) => [row.periodKey, Number(row.complaints)]),
     );
     const chartData = buildPeriodKeys(start, end, granularity).map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts period; returns the transformed collection value. */
       (period) => ({
         period,
         complaints: countsByPeriod.get(period) || 0,
@@ -951,6 +1179,8 @@ async function getComplaintTrends_controller(req, res, next) {
   }
 }
 
+/** Fetches owner vehicle reports.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getOwnerVehicleReports_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -971,6 +1201,8 @@ async function getOwnerVehicleReports_controller(req, res, next) {
   }
 }
 
+/** Fetches owner vehicle report history.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getOwnerVehicleReportHistory_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -1001,6 +1233,8 @@ async function getOwnerVehicleReportHistory_controller(req, res, next) {
   }
 }
 
+/** Fetches complaints about me.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getComplaintsAboutMe_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -1036,6 +1270,8 @@ async function getComplaintsAboutMe_controller(req, res, next) {
   }
 }
 
+/** Fetches complaints about my vehicles.
+ * Accepts req, res, and next; returns a promise after sending a response or forwarding an error. */
 async function getComplaintsAboutMyVehicles_controller(req, res, next) {
   try {
     if (!validateAuthenticatedUser(req, res, "Unauthorized, Login first!")) {
@@ -1077,6 +1313,7 @@ async function getComplaintsAboutMyVehicles_controller(req, res, next) {
 
 module.exports = {
   createComplaint_controller,
+  getComplaintEvidence_controller,
   updateComplaintStatus_controller,
   getMyComplaints_controller,
   getAllComplaints_controller,
