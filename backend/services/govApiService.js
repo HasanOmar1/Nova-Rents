@@ -54,13 +54,22 @@ function isBlank(value) {
   return value == null || String(value).trim() === "";
 }
 
+function formatDate(date) {
+  if (!date) return null;
+
+  const d = new Date(date);
+
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 /**
  * Compare our vehicle row to one official data.gov.il private-vehicle record.
  * Only uses keys the live resource actually returns (inspected 2026-08-18):
- * mispar_rechev, tozeret_nm, kinuy_mishari, shnat_yitzur, tzeva_rechev,
- * sug_delek_nm, tokef_dt, misgeret, ...
- * Does not compare VIN/chassis against our DB (we have no such column).
- * Does not compare tokef_dt to vehicles.expirationDate (that field is listing expiry).
+ * Compares licensePlate, year, modelName and license expiration Date
  */
 /** Compares vehicle to government record.
  * Accepts vehicle and record; returns the derived value. */
@@ -85,6 +94,12 @@ function compareVehicleToGovernmentRecord(vehicle, record) {
       ours: vehicle.modelName,
       government: record.kinuy_mishari,
     },
+    {
+      field: "expirationDate",
+      ours: formatDate(vehicle.expirationDate),
+      government: record.tokef_dt,
+      required: true,
+    },
   ];
 
   const matchedFields = [];
@@ -104,15 +119,8 @@ function compareVehicleToGovernmentRecord(vehicle, record) {
     else mismatchedFields.push(entry);
   }
 
-  const displayOnly = {
-    chassis: record.misgeret ?? null,
-    registrationValidity: record.tokef_dt ?? null,
-    manufacturerCode: record.tozeret_cd ?? null,
-    modelCode: record.degem_nm ?? null,
-  };
-
   const status = mismatchedFields.length ? "mismatch" : "verified";
-  return { status, matchedFields, mismatchedFields, displayOnly };
+  return { status, matchedFields, mismatchedFields };
 }
 
 /** Looks up vehicle in gov il.

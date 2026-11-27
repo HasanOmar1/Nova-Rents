@@ -13,7 +13,8 @@ async function getOwnedLicensePlates(ownerId) {
   return rows.map(
     /** Transforms one collection item for the surrounding mapping operation.
      * Accepts row; returns the transformed collection value. */
-    (row) => row.licensePlate);
+    (row) => row.licensePlate,
+  );
 }
 
 /** Fetches document by id.
@@ -45,10 +46,13 @@ async function getUserScopedDocuments(userId) {
  * Accepts licensePlates; returns a promise for the requested data. */
 async function getVehicleScopedDocumentsForPlates(licensePlates) {
   if (!licensePlates.length) return [];
-  const placeholders = licensePlates.map(
-    /** Transforms one collection item for the surrounding mapping operation.
-     * Accepts no arguments; returns the transformed collection value. */
-    () => "?").join(", ");
+  const placeholders = licensePlates
+    .map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts no arguments; returns the transformed collection value. */
+      () => "?",
+    )
+    .join(", ");
   return doQuery(
     `
       SELECT *
@@ -410,6 +414,7 @@ async function getVehicleForGovernmentCompare(licensePlate) {
         v.color,
         v.fuelType,
         v.ownerId,
+        v.expirationDate,
         cb.brandName,
         cm.modelName
       FROM vehicles v
@@ -437,10 +442,13 @@ async function getVehicleGovernmentCheck(licensePlate) {
  * Accepts licensePlates; returns a promise for the requested data. */
 async function getVehicleGovernmentChecksForPlates(licensePlates) {
   if (!licensePlates.length) return [];
-  const placeholders = licensePlates.map(
-    /** Transforms one collection item for the surrounding mapping operation.
-     * Accepts no arguments; returns the transformed collection value. */
-    () => "?").join(", ");
+  const placeholders = licensePlates
+    .map(
+      /** Transforms one collection item for the surrounding mapping operation.
+       * Accepts no arguments; returns the transformed collection value. */
+      () => "?",
+    )
+    .join(", ");
   return doQuery(
     `SELECT * FROM vehicle_government_checks WHERE licensePlate IN (${placeholders})`,
     licensePlates,
