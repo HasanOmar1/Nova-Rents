@@ -49,6 +49,13 @@ const ADMIN_VEHICLE_STATUS_FILTERS = new Set([
   "maintenance",
   "inactive",
 ]);
+const OWNER_VEHICLE_STATUS_FILTERS = new Set([
+  "all",
+  "available",
+  "not_validated",
+  "maintenance",
+  "inactive",
+]);
 const MAX_ADMIN_VEHICLE_SEARCH_LENGTH = 100;
 
 const UNKNOWN_VEHICLE_ELIGIBILITY = Object.freeze({
@@ -71,12 +78,27 @@ const getUserVehicles = async (req, res, next) => {
       return;
 
     const { userId } = req.session.user;
-    const status = req.query.status || "all";
+    const normalizedStatus = String(req.query.status || "all")
+      .trim()
+      .toLowerCase();
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
     const offset = (page - 1) * limit;
 
+    if (!OWNER_VEHICLE_STATUS_FILTERS.has(normalizedStatus)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        message: "Invalid vehicle status filter",
+      });
+    }
+
+    const effectiveStatusSql = getEffectiveVehicleStatusSql({
+      vehicleAlias: "v",
+      ownerAlias: "u",
+    });
+
     // Owner-only: includes private exact pickup fields for Add/Edit.
+    // effectiveStatus reuses the same precedence as admin inventory
+    // (blocked → maintenance/inactive → active rental → verification → available).
     let query = `
       SELECT 
         v.licensePlate,
@@ -100,6 +122,8 @@ const getUserVehicles = async (req, res, next) => {
         v.createdAt,
         v.details,
         v.seats,
+        u.status AS ownerStatus,
+        (${effectiveStatusSql}) AS effectiveStatus,
         cm.modelName, 
         cb.brandId, cb.brandName, 
         ct.carTypeId, ct.carTypeName
@@ -107,16 +131,22 @@ const getUserVehicles = async (req, res, next) => {
       JOIN carmodels cm ON v.modelId = cm.modelId
       JOIN carbrands cb ON cm.brandId = cb.brandId
       JOIN cartypes ct ON cm.carTypeId = ct.carTypeId
+      JOIN users u ON v.ownerId = u.userId
       WHERE v.ownerId = ?
     `;
+    let countQuery = `
+  SELECT COUNT(*) as totalCount
+  FROM vehicles v
+  JOIN users u ON v.ownerId = u.userId
+  WHERE v.ownerId = ?
+`;
 
-    let countQuery = `SELECT COUNT(*) as totalCount FROM vehicles WHERE ownerId = ?`;
     let queryParams = [userId];
 
-    if (status !== "all") {
-      query += ` AND v.status = ?`;
-      countQuery += ` AND status = ?`;
-      queryParams.push(status);
+    if (normalizedStatus !== "all") {
+      query += ` AND (${effectiveStatusSql}) = ?`;
+      countQuery += ` AND (${effectiveStatusSql}) = ?`;
+      queryParams.push(normalizedStatus);
     }
 
     query += ` ORDER BY v.createdAt DESC, v.licensePlate DESC LIMIT ? OFFSET ?`;
@@ -127,47 +157,59 @@ const getUserVehicles = async (req, res, next) => {
         /** Transforms one collection item for the surrounding mapping operation.
          * Accepts vehicle; returns the transformed collection value. */
         (vehicle) => ({
-        licensePlate: vehicle.licensePlate,
-        ownerId: vehicle.ownerId,
-      })),
+          licensePlate: vehicle.licensePlate,
+          ownerId: vehicle.ownerId,
+        }),
+      ),
     );
     const vehiclesWithEligibility = vehicles.map(
       /** Transforms one collection item for the surrounding mapping operation.
        * Accepts vehicle; returns the transformed collection value. */
       (vehicle) => {
-        const rentalEligibility =
-          eligibilitySummaries.get(String(vehicle.licensePlate)) || {
-            eligible: false,
-            reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
-            statuses: {},
-          };
+        const rentalEligibility = eligibilitySummaries.get(
+          String(vehicle.licensePlate),
+        ) || {
+          eligible: false,
+          reasons: ["VEHICLE_ELIGIBILITY_UNKNOWN"],
+          statuses: {},
+        };
         return {
           ...vehicle,
           rentalEligible: rentalEligibility.eligible,
           rentalEligibility,
         };
-    });
+      },
+    );
 
     const countResult = await doQuery(countQuery, queryParams);
     const totalVehicles = countResult[0].totalCount;
     const totalPages = Math.ceil(totalVehicles / limit);
 
     const statsQuery = `
-      SELECT 
-        COUNT(*) as allVehicles,
-        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as availableCount,
-        SUM(CASE WHEN status = 'rented' THEN 1 ELSE 0 END) as rentedCount,
-        SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenanceCount,
-        SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactiveCount,
-        AVG(CASE WHEN status != 'inactive' THEN price ELSE NULL END) as avgDailyRate
-      FROM vehicles 
-      WHERE ownerId = ?
+      SELECT
+        COUNT(*) AS allVehicles,
+        SUM(CASE WHEN effectiveStatus = 'available' THEN 1 ELSE 0 END) AS availableCount,
+        SUM(CASE WHEN effectiveStatus = 'not_validated' THEN 1 ELSE 0 END) AS notValidatedCount,
+        SUM(CASE WHEN effectiveStatus = 'rented' THEN 1 ELSE 0 END) AS rentedCount,
+        SUM(CASE WHEN effectiveStatus = 'maintenance' THEN 1 ELSE 0 END) AS maintenanceCount,
+        SUM(CASE WHEN effectiveStatus = 'inactive' THEN 1 ELSE 0 END) AS inactiveCount,
+        AVG(CASE WHEN status != 'inactive' THEN price ELSE NULL END) AS avgDailyRate
+      FROM (
+        SELECT
+          v.status,
+          v.price,
+          (${effectiveStatusSql}) AS effectiveStatus
+        FROM vehicles v
+        JOIN users u ON v.ownerId = u.userId
+        WHERE v.ownerId = ?
+      ) effectiveOwnerVehicles
     `;
     const statsResult = await doQuery(statsQuery, [userId]);
 
     const stats = {
       allVehicles: Number(statsResult[0].allVehicles) || 0,
       availableNow: Number(statsResult[0].availableCount) || 0,
+      notValidated: Number(statsResult[0].notValidatedCount) || 0,
       rented: Number(statsResult[0].rentedCount) || 0,
       maintenance: Number(statsResult[0].maintenanceCount) || 0,
       inactive: Number(statsResult[0].inactiveCount) || 0,
@@ -672,7 +714,9 @@ const listVehicles = async (
       100,
     );
     const offset = (parsedPage - 1) * parsedLimit;
-    const normalizedStatus = String(status || "all").trim().toLowerCase();
+    const normalizedStatus = String(status || "all")
+      .trim()
+      .toLowerCase();
     const normalizedSearch = includeBlockedOwners
       ? String(search || "").trim()
       : "";
@@ -801,9 +845,10 @@ const listVehicles = async (
             /** Transforms one collection item for the surrounding mapping operation.
              * Accepts vehicle; returns the transformed collection value. */
             (vehicle) => ({
-            licensePlate: vehicle.licensePlate,
-            ownerId: vehicle.ownerId,
-          })),
+              licensePlate: vehicle.licensePlate,
+              ownerId: vehicle.ownerId,
+            }),
+          ),
         );
 
       responseVehicles = vehicles.map(
@@ -822,7 +867,8 @@ const listVehicles = async (
             rentalEligibility,
             canRent: effectiveStatus === "available",
           });
-      });
+        },
+      );
     } else {
       responseVehicles = vehicles.map(omitPrivatePickupFields);
     }
@@ -900,23 +946,39 @@ const listVehicles = async (
           seenModels.add(row.modelName);
           modelsWithBrands.push({ model: row.modelName, brand: row.brandName });
         }
-    });
+      },
+    );
 
     const availableFilters = {
       combinations: optionsData,
-      locations: [...new Set(optionsData.map(
-        /** Transforms one collection item for the surrounding mapping operation.
-         * Accepts r; returns the transformed collection value. */
-        (r) => r.address))],
-      brands: [...new Set(optionsData.map(
-        /** Transforms one collection item for the surrounding mapping operation.
-         * Accepts r; returns the transformed collection value. */
-        (r) => r.brandName))],
+      locations: [
+        ...new Set(
+          optionsData.map(
+            /** Transforms one collection item for the surrounding mapping operation.
+             * Accepts r; returns the transformed collection value. */
+            (r) => r.address,
+          ),
+        ),
+      ],
+      brands: [
+        ...new Set(
+          optionsData.map(
+            /** Transforms one collection item for the surrounding mapping operation.
+             * Accepts r; returns the transformed collection value. */
+            (r) => r.brandName,
+          ),
+        ),
+      ],
       models: modelsWithBrands,
-      types: [...new Set(optionsData.map(
-        /** Transforms one collection item for the surrounding mapping operation.
-         * Accepts r; returns the transformed collection value. */
-        (r) => r.carTypeName))],
+      types: [
+        ...new Set(
+          optionsData.map(
+            /** Transforms one collection item for the surrounding mapping operation.
+             * Accepts r; returns the transformed collection value. */
+            (r) => r.carTypeName,
+          ),
+        ),
+      ],
     };
 
     res.status(200).json({

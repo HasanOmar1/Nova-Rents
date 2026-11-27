@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  AlertTriangle,
   ArrowRight,
   Car,
   CircleDollarSign,
@@ -102,6 +103,16 @@ const MyVehicles = () => {
         () => handleStatusChange("available"),
     },
     {
+      title: "Not Validated",
+      value: vehicleStats?.notValidated ?? vehicleStats?.not_validated ?? 0,
+      icon: <AlertTriangle size={28} color="#f9e081" />,
+      isAction: true,
+      onClick:
+        /* Handles the click callback for this rendered control.
+         * It accepts no arguments and returns the delegated result. */
+        () => handleStatusChange("not_validated"),
+    },
+    {
       title: "Under Maintenance",
       value: vehicleStats?.maintenance || 0,
       icon: <ShieldAlert size={28} color="#a7d2eb" />,
@@ -148,6 +159,7 @@ const MyVehicles = () => {
             >
               <option value="all">All Vehicles</option>
               <option value="available">Available</option>
+              <option value="not_validated">Not validated</option>
               <option value="maintenance">Maintenance</option>
               <option value="inactive">Inactive</option>
             </select>
@@ -172,6 +184,7 @@ const MyVehicles = () => {
           (item) => (
             <HomeTopCards
               key={item.title}
+              className={styles.vehicleStatCard}
               title={item.title}
               value={item.value}
               icon={item.icon}
