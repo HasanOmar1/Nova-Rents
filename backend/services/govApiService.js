@@ -27,10 +27,13 @@ function fuelFamily(value) {
   const normalized = normalizeText(value);
   if (!normalized) return "";
   for (const [family, aliases] of Object.entries(FUEL_ALIASES)) {
-    if (aliases.some(
-      /** Tests whether one collection item satisfies the surrounding condition.
-       * Accepts alias; returns a boolean used by the collection operation. */
-      (alias) => normalized === alias || normalized.includes(alias))) {
+    if (
+      aliases.some(
+        /** Tests whether one collection item satisfies the surrounding condition.
+         * Accepts alias; returns a boolean used by the collection operation. */
+        (alias) => normalized === alias || normalized.includes(alias),
+      )
+    ) {
       return family;
     }
   }
@@ -51,13 +54,22 @@ function isBlank(value) {
   return value == null || String(value).trim() === "";
 }
 
+function formatDate(date) {
+  if (!date) return null;
+
+  const d = new Date(date);
+
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 /**
  * Compare our vehicle row to one official data.gov.il private-vehicle record.
  * Only uses keys the live resource actually returns (inspected 2026-08-18):
- * mispar_rechev, tozeret_nm, kinuy_mishari, shnat_yitzur, tzeva_rechev,
- * sug_delek_nm, tokef_dt, misgeret, ...
- * Does not compare VIN/chassis against our DB (we have no such column).
- * Does not compare tokef_dt to vehicles.expirationDate (that field is listing expiry).
+ * Compares licensePlate, year, modelName and license expiration Date
  */
 /** Compares vehicle to government record.
  * Accepts vehicle and record; returns the derived value. */
@@ -78,25 +90,15 @@ function compareVehicleToGovernmentRecord(vehicle, record) {
       required: true,
     },
     {
-      field: "color",
-      ours: vehicle.color,
-      government: record.tzeva_rechev,
-    },
-    {
-      field: "fuelType",
-      ours: vehicle.fuelType,
-      government: record.sug_delek_nm,
-      fuel: true,
-    },
-    {
-      field: "brandName",
-      ours: vehicle.brandName,
-      government: record.tozeret_nm,
-    },
-    {
       field: "modelName",
       ours: vehicle.modelName,
       government: record.kinuy_mishari,
+    },
+    {
+      field: "expirationDate",
+      ours: formatDate(vehicle.expirationDate),
+      government: record.tokef_dt,
+      required: true,
     },
   ];
 
@@ -117,15 +119,8 @@ function compareVehicleToGovernmentRecord(vehicle, record) {
     else mismatchedFields.push(entry);
   }
 
-  const displayOnly = {
-    chassis: record.misgeret ?? null,
-    registrationValidity: record.tokef_dt ?? null,
-    manufacturerCode: record.tozeret_cd ?? null,
-    modelCode: record.degem_nm ?? null,
-  };
-
   const status = mismatchedFields.length ? "mismatch" : "verified";
-  return { status, matchedFields, mismatchedFields, displayOnly };
+  return { status, matchedFields, mismatchedFields };
 }
 
 /** Looks up vehicle in gov il.
@@ -137,7 +132,9 @@ async function lookupVehicleInGovIL(licensePlate) {
   const timer = setTimeout(
     /** Handles expiration of the configured timeout.
      * Accepts no arguments; returns no meaningful value. */
-    () => controller.abort(), GOV_TIMEOUT_MS);
+    () => controller.abort(),
+    GOV_TIMEOUT_MS,
+  );
 
   try {
     const filters = Number.isFinite(numericPlate)
@@ -222,7 +219,10 @@ function emptyComparison(status, errorMessage = null, snapshot = null) {
  * Accepts vehicle and lookup; returns the derived value. */
 function buildGovernmentCheckPayload(vehicle, lookup) {
   if (!lookup || lookup.lookupStatus === "unavailable") {
-    return emptyComparison("unavailable", lookup?.errorMessage || "Government API unavailable");
+    return emptyComparison(
+      "unavailable",
+      lookup?.errorMessage || "Government API unavailable",
+    );
   }
   if (lookup.lookupStatus === "error") {
     return emptyComparison(
@@ -231,7 +231,10 @@ function buildGovernmentCheckPayload(vehicle, lookup) {
     );
   }
   if (lookup.lookupStatus === "not_found" || !lookup.records?.length) {
-    return emptyComparison("not_found", null, { lookupStatus: "not_found", record: null });
+    return emptyComparison("not_found", null, {
+      lookupStatus: "not_found",
+      record: null,
+    });
   }
 
   const record = lookup.records[0];
