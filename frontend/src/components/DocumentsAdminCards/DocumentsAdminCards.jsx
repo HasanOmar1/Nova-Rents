@@ -6,6 +6,7 @@ import {
   formatDocumentType,
   formatGovCheckStatus,
 } from "../../utils/displayFormat";
+import { getDocumentDisplayStatus } from "../DocumentsCards/DocumentsCards.utils";
 
 const STATUS_CLASS = {
   pending_review: styles.pending,
@@ -31,9 +32,13 @@ const DocumentsAdminCards = ({
   account,
   plate,
   status,
+  expirationDate,
   govStatus,
   onReview,
-}) => (
+}) => {
+  const displayStatus = getDocumentDisplayStatus({ status, expirationDate });
+
+  return (
   <div className={styles.DocumentsAdminCards}>
     <p className={styles.typeCell} data-label="Type">
       <span className={styles.typeBadge}>{formatDocumentType(documentType)}</span>
@@ -45,8 +50,10 @@ const DocumentsAdminCards = ({
       {plate || "—"}
     </p>
     <p className={styles.statusCell} data-label="Status">
-      <span className={`${styles.statusBadge} ${STATUS_CLASS[status] || ""}`}>
-        {formatDocumentStatus(status, "admin")}
+      <span
+        className={`${styles.statusBadge} ${STATUS_CLASS[displayStatus] || ""}`}
+      >
+        {formatDocumentStatus(displayStatus, "admin")}
       </span>
     </p>
     <p className={styles.govCell} data-label="Gov. verification">
@@ -63,6 +70,7 @@ const DocumentsAdminCards = ({
       Review
     </button>
   </div>
-);
+  );
+};
 
 export default DocumentsAdminCards;

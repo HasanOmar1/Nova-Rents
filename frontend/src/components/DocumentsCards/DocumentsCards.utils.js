@@ -3,6 +3,7 @@
 
 // Tests whether a supplied date falls before the current time.
 // Accepts a date-like value and returns a Boolean.
+// Matches backend isExpirationDatePast: valid through the expiration day.
 export const isPastDate = (value) => {
   if (!value) return false;
   const date = new Date(value);
@@ -13,13 +14,24 @@ export const isPastDate = (value) => {
   return date < today;
 };
 
+// Returns the status shown in the UI for a document slot or admin row.
+// Accepts a document-like object and returns the effective status string.
+// Mirrors backend slotStatus: verified + past expirationDate → expired.
+export const getDocumentDisplayStatus = (documentOrSlot) => {
+  const status = documentOrSlot?.status || "not_uploaded";
+  if (status === "verified" && isPastDate(documentOrSlot?.expirationDate)) {
+    return "expired";
+  }
+  return status;
+};
+
 // Counts completed and total slots in a vehicle's document collection.
 // Accepts document records and returns completion-count summary fields.
 export const getVehicleDocSummary = (documents = []) => {
   const verifiedCount = documents.filter(
     // Tests whether one collection entry belongs in the filtered result.
     // Accepts slot and returns a Boolean inclusion result.
-    (slot) => slot.status === "verified",
+    (slot) => getDocumentDisplayStatus(slot) === "verified",
   ).length;
 
   return {
@@ -39,7 +51,7 @@ export const getVehicleDocSummary = (documents = []) => {
       documents.every(
         // Tests one collection entry for the surrounding all-items check.
         // Accepts slot and returns a Boolean validity result.
-        (slot) => slot.status === "verified"),
+        (slot) => getDocumentDisplayStatus(slot) === "verified"),
   };
 };
 

@@ -326,4 +326,6 @@ module.exports = {
   evaluateUserRentalEligibility,
   evaluateVehicleRentalEligibility,
   evaluateInsuranceCoversRentalPeriod,
+  isExpirationDatePast,
+  slotStatus,
 };

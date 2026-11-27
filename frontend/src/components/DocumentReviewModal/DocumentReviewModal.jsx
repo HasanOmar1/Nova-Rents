@@ -12,6 +12,11 @@ import {
   REJECTION_CODE_OPTIONS,
   getDocumentDisplayConfig,
 } from "../../utils/displayFormat";
+import { formatIsoDateToDisplay } from "../../utils/dateFormat";
+import {
+  getDocumentDisplayStatus,
+  isPastDate,
+} from "../DocumentsCards/DocumentsCards.utils";
 import styles from "./DocumentReviewModal.module.css";
 
 // Renders the Document Review Modal interface.
@@ -40,6 +45,16 @@ const DocumentReviewModal = ({
   }
 
   const isPending = document?.status === "pending_review";
+  const displayStatus = document ? getDocumentDisplayStatus(document) : null;
+  const documentIsExpired =
+    Boolean(document) &&
+    (document.expirationCheck === "expired" ||
+      isPastDate(document.expirationDate));
+  const expiredOnLabel = document?.expirationDate
+    ? formatIsoDateToDisplay(document.expirationDate) ||
+      String(document.expirationDate).slice(0, 10)
+    : null;
+  const canVerifyDocument = isPending && !documentIsExpired;
   const gov = document?.governmentCheck || {};
   const fieldLabels = getDocumentDisplayConfig(document?.documentType, "admin");
   const accountName =
@@ -83,6 +98,16 @@ const DocumentReviewModal = ({
           <div className={styles.content}>
             {errorMsg && <p className={styles.errorMsg}>{errorMsg}</p>}
 
+            {documentIsExpired && (
+              <div className={styles.expiredWarning} role="alert">
+                <strong>Expired document</strong>
+                <p>
+                  This document expired on {expiredOnLabel || "an earlier date"}{" "}
+                  and cannot be verified. Please request an updated document.
+                </p>
+              </div>
+            )}
+
             <section className={styles.block}>
               <p className={styles.label}>Account</p>
               <p className={styles.value}>{accountName || "—"}</p>
@@ -98,7 +123,7 @@ const DocumentReviewModal = ({
               </p>
               <p className={styles.value}>
                 {formatDocumentType(document.documentType)} ·{" "}
-                {formatDocumentStatus(document.status, "admin")}
+                {formatDocumentStatus(displayStatus, "admin")}
                 {document.verificationMethod
                   ? ` · ${document.verificationMethod}`
                   : ""}
@@ -315,10 +340,19 @@ const DocumentReviewModal = ({
                     className={styles.verifyBtn}
                     loading={isBusy}
                     loadingText="Verifying..."
+                    disabled={!canVerifyDocument}
+                    title={
+                      documentIsExpired
+                        ? "Expired documents cannot be verified"
+                        : undefined
+                    }
                     onClick={
                       // Handles the component's click event.
                       // Takes no arguments and returns the handler result.
-                      () => onVerify(document.documentId)
+                      () => {
+                        if (!canVerifyDocument) return;
+                        onVerify(document.documentId);
+                      }
                     }
                   >
                     Verify

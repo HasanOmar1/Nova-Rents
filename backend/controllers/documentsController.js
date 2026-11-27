@@ -26,6 +26,10 @@ const {
   validateDocumentMetadata,
 } = require("../utils/documentMetadata");
 const {
+  isExpirationDatePast,
+  slotStatus,
+} = require("../utils/documentEligibility");
+const {
   getOwnedLicensePlates,
   getDocumentById,
   getUserScopedDocuments,
@@ -506,10 +510,8 @@ function expirationValidity(expirationDate) {
   if (!expirationDate) return "n_a";
   const value = new Date(expirationDate);
   if (Number.isNaN(value.getTime())) return "n_a";
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  value.setHours(0, 0, 0, 0);
-  return value >= today ? "valid" : "expired";
+  // Same rule as eligibility: valid through the expiration day.
+  return isExpirationDatePast(expirationDate) ? "expired" : "valid";
 }
 
 /** Parses json field.
@@ -713,19 +715,18 @@ async function getAdminDocumentById_controller(req, res, next) {
     }
 
     const relatedStatuses = await getUserDocumentStatusSummary(row.userId);
-    const identityStatus =
-      relatedStatuses.find(
-        /** Tests whether one collection item is the requested match.
-         * Accepts d; returns a boolean used by the collection operation. */
-        (d) =>
-        ["identity_card", "passport"].includes(d.documentType),
-      )?.status || "not_uploaded";
-    const driverLicenseStatus =
-      relatedStatuses.find(
-        /** Tests whether one collection item is the requested match.
-         * Accepts d; returns a boolean used by the collection operation. */
-        (d) => d.documentType === "driver_license")
-        ?.status || "not_uploaded";
+    const identityDoc = relatedStatuses.find(
+      /** Tests whether one collection item is the requested match.
+       * Accepts d; returns a boolean used by the collection operation. */
+      (d) => ["identity_card", "passport"].includes(d.documentType),
+    );
+    const driverLicenseDoc = relatedStatuses.find(
+      /** Tests whether one collection item is the requested match.
+       * Accepts d; returns a boolean used by the collection operation. */
+      (d) => d.documentType === "driver_license",
+    );
+    const identityStatus = slotStatus(identityDoc);
+    const driverLicenseStatus = slotStatus(driverLicenseDoc);
 
     await createSystemHistory(
       req.session.user.userId,
@@ -809,6 +810,12 @@ async function reviewDocument(req, res, decision) {
         if (!metadataValidation.ok) {
           return { invalidMetadata: metadataValidation };
         }
+        if (isExpirationDatePast(existing.expirationDate)) {
+          return {
+            expiredDocument: true,
+            expirationDate: existing.expirationDate,
+          };
+        }
       }
       const updateResult = await applyAdminReviewOnConnection(connection, documentId, {
         status: decision,
@@ -850,6 +857,18 @@ async function reviewDocument(req, res, decision) {
       message: `This document cannot be verified. ${result.invalidMetadata.message}`,
       field: result.invalidMetadata.field,
       metadataErrors: result.invalidMetadata.errors,
+    });
+  }
+  if (result.expiredDocument) {
+    const expiredOn = result.expirationDate
+      ? String(result.expirationDate).slice(0, 10)
+      : null;
+    return res.status(STATUS_CODE.BAD_REQUEST).json({
+      message: expiredOn
+        ? `This document expired on ${expiredOn} and cannot be verified. Please request an updated document.`
+        : "This document has expired and cannot be verified. Please request an updated document.",
+      code: "DOCUMENT_EXPIRED",
+      expirationDate: result.expirationDate || null,
     });
   }
 

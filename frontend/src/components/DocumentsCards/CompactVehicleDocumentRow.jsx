@@ -11,7 +11,10 @@ import {
   getDocumentGuidance,
 } from "../../utils/displayFormat";
 import { STATUS_CLASS } from "./DocumentsCards.constants";
-import { isPastDate } from "./DocumentsCards.utils";
+import {
+  getDocumentDisplayStatus,
+  isPastDate,
+} from "./DocumentsCards.utils";
 import styles from "./DocumentsCards.module.css";
 
 // Renders the Compact Vehicle Document Row interface.
@@ -22,7 +25,7 @@ const CompactVehicleDocumentRow = ({
   onView,
   viewingId,
 }) => {
-  const status = slot.status || "not_uploaded";
+  const status = getDocumentDisplayStatus(slot);
   const canView = Boolean(slot.documentId);
   const maskedNumber = maskSensitiveNumber(slot.documentNumber);
   const expirationPassed = isPastDate(slot.expirationDate);

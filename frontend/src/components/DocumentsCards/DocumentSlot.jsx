@@ -11,13 +11,16 @@ import {
   getDocumentGuidance,
 } from "../../utils/displayFormat";
 import { STATUS_CLASS } from "./DocumentsCards.constants";
-import { isPastDate } from "./DocumentsCards.utils";
+import {
+  getDocumentDisplayStatus,
+  isPastDate,
+} from "./DocumentsCards.utils";
 import styles from "./DocumentsCards.module.css";
 
 // Renders the Document Slot interface.
 // Accepts an options object and returns rendered JSX.
 const DocumentSlot = ({ slot, onUpload, onView, viewingId }) => {
-  const status = slot.status || "not_uploaded";
+  const status = getDocumentDisplayStatus(slot);
   const canView = Boolean(slot.documentId);
   const maskedNumber = maskSensitiveNumber(slot.documentNumber);
   const expirationPassed = isPastDate(slot.expirationDate);

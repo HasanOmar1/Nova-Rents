@@ -290,6 +290,7 @@ const DocumentsAdmin = () => {
                   }
                   plate={doc.licensePlate}
                   status={doc.status}
+                  expirationDate={doc.expirationDate}
                   govStatus={doc.governmentCheck?.status || "not_checked"}
                   onReview={
                     /* Handles the review callback for this rendered control.

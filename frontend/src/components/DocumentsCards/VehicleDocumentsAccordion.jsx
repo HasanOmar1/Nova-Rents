@@ -2,7 +2,9 @@
 // It converts supplied props and shared state into the rendered interface.
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
+  formatDocumentStatus,
   formatGovCheckStatus,
+  formatVehicleStatus,
   GOVERNMENT_VEHICLE_TITLE,
   GOVERNMENT_VEHICLE_EXPLANATION,
   getGovernmentCheckGuidance,
@@ -28,6 +30,17 @@ const VehicleDocumentsAccordion = ({
   const govStatus = vehicle.governmentCheck?.status || "not_checked";
   const documents = vehicle.documents || [];
   const summary = getVehicleDocSummary(documents);
+  // Top badge = overall vehicle readiness (docs + government check),
+  // not government-only. getVehicleDocSummary already treats expired
+  // verified docs as not verified via getDocumentDisplayStatus.
+  const isVehicleVerified =
+    summary.fullyVerified && govStatus === "verified";
+  const topBadgeLabel = isVehicleVerified
+    ? formatDocumentStatus("verified")
+    : formatVehicleStatus("not_validated");
+  const topBadgeClass = isVehicleVerified
+    ? styles.verified
+    : styles.mismatch;
   const accordionId = getVehicleDocumentsId(vehicle.licensePlate);
   const panelId = `${accordionId}-panel`;
   const govGuidance = getGovernmentCheckGuidance(govStatus);
@@ -58,9 +71,9 @@ const VehicleDocumentsAccordion = ({
           )}
         </span>
         <span
-          className={`${styles.statusBadge} ${styles.vehicleGovBadge} ${GOV_CLASS[govStatus] || ""}`}
+          className={`${styles.statusBadge} ${styles.vehicleGovBadge} ${topBadgeClass}`}
         >
-          {formatGovCheckStatus(govStatus)}
+          {topBadgeLabel}
         </span>
       </button>
 
