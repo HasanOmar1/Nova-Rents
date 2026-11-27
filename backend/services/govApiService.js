@@ -27,10 +27,13 @@ function fuelFamily(value) {
   const normalized = normalizeText(value);
   if (!normalized) return "";
   for (const [family, aliases] of Object.entries(FUEL_ALIASES)) {
-    if (aliases.some(
-      /** Tests whether one collection item satisfies the surrounding condition.
-       * Accepts alias; returns a boolean used by the collection operation. */
-      (alias) => normalized === alias || normalized.includes(alias))) {
+    if (
+      aliases.some(
+        /** Tests whether one collection item satisfies the surrounding condition.
+         * Accepts alias; returns a boolean used by the collection operation. */
+        (alias) => normalized === alias || normalized.includes(alias),
+      )
+    ) {
       return family;
     }
   }
@@ -78,22 +81,6 @@ function compareVehicleToGovernmentRecord(vehicle, record) {
       required: true,
     },
     {
-      field: "color",
-      ours: vehicle.color,
-      government: record.tzeva_rechev,
-    },
-    {
-      field: "fuelType",
-      ours: vehicle.fuelType,
-      government: record.sug_delek_nm,
-      fuel: true,
-    },
-    {
-      field: "brandName",
-      ours: vehicle.brandName,
-      government: record.tozeret_nm,
-    },
-    {
       field: "modelName",
       ours: vehicle.modelName,
       government: record.kinuy_mishari,
@@ -137,7 +124,9 @@ async function lookupVehicleInGovIL(licensePlate) {
   const timer = setTimeout(
     /** Handles expiration of the configured timeout.
      * Accepts no arguments; returns no meaningful value. */
-    () => controller.abort(), GOV_TIMEOUT_MS);
+    () => controller.abort(),
+    GOV_TIMEOUT_MS,
+  );
 
   try {
     const filters = Number.isFinite(numericPlate)
@@ -222,7 +211,10 @@ function emptyComparison(status, errorMessage = null, snapshot = null) {
  * Accepts vehicle and lookup; returns the derived value. */
 function buildGovernmentCheckPayload(vehicle, lookup) {
   if (!lookup || lookup.lookupStatus === "unavailable") {
-    return emptyComparison("unavailable", lookup?.errorMessage || "Government API unavailable");
+    return emptyComparison(
+      "unavailable",
+      lookup?.errorMessage || "Government API unavailable",
+    );
   }
   if (lookup.lookupStatus === "error") {
     return emptyComparison(
@@ -231,7 +223,10 @@ function buildGovernmentCheckPayload(vehicle, lookup) {
     );
   }
   if (lookup.lookupStatus === "not_found" || !lookup.records?.length) {
-    return emptyComparison("not_found", null, { lookupStatus: "not_found", record: null });
+    return emptyComparison("not_found", null, {
+      lookupStatus: "not_found",
+      record: null,
+    });
   }
 
   const record = lookup.records[0];
